@@ -1,0 +1,22 @@
+<!--
+%\VignetteEngine{knitr}
+%\VignetteIndexEntry{ISMB Twitter Analysis}
+-->
+
+*note:*
+
+This is where the analysis is performed and described.
+All necessary functions will be generated in separate R files.
+As described [here](http://rmflight.github.io/post/vignette-analysis/).
+
+
+# Reproducibility
+This vignette and package were built as recommended by the blogpost of [Hilary Parker](https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/), [the book "R packages"](http://r-pkgs.had.co.nz/) and the idea of using `R packages` for an analysis is coming from Robert M. Flight's blogposts, where he explains [why](http://rmflight.github.io/post/analyses-as-packages/) and [how](http://rmflight.github.io/post/vignette-analysis/) to use `R package` for an analysis.
+
+## packrat
+In order to be clear on R package versions and dependencies, [packrat](http://rstudio.github.io/packrat/) was used. 
+```{r}
+# devtools::install_github("rstudio/packrat")
+library(packrat)
+```
+Follow the [walktrough](http://rstudio.github.io/packrat/walkthrough.html) from packrat, which they highly recommend.
