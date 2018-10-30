@@ -17,6 +17,26 @@ This vignette and package were built as recommended by the blogpost of [Hilary P
 In order to be clear on R package versions and dependencies, [packrat](http://rstudio.github.io/packrat/) was used. 
 ```{r}
 # devtools::install_github("rstudio/packrat")
-library(packrat)
+require(packrat)
 ```
 Follow the [walktrough](http://rstudio.github.io/packrat/walkthrough.html) from packrat, which they highly recommend.
+
+
+# Dataset
+## obtain dataset
+With account on [BExIS](https://www.bexis.uni-jena.de). Name and content of datasets : 
+
+¦ name             ¦ content                   ¦
+¦ ---------------- ¦ ------------------------- ¦
+¦ bla              ¦ bla                       ¦
+
+
+## clean datasets
+Extract necessary data from datasets.
+```{r}
+trophic_groups <- c()
+years <- c()
+# cleanDataset1(trophic_groups, years)
+```
+
+
