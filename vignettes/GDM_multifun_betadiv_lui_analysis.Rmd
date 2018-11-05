@@ -6,36 +6,180 @@
 *note:*
 
 This is where the analysis is performed and described.
-All necessary functions will be generated in separate R files.
+All necessary functions will be written in separate R files.
 As described [here](http://rmflight.github.io/post/vignette-analysis/).
 
 
 # Reproducibility
 This vignette and package were built as recommended by the blogpost of [Hilary Parker](https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/), [the book "R packages"](http://r-pkgs.had.co.nz/) and the idea of using `R packages` for an analysis is coming from Robert M. Flight's blogposts, where he explains [why](http://rmflight.github.io/post/analyses-as-packages/) and [how](http://rmflight.github.io/post/vignette-analysis/) to use `R package` for an analysis.
 
+Working with [Google's R Style Guide](https://google.github.io/styleguide/Rguide.xml).
+
 ## packrat
 In order to be clear on R package versions and dependencies, [packrat](http://rstudio.github.io/packrat/) was used. 
-```{r}
+```{r, eval=F}
 # devtools::install_github("rstudio/packrat")
 require(packrat)
 ```
 Follow the [walktrough](http://rstudio.github.io/packrat/walkthrough.html) from packrat, which they highly recommend.
 
 
-# Dataset
-## obtain dataset
-With account on [BExIS](https://www.bexis.uni-jena.de). Name and content of datasets : 
+## personalisation
+To run this script with personal, non-public content, run `nonpublic.R` . TODO: an empty version of the file will be uploaded, named `nonpublic_empty.R`
 
-¦ name             ¦ content                   ¦
-¦ ---------------- ¦ ------------------------- ¦
-¦ bla              ¦ bla                       ¦
-
-
-## clean datasets
-Extract necessary data from datasets.
-```{r}
-trophic_groups <- c()
-years <- c()
-# cleanDataset1(trophic_groups, years)
+```{r, eval=F}
+include.nonpublic <- readline(prompt="Fill in nonpublic variables from file nonpublic.Rmd? y or n ")
+if (include.nonpublic == "y") {
+  source("nonpublic.R")
+}
 ```
+
+
+# Dataset
+## about
+
+| var name   | ID     | content                   | year |
+| ---------- | ------ | ------------------------- | ---- |
+|   soil     | bla    | bla                       |      |
+|   pH       | bli    | blu                       |  |
+| spdivGRL   | ... | species diversity in grasslands |  |
+| spinfoGRL  | ... | info about species diversity in grasslands |  |
+| landscape  | ... | ... |  |
+| plotNames  | ... | ... |  |
+| plotCoord  | | |  |
+| covar      | | environmental coovariates |  |
+| funct       | EP grass functions & services.txt | Ecosystem functions data, pre-cleaned by eric |  |
+| lui        | 20907 | land-use intensity data |  |
+| lui5y      | ? by-hand | some update of lui dataset | 2006-2010 |
+```{r}
+varnames <- c("soil", "pH", "spdivGRL", "spinfoGRL", "landscape", "plotNames", "plotCoord", "covar", "funs", "lui")
+varIDs <- c(NA, NA, NA, NA, NA, NA, NA, NA, NA, 20907)
+```
+
+
+## obtain dataset from BExIS
+With account on [BExIS](https://www.bexis.uni-jena.de). Using the script `accesBexis.R` from Bexis. Download and store it a folder with path `accesBexispath`.
+```{r, eval=F}
+# accesBexispath <- "C:/Users/nschenk/Documents/BEF/BExIS/"
+source(paste(accesBexispath,"accessBexis.R", sep=""))
+```
+
+As this script is public, user-input is requested to fill in variables `datasetid`, `user`, `pswd` and a name for the downloaded dataset. The first 3 variables are requested by the function `read.service` from the script `accessBexis.R`.
+
+**single dataset download**
+```{r, eval=F}
+my_name <- readline(prompt="BExIS user name : ")
+my_password <- readline(prompt="BExIS password : ")
+my_datasetid <- readline(prompt="BExIS dataset ID : ")
+my_varname <- readline(prompt="BExIS dataset name which will be used in R")
+downloaded_dataset <- read.service(datasetid = my_datasetid, user = my_name, pswd = my_password)
+assign(my_varname, downloaded_dataset)
+# delete unwanted variables
+rm(my_name, my_password, my_datasetid); gc()
+```
+
+
+## land-use intensity (LUI)
+LUI is standardised among five years, from 2006-2010.
+```{r}
+LUI <- loadAndCleanLUI(path=pathtodata)
+```
+
+## ecosystem functions
+```{r}
+funct <- loadAndCleanEcosystemFunctions(path=pathtodata)
+```
+checking correlations between functions
+```{r}
+# TODO : here! check in other file how I found out which input variables are too correlated to include. 
+```
+
+
+
+raw from eric
+```{r}
+
+
+## aboveground P and N stocks too correlated with biomass to use separately
+with(fonly, cor(shootNstock, Biomass,use="complete.obs"))
+##0.819931
+with(fonly, cor(shootPstock, Biomass,use="complete.obs"))
+##0.757451
+
+################################################################################################
+########### make some mini multifunctionality measures to combine related functions ############
+################################################################################################
+
+## a measure of soil carbon enzyme activities
+sce <- c("beta_Glucosidase", "N_Acetyl_beta_Glucosaminidase", "Xylosidase")
+sce2 <- funct2[,match(sce, names(funct2))]
+soilCflxs <- multidiv(sce2, sc="sd", cent=TRUE)[,1]
+
+### a measure of soil N cycling with enzyme activities and functional gene abundances
+nce <- c("Urease", "DEA","Potential.nitrification","nifH","amoA_AOB","amoA_AOA")
+nce2 <- funct2[,match(nce, names(funct2))]
+soilNflxs <- multidiv(nce2, sc="sd", cent=TRUE)[,1]
+
+## a measure of P loss combining resin bag and the phosphorus retention index from Allan et al. 2015
+ploss <- max(fonly6$P_loss, na.rm=T) - fonly6$P_loss ## reverse P loss values, so high values indicate low loss
+## calculate PRI
+# first convert soil P and microbial P to stocks rather than concentrations
+# concentrations are mg/kg, convert to g/g
+# bulk density is in g/cm3 to 10cm depth, multiply by 100,000 to convert to g soil per m2
+soilPstock <- (fonly6$OlsenPi2014/1000000) * (fonly6$Bulk.density2014 * 100000)
+micPstock <- (fonly6$Pmic/1000000) * (fonly6$Bulk.density2014 * 100000)
+
+PRI <- with(fonly6, (micPstock + Pshoot) / (micPstock + Pshoot + OlsenPi2014)) ## use averages for Pmic and Pshoot as we only have one value of Olsen P
+P_loss_comb <- multidiv(cbind(ploss, PRI), sc="sd", cent=TRUE)[,1]
+
+## same for N loss
+nloss <- max(fonly6$N_loss, na.rm=T) - fonly6$N_loss2009 ## reverse N loss
+## make NRI
+soilDIN <- with(fonly6, NH4.2014 + NO3.2014)
+soilDINstock <- (soilDIN/1000000) * (fonly6$Bulk.density2014 * 100000)
+micNstock <- (fonly6$Nmic.2011/1000000) * (fonly6$Bulk.density2014 * 100000)
+
+NRI <- with(fonly6, (Nshoot.2011 + micNstock) / (Nshoot.2011 + soilDINstock + micNstock))
+N_loss_comb <- multidiv(cbind(nloss, NRI), sc="sd", cent=TRUE)[,1]
+
+## select the list of functions
+funlist <- c("Root.biomass","Groundwater.recharge", "Parasitoid.traps", "pathogen.infection", "herbivory", 
+             "Total.pollinators", "Biomass","Phosphatase", "Root.decomposition", "Litter.decomposition")
+
+funsel <- fonly6[,funlist]
+## add the combined measures
+funsel2 <- cbind(funsel, soilCflxs, soilNflxs, P_loss_comb, N_loss_comb)
+
+## check distributions
+par(mfrow=c(5,3))
+par(mar=c(3,4,2,1))
+for(i in 1:ncol(funsel2)){
+  hist(funsel2[,i], main = names(funsel2)[i])
+}
+
+## log transform pathogen, phosphatase, parasitoids, log + smallest non zero number
+logn0 <- function(x) log(x + min(x[x>0], na.rm=T))
+
+
+funselL <- funsel2
+funselL$pathogen.infection <- logn0(funselL$pathogen.infection)
+funselL$Parasitoid.traps <- logn0(funselL$Parasitoid.traps)
+funselL$Phosphatase <- logn0(funselL$Phosphatase)
+funselL$Total.pollinators <- logn0(funselL$Total.pollinators)
+funselL$herbivory <- logn0(funselL$herbivory)
+
+## check distributions
+par(mfrow=c(5,3))
+par(mar=c(3,4,2,1))
+for(i in 1:ncol(funselL)){
+  hist(funselL[,i], main = names(funsel2)[i])
+}
+
+funselsc <- scale(funselL)
+## add plots as rownames
+rownames(funselsc) <- funct$Plot
+
+```
+
+
 
