@@ -4,7 +4,6 @@
 -->
 
 *note:*
-
 This is where the analysis is performed and described.
 All necessary functions will be written in separate R files.
 As described [here](http://rmflight.github.io/post/vignette-analysis/).
