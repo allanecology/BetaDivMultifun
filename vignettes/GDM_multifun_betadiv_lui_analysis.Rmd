@@ -2,6 +2,10 @@
 %\VignetteEngine{knitr}
 %\VignetteIndexEntry{ISMB Twitter Analysis}
 -->
+*how to work on this file*
+
+There are TODO's, WAITING's
+
 
 *note:*
 
@@ -51,7 +55,7 @@ if (include.nonpublic == "y") {
 | funct       | EP grass functions & services.txt | Ecosystem functions data, pre-cleaned by eric |  |
 | lui        | 20907 | land-use intensity data |  |
 | lui5y      | ? by-hand | some update of lui dataset | 2006-2010 |
-```{r}
+```{r, eval=F}
 varnames <- c("soil", "pH", "spdivGRL", "spinfoGRL", "landscape", "plotNames", "plotCoord", "covar", "funs", "lui")
 varIDs <- c(NA, NA, NA, NA, NA, NA, NA, NA, NA, 20907)
 ```
@@ -84,102 +88,38 @@ LUI is standardised among five years, from 2006-2010.
 ```{r}
 LUI <- loadAndCleanLUI(path=pathtodata)
 ```
+### variation in LUI
+TODO calculate variation in LUI of many years. Standardize each m,g amd f with the average value across ALL years, to keep the variation!--> do this by hand, not with the online LUI tool!
+
 
 ## ecosystem functions
 ```{r}
 funct <- loadAndCleanEcosystemFunctions(path=pathtodata)
 ```
-checking correlations between functions
+WAITING : checking correlations between functions - follow eric's script "create function database.R" once it is clear how to deal with the functions.
 ```{r}
-# TODO : here! check in other file how I found out which input variables are too correlated to include. 
+# WAITING : here! check in other file how I found out which input variables are too correlated to include. 
+```
+
+
+## Biodiversity
+We will average biodiversity data across several years. Not for OTU measures, as they differ too much across years. For presence-absence, we say that a species is present if it was present at least in one year. 
+
+TODO : is the diversity correlated among years? (can we combine years?)
+
+```{r}
+
 ```
 
 
 
-raw from eric
-```{r}
+### Biodiversity abundance
+**leave abundance out for the moment** to make things easier.
 
+For abundance : take one year and standardise all species per plot. All species of 1 plot should sum to 1. Then, average across years of these standardised values. Do this for bats and birds separately before combining them, because bats and bird abundances were measured differently. (Bat abundance was the amount of sounds measured, but one bat may produce several sounds. Birds were measured visually and as well with sounds, but different than bats.)
 
-## aboveground P and N stocks too correlated with biomass to use separately
-with(fonly, cor(shootNstock, Biomass,use="complete.obs"))
-##0.819931
-with(fonly, cor(shootPstock, Biomass,use="complete.obs"))
-##0.757451
+Open question: is it possible to work with relative abundances for Betadiversity? Does that impact the abundance turnover component?
 
-################################################################################################
-########### make some mini multifunctionality measures to combine related functions ############
-################################################################################################
-
-## a measure of soil carbon enzyme activities
-sce <- c("beta_Glucosidase", "N_Acetyl_beta_Glucosaminidase", "Xylosidase")
-sce2 <- funct2[,match(sce, names(funct2))]
-soilCflxs <- multidiv(sce2, sc="sd", cent=TRUE)[,1]
-
-### a measure of soil N cycling with enzyme activities and functional gene abundances
-nce <- c("Urease", "DEA","Potential.nitrification","nifH","amoA_AOB","amoA_AOA")
-nce2 <- funct2[,match(nce, names(funct2))]
-soilNflxs <- multidiv(nce2, sc="sd", cent=TRUE)[,1]
-
-## a measure of P loss combining resin bag and the phosphorus retention index from Allan et al. 2015
-ploss <- max(fonly6$P_loss, na.rm=T) - fonly6$P_loss ## reverse P loss values, so high values indicate low loss
-## calculate PRI
-# first convert soil P and microbial P to stocks rather than concentrations
-# concentrations are mg/kg, convert to g/g
-# bulk density is in g/cm3 to 10cm depth, multiply by 100,000 to convert to g soil per m2
-soilPstock <- (fonly6$OlsenPi2014/1000000) * (fonly6$Bulk.density2014 * 100000)
-micPstock <- (fonly6$Pmic/1000000) * (fonly6$Bulk.density2014 * 100000)
-
-PRI <- with(fonly6, (micPstock + Pshoot) / (micPstock + Pshoot + OlsenPi2014)) ## use averages for Pmic and Pshoot as we only have one value of Olsen P
-P_loss_comb <- multidiv(cbind(ploss, PRI), sc="sd", cent=TRUE)[,1]
-
-## same for N loss
-nloss <- max(fonly6$N_loss, na.rm=T) - fonly6$N_loss2009 ## reverse N loss
-## make NRI
-soilDIN <- with(fonly6, NH4.2014 + NO3.2014)
-soilDINstock <- (soilDIN/1000000) * (fonly6$Bulk.density2014 * 100000)
-micNstock <- (fonly6$Nmic.2011/1000000) * (fonly6$Bulk.density2014 * 100000)
-
-NRI <- with(fonly6, (Nshoot.2011 + micNstock) / (Nshoot.2011 + soilDINstock + micNstock))
-N_loss_comb <- multidiv(cbind(nloss, NRI), sc="sd", cent=TRUE)[,1]
-
-## select the list of functions
-funlist <- c("Root.biomass","Groundwater.recharge", "Parasitoid.traps", "pathogen.infection", "herbivory", 
-             "Total.pollinators", "Biomass","Phosphatase", "Root.decomposition", "Litter.decomposition")
-
-funsel <- fonly6[,funlist]
-## add the combined measures
-funsel2 <- cbind(funsel, soilCflxs, soilNflxs, P_loss_comb, N_loss_comb)
-
-## check distributions
-par(mfrow=c(5,3))
-par(mar=c(3,4,2,1))
-for(i in 1:ncol(funsel2)){
-  hist(funsel2[,i], main = names(funsel2)[i])
-}
-
-## log transform pathogen, phosphatase, parasitoids, log + smallest non zero number
-logn0 <- function(x) log(x + min(x[x>0], na.rm=T))
-
-
-funselL <- funsel2
-funselL$pathogen.infection <- logn0(funselL$pathogen.infection)
-funselL$Parasitoid.traps <- logn0(funselL$Parasitoid.traps)
-funselL$Phosphatase <- logn0(funselL$Phosphatase)
-funselL$Total.pollinators <- logn0(funselL$Total.pollinators)
-funselL$herbivory <- logn0(funselL$herbivory)
-
-## check distributions
-par(mfrow=c(5,3))
-par(mar=c(3,4,2,1))
-for(i in 1:ncol(funselL)){
-  hist(funselL[,i], main = names(funsel2)[i])
-}
-
-funselsc <- scale(funselL)
-## add plots as rownames
-rownames(funselsc) <- funct$Plot
-
-```
-
+We may lose situations where one plot has many species and another plot has a low amount of species. So the question is - is the value changing a lot? Standardisation can only happen either per year OR per plot. Per plot makes sense, because presumably the same person measured the diversity of a given plot, and the abundance can differ among persons. To keep the situation mentioned above, we would need to standardise per year and not per plot. According to Eric, that would only be the case in a low number of situations. But would be needed to confirm it.
 
 
