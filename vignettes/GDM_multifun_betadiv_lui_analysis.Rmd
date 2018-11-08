@@ -114,7 +114,7 @@ TODO : is the diversity correlated among years? (can we combine years?)
 
 
 ### Biodiversity abundance
-**leave abundance out for the moment** to make things easier.
+**leave abundance out for the moment** to make things easier. WAITING for need to work with abundance data.
 
 For abundance : take one year and standardise all species per plot. All species of 1 plot should sum to 1. Then, average across years of these standardised values. Do this for bats and birds separately before combining them, because bats and bird abundances were measured differently. (Bat abundance was the amount of sounds measured, but one bat may produce several sounds. Birds were measured visually and as well with sounds, but different than bats.)
 

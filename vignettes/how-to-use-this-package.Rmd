@@ -1,0 +1,20 @@
+---
+title: "how to use this package"
+author: "noelle"
+date: "November 8, 2018"
+output: html_document
+---
+
+# Resources used
+To create the package, I used the blogposts of: [Hilary Parker](https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/)
+and TODO fill in who else
+
+# installing this package
+1. Download the whole folder of github.
+2. set the R working directory to the parent folder of the downloaded package. (e.g. Downloads if you stored the package folder in Downloads.)
+```{r}
+setwd("<parent-directory-of-the-package>")
+install("multiFunBetadivLuiGDM")
+```
+
+
