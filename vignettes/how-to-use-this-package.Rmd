@@ -6,15 +6,46 @@ output: html_document
 ---
 
 # Resources used
-To create the package, I used the blogposts of: [Hilary Parker](https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/)
-and TODO fill in who else
+To create the package, I used the blogposts of: [Hilary Parker](https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/), [the book "R packages"](http://r-pkgs.had.co.nz/) and the idea of using `R packages` for an analysis is coming from Robert M. Flight's blogposts, where he explains [why](http://rmflight.github.io/post/analyses-as-packages/) and [how](http://rmflight.github.io/post/vignette-analysis/) to use `R package` for an analysis.
+
+# install required packages
+If you are linux user, install the following packages with `sudo apt-get install`
+- `libcurl`
+- `libssl-dev`
+- `libxml2 libxml2-dev`
+
+If you are not using Linux and there was any requirement, R will tell you in its error message as soon as you try to install the below mentioned packages.
+```{r, eval=F}
+install.packages("devtools")
+library(devtools)
+devtools::install_github("klutometis/roxygen")
+library(roxygen2)
+```
+
 
 # installing this package
 1. Download the whole folder of github.
 2. set the R working directory to the parent folder of the downloaded package. (e.g. Downloads if you stored the package folder in Downloads.)
-```{r}
+```{r, eval=F}
 setwd("<parent-directory-of-the-package>")
 install("multiFunBetadivLuiGDM")
 ```
+
+Set wd back to the package
+```{r}
+setwd("/home/noelleschenk/Desktop/github/allanecology/BetaDivMultifun/")
+```
+
+
+# working on the package
+## create documentation
+from roxygen comments, with Ctrl-Shift-D or
+```{r,eval=F}
+devtools:document()
+```
+
+## load
+with Ctrl-Shift-L or `devtools::load_all()`
+
 
 
