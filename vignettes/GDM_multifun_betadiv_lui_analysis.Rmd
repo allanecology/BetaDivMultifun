@@ -1,3 +1,8 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
 <!--
 %\VignetteEngine{knitr}
 %\VignetteIndexEntry{ISMB Twitter Analysis}
@@ -10,7 +15,7 @@ There are TODO's, WAITING's
 *note:*
 
 This is where the analysis is performed and described.
-All necessary functions will be written in separate R files.
+All necessary functions will be written in R files within the folder R/.
 As described [here](http://rmflight.github.io/post/vignette-analysis/).
 
 
@@ -20,7 +25,7 @@ This vignette and package were built as recommended by the blogpost of [Hilary P
 Working with [Google's R Style Guide](https://google.github.io/styleguide/Rguide.xml).
 
 ## packrat
-In order to be clear on R package versions and dependencies, [packrat](http://rstudio.github.io/packrat/) was used. 
+In order to be clear on R package versions and dependencies, [packrat](http://rstudio.github.io/packrat/) was used. **TODO : get infos abou how to use packrat**
 ```{r, eval=F}
 # devtools::install_github("rstudio/packrat")
 require(packrat)
@@ -29,13 +34,9 @@ Follow the [walktrough](http://rstudio.github.io/packrat/walkthrough.html) from 
 
 
 ## personalisation
-To run this script with personal, non-public content, run `nonpublic.R` . TODO: an empty version of the file will be uploaded, named `nonpublic_empty.R`
-
+To run this script with personal, non-public content, store global variables (as e.g. path to the datasets) with the following function, if they are not in the current directory.
 ```{r, eval=F}
-include.nonpublic <- readline(prompt="Fill in nonpublic variables from file nonpublic.Rmd? y or n ")
-if (include.nonpublic == "y") {
-  source("nonpublic.R")
-}
+setNonpublicVariables(".", ".", ".")
 ```
 
 
@@ -84,16 +85,65 @@ rm(my_name, my_password, my_datasetid); gc()
 
 
 ## land-use intensity (LUI)
-LUI is standardised among five years, from 2006-2010.
-```{r}
-LUI <- loadAndCleanLUI(path=pathtodata)
+LUI is standardised among five years, from 2006-2010. The data used for LUI is assembled data, therefore get it from the assembled_data folder.
+
+
+### the combined index
+The combined index of G+M+F has been shown to better predict patterns than the individual components (Bluthgen, 2012). 
+
+$$LUI_i = \sqrt{\frac{g_i}{\bar{g}} + \frac{m_i}{\bar{m}} + \frac{f_i}{\bar{f}}}  \textsf{ , where } \bar{c} = \bar{c}_{2006} + ... + \bar{c}_{2010} \textsf{  for } c \in \{g, m, f\} \textsf{ and } i \textsf{ corresponds to plots } \in \{1, ... , 150\}$$
+
+- **normalisation** by division with mean (alternative : $ x_{new} = \frac{x_i - x_{min}}{x_{max} - x_{min}}$) . Division with mean was chosen because it is not as dependent of **outliers**. The mean was much more consistent among the years and the regions. Normalisation and not standardisation because normalisation keeps outliers.
+
+- standardisation : $z_i = \frac{x_i - \mu}{\sigma}$, would lead to centering around 0, standard deviation = 1. makes distribution normal, better for optimisation, PCA, ... not in this case, because it takes out outliers and can change some identities of the data.
+
+- **square root transformation** to achieve a more even distribution and reduce the effect of outliers in regression (Bluthgen, 2012)
+
+
+### averaging over years
+
+In many cases, a long-term measure of land-use intensity may be desirable which integrates inter-annual variability. (Bluthgen, 2012)
+
+Two ways of averaging are possible, first average each component $\in \{g, m, f\}$ over the 5 years and then sum the averages to $LUI$, or first calculating $LUI$ for each year and averaging the 5 measurements. It happens to not matter, because
+$$\bar{LUI} = \bar{g} + \bar{m} + \bar{f} \textsf{  whenever they contain the same number of elements (equal weighting)}$$
+This was true if we would not **transform** LUI. But as we do, it is possible to either transform LUI for each years separately and average the transformed values or average each component separatley first, combine them to LUI and transform after.
+
+therefore, 
+$$LUI_i = \sqrt{\sum_{c \in \{g, m, f\}} \frac{\frac{c_{i,2006}}{\bar{c}} + ... + \frac{c_{i,2010}}{\bar{c}}}{ N_{years}}}  \textsf{  or alternatively }  LUI_i \frac{\sum_{y \in \{2006, ... , 2010\}} \sqrt{ \frac{g_{i,y}}{\bar{g}} + \frac{m_{i,y}}{\bar{m}} + \frac{f_{i,y}}{\bar{f}}}}{N_{years}}  $$
+or shortly:
+$$ LUI_i = \sqrt{g_{2006, ... , 2010} + m_{2006, ... , 2010} + f_{2006, ... , 2010}} \textsf{  or alternatively } LUI_i = \frac{LUI_{2006} + ... + LUI_{2010}}{N_{years}}= $$
+
+- **But** when should we apply the transformation? in the very end, right?
+
+TODO : I would opt for transformation first - average later. Because I have 3 measurements in 3 different years, which are independent of each other. Transforming each of them individually would make them more comparable (right?)
+
+
+
+
+```{r, eval=F}
+LUI <- loadAndCleanLUI(path=pathtoASSEMBLEDdata)
 ```
+
+Average of LUI across time, combining the years 2006, 2007, 2008, 2009 and 2010 (5 years). For each year, data of all plots is available. 
+
+```{r, eval=F}
+# calculate the mean of each G,M,F across all years separately
+Gmean <- mean(lui5y$TotalGrazing)
+Mmean <- mean(lui5y$TotalMowing)
+Fmean <- mean(lui5y$TotalFertilization)
+
+
+```
+
+
+
+
 ### variation in LUI
 TODO calculate variation in LUI of many years. Standardize each m,g amd f with the average value across ALL years, to keep the variation!--> do this by hand, not with the online LUI tool!
 
 
 ## ecosystem functions
-```{r}
+```{r, eval=F}
 funct <- loadAndCleanEcosystemFunctions(path=pathtodata)
 ```
 WAITING : checking correlations between functions - follow eric's script "create function database.R" once it is clear how to deal with the functions.
