@@ -20,11 +20,10 @@ NULL
 #' @return a vector with the land-use intensity averages.
 #' @export
 loadAndCleanLUI <- function(dataset="LUI06to10update20.07.16.txt", path) {
-  lui5y  <- read.table(paste(path, dataset, sep=""), header=T)
+  lui5y  <<- read.table(paste(path, dataset, sep=""), header=T)
   with(lui5y, tapply(LUI, Plot, mean))
 }
 NULL
-
 
 
 #' combine columns
