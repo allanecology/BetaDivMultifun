@@ -42,24 +42,24 @@ setNonpublicVariables(".", ".", ".")
 
 # Dataset
 ## about
-
-| var name   | ID     | content                   | year |
-| ---------- | ------ | ------------------------- | ---- |
-|   soil     | bla    | bla                       |      |
-|   pH       | bli    | blu                       |  |
-| spdivGRL   | ... | species diversity in grasslands |  |
-| spinfoGRL  | ... | info about species diversity in grasslands |  |
-| landscape  | ... | ... |  |
-| plotNames  | ... | ... |  |
-| plotCoord  | | |  |
-| covar      | | environmental coovariates |  |
-| funct       | EP grass functions & services.txt | Ecosystem functions data, pre-cleaned by eric |  |
-| lui        | 20907 | land-use intensity data |  |
-| lui5y      | ? by-hand | some update of lui dataset | 2006-2010 |
-```{r, eval=F}
-varnames <- c("soil", "pH", "spdivGRL", "spinfoGRL", "landscape", "plotNames", "plotCoord", "covar", "funs", "lui")
-varIDs <- c(NA, NA, NA, NA, NA, NA, NA, NA, NA, 20907)
-```
+<!-- [TODO] : table will be updated -->
+<!-- | var name   | ID     | content                   | year | -->
+<!-- | ---------- | ------ | ------------------------- | ---- | -->
+<!-- |   soil     | bla    | bla                       |      | -->
+<!-- |   pH       | bli    | blu                       |  | -->
+<!-- | spdivGRL   | ... | species diversity in grasslands |  | -->
+<!-- | spinfoGRL  | ... | info about species diversity in grasslands |  | -->
+<!-- | landscape  | ... | ... |  | -->
+<!-- | plotNames  | ... | ... |  | -->
+<!-- | plotCoord  | | |  | -->
+<!-- | covar      | | environmental coovariates |  | -->
+<!-- | funct       | EP grass functions & services.txt | Ecosystem functions data, pre-cleaned by eric |  | -->
+<!-- | lui        | 20907 | land-use intensity data |  | -->
+<!-- | lui5y      | ? by-hand | some update of lui dataset | 2006-2010 | -->
+<!-- ```{r, eval=F} -->
+<!-- varnames <- c("soil", "pH", "spdivGRL", "spinfoGRL", "landscape", "plotNames", "plotCoord", "covar", "funs", "lui") -->
+<!-- varIDs <- c(NA, NA, NA, NA, NA, NA, NA, NA, NA, 20907) -->
+<!-- ``` -->
 
 
 ## obtain dataset from BExIS
@@ -142,7 +142,8 @@ Fmean <- mean(lui5y$TotalFertilization)
 TODO calculate variation in LUI of many years. Standardize each m,g amd f with the average value across ALL years, to keep the variation!--> do this by hand, not with the online LUI tool!
 
 
-## ecosystem functions
+## Ecosystem functions
+
 ```{r, eval=F}
 funct <- loadAndCleanEcosystemFunctions(path=pathtodata)
 ```
@@ -150,6 +151,7 @@ WAITING : checking correlations between functions - follow eric's script "create
 ```{r}
 # WAITING : here! check in other file how I found out which input variables are too correlated to include. 
 ```
+
 
 
 ## Biodiversity
@@ -171,5 +173,3 @@ For abundance : take one year and standardise all species per plot. All species 
 Open question: is it possible to work with relative abundances for Betadiversity? Does that impact the abundance turnover component?
 
 We may lose situations where one plot has many species and another plot has a low amount of species. So the question is - is the value changing a lot? Standardisation can only happen either per year OR per plot. Per plot makes sense, because presumably the same person measured the diversity of a given plot, and the abundance can differ among persons. To keep the situation mentioned above, we would need to standardise per year and not per plot. According to Eric, that would only be the case in a low number of situations. But would be needed to confirm it.
-
-
