@@ -1,6 +1,6 @@
-#' ismbTweetAnalysis.
+#' BetaDivMultifun
 #'
-#' @name ismbTweetAnalysis
+#' @name BetaDivMultifun
 #' @docType package
 NULL
 
@@ -115,4 +115,32 @@ loadAndCleanEcosystemFunctions <- function(dataset="EP grass functions & service
 NULL
 
 
+
+
+#' Test if column is identical with reference dataset
+#'
+#' Tests wether the column given is identical with another column from a reference dataset.
+#' The order of rows is not identical in both columns, therefore a simple comparison with
+#' \code{identical()} is not possible. 
+#' The columns compared have the same name "name". 
+#' Both datasets have a column (e.g. with the name "Plot"), by which they can be sorted.
+#' Is used in BetaDivMultifun to test wether the dataset content is identical with 
+#' the Synthesis dataset "Info_data_EP grass functions & services.xlsx", BExIS number
+#' 
+#'
+#'
+#' @param name names of the columns which will be compared.
+#' @param tocompareset name of the dataset which is compared (dataset 1). Is a data.table.
+#' @param refset name of the reference dataset (dataset 2). This dataset can be much larger
+#' than \code{tocompareset}, only the two columns of interest are filtered out. 
+#' Is a data.table.
+#' @param sortcol name of the column which is used to sort rows
+#' @return Boolean value which indicates wheter the columns are identical or not.
+#' @export
+CompareToReferenceDataset <- function(tocompareset, refset, name, sortcol="Plot"){
+  refset <- refset[,c(sortcol, name), with=F]
+  data.table::setnames(refset, old="Plot", new="Plotn")
+  return(all.equal(refset, tocompareset[,c("Plotn", name), with=F], ignore.row.order=T))
+}
+NULL
 
