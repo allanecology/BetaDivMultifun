@@ -20,12 +20,11 @@ info_data <- info_data[grep("txt", info_data$path_unix),c("ColumnName", "path_un
 
 
 
-# Ecosystem functions dataset
+# Ecosystem functions RAW dataset
 
 sample dataset (from Eric, some Columns will be included), synthesis dataset
 ```{r}
 synthesis <- data.table::fread(paste(pathtodata, "../assembled_data/EP grass functions & services.txt", sep=""), header=T)
-data.table::setnames(synthesis, old="DEA", new="DEA_with_C2H2")
 ```
 
 ## Plot, exploratories
@@ -78,8 +77,9 @@ Includes fine and coarse biomass, added them together.
 ```{r}
 Root.biomass <- data.table::fread(info_data$path_unix[grep("Root.biomass", info_data$ColumnName)], header=T, sep='\t')
 Root.biomass <- Root.biomass[Type == "G"]
-Root.biomass[, "Root.biomass" := rowSums(.SD,na.rm=T), .SDcols=c("Fine_Roots_Biomass", "Coarse_Roots_Biomass")]
-Root.biomass <- data.table::setnames(Root.biomass[,c("EP_Plotid", "Root.biomass")], old=c("EP_Plotid", "Root.biomass"), new=c("Plot", "Root.biomass"))
+Root.biomass <- Root.biomass[,c("EP_Plotid", "Fine_Roots_Biomass", "Coarse_Roots_Biomass")]
+data.table::setnames(Root.biomass, old="EP_Plotid", new="Plot")
+Root.biomass <- merge(PlotExplo, Root.biomass, by="Plot")
 ```
 
 # Flower cover
@@ -177,7 +177,11 @@ forage.quality[, DMI := 120/NDF]
 forage.quality[, RFV := (DDM*DMI)/1.29]
 
 forage.quality[, forage.quality := apply(scale(forage.quality[,c("RFV", "Crude.protein")]), 1, mean)]
-forage.quality <- data.table::setnames(forage.quality[,c("Plot_name", "forage.quality")], old=c("Plot_name", "forage.quality"), new= c("Plot", "forage.quality"))
+forage.quality <- data.table::setnames(forage.quality[,c("Plot_name", "forage.quality")], old=c("Plot_name", "forage.quality"), new= c("Plotn", "forage.quality"))
+
+# test <- merge(synthesis[,c("Plot","forage.quality")], forage.quality, by="Plot")
+
+CompareToReferenceDataset(forage.quality, synthesis, name="forage.quality")
 ```
 TODO : **different values than in synthesis!!** Really calculated with 2009? Or is it the mean among all years (2009 - 2013). If yes - take mean among years AFTER forage.quality calculation?! Note : the column names given in assembled dataset do not correspond to columns in "my" dataset - e.g. ShootN.conc in Erics dataset is "N" in mine.
 
@@ -188,7 +192,14 @@ TODO : for each year, then average
 # Phosphorous (loss) 2011
 Resin refers to the method of phosphorous measurement in soil.
 ```{r}
-P.loss2011 <- data.table::fread(info_data$path_unix[grep("P.loss2011", info_data$ColumnName)], header=T, sep='\t')
+P_loss2011 <- data.table::fread(info_data$path_unix[grep("P_loss2011", info_data$ColumnName)], header=T, sep='\t')
+# filter out grassland plots
+P_loss2011 <- P_loss2011[grep("G", P_loss2011$EP)]
+# get new plot names
+data.table::setnames(P_loss2011, old=c("EP","Resin_P"), new=c("Plot","P_loss2011"))
+P_loss2011 <- merge(PlotExplo, P_loss2011, by="Plot")
+# compare to synthesis dataset
+CompareToReferenceDataset(P_loss2011, synthesis, name="P_loss2011")
 ```
 
 
@@ -199,9 +210,8 @@ Olsen method, Pi is inorganic Phosphorous
 OlsenPi2014 <- data.table::fread(info_data$path_unix[grep("OlsenPi2014", info_data$ColumnName)], header=T, sep='\t')
 # grassland plots are abbreviated with a "G", e.g. "AEG", forest plots with "W", e.g. "AEW"
 OlsenPi2014 <- OlsenPi2014[grep("G",OlsenPi2014$Plot_ID),c("Plot_ID","OlsenPi")]
-data.table::setnames(OlsenPi2014, old=c("Plot_ID", "OlsenPi"), new=c("Plot", "OlsenPi2014"))
-OlsenPi2014 <- merge(PlotExplo, OlsenPi2014, by="Plot")
-
+data.table::setnames(OlsenPi2014, old=c("Plot_ID", "OlsenPi"), new=c("Plotn", "OlsenPi2014"))
+# Plot names are already like in "Plotn"
 CompareToReferenceDataset(OlsenPi2014, synthesis, name="OlsenPi2014")
 ```
 
@@ -218,12 +228,12 @@ all concentrations given g-1.
 
 ```{r}
 microbial_enzyme_activities <- data.table::fread(info_data$path_unix[grep("beta_Glucosidase", info_data$ColumnName)], header=T, sep='\t', drop=c("Exploratory", "Year"))
-data.table::setnames(microbial_enzyme_activities, old=c("EP_Plot_ID"), new="Plot")
+data.table::setnames(microbial_enzyme_activities, old=c("EP_Plot_ID","DEA_with_C2H2"), new=c("Plot", "DEA"))
 microbial_enzyme_activities <- merge(PlotExplo, microbial_enzyme_activities, by="Plot")
 
 # compare to synthesis dataset
 # test for all enzymes separately
-CompareToReferenceDataset(microbial_enzyme_activities, synthesis, name="DEA_with_C2H2", sortcol = "Plot")
+CompareToReferenceDataset(microbial_enzyme_activities, synthesis, name="DEA", sortcol = "Plot")
 # note : Phosphatase values are not equal, but within a 0.0001 range.
 ```
 
