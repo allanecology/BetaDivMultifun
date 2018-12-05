@@ -1,0 +1,16 @@
+---
+title: "assembled dataset construction"
+author: "noelle"
+date: "December 5, 2018"
+output: html_document
+---
+
+
+# Root biomass
+rb = fine root + coarse root biomass
+```{r}
+
+Root.biomass[, "Root.biomass" := rowSums(.SD,na.rm=T), .SDcols=c("Fine_Roots_Biomass", "Coarse_Roots_Biomass")]
+Root.biomass <- data.table::setnames(Root.biomass[,c("EP_Plotid", "Root.biomass")], old=c("EP_Plotid", "Root.biomass"), new=c("Plot", "Root.biomass"))
+```
+
