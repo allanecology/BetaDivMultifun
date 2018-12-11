@@ -1,0 +1,141 @@
+---
+title: "compare to synthesis dataset"
+author: "noelle"
+date: "December 5, 2018"
+output: html_document
+---
+# Comparison of raw functions dataset to synthesis dataset
+
+
+sample dataset (from Eric, some Columns will be included), [synthesis dataset](https://www.bexis.uni-jena.de/Data/ShowXml.aspx?DatasetId=21688) (note: access only with access to BExIS)
+
+synthesis data can only be loaded with help of the file `nonpublic.R`
+```{r}
+synthesis <- data.table::fread(paste(pathtodata, "../assembled_data/EP grass functions & services.txt", sep=""), header=T)
+```
+
+
+```{r}
+# Biomass
+CompareToReferenceDataset(raw_functions, synthesis, name="Biomass2011")
+CompareToReferenceDataset(raw_functions, synthesis, name="Biomass2014")
+CompareToReferenceDataset(raw_functions, synthesis, name="SoilOrganicC")
+CompareToReferenceDataset(raw_functions, synthesis, name="Pmic.2011")
+CompareToReferenceDataset(raw_functions, synthesis, name="Root.decomposition")
+CompareToReferenceDataset(raw_functions, synthesis, name="Bulk.density2014")
+CompareToReferenceDataset(raw_functions, synthesis, name="Soil.C.stock")
+CompareToReferenceDataset(raw_functions, synthesis, name="P_loss2011")
+CompareToReferenceDataset(raw_functions, synthesis, name="OlsenPi2014")
+CompareToReferenceDataset(raw_functions, synthesis, name="Urease", sortcol = "Plot")
+CompareToReferenceDataset(raw_functions, synthesis, name="beta_Glucosidase", sortcol = "Plot")
+CompareToReferenceDataset(raw_functions, synthesis, name="Xylosidase", sortcol = "Plot")
+CompareToReferenceDataset(raw_functions, synthesis, name="N_Acetyl_beta_Glucosaminidase", sortcol = "Plot")
+CompareToReferenceDataset(raw_functions, synthesis, name="DEA", sortcol = "Plot")
+CompareToReferenceDataset(tocompareset = Potential.nitrification, refset = synthesis, name = "Potential.nitrification", sortcol = "Plot")
+```
+## within range
+### Phosphatase
+```{r}
+CompareToReferenceDataset(raw_functions, synthesis, name="Phosphatase", sortcol = "Plot")
+test <- merge(raw_functions[, c("Plot", "Phosphatase")], synthesis[, c("Plot", "Phosphatase")], by="Plot")
+max(test$Phosphatase.x - test$Phosphatase.y)
+min(test$Phosphatase.x - test$Phosphatase.y)
+```
+
+### root biomass
+```{r}
+Root.biomass <- data.table::fread(info_data$path_unix[grep("Root.biomass", info_data$ColumnName)], header=T, sep='\t')
+Root.biomass <- Root.biomass[Type == "G"]
+Root.biomass <- Root.biomass[,c("EP_Plotid", "Fine_Roots_Biomass", "Coarse_Roots_Biomass")]
+data.table::setnames(Root.biomass, old="EP_Plotid", new="Plot")
+
+Root.biomass[,"Root.biomass":= rowSums(Root.biomass[,c("Fine_Roots_Biomass", "Coarse_Roots_Biomass")], na.rm=T)]
+Root.biomass <- merge(PlotExplo, Root.biomass, by="Plot")
+# comparing the two columns finds that they are not the same
+CompareToReferenceDataset(Root.biomass, synthesis, name="Root.biomass")
+# when closely comparing, they do not deviate much (most 1e-15, which is acceptable)
+test <- merge(Root.biomass, synthesis[,c("Plot", "Root.biomass")], by="Plot")
+max(test$Root.biomass.x - test$Root.biomass.y, na.rm=T)
+```
+### Herbivory
+```{r}
+raw_functions[,"herbivory" := rowMeans(raw_functions[, c("Herbivory1", "Herbivory2")], na.rm=T)]
+CompareToReferenceDataset(raw_functions, synthesis, name="herbivory")
+
+deleteme <- merge(synthesis[,c("Plot","herbivory")], raw_functions, by="Plot")
+del <- deleteme$herbivory.x - deleteme$herbivory.y
+sum(del > 0.000001, na.rm=T)
+rm(del, deleteme); gc()
+```
+deviation from synthesis dataset is smaller than 0.000001.
+
+
+
+## problematic
+### forage quality
+```{r}
+forage.quality.test <- merge(forage.quality[, c("Plot", "forage.quality")], synthesis[, c("Plot", "forage.quality")], by="Plot")
+max(forage.quality.test$forage.quality.x - forage.quality.test$forage.quality.y)
+min(forage.quality.test$forage.quality.x - forage.quality.test$forage.quality.y)
+# too much deviation ! 
+
+
+
+# calculating the columns needed for forage quality calc
+# 2009
+forage.quality.2009[, Crude.protein.2009 := 6.25*N.2009]
+forage.quality.2009[, DDM.2009 := 88.9-(0.779* ADF.2009)]
+forage.quality.2009[, DMI.2009 := 120/NDF.2009]
+forage.quality.2009[, RFV.2009 := (DDM.2009*DMI.2009)/1.29]
+forage.quality.2009[, forage.quality.2009 := apply(scale(forage.quality.2009[,c("RFV.2009", "Crude.protein.2009")]), 1, mean)]
+forage.quality.2009 <- merge(PlotExplo, forage.quality.2009, by="Plot")
+# 2010
+forage.quality.2010[, Crude.protein.2010 := 6.25*N.2010]
+forage.quality.2010[, DDM.2010 := 88.9-(0.779* ADF.2010)]
+forage.quality.2010[, DMI.2010 := 120/NDF.2010]
+forage.quality.2010[, RFV.2010 := (DDM.2010*DMI.2010)/1.29]
+forage.quality.2010[, forage.quality.2010 := apply(scale(forage.quality.2010[,c("RFV.2010", "Crude.protein.2010")]), 1, mean)]
+forage.quality.2010 <- merge(PlotExplo, forage.quality.2010, by="Plot")
+# 2011
+forage.quality.2011[, Crude.protein.2011 := 6.25*N.2011]
+forage.quality.2011[, DDM.2011 := 88.9-(0.779* ADF.2011)]
+forage.quality.2011[, DMI.2011 := 120/NDF.2011]
+forage.quality.2011[, RFV.2011 := (DDM.2011*DMI.2011)/1.29]
+forage.quality.2011[, forage.quality.2011 := apply(scale(forage.quality.2011[,c("RFV.2011", "Crude.protein.2011")]), 1, mean)]
+forage.quality.2011 <- merge(PlotExplo, forage.quality.2011, by="Plot")
+# 2012
+forage.quality.2012[, Crude.protein.2012 := 6.25*N.2012]
+forage.quality.2012[, DDM.2012 := 88.9-(0.779* ADF.2012)]
+forage.quality.2012[, DMI.2012 := 120/NDF.2012]
+forage.quality.2012[, RFV.2012 := (DDM.2012*DMI.2012)/1.29]
+forage.quality.2012[, forage.quality.2012 := apply(scale(forage.quality.2012[,c("RFV.2012", "Crude.protein.2012")]), 1, mean)]
+forage.quality.2012 <- merge(PlotExplo, forage.quality.2012, by="Plot")
+# 2013
+forage.quality.2013[, Crude.protein.2013 := 6.25*N.2013]
+forage.quality.2013[, DDM.2013 := 88.9-(0.779* ADF.2013)]
+forage.quality.2013[, DMI.2013 := 120/NDF.2013]
+forage.quality.2013[, RFV.2013 := (DDM.2013*DMI.2013)/1.29]
+forage.quality.2013[, forage.quality.2013 := apply(scale(forage.quality.2013[,c("RFV.2013", "Crude.protein.2013")]), 1, mean)]
+forage.quality.2013 <- merge(PlotExplo, forage.quality.2013, by="Plot")
+
+# tested for each year if equal to forage.quality in synthesis
+# data.table::setnames(forage.quality.2010, old="forage.quality.2010", new="forage.quality")
+# CompareToReferenceDataset(forage.quality.2010, synthesis, name="forage.quality")
+
+# test if mean of all years is given in synthesis
+forage.quality <- merge(forage.quality.2009[,c("Plot", "Plotn", "forage.quality")], forage.quality.2010[,c("Plot", "forage.quality")], by="Plot")
+forage.quality <- merge(forage.quality, forage.quality.2011[,c("Plot", "forage.quality")], by="Plot", suffixes=c(".2011", ".a"))
+forage.quality <- merge(forage.quality, forage.quality.2012[,c("Plot", "forage.quality")], by="Plot", suffixes=c(".2012", ".a"))
+forage.quality <- merge(forage.quality, forage.quality.2013[,c("Plot", "forage.quality")], by="Plot", suffixes = c(".2013", ".a"))
+
+newcol <- rowMeans(forage.quality[, colnames(forage.quality)[grep("forage", colnames(forage.quality))], with=F], na.rm = T)
+fq <- cbind(forage.quality[, c("Plot", "Plotn")], "forage.quality" = newcol)
+CompareToReferenceDataset(fq, synthesis, name="forage.quality")
+
+test <- merge(fq[, c("Plot", "forage.quality")], synthesis[, c("Plot", "forage.quality")], by="Plot")
+max(test$forage.quality.x - test$forage.quality.y)
+min(test$forage.quality.x - test$forage.quality.y)
+
+# TODO is not the same!
+```
+TODO : **different values than in synthesis!!** Really calculated with 2009? Or is it the mean among all years (2009 - 2013). If yes - take mean among years AFTER forage.quality calculation?! Note : the column names given in assembled dataset do not correspond to columns in "my" dataset - e.g. ShootN.conc in Erics dataset is "N" in mine.
