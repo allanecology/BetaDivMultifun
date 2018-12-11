@@ -102,13 +102,23 @@ Total.flower.cover <- data.table::fread(info_data$path_unix[grep("Total.flower.c
 
 
 # Microbial phosphorous in soil
+2011 and 2014
+
 (mg/kg)
+
 used to calculate PRI
 ```{r}
 Pmic.2011 <- data.table::fread(info_data$path_unix[grep("Pmic.2011", info_data$ColumnName)], header=T, sep='\t')
 Pmic.2011 <- Pmic.2011[grep("G", Pmic.2011$EP)]
 data.table::setnames(Pmic.2011, old=c("EP", "Pmic"), new=c("Plot", "Pmic.2011"))
 raw_functions <- merge(raw_functions, Pmic.2011, by="Plot"); rm(Pmic.2011)
+```
+
+```{r}
+Pmic.2014 <- data.table::fread(info_data$path_unix[grep("Pmic.2014", info_data$ColumnName)], header=T, sep='\t')
+Pmic.2014 <- Pmic.2014[,c("EP", "Pmic")]
+data.table::setnames(Pmic.2014, old=c("EP", "Pmic"), new=c("Plot", "Pmic.2014"))
+raw_functions <- merge(raw_functions, Pmic.2014, by="Plot") ; rm(Pmic.2014)
 ```
 
 
@@ -138,7 +148,7 @@ Determination bulk density and calculated CN stocks for the upper 10 cm of the m
 ```{r}
 Bulk.density.soil.C.stock.2011 <- data.table::fread(info_data$path_unix[grep("Soil.C.stock", info_data$ColumnName)], header=T, sep='\t')
 Bulk.density.soil.C.stock.2011 <- Bulk.density.soil.C.stock.2011[Type == "G"]
-Bulk.density.soil.C.stock.2011 <- data.table::setnames(Bulk.density.soil.C.stock.2011[,c("EP_Plotid", "BD", "OC_stock")], old=c("EP_Plotid", "BD", "OC_stock"), new=c("Plot", "Bulk.density2014", "Soil.C.stock"))
+Bulk.density.soil.C.stock.2011 <- data.table::setnames(Bulk.density.soil.C.stock.2011[,c("EP_Plotid", "BD", "OC_stock")], old=c("EP_Plotid", "BD", "OC_stock"), new=c("Plot", "Bulk.density2011", "Soil.C.stock"))
 raw_functions <- merge(raw_functions, Bulk.density.soil.C.stock.2011, by="Plot"); rm(Bulk.density.soil.C.stock.2011)
 ```
 
@@ -224,6 +234,8 @@ raw_functions <- merge(raw_functions, forage.quality.2013, by="Plot")
 
 
 # Phosphorous (loss) 2011
+measures phoshporous that is not stored in plants or microbes.
+
 Resin refers to the method of phosphorous measurement in soil.
 ```{r}
 P_loss2011 <- data.table::fread(info_data$path_unix[grep("P_loss2011", info_data$ColumnName)], header=T, sep='\t')
@@ -231,7 +243,18 @@ P_loss2011 <- data.table::fread(info_data$path_unix[grep("P_loss2011", info_data
 P_loss2011 <- P_loss2011[grep("G", P_loss2011$EP)]
 # get new plot names
 data.table::setnames(P_loss2011, old=c("EP","Resin_P"), new=c("Plot","P_loss2011"))
-raw_functions <- merge(raw_functions, P_loss2011, by="Plot")
+raw_functions <- merge(raw_functions, P_loss2011, by="Plot"); rm(P_loss2011)
+```
+
+## 2015
+Resin P : small bags with filled with resin: a granular material onto which nutrients are adsorbed that comes into contact with the material. These bags are incubated at a certain depth in order that all nutrients that are in solution around the bags is caught in the bag. After incubation, nitrate is detached from the resin and the concentrations are measured.
+
+[µg/g Resin] 	
+```{r}
+P_loss2015 <- data.table::fread(info_data$path_unix[grep("P_loss2015", info_data$ColumnName)], header=T, sep='\t')
+P_loss2015 <- P_loss2015[,c("Plot", "Mean_P")]
+data.table::setnames(P_loss2015, old=c("Mean_P"), new=c("P_loss2015"))
+raw_functions <- merge(raw_functions, P_loss2015, by="Plot"); rm(P_loss2015)
 ```
 
 
@@ -275,11 +298,125 @@ year is not clear, but probably 2011. start date is 1.9.2011, end date is 30.01.
 Potential.nitrification <- data.table::fread(info_data$path_unix[grep("Potential.nitrification", info_data$ColumnName)])
 Potential.nitrification <- Potential.nitrification[,c("PlotID", "pot_nitrification")]
 data.table::setnames(Potential.nitrification, old=c("PlotID", "pot_nitrification"), new=c("Plot", "Potential.nitrification"))
-merge(raw_functions, Potential.nitrification, by="Plot")
-raw_functions <- Potential.nitrification <- merge(PlotExplo, Potential.nitrification, by="Plot")
+raw_functions <- merge(raw_functions, Potential.nitrification, by="Plot")
+```
+
+# Nmic
+Within the soil sampling campaign 2011 all samples are taken in the beginning of May 2011 as a mixed sample from the top horizon (0-10 cm) of the all 50 grassland experimental plots of all three exploratories.
+
+For our study, we only use Microbial nitrogen.
+```{r}
+Nmic.2011 <- data.table::fread(info_data$path_unix[grep("Nmic.2011", info_data$ColumnName)])
+Nmic.2011 <- Nmic.2011[,c("EP_Plot_ID", "Microbial_nitrogen")]
+data.table::setnames(Nmic.2011, old=c("EP_Plot_ID", "Microbial_nitrogen"), new=c("Plot", "Nmic.2011"))
+raw_functions <- merge(raw_functions, Nmic.2011, by="Plot")
 ```
 
 
+# NH4 and NO3 2014 - Potential nitrification 2
+potential nitrification is measured and NH4 as well as NO3 content is determined.
 
+bdl : below detection limit
+
+11 Plots are measured twice : "SEG40" "SEG41" "SEG42" "SEG43" "SEG44" "SEG45" "SEG46" "SEG47" "SEG48" "SEG49" "SEG50". 
+Like in synthesis dataset, the first measure only is taken.
+
+NH4 : µg / g DW soil, Ammonium
+
+NO3 : mg / g DW soil, Nitrate
+```{r}
+NH4.2014 <- data.table::fread(info_data$path_unix[grep("NH4.2014", info_data$ColumnName)])
+NH4.2014 <- NH4.2014[grep("G", NH4.2014$Plot_ID), c("Plot_ID", "NH4", "NO3")]
+# show duplicates
+# NH4.2014[NH4.2014$Plot_ID %in% NH4.2014[duplicated(NH4.2014$Plot_ID), Plot_ID]]
+# filter out second duplicate.
+NH4.2014 <- NH4.2014[!which(duplicated(NH4.2014$Plot_ID)),]
+# translate "bdl" to "0.000000" as in synthesis dataset
+NH4.2014$NH4 <- as.numeric(sub("bdl", "0.000000000", NH4.2014$NH4))
+NH4.2014$NO3 <- as.numeric(sub("bdl", "0.000000000", NH4.2014$NO3))
+data.table::setnames(NH4.2014, old=c("Plot_ID", "NH4", "NO3"), new=c("Plot", "NH4.2014", "NO3.2014"))
+raw_functions <- merge(raw_functions, NH4.2014, by="Plot"); rm(NH4.2014)
+```
+
+# mAMFhyphae
+on 93 grassland EPs, 2011. 17 from AEG, 22 from HEG and 18 from SEG.
+
+extraradical fungal hyphal length, measured in hyphae per gram soil
+```{r}
+mAMFhyphae <- data.table::fread(info_data$path_unix[grep("mAMFhyphae", info_data$ColumnName)])
+mAMFhyphae <- mAMFhyphae[,c("Plot", "mAMFhyphaepergramsoil")]
+# plots measured, number of plots per exploratory
+# pm <- raw_functions$Plot[!raw_functions$Plot %in% mAMFhyphae$Plot]
+# length(grep("AEG", pm))
+# length(grep("HEG", pm))
+# length(grep("SEG", pm))
+data.table::setnames(mAMFhyphae, old="mAMFhyphaepergramsoil", new="mAMFhyphae")
+raw_functions <- merge(raw_functions, mAMFhyphae, by="Plot", all.x = T, all.y = T)
+```
+
+# Groundwater recharge
+contains values from 2010 to 2016, each year will be added to a separate column
+
+Annual actual evapotranspiration (ETa), downward water flux (DF), upward water flux (UF), and net flux (NF) were calculated in 14-day resolution for the 0-0.15 m soil layer with a soil water balance model and aggregated to annual values. A complete description of the methods and especially of the differences in the methods used to derive dataset 22486 (water fluxes grassland VIPs; Leimer et al. 2018) can be provided on request. 
+
+NF1 [mm]: net flux betw. 0 - 0.15 m soil layer and deeper soil
+
+Groundwater recharge and discharge areas differ considerably in terms of soil pH and plant species richness, with both increasing towards discharge areas (Giesler et al., 1998; Zinko et al., 2005).
+
+```{r}
+Groundwater.recharge <- data.table::fread(info_data$path_unix[grep("Groundwater.recharge", info_data$ColumnName)])
+Groundwater.recharge <- Groundwater.recharge[,c("EP_Plotid", "year", "NF1")]
+# 2010
+G <- Groundwater.recharge[year == 2010,]
+data.table::setnames(G, old=c("EP_Plotid", "NF1"), new=c("Plot", "Groundwater.recharge2010"))
+raw_functions <- merge(raw_functions, G[,c("Plot", "Groundwater.recharge2010")], by="Plot")
+# 2011
+G <- Groundwater.recharge[year == 2011,]
+data.table::setnames(G, old=c("EP_Plotid", "NF1"), new=c("Plot", "Groundwater.recharge2011"))
+raw_functions <- merge(raw_functions, G[,c("Plot", "Groundwater.recharge2011")], by="Plot")
+# 2012
+G <- Groundwater.recharge[year == 2012,]
+data.table::setnames(G, old=c("EP_Plotid", "NF1"), new=c("Plot", "Groundwater.recharge2012"))
+raw_functions <- merge(raw_functions, G[,c("Plot", "Groundwater.recharge2012")], by="Plot")
+# 2013
+G <- Groundwater.recharge[year == 2013,]
+data.table::setnames(G, old=c("EP_Plotid", "NF1"), new=c("Plot", "Groundwater.recharge2013"))
+raw_functions <- merge(raw_functions, G[,c("Plot", "Groundwater.recharge2013")], by="Plot")
+# 2014
+G <- Groundwater.recharge[year == 2014,]
+data.table::setnames(G, old=c("EP_Plotid", "NF1"), new=c("Plot", "Groundwater.recharge2014"))
+raw_functions <- merge(raw_functions, G[,c("Plot", "Groundwater.recharge2014")], by="Plot")
+# 2015
+G <- Groundwater.recharge[year == 2015,]
+data.table::setnames(G, old=c("EP_Plotid", "NF1"), new=c("Plot", "Groundwater.recharge2015"))
+raw_functions <- merge(raw_functions, G[,c("Plot", "Groundwater.recharge2015")], by="Plot")
+# 2016
+G <- Groundwater.recharge[year == 2016,]
+data.table::setnames(G, old=c("EP_Plotid", "NF1"), new=c("Plot", "Groundwater.recharge2016"))
+raw_functions <- merge(raw_functions, G[,c("Plot", "Groundwater.recharge2016")], by="Plot")
+```
+
+# dung decomposition
+assessing work of Dung beetles (Scarabaeidae)
+
+quantitative surveys of dung beetles and their dung removal rates. The measure is removal in g dry weight after 48 hours.
+
+percentage of dung dry mass removed after 48 h
+
+some only summer 2014, others the whole years (9 grassland plots per year)
+
+fresh dung was placed in bags accessible to beatles and weighted before and after. after 48h, the samples were removed.
+dung with a fresh weight of approx. 220.7 (± 19.9) g of cow, 34.4 (± 3.8) g of horse, 50.5 (± 3.6) g of sheep, 32.6 (± 1.6) g of deer, 14.5 (± 1.4) g of fox and 47.6 (± 2.4) g of wild boar. 
+
+
+
+```{r}
+dw <- c("Cow", "Horse", "Sheep", "Deer", "Fox", "Boar")
+# "Cow"       "Horse"     "Deer"      "Sheep"     "Wildboar"  "Fox"       "Brownbear" "Elephant"  "Elk"       "Wisent"    "Wolf"
+dung.decomposition <- data.table::fread(info_data$path_unix[grep("dung.decomposition", info_data$ColumnName)])
+dung.decomposition[EP == "AEG2" & dungtype == "Cow", ]
+# 0.458213653
+#TODO : ask if there is a script around. 
+```
 
 

@@ -21,17 +21,21 @@ CompareToReferenceDataset(raw_functions, synthesis, name="Biomass2011")
 CompareToReferenceDataset(raw_functions, synthesis, name="Biomass2014")
 CompareToReferenceDataset(raw_functions, synthesis, name="SoilOrganicC")
 CompareToReferenceDataset(raw_functions, synthesis, name="Pmic.2011")
+CompareToReferenceDataset(raw_functions, synthesis, name="Pmic.2014")
 CompareToReferenceDataset(raw_functions, synthesis, name="Root.decomposition")
-CompareToReferenceDataset(raw_functions, synthesis, name="Bulk.density2014")
 CompareToReferenceDataset(raw_functions, synthesis, name="Soil.C.stock")
 CompareToReferenceDataset(raw_functions, synthesis, name="P_loss2011")
+CompareToReferenceDataset(raw_functions, synthesis, name="P_loss2015")
 CompareToReferenceDataset(raw_functions, synthesis, name="OlsenPi2014")
 CompareToReferenceDataset(raw_functions, synthesis, name="Urease", sortcol = "Plot")
 CompareToReferenceDataset(raw_functions, synthesis, name="beta_Glucosidase", sortcol = "Plot")
 CompareToReferenceDataset(raw_functions, synthesis, name="Xylosidase", sortcol = "Plot")
 CompareToReferenceDataset(raw_functions, synthesis, name="N_Acetyl_beta_Glucosaminidase", sortcol = "Plot")
 CompareToReferenceDataset(raw_functions, synthesis, name="DEA", sortcol = "Plot")
-CompareToReferenceDataset(tocompareset = Potential.nitrification, refset = synthesis, name = "Potential.nitrification", sortcol = "Plot")
+CompareToReferenceDataset(raw_functions, synthesis, name ="Potential.nitrification", sortcol = "Plot")
+CompareToReferenceDataset(raw_functions, synthesis, name ="Nmic.2011", sortcol = "Plot")
+CompareToReferenceDataset(raw_functions, synthesis, name ="NH4.2014", sortcol = "Plot")
+CompareToReferenceDataset(raw_functions, synthesis, name ="mAMFhyphae", sortcol = "Plot")
 ```
 ## within range
 ### Phosphatase
@@ -41,6 +45,13 @@ test <- merge(raw_functions[, c("Plot", "Phosphatase")], synthesis[, c("Plot", "
 max(test$Phosphatase.x - test$Phosphatase.y)
 min(test$Phosphatase.x - test$Phosphatase.y)
 ```
+### Nitrate NO3.2014
+```{r}
+test <- merge(synthesis[,c("Plot", "NO3.2014")], raw_functions, by="Plot")
+max(test$NO3.2014.x - test$NO3.2014.y)
+```
+
+
 
 ### root biomass
 ```{r}
@@ -69,9 +80,34 @@ rm(del, deleteme); gc()
 ```
 deviation from synthesis dataset is smaller than 0.000001.
 
+## wrong name
+### Bulk density
+is from 2011, not 2014
+```{r}
+# correct error in synthesis : bulk density is from 2011, not 2014
+data.table::setnames(synthesis, old="Bulk.density2014", new="Bulk.density2011")
+CompareToReferenceDataset(raw_functions, synthesis, name="Bulk.density2011")
+```
+
+## special cases
+### NH4 and NO3
+11 duplicates, but in synthesis, only first occurrence is taken.
+```{r}
+dups <- NH4.2014[duplicated(NH4.2014$Plot_ID), Plot_ID]
+synthesis[synthesis$Plot %in% dups, c("Plot", "NH4.2014", "NO3.2014")]
+```
+
+### Groundwater recharge
+
+```{r}
+raw_functions[, Groundwater.recharge := rowMeans(raw_functions[,c(paste("Groundwater.recharge", seq(2010,2016), sep=""))])]
+CompareToReferenceDataset(raw_functions, synthesis, name ="Groundwater.recharge", sortcol = "Plot")
+```
 
 
 ## problematic
+
+
 ### forage quality
 ```{r}
 forage.quality.test <- merge(forage.quality[, c("Plot", "forage.quality")], synthesis[, c("Plot", "forage.quality")], by="Plot")
