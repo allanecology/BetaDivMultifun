@@ -19,15 +19,7 @@ info_data <- info_data[grep("txt", info_data$path_unix),c("ColumnName", "path_un
 ```
 
 
-
-# Ecosystem functions RAW dataset
-
-sample dataset (from Eric, some Columns will be included), synthesis dataset
-```{r}
-synthesis <- data.table::fread(paste(pathtodata, "../assembled_data/EP grass functions & services.txt", sep=""), header=T)
-```
-
-## Plot, exploratories
+# Plot, exploratories
 ```{r}
 PlotExplo <- data.table::fread(info_data$path_unix[grep("Biomass2011", info_data$ColumnName)], header=T, sep='\t')
 PlotExplo <- PlotExplo[,c("EpPlotID", "explo")]
@@ -37,10 +29,10 @@ Plot <- c(paste("AEG", seq(1,50), sep=""), paste("HEG", seq(1,50), sep=""), past
 # generate new plot names
 Plotn <- c(paste("AEG", sprintf("%02d", 1:50), sep=""), paste("HEG", sprintf("%02d", 1:50), sep=""), paste("SEG", sprintf("%02d", 1:50), sep=""))
 PlotExplo <- merge(PlotExplo, cbind(Plot, Plotn), by = "Plot")
-# not using PlotExplo at the moment
-PlotExplo <- PlotExplo[,c("Plot","Plotn")]
+# subset for raw dataset construction
+# TODO : delete this line? PlotExplo <- PlotExplo[,c("Plot","Plotn")]
+raw_functions <- data.table::copy(PlotExplo)
 ```
-
 
 
 # Biomass
@@ -48,19 +40,35 @@ years 2008 to 2017. **caution**, 2008 might not be reliable.
 
 all biomasses in g/m^2
 ```{r}
+# 2008
+# TODO
+# 2009
+# TODO
+# 2010
+# TODO
+# 2011
 Biomass2011 <- data.table::fread(info_data$path_unix[grep("Biomass2011", info_data$ColumnName)], header=T, sep='\t')
 Biomass2011 <- Biomass2011[,c("EpPlotID", "biomass_g")]
 data.table::setnames(Biomass2011, old = c("EpPlotID", "biomass_g"), new = c("Plot", "Biomass2011"))
-Biomass2011 <- merge(PlotExplo, Biomass2011, by="Plot")
+# add to raw_functions dataset
+raw_functions <- merge(raw_functions, Biomass2011, by="Plot") ; rm(Biomass2011)
+# TODO : delete this line? Biomass2011 <- merge(PlotExplo, Biomass2011, by="Plot")
 
-
+# 2012
+# TODO
+# 2013
+# TODO
+# 2014
 Biomass2014 <- data.table::fread(info_data$path_unix[grep("Biomass2014", info_data$ColumnName)], header=T)
 Biomass2014 <- Biomass2014[,c("EpPlotID", "biomass_g")]
 data.table::setnames(Biomass2014, old = c("EpPlotID", "biomass_g"), new = c("Plot", "Biomass2014"))
+raw_functions <- merge(raw_functions, Biomass2014, by="Plot"); rm(Biomass2014)
 
+# 2015
 Biomass2015 <- data.table::fread(info_data$path_unix[grep("Biomass2015", info_data$ColumnName)], header=T, quote="", drop=19)
 Biomass2015 <- Biomass2015[,c("EpPlotID", "biomass_g")]
 data.table::setnames(Biomass2015, old=c("EpPlotID", "biomass_g"), new=c("Plot", "Biomass2015"))
+raw_functions <- merge(raw_functions, Biomass2015, by="Plot"); rm(Biomass2015)
 ```
 
 
@@ -69,6 +77,8 @@ data.table::setnames(Biomass2015, old=c("EpPlotID", "biomass_g"), new=c("Plot", 
 ```{r}
 SoilOrganicC <- data.table::fread(info_data$path_unix[grep("SoilOrganicC", info_data$ColumnName)], header=T, sep='\t')
 SoilOrganicC <- SoilOrganicC[which(SoilOrganicC$Type == "G"), c("EP_Plotid","Organic_C")]
+data.table::setnames(SoilOrganicC, old=c("EP_Plotid", "Organic_C"), new=c("Plot", "SoilOrganicC"))
+raw_functions <- merge(raw_functions, SoilOrganicC, by="Plot"); rm(SoilOrganicC)
 ```
 
 
@@ -79,34 +89,38 @@ Root.biomass <- data.table::fread(info_data$path_unix[grep("Root.biomass", info_
 Root.biomass <- Root.biomass[Type == "G"]
 Root.biomass <- Root.biomass[,c("EP_Plotid", "Fine_Roots_Biomass", "Coarse_Roots_Biomass")]
 data.table::setnames(Root.biomass, old="EP_Plotid", new="Plot")
-Root.biomass <- merge(PlotExplo, Root.biomass, by="Plot")
+raw_functions <- merge(raw_functions, Root.biomass, by="Plot"); rm(Root.biomass)
 ```
 
 # Flower cover
 **leave out**
 We can go from "total_influorescence_area_in_cm" of each species to a total flower cover. The total area measured was : 600m² per grassland plot.
 TODO : left open as not sure if I include it
-```{r}
+```{r, eval=F}
 Total.flower.cover <- data.table::fread(info_data$path_unix[grep("Total.flower.cover", info_data$ColumnName)], header=T, sep='\t')
 ```
 
 
 # Microbial phosphorous in soil
 (mg/kg)
-TODO : why is it a function/ important?
+used to calculate PRI
 ```{r}
 Pmic.2011 <- data.table::fread(info_data$path_unix[grep("Pmic.2011", info_data$ColumnName)], header=T, sep='\t')
+Pmic.2011 <- Pmic.2011[grep("G", Pmic.2011$EP)]
+data.table::setnames(Pmic.2011, old=c("EP", "Pmic"), new=c("Plot", "Pmic.2011"))
+raw_functions <- merge(raw_functions, Pmic.2011, by="Plot"); rm(Pmic.2011)
 ```
 
 
 # Root decomposition
 Decomposition measurements of fine roots (<2mm) within the upper 10 cm of the mineral soil. Determination of mass loss after 6 months. Litterbag method. Standardized control material: beech roots for forest sites and herbaceous roots for grassland sites. Numbers in [%]
 
-we use Mass_loss_Octover_2012 TODO : why?
+mass "loss" because decomposed roots are lost.
 ```{r}
 Root.decomposition <- data.table::fread(info_data$path_unix[grep("Root.decomposition", info_data$ColumnName)], header=T, sep='\t')
 Root.decomposition <- Root.decomposition[Type == "G"]
 Root.decomposition <- data.table::setnames(Root.decomposition[,c("EP_Plotid", "Mass_loss_October_2012")], old=c("EP_Plotid", "Mass_loss_October_2012"), new=c("Plot", "Root.decomposition"))
+raw_functions <- merge(raw_functions, Root.decomposition, by="Plot"); rm(Root.decomposition)
 ```
 
 
@@ -124,9 +138,9 @@ Determination bulk density and calculated CN stocks for the upper 10 cm of the m
 ```{r}
 Bulk.density.soil.C.stock.2011 <- data.table::fread(info_data$path_unix[grep("Soil.C.stock", info_data$ColumnName)], header=T, sep='\t')
 Bulk.density.soil.C.stock.2011 <- Bulk.density.soil.C.stock.2011[Type == "G"]
-Bulk.density.soil.C.stock.2011 <- data.table::setnames(Bulk.density.soil.C.stock.2011[,c("EP_Plotid", "BD", "OC_stock")], old=c("EP_Plotid", "BD", "OC_stock"), new=c("Plot", "Bulk.density.2014", "Soil.C.stock"))
+Bulk.density.soil.C.stock.2011 <- data.table::setnames(Bulk.density.soil.C.stock.2011[,c("EP_Plotid", "BD", "OC_stock")], old=c("EP_Plotid", "BD", "OC_stock"), new=c("Plot", "Bulk.density2014", "Soil.C.stock"))
+raw_functions <- merge(raw_functions, Bulk.density.soil.C.stock.2011, by="Plot"); rm(Bulk.density.soil.C.stock.2011)
 ```
-
 
 # Herbivory
 
@@ -137,18 +151,27 @@ increased land-use - less invertebrates - less herbivory
 
 Visually estimation of herbivory by eye using templates and measurement of leaf area left after feeding of the herbivores using LI-COR area meter
 
-2 samples per plot. The mean of both measures is taken.
+2 samples per plot in 145 cases, 1 sample for :  "AEG6"  "HEG16" "HEG43" "SEG19" "SEG33" and 3 samples for "SEG45". 2 Columns are included in the raw_functions dataset, 1 for each sample.
+
+SEG45 : The mean of all 3 samples was already taken and stored as sample2. Taking the mean of samples2 first and then with sample1 would lead to different results than in the synthesis dataset.
 ```{r}
 herb <- data.table::fread(info_data$path_unix[grep("herbivory.2013", info_data$ColumnName)], header=T, sep='\t')
 data.table::setorder(herb, EP_Plotid)
 # prepare empty dt and names vector for forloop
 ns <- unique(herb[,EP_Plotid])
-herbivory = data.table::data.table(Plot = ns, herbivory = NA)
-# fill in herbivory values in forloop
-for(i in 1:length(ns)){
-  herbivory$herbivory[i] <- mean(herb[EP_Plotid == herbivory$Plot[i], PercHerbivory], na.rm = T)
-}
-rm(herb)
+# some plots don't have a secnod measure
+PlotExplo$Plot[!(PlotExplo$Plot %in% ns)]
+# store both measures as Herbivory1 and Herbivory2
+herb1 <- herb[herb$Sample == 1, c("EP_Plotid","PercHerbivory")]
+herb2 <- herb[herb$Sample == 2, c("EP_Plotid","PercHerbivory")]
+# SEG45 has 3 samples. therefore take the mean of all 3 samples as measure and set herb1 to NA.
+herb2 <- rbind(herb2[EP_Plotid != "SEG45"], list("SEG45", mean(herb[EP_Plotid == "SEG45", PercHerbivory])))
+herb1 <- herb1[EP_Plotid != "SEG45"]
+herb <- merge(herb1, herb2, by="EP_Plotid", all.x = T, all.y = T)
+data.table::setnames(herb, old=c("EP_Plotid", "PercHerbivory.x", "PercHerbivory.y"), new=c("Plot", "Herbivory1", "Herbivory2"))
+
+raw_functions <- merge(raw_functions, herb, by="Plot", all.x = T)
+rm(herb); rm(herb1); rm(herb2); rm(ns); gc()
 ```
 
 
@@ -169,23 +192,34 @@ according to forage quality estimation based on alfalfa (medicago sativa) values
 [% concentration in aboveground grassland plant community biomass without litter]
 ```{r}
 forage.quality <- data.table::fread(info_data$path_unix[grep("forage.quality", info_data$ColumnName)], header=T, sep='\t')
-forage.quality <- forage.quality[year == "2009"]
-# calculating the columns needed for forage quality calc
-forage.quality[, Crude.protein := 6.25*N]
-forage.quality[, DDM := 88.9-(0.779* ADF)]
-forage.quality[, DMI := 120/NDF]
-forage.quality[, RFV := (DDM*DMI)/1.29]
-
-forage.quality[, forage.quality := apply(scale(forage.quality[,c("RFV", "Crude.protein")]), 1, mean)]
-forage.quality <- data.table::setnames(forage.quality[,c("Plot_name", "forage.quality")], old=c("Plot_name", "forage.quality"), new= c("Plotn", "forage.quality"))
-
-# test <- merge(synthesis[,c("Plot","forage.quality")], forage.quality, by="Plot")
-
-CompareToReferenceDataset(forage.quality, synthesis, name="forage.quality")
+# 2009
+forage.quality.2009 <- forage.quality[year == "2009"]
+forage.quality.2009 <- forage.quality.2009[, c("Plot", "N", "ADF", "NDF")]
+data.table::setnames(forage.quality.2009, old=c("N", "ADF", "NDF"), new = c("N.2009", "ADF.2009", "NDF.2009"))
+# 2010
+forage.quality.2010 <- forage.quality[year == "2010"]
+forage.quality.2010 <- forage.quality.2010[, c("Plot", "N", "ADF", "NDF")]
+data.table::setnames(forage.quality.2010, old=c("N", "ADF", "NDF"), new = c("N.2010", "ADF.2010", "NDF.2010"))
+# 2011
+forage.quality.2011 <- forage.quality[year == "2011"]
+forage.quality.2011 <- forage.quality.2011[, c("Plot", "N", "ADF", "NDF")]
+data.table::setnames(forage.quality.2011, old=c("N", "ADF", "NDF"), new = c("N.2011", "ADF.2011", "NDF.2011"))
+# 2012
+forage.quality.2012 <- forage.quality[year == "2012"]
+forage.quality.2012 <- forage.quality.2012[, c("Plot", "N", "ADF", "NDF")]
+data.table::setnames(forage.quality.2012, old=c("N", "ADF", "NDF"), new = c("N.2012", "ADF.2012", "NDF.2012"))
+# 2013
+forage.quality.2013 <- forage.quality[year == "2013"]
+forage.quality.2013 <- forage.quality.2013[, c("Plot", "N", "ADF", "NDF")]
+data.table::setnames(forage.quality.2013, old=c("N", "ADF", "NDF"), new = c("N.2013", "ADF.2013", "NDF.2013"))
+# merge all years with raw_functions
+raw_functions <- merge(raw_functions, forage.quality.2009, by="Plot")
+raw_functions <- merge(raw_functions, forage.quality.2010, by="Plot")
+raw_functions <- merge(raw_functions, forage.quality.2011, by="Plot")
+raw_functions <- merge(raw_functions, forage.quality.2012, by="Plot")
+raw_functions <- merge(raw_functions, forage.quality.2013, by="Plot")
 ```
-TODO : **different values than in synthesis!!** Really calculated with 2009? Or is it the mean among all years (2009 - 2013). If yes - take mean among years AFTER forage.quality calculation?! Note : the column names given in assembled dataset do not correspond to columns in "my" dataset - e.g. ShootN.conc in Erics dataset is "N" in mine.
 
-TODO : for each year, then average
 
 
 
@@ -197,11 +231,8 @@ P_loss2011 <- data.table::fread(info_data$path_unix[grep("P_loss2011", info_data
 P_loss2011 <- P_loss2011[grep("G", P_loss2011$EP)]
 # get new plot names
 data.table::setnames(P_loss2011, old=c("EP","Resin_P"), new=c("Plot","P_loss2011"))
-P_loss2011 <- merge(PlotExplo, P_loss2011, by="Plot")
-# compare to synthesis dataset
-CompareToReferenceDataset(P_loss2011, synthesis, name="P_loss2011")
+raw_functions <- merge(raw_functions, P_loss2011, by="Plot")
 ```
-
 
 
 ## Phosphorous 2014
@@ -211,8 +242,7 @@ OlsenPi2014 <- data.table::fread(info_data$path_unix[grep("OlsenPi2014", info_da
 # grassland plots are abbreviated with a "G", e.g. "AEG", forest plots with "W", e.g. "AEW"
 OlsenPi2014 <- OlsenPi2014[grep("G",OlsenPi2014$Plot_ID),c("Plot_ID","OlsenPi")]
 data.table::setnames(OlsenPi2014, old=c("Plot_ID", "OlsenPi"), new=c("Plotn", "OlsenPi2014"))
-# Plot names are already like in "Plotn"
-CompareToReferenceDataset(OlsenPi2014, synthesis, name="OlsenPi2014")
+raw_functions <- merge(raw_functions, OlsenPi2014, by="Plotn")
 ```
 
 
@@ -229,13 +259,9 @@ all concentrations given g-1.
 ```{r}
 microbial_enzyme_activities <- data.table::fread(info_data$path_unix[grep("beta_Glucosidase", info_data$ColumnName)], header=T, sep='\t', drop=c("Exploratory", "Year"))
 data.table::setnames(microbial_enzyme_activities, old=c("EP_Plot_ID","DEA_with_C2H2"), new=c("Plot", "DEA"))
-microbial_enzyme_activities <- merge(PlotExplo, microbial_enzyme_activities, by="Plot")
-
-# compare to synthesis dataset
-# test for all enzymes separately
-CompareToReferenceDataset(microbial_enzyme_activities, synthesis, name="DEA", sortcol = "Plot")
-# note : Phosphatase values are not equal, but within a 0.0001 range.
+raw_functions <- merge(raw_functions, microbial_enzyme_activities, by="Plot")
 ```
+
 
 
 # Potential nitrification
@@ -249,10 +275,8 @@ year is not clear, but probably 2011. start date is 1.9.2011, end date is 30.01.
 Potential.nitrification <- data.table::fread(info_data$path_unix[grep("Potential.nitrification", info_data$ColumnName)])
 Potential.nitrification <- Potential.nitrification[,c("PlotID", "pot_nitrification")]
 data.table::setnames(Potential.nitrification, old=c("PlotID", "pot_nitrification"), new=c("Plot", "Potential.nitrification"))
-Potential.nitrification <- merge(PlotExplo, Potential.nitrification, by="Plot")
-
-# compare to synthesis dataset
-CompareToReferenceDataset(tocompareset = Potential.nitrification, refset = synthesis, name = "Potential.nitrification", sortcol = "Plot")
+merge(raw_functions, Potential.nitrification, by="Plot")
+raw_functions <- Potential.nitrification <- merge(PlotExplo, Potential.nitrification, by="Plot")
 ```
 
 
