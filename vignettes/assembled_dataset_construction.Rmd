@@ -14,3 +14,23 @@ Root.biomass[, "Root.biomass" := rowSums(.SD,na.rm=T), .SDcols=c("Fine_Roots_Bio
 Root.biomass <- data.table::setnames(Root.biomass[,c("EP_Plotid", "Root.biomass")], old=c("EP_Plotid", "Root.biomass"), new=c("Plot", "Root.biomass"))
 ```
 
+# forage quality
+RFV : Relative Feed Value
+RFQ : Relative Forage Quality
+ADL : acid detergent lignin, Lignin
+ADF : Acid Detergent Fibre, Säure-Detergenz-Faser, ein Teil der Gerüstsubstanzen von Futtermitteln
+NDF : Neutral Detergent Fibre, Neutral-Detergenz-Faser, fasrige Anteile von Futtermitteln 
+
+according to forage quality estimation based on alfalfa (medicago sativa) values. [source](https://openprairie.sdstate.edu/cgi/viewcontent.cgi?referer=https://scholar.google.ch/&httpsredir=1&article=1351&context=extension_extra)
+
+[% concentration in aboveground grassland plant community biomass without litter]
+
+```{r}
+# calculating the columns needed for forage quality calc
+forage.quality[, Crude.protein := 6.25*N]
+forage.quality[, DDM := 88.9-(0.779* ADF)]
+forage.quality[, DMI := 120/NDF]
+forage.quality[, RFV := (DDM*DMI)/1.29]
+forage.quality[, forage.quality := apply(scale(forage.quality[,c("RFV", "Crude.protein")]), 1, mean)]
+```
+See in compare_raw_function_to_synthesis for yearly calculation!
