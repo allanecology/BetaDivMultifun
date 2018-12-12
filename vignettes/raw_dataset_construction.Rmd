@@ -29,9 +29,15 @@ Plot <- c(paste("AEG", seq(1,50), sep=""), paste("HEG", seq(1,50), sep=""), past
 # generate new plot names
 Plotn <- c(paste("AEG", sprintf("%02d", 1:50), sep=""), paste("HEG", sprintf("%02d", 1:50), sep=""), paste("SEG", sprintf("%02d", 1:50), sep=""))
 PlotExplo <- merge(PlotExplo, cbind(Plot, Plotn), by = "Plot")
+```
+
+# raw dataset
+Generate a dataset which stores all raw data. Will be assembled with the script `assembled_dataset_construction.R`. Datasets that can not be easily included as raw datasets into `raw_functions` are assembled (calculations are done) in `assembled_dataset_construction.R` and then integrated into raw_functions as well (and assembled functions variable, of corse).
+```{r}
 # subset for raw dataset construction
-# TODO : delete this line? PlotExplo <- PlotExplo[,c("Plot","Plotn")]
 raw_functions <- data.table::copy(PlotExplo)
+# generate list for datasets that will be constructed in assembled_dataset_construction.R script directly.
+list_raw_functions <- list()
 ```
 
 
@@ -167,21 +173,7 @@ SEG45 : The mean of all 3 samples was already taken and stored as sample2. Takin
 ```{r}
 herb <- data.table::fread(info_data$path_unix[grep("herbivory.2013", info_data$ColumnName)], header=T, sep='\t')
 data.table::setorder(herb, EP_Plotid)
-# prepare empty dt and names vector for forloop
-ns <- unique(herb[,EP_Plotid])
-# some plots don't have a secnod measure
-PlotExplo$Plot[!(PlotExplo$Plot %in% ns)]
-# store both measures as Herbivory1 and Herbivory2
-herb1 <- herb[herb$Sample == 1, c("EP_Plotid","PercHerbivory")]
-herb2 <- herb[herb$Sample == 2, c("EP_Plotid","PercHerbivory")]
-# SEG45 has 3 samples. therefore take the mean of all 3 samples as measure and set herb1 to NA.
-herb2 <- rbind(herb2[EP_Plotid != "SEG45"], list("SEG45", mean(herb[EP_Plotid == "SEG45", PercHerbivory])))
-herb1 <- herb1[EP_Plotid != "SEG45"]
-herb <- merge(herb1, herb2, by="EP_Plotid", all.x = T, all.y = T)
-data.table::setnames(herb, old=c("EP_Plotid", "PercHerbivory.x", "PercHerbivory.y"), new=c("Plot", "Herbivory1", "Herbivory2"))
-
-raw_functions <- merge(raw_functions, herb, by="Plot", all.x = T)
-rm(herb); rm(herb1); rm(herb2); rm(ns); gc()
+list_raw_functions[["Herbivory.2013"]] <- herb
 ```
 
 
@@ -229,7 +221,6 @@ raw_functions <- merge(raw_functions, forage.quality.2011, by="Plot")
 raw_functions <- merge(raw_functions, forage.quality.2012, by="Plot")
 raw_functions <- merge(raw_functions, forage.quality.2013, by="Plot")
 ```
-
 
 
 
@@ -408,7 +399,7 @@ some only summer 2014, others the whole years (9 grassland plots per year)
 fresh dung was placed in bags accessible to beatles and weighted before and after. after 48h, the samples were removed.
 dung with a fresh weight of approx. 220.7 (± 19.9) g of cow, 34.4 (± 3.8) g of horse, 50.5 (± 3.6) g of sheep, 32.6 (± 1.6) g of deer, 14.5 (± 1.4) g of fox and 47.6 (± 2.4) g of wild boar. 
 
-
+see [PhD thesis](http://tuprints.ulb.tu-darmstadt.de/7402/1/20180502%20Frank.pdf)
 
 ```{r}
 dw <- c("Cow", "Horse", "Sheep", "Deer", "Fox", "Boar")
@@ -419,4 +410,47 @@ dung.decomposition[EP == "AEG2" & dungtype == "Cow", ]
 #TODO : ask if there is a script around. 
 ```
 
+# Litter decomposition
+litter bag approach, Mass loss in the litter bags, after two months, and four months. 1.5g of dry plant material. January 2013 put 10 bags each, 2 months later retrieval of 5 bags, 2 more months : retrieval of other 5 bags. calculated daily decomposition rates.
+
+will be assembled from input data.
+```{r}
+Litter.decomposition <- data.table::fread(info_data$path_unix[grep("Litter.decomposition", info_data$ColumnName)])
+list_raw_functions[["Litter.decomposition"]] <- Litter.decomposition
+```
+
+# Parasitoid traps
+will be assembled from input data.
+```{r}
+AEGpt <- data.table::fread(strsplit(info_data$path_unix[grep("Parasitoid.traps", info_data$ColumnName)], split=", ")[[1]][1])
+HEGpt <- data.table::fread(strsplit(info_data$path_unix[grep("Parasitoid.traps", info_data$ColumnName)], split=", ")[[1]][2])
+SEGpt <- data.table::fread(strsplit(info_data$path_unix[grep("Parasitoid.traps", info_data$ColumnName)], split=", ")[[1]][3])
+Parasitoid.traps <- rbind(AEGpt, HEGpt, SEGpt)
+# store in list of raw datasets
+list_raw_functions[["Parasitoid.traps"]] <- Parasitoid.traps
+```
+
+
+# Pathogen infection
+mean_prevalence X mean_severity) combined with 2011 plant cover data (19686) to calculate total area infected by pathogens per plot
+
+4 transects of 25x1 m were searched for foliar fungal pathogens on all grassland EP's. The prevalence and severity of each pathogen was estimated.
+
+species_richness : Richness of foliar fungal pathogen species richness on the plot
+
+mean_prevalence : mean disease prevalence on plot averaged across all pathogens. The percentage of plants with visible infection symptoms.
+
+mean_severity : mean disease severity on plot averaged across all pathogens. The percentage of aboveground plant surface affected by pathogen
+
+% infizierte pflanzen
+% pflanzenoberfläche betroffen (über alle pflanzen?!)
+```{r}
+#TODO how to name this? make extra raw dataset ad go to assembled datast constr. to do
+pathogen.infection1 <- data.table::fread(info_data$path_unix[grep("pathogen.infection", info_data$ColumnName)])
+pathogen.infection1 <- pathogen.infection1[, c("EP_plot_ID", "mean_prevalence","mean_severity")]
+data.table::setnames(pathogen.infection1, old=c("EP_plot_ID", "mean_prevalence","mean_severity"), new=c("Plot", "mean_prevalence","mean_severity"))
+raw_functions <- merge(raw_functions, pathogen.infection1, by="Plot", all.x = T)
+
+test <- merge(raw_functions, synthesis[,c("Plot", "pathogen.infection")])
+```
 

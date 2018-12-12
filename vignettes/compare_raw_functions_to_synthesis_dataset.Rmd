@@ -36,7 +36,15 @@ CompareToReferenceDataset(raw_functions, synthesis, name ="Potential.nitrificati
 CompareToReferenceDataset(raw_functions, synthesis, name ="Nmic.2011", sortcol = "Plot")
 CompareToReferenceDataset(raw_functions, synthesis, name ="NH4.2014", sortcol = "Plot")
 CompareToReferenceDataset(raw_functions, synthesis, name ="mAMFhyphae", sortcol = "Plot")
+
+CompareToReferenceDataset(raw_functions, synthesis, name ="pathogen.infection", sortcol = "Plot")
 ```
+Run after running `assembled_dataset_construction.R`. There, the datasets which can not be included in the raw_functions variable are assembled and added to `raw_functions` to be able to compare to `synthesis`.
+```{r}
+CompareToReferenceDataset(raw_functions, synthesis, name ="herbivory", sortcol = "Plot")
+```
+
+
 ## within range
 ### Phosphatase
 ```{r}
@@ -50,8 +58,6 @@ min(test$Phosphatase.x - test$Phosphatase.y)
 test <- merge(synthesis[,c("Plot", "NO3.2014")], raw_functions, by="Plot")
 max(test$NO3.2014.x - test$NO3.2014.y)
 ```
-
-
 
 ### root biomass
 ```{r}
@@ -79,6 +85,20 @@ sum(del > 0.000001, na.rm=T)
 rm(del, deleteme); gc()
 ```
 deviation from synthesis dataset is smaller than 0.000001.
+
+### Litter.decomposition
+```{r}
+t <- merge(synthesis[,c("Plot", "Litter.decomposition")], Litter.decomposition, by="Plot")
+max(t$Litter.decomposition.x - t$Litter.decomposition.y)
+```
+
+## needs calculation
+### Parasitoid traps
+see calculation in raw_dataset
+```{r}
+CompareToReferenceDataset(raw_functions, synthesis, name ="Parasitoid.traps", sortcol = "Plot")
+```
+
 
 ## wrong name
 ### Bulk density
