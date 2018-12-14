@@ -25,39 +25,31 @@ library(roxygen2)
 
 
 # installing this package
-1. Download the whole folder of github.
+1. Download the whole folder from [github](https://github.com/allanecology/BetaDivMultifun).
 2. set the R working directory to the parent folder of the downloaded package. (e.g. Downloads if you stored the package folder in Downloads.)
-
-TODO : make new from here!
-
-
-
-
+The devtools::install function also installs packages on which `BetaDivMultifun` depends on.
 ```{r, eval=F}
 setwd("<parent-directory-of-the-package>")
-install("multiFunBetadivLuiGDM")
+devtools::install("BetaDivMultifun")
 ```
 
 Set wd back to the package
 ```{r}
-setwd("/home/noelleschenk/Desktop/github/allanecology/BetaDivMultifun/")
+setwd("/home/noelleschenk/Desktop/BetaDivMultifun/")
 ```
 
+# working on the package (only if code is changed)
+After working on the package, the newly generated code needs to be loaded. (E.g. if you add a function and later want to use it.) Therefore, the function code as well as the functions documentation needs to be loaded as described below. 
 
-```{bash}
-cat /home/noelleschenk/Documents/setup.sh
-```
-
-
-# working on the package
 ## create documentation
 from roxygen comments, with Ctrl-Shift-D or
 ```{r,eval=F}
-devtools:document()
+devtools::document()
 ```
 
 ## load
-with Ctrl-Shift-L or `devtools::load_all()`
-
-
-
+load functions which are encoded in the package.
+```{r}
+devtools::load_all()
+```
+or with Ctrl-Shift-L
