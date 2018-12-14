@@ -12,11 +12,12 @@ sample dataset (from Eric, some Columns will be included), [synthesis dataset](h
 synthesis data can only be loaded with help of the file `nonpublic.R`
 ```{r}
 synthesis <- data.table::fread(paste(pathtodata, "../assembled_data/EP grass functions & services.txt", sep=""), header=T)
+data.table::setnames(synthesis, old="Plot", "Plotn")
+synthesis <- merge(PlotExplo[,c("Plot", "Plotn")], synthesis, by="Plotn")
 ```
 
 
 ```{r}
-# Biomass
 CompareToReferenceDataset(raw_functions, synthesis, name="Biomass2011")
 CompareToReferenceDataset(raw_functions, synthesis, name="Biomass2014")
 CompareToReferenceDataset(raw_functions, synthesis, name="SoilOrganicC")
@@ -126,6 +127,11 @@ CompareToReferenceDataset(raw_functions, synthesis, name ="Groundwater.recharge"
 
 
 ## problematic
+### Biomass 2009
+two treatments, neither was used in synthesis for Biomass2009
+```{r}
+merge(Biomass2009, synthesis[,c("Plot", "Biomass2009")], by="Plot", all=T)
+```
 
 
 ### forage quality

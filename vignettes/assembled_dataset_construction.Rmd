@@ -5,6 +5,12 @@ date: "December 5, 2018"
 output: html_document
 ---
 
+# Biomass
+2009 has 2 measures per plot
+```{r}
+#TODO find problem and solve (see compare to synthesis script)
+```
+
 
 # Root biomass
 rb = fine root + coarse root biomass

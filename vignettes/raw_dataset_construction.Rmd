@@ -45,11 +45,20 @@ list_raw_functions <- list()
 years 2008 to 2017. **caution**, 2008 might not be reliable.
 
 all biomasses in g/m^2
+
+2009 : Biomass was clipped in each two subplots per plot. In each subplot we clipped four 50 x 50 cm plots 2-3 cm above-ground.
+two treatments, K1 and K2, K2 is taken in synthesis. 149 plots only.
 ```{r}
 # 2008
 # TODO
 # 2009
-# TODO
+Biomass2009 <- data.table::fread(info_data$path_unix[grep("Biomass2009", info_data$ColumnName)], header=T, sep='\t')
+Biomass2009 <- Biomass2009[Treatment == "K2",]
+Biomass2009 <- Biomass2009[,c("GpPlotID", "Biomass")]
+data.table::setnames(Biomass2009, old=c("GpPlotID", "Biomass"), new=c("Plot", "Biomass2009"))
+# raw_functions <- merge(raw_functions, Biomass2009, by="Plot", all.x=T)
+# list_raw_functions[["Biomass2009"]] <- Biomass2009
+# TODO there is something wrong with Biomass2009
 # 2010
 # TODO
 # 2011
@@ -432,7 +441,7 @@ list_raw_functions[["Parasitoid.traps"]] <- Parasitoid.traps
 
 
 # Pathogen infection
-mean_prevalence X mean_severity) combined with 2011 plant cover data (19686) to calculate total area infected by pathogens per plot
+mean_prevalence X mean_severity, combined with 2011 plant cover data (19686) to calculate total area infected by pathogens per plot
 
 4 transects of 25x1 m were searched for foliar fungal pathogens on all grassland EP's. The prevalence and severity of each pathogen was estimated.
 
@@ -445,12 +454,18 @@ mean_severity : mean disease severity on plot averaged across all pathogens. The
 % infizierte pflanzen
 % pflanzenoberfläche betroffen (über alle pflanzen?!)
 ```{r}
-#TODO how to name this? make extra raw dataset ad go to assembled datast constr. to do
-pathogen.infection1 <- data.table::fread(info_data$path_unix[grep("pathogen.infection", info_data$ColumnName)])
-pathogen.infection1 <- pathogen.infection1[, c("EP_plot_ID", "mean_prevalence","mean_severity")]
-data.table::setnames(pathogen.infection1, old=c("EP_plot_ID", "mean_prevalence","mean_severity"), new=c("Plot", "mean_prevalence","mean_severity"))
-raw_functions <- merge(raw_functions, pathogen.infection1, by="Plot", all.x = T)
+pathogen.infection <- data.table::fread(info_data$path_unix[grep("pathogen.infection", info_data$ColumnName)])
+pathogen.infection <- pathogen.infection[, c("EP_plot_ID", "mean_prevalence","mean_severity")]
+data.table::setnames(pathogen.infection, old=c("EP_plot_ID", "mean_prevalence","mean_severity"), new=c("Plot", "mean_prevalence","mean_severity"))
 
-test <- merge(raw_functions, synthesis[,c("Plot", "pathogen.infection")])
+# TODO find 2011 plant cover data to calc pathogen infection
+# TODO add raw data to calc path infection to list_raw_functions
+
+```
+
+# Total pollinators
+TODO : go on here, read in file and check html
+```{r}
+data.table::fread("/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/raw_data/15086_flower visitor interactions 2008-only pollinators_1.1.26_PublicDataset/15086.txt")
 ```
 
