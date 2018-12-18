@@ -39,6 +39,7 @@ CompareToReferenceDataset(raw_functions, synthesis, name ="NH4.2014", sortcol = 
 CompareToReferenceDataset(raw_functions, synthesis, name ="mAMFhyphae", sortcol = "Plot")
 
 CompareToReferenceDataset(raw_functions, synthesis, name ="pathogen.infection", sortcol = "Plot")
+
 ```
 Run after running `assembled_dataset_construction.R`. There, the datasets which can not be included in the raw_functions variable are assembled and added to `raw_functions` to be able to compare to `synthesis`.
 ```{r}
@@ -47,6 +48,21 @@ CompareToReferenceDataset(raw_functions, synthesis, name ="herbivory", sortcol =
 
 
 ## within range
+### Parasitoid traps
+see calculation in raw_dataset
+```{r}
+test <- merge(synthesis[,c("Plot", "Parasitoid.traps")], raw_functions[,c("Plot", "Parasitoid.traps")], by="Plot")
+max(test$Parasitoid.traps.x - test$Parasitoid.traps.y, na.rm=T)
+CompareToReferenceDataset(raw_functions, synthesis, name ="Parasitoid.traps", sortcol = "Plot")
+```
+
+### Groundwater recharge
+
+```{r}
+test <- merge(synthesis[, c("Plot", "Groundwater.recharge")], raw_functions[, c("Plot", "Groundwater.recharge")], by="Plot")
+max(test$Groundwater.recharge.x - test$Groundwater.recharge.y)
+```
+
 ### Phosphatase
 ```{r}
 CompareToReferenceDataset(raw_functions, synthesis, name="Phosphatase", sortcol = "Plot")
@@ -93,12 +109,13 @@ t <- merge(synthesis[,c("Plot", "Litter.decomposition")], Litter.decomposition, 
 max(t$Litter.decomposition.x - t$Litter.decomposition.y)
 ```
 
-## needs calculation
-### Parasitoid traps
-see calculation in raw_dataset
+### Nshoot and Pshoot 2011
 ```{r}
-CompareToReferenceDataset(raw_functions, synthesis, name ="Parasitoid.traps", sortcol = "Plot")
+t <- merge(synthesis[,c("Plot", "Nshoot.2011", "Pshoot.2011")], raw_functions[,c("Plot", "Nshoot.2011", "Pshoot.2011")], by="Plot")
+max(t$Nshoot.2011.x - t$Nshoot.2011.y, na.rm=T)
+max(t$Pshoot.2011.x - t$Pshoot.2011.y, na.rm=T)
 ```
+
 
 
 ## wrong name
@@ -118,15 +135,23 @@ dups <- NH4.2014[duplicated(NH4.2014$Plot_ID), Plot_ID]
 synthesis[synthesis$Plot %in% dups, c("Plot", "NH4.2014", "NO3.2014")]
 ```
 
-### Groundwater recharge
-
-```{r}
-raw_functions[, Groundwater.recharge := rowMeans(raw_functions[,c(paste("Groundwater.recharge", seq(2010,2016), sep=""))])]
-CompareToReferenceDataset(raw_functions, synthesis, name ="Groundwater.recharge", sortcol = "Plot")
-```
 
 
 ## problematic
+### Total.pollinators
+Plot number AEG24 has 939 total pollinators in synthesis dataset, but only 339 total pollinators in the downloaded dataset. All other numbers are perfectly identical.
+
+The number from the downloaded dataset is taken, but the change is recorded.
+```{r, eval=F}
+test <- merge(synthesis[, c("Plot", "Total.pollinators")], raw_functions, by="Plot")
+test[which(test$Total.pollinators.x - test$Total.pollinators.y > 1),]
+# change number from synthesis dataset
+synthesis[Plot == "AEG24", ]$Total.pollinators <- 339
+#TODO : still returns FALSE; but I controlled all by hand and it seems to be correct. (equal number of NAs, all values are the same.)
+CompareToReferenceDataset(raw_functions, synthesis, name ="Total.pollinators", sortcol = "Plot")
+```
+
+
 ### Biomass 2009
 two treatments, neither was used in synthesis for Biomass2009
 ```{r}
@@ -135,6 +160,7 @@ merge(Biomass2009, synthesis[,c("Plot", "Biomass2009")], by="Plot", all=T)
 
 
 ### forage quality
+Note : **multiply with biomass from the given year!**
 ```{r}
 forage.quality.test <- merge(forage.quality[, c("Plot", "forage.quality")], synthesis[, c("Plot", "forage.quality")], by="Plot")
 max(forage.quality.test$forage.quality.x - forage.quality.test$forage.quality.y)
@@ -201,3 +227,13 @@ min(test$forage.quality.x - test$forage.quality.y)
 # TODO is not the same!
 ```
 TODO : **different values than in synthesis!!** Really calculated with 2009? Or is it the mean among all years (2009 - 2013). If yes - take mean among years AFTER forage.quality calculation?! Note : the column names given in assembled dataset do not correspond to columns in "my" dataset - e.g. ShootN.conc in Erics dataset is "N" in mine.
+
+# Nshoot and Pshoot 2009
+same problem as with forage quality : not the same numbers as in synthesis! Due to Biomass 2009?
+
+need to multiply with biomass?
+```{r}
+test <- merge(assemblednutrients[,c("Plot", "Nshoot2011")], synthesis[,c("Plot", "Nshoot.2011")], by="Plot")
+max(test$Nshoot2011 - test$Nshoot.2011, na.rm=T)
+```
+

@@ -50,29 +50,44 @@ all biomasses in g/m^2
 two treatments, K1 and K2, K2 is taken in synthesis. 149 plots only.
 ```{r}
 # 2008
-# TODO
-# 2009
-Biomass2009 <- data.table::fread(info_data$path_unix[grep("Biomass2009", info_data$ColumnName)], header=T, sep='\t')
-Biomass2009 <- Biomass2009[Treatment == "K2",]
-Biomass2009 <- Biomass2009[,c("GpPlotID", "Biomass")]
-data.table::setnames(Biomass2009, old=c("GpPlotID", "Biomass"), new=c("Plot", "Biomass2009"))
-# raw_functions <- merge(raw_functions, Biomass2009, by="Plot", all.x=T)
-# list_raw_functions[["Biomass2009"]] <- Biomass2009
-# TODO there is something wrong with Biomass2009
+Biomass2008 <- data.table::fread(info_data$path_unix[grep("Biomass2008", info_data$ColumnName)], header=T, sep='\t')
+Biomass2008 <- Biomass2008[, c("PlotID", "biomass_g_m_2")]
+data.table::setnames(Biomass2008, old= c("PlotID", "biomass_g_m_2"), new = c("Plot", "Biomass2008"))
+raw_functions <- merge(raw_functions, Biomass2008, by="Plot", all=T)
+
+# # 2009
+# Biomass2009 <- data.table::fread(info_data$path_unix[grep("Biomass2009", info_data$ColumnName)], header=T, sep='\t')
+# Biomass2009 <- Biomass2009[Treatment == "K2",]
+# Biomass2009 <- Biomass2009[,c("GpPlotID", "Biomass")]
+# data.table::setnames(Biomass2009, old=c("GpPlotID", "Biomass"), new=c("Plot", "Biomass2009"))
+# # raw_functions <- merge(raw_functions, Biomass2009, by="Plot", all.x=T)
+# # list_raw_functions[["Biomass2009"]] <- Biomass2009
+# # TODO there is something wrong with Biomass2009. is it same area as other years?
+
 # 2010
-# TODO
+Biomass2010 <- data.table::fread(info_data$path_unix[grep("Biomass2010", info_data$ColumnName)], header=T, sep='\t')
+Biomass2010 <- Biomass2010[, c("PlotID", "Biomasse")]
+data.table::setnames(Biomass2010, old= c("PlotID", "Biomasse"), new = c("Plot", "Biomass2010"))
+raw_functions <- merge(raw_functions, Biomass2010, by="Plot", all=T)
+
 # 2011
 Biomass2011 <- data.table::fread(info_data$path_unix[grep("Biomass2011", info_data$ColumnName)], header=T, sep='\t')
 Biomass2011 <- Biomass2011[,c("EpPlotID", "biomass_g")]
 data.table::setnames(Biomass2011, old = c("EpPlotID", "biomass_g"), new = c("Plot", "Biomass2011"))
-# add to raw_functions dataset
-raw_functions <- merge(raw_functions, Biomass2011, by="Plot") ; rm(Biomass2011)
-# TODO : delete this line? Biomass2011 <- merge(PlotExplo, Biomass2011, by="Plot")
+raw_functions <- merge(raw_functions, Biomass2011, by="Plot")
 
 # 2012
-# TODO
+Biomass2012 <- data.table::fread(info_data$path_unix[grep("Biomass2012", info_data$ColumnName)], header=T, sep='\t')
+Biomass2012 <- Biomass2012[, c("EpPlotID", "biomass_g")]
+data.table::setnames(Biomass2012, old=c("EpPlotID", "biomass_g"), new=c("Plot", "Biomass2012"))
+raw_functions <- merge(raw_functions, Biomass2012, by="Plot")
+
 # 2013
-# TODO
+Biomass2013 <- data.table::fread(info_data$path_unix[grep("Biomass2013", info_data$ColumnName)], header=T, sep='\t')
+Biomass2013 <- Biomass2013[, c("EpPlotID", "biomass_g")]
+data.table::setnames(Biomass2013, old= c("EpPlotID", "biomass_g"), new= c("Plot", "Biomass2013"))
+raw_functions <- merge(raw_functions, Biomass2013, by="Plot")
+
 # 2014
 Biomass2014 <- data.table::fread(info_data$path_unix[grep("Biomass2014", info_data$ColumnName)], header=T)
 Biomass2014 <- Biomass2014[,c("EpPlotID", "biomass_g")]
@@ -84,11 +99,26 @@ Biomass2015 <- data.table::fread(info_data$path_unix[grep("Biomass2015", info_da
 Biomass2015 <- Biomass2015[,c("EpPlotID", "biomass_g")]
 data.table::setnames(Biomass2015, old=c("EpPlotID", "biomass_g"), new=c("Plot", "Biomass2015"))
 raw_functions <- merge(raw_functions, Biomass2015, by="Plot"); rm(Biomass2015)
+
+# 2016
+Biomass2016 <- data.table::fread(info_data$path_unix[grep("Biomass2016", info_data$ColumnName)], header=T)
+Biomass2016 <- Biomass2016[, c("EpPlotID", "biomass_g")]
+data.table::setnames(Biomass2016, old= c("EpPlotID", "biomass_g"), new= c("Plot", "Biomass2016"))
+raw_functions <- merge(raw_functions, Biomass2016, by="Plot")
+
+# 2017
+Biomass2017 <- data.table::fread(info_data$path_unix[grep("Biomass2017", info_data$ColumnName)], header=T)
+Biomass2017 <- Biomass2017[, c("EpPlotID", "biomass_g")]
+data.table::setnames(Biomass2017, old=c("EpPlotID", "biomass_g"), new=c("Plot", "Biomass2017"))
+raw_functions <- merge(raw_functions, Biomass2017, by="Plot", all=T)
+
+# nutrients <- Reduce(function(x, y) merge(x, y, all=TRUE), list(nutrients2009, nutrients2010, nutrients2011, nutrients2012, nutrients2013))
 ```
 
 
 
 # Soil Organic C
+2011
 ```{r}
 SoilOrganicC <- data.table::fread(info_data$path_unix[grep("SoilOrganicC", info_data$ColumnName)], header=T, sep='\t')
 SoilOrganicC <- SoilOrganicC[which(SoilOrganicC$Type == "G"), c("EP_Plotid","Organic_C")]
@@ -98,13 +128,14 @@ raw_functions <- merge(raw_functions, SoilOrganicC, by="Plot"); rm(SoilOrganicC)
 
 
 # Root biomass
-Includes fine and coarse biomass, added them together.
+2011, 
+Includes fine and coarse biomass, will add them together.
 ```{r}
 Root.biomass <- data.table::fread(info_data$path_unix[grep("Root.biomass", info_data$ColumnName)], header=T, sep='\t')
 Root.biomass <- Root.biomass[Type == "G"]
 Root.biomass <- Root.biomass[,c("EP_Plotid", "Fine_Roots_Biomass", "Coarse_Roots_Biomass")]
 data.table::setnames(Root.biomass, old="EP_Plotid", new="Plot")
-raw_functions <- merge(raw_functions, Root.biomass, by="Plot"); rm(Root.biomass)
+list_raw_functions[["Root.biomass"]] <- Root.biomass
 ```
 
 # Flower cover
@@ -186,7 +217,7 @@ list_raw_functions[["Herbivory.2013"]] <- herb
 ```
 
 
-# Forage quality
+# Forage quality - NOT READY YET
 "Futter qualität", year : 2009
 forage quality (index based on crude protein concentration and relative forage value) - Eric Ecology Letters LUI
 
@@ -366,37 +397,43 @@ Groundwater recharge and discharge areas differ considerably in terms of soil pH
 ```{r}
 Groundwater.recharge <- data.table::fread(info_data$path_unix[grep("Groundwater.recharge", info_data$ColumnName)])
 Groundwater.recharge <- Groundwater.recharge[,c("EP_Plotid", "year", "NF1")]
+Gtot <- data.table::copy(PlotExplo)
 # 2010
 G <- Groundwater.recharge[year == 2010,]
 data.table::setnames(G, old=c("EP_Plotid", "NF1"), new=c("Plot", "Groundwater.recharge2010"))
-raw_functions <- merge(raw_functions, G[,c("Plot", "Groundwater.recharge2010")], by="Plot")
+Gtot <- merge(Gtot, G[,c("Plot", "Groundwater.recharge2010")], by="Plot")
 # 2011
 G <- Groundwater.recharge[year == 2011,]
 data.table::setnames(G, old=c("EP_Plotid", "NF1"), new=c("Plot", "Groundwater.recharge2011"))
-raw_functions <- merge(raw_functions, G[,c("Plot", "Groundwater.recharge2011")], by="Plot")
+Gtot <- merge(Gtot, G[,c("Plot", "Groundwater.recharge2011")], by="Plot")
 # 2012
 G <- Groundwater.recharge[year == 2012,]
 data.table::setnames(G, old=c("EP_Plotid", "NF1"), new=c("Plot", "Groundwater.recharge2012"))
-raw_functions <- merge(raw_functions, G[,c("Plot", "Groundwater.recharge2012")], by="Plot")
+Gtot <- merge(Gtot, G[,c("Plot", "Groundwater.recharge2012")], by="Plot")
 # 2013
 G <- Groundwater.recharge[year == 2013,]
 data.table::setnames(G, old=c("EP_Plotid", "NF1"), new=c("Plot", "Groundwater.recharge2013"))
-raw_functions <- merge(raw_functions, G[,c("Plot", "Groundwater.recharge2013")], by="Plot")
+Gtot <- merge(Gtot, G[,c("Plot", "Groundwater.recharge2013")], by="Plot")
 # 2014
 G <- Groundwater.recharge[year == 2014,]
 data.table::setnames(G, old=c("EP_Plotid", "NF1"), new=c("Plot", "Groundwater.recharge2014"))
-raw_functions <- merge(raw_functions, G[,c("Plot", "Groundwater.recharge2014")], by="Plot")
+Gtot <- merge(Gtot, G[,c("Plot", "Groundwater.recharge2014")], by="Plot")
 # 2015
 G <- Groundwater.recharge[year == 2015,]
 data.table::setnames(G, old=c("EP_Plotid", "NF1"), new=c("Plot", "Groundwater.recharge2015"))
-raw_functions <- merge(raw_functions, G[,c("Plot", "Groundwater.recharge2015")], by="Plot")
+Gtot <- merge(Gtot, G[,c("Plot", "Groundwater.recharge2015")], by="Plot")
 # 2016
 G <- Groundwater.recharge[year == 2016,]
 data.table::setnames(G, old=c("EP_Plotid", "NF1"), new=c("Plot", "Groundwater.recharge2016"))
-raw_functions <- merge(raw_functions, G[,c("Plot", "Groundwater.recharge2016")], by="Plot")
+Gtot <- merge(Gtot, G[,c("Plot", "Groundwater.recharge2016")], by="Plot")
+
+list_raw_functions[["Groundwater.recharge"]] <- Gtot
+# also include years in raw_functions
+raw_functions <- merge(raw_functions, Gtot, by="Plot")
 ```
 
-# dung decomposition
+
+# dung decomposition NOT INCLUDED YET
 assessing work of Dung beetles (Scarabaeidae)
 
 quantitative surveys of dung beetles and their dung removal rates. The measure is removal in g dry weight after 48 hours.
@@ -464,8 +501,41 @@ data.table::setnames(pathogen.infection, old=c("EP_plot_ID", "mean_prevalence","
 ```
 
 # Total pollinators
-TODO : go on here, read in file and check html
+The total amount of visits per plot will be taken as total pollinators function.
 ```{r}
-data.table::fread("/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/raw_data/15086_flower visitor interactions 2008-only pollinators_1.1.26_PublicDataset/15086.txt")
+Total.pollinators <- data.table::fread(info_data$path_unix[grep("Total.pollinators", info_data$ColumnName)])
+Total.pollinators <- Total.pollinators[,c("EP_ID", "Total")]
+data.table::setnames(Total.pollinators, old=c("EP_ID", "Total"), new=c("Plot", "Total.pollinators"))
+list_raw_functions[["Total.pollinators"]] <- Total.pollinators
+```
+
+# Nutrients
+2009, 2010, 2011, 2012, 2013
+
+contains: Nshoot and Pshoot of all years
+
+near infrared spectroscopy (NIRS), 
+
+note : there are **values for 2008** in dataset 5401 (used for Biomass2008)
+```{r}
+nutrients <- data.table::fread(info_data$path_unix[grep("Nshoot.2009", info_data$ColumnName)])
+# 2009
+nutrients2009 <- nutrients[year == "2009", c("Plot", "N", "P")]
+data.table::setnames(nutrients2009, old=c("N", "P"), new=c("Nshoot2009percent", "Pshoot2009percent"))
+# 2010
+nutrients2010 <- nutrients[year == "2010", c("Plot", "N", "P")]
+data.table::setnames(nutrients2010, old=c("N", "P"), new=c("Nshoot2010percent", "Pshoot2010percent"))
+# 2011
+nutrients2011 <- nutrients[year == "2011", c("Plot", "N", "P")]
+data.table::setnames(nutrients2011, old=c("N", "P"), new=c("Nshoot2011percent", "Pshoot2011percent"))
+# 2012
+nutrients2012 <- nutrients[year == "2012", c("Plot", "N", "P")]
+data.table::setnames(nutrients2012, old=c("N", "P"), new=c("Nshoot2012percent", "Pshoot2012percent"))
+# 2013
+nutrients2013 <- nutrients[year == "2013", c("Plot", "N", "P")]
+data.table::setnames(nutrients2013, old=c("N", "P"), new=c("Nshoot2013percent", "Pshoot2013percent"))
+# take nutrients together for list_raw_functions
+nutrients <- Reduce(function(x, y) merge(x, y, all=TRUE), list(nutrients2009, nutrients2010, nutrients2011, nutrients2012, nutrients2013))
+list_raw_functions[["nutrients"]] <- nutrients
 ```
 

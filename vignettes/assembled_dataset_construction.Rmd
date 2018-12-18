@@ -15,10 +15,18 @@ output: html_document
 # Root biomass
 rb = fine root + coarse root biomass
 ```{r}
-
+Root.biomass <- list_raw_functions$Root.biomass
 Root.biomass[, "Root.biomass" := rowSums(.SD,na.rm=T), .SDcols=c("Fine_Roots_Biomass", "Coarse_Roots_Biomass")]
-Root.biomass <- data.table::setnames(Root.biomass[,c("EP_Plotid", "Root.biomass")], old=c("EP_Plotid", "Root.biomass"), new=c("Plot", "Root.biomass"))
+Root.biomass <- Root.biomass[, c("Plot", "Root.biomass")]
+raw_functions <- merge(raw_functions, Root.biomass, by="Plot", all=T)
 ```
+
+# Groundwater recharge
+```{r}
+Gtot <- list_raw_functions$Groundwater.recharge
+raw_functions[, Groundwater.recharge := rowMeans(Gtot[,c(paste("Groundwater.recharge", seq(2010,2016), sep=""))])]
+```
+
 
 # forage quality
 RFV : Relative Feed Value
@@ -40,6 +48,43 @@ forage.quality[, RFV := (DDM*DMI)/1.29]
 forage.quality[, forage.quality := apply(scale(forage.quality[,c("RFV", "Crude.protein")]), 1, mean)]
 ```
 See in compare_raw_function_to_synthesis for yearly calculation!
+
+# Nshoot and Pshoot
+same dataset as forage.quality
+```{r}
+nutrients <- list_raw_functions$nutrients
+#TODO : decide if this values are taken or not. BUT : there is something wrong with Biomass 2009
+# multiply with biomass?
+# nutrients <- list_raw_functions$nutrients
+# d09 <- merge(Biomass2009, nutrients, by="Plot", all=T)
+# d09[, Nshoot.2009 := Biomass2009 * (Nshoot2009percent / 100)]
+# bal <- merge(d09, synthesis[,c("Plot", "Nshoot.2009")])
+# # maximum deviation of 6
+# max(bal$Nshoot.2009.x - bal$Nshoot.2009.y, na.rm=T)
+# # the larger the total values, the larger the deviation. Could be acceptable?
+# plot(bal$Nshoot.2009.x, bal$Nshoot.2009.x - bal$Nshoot.2009.y)
+
+# calculate values, but use with caution.
+
+# 2010
+assemblednutrients <- merge(Biomass2010, nutrients, by="Plot", all=T)
+assemblednutrients[, Nshoot.2010 := Biomass2010 * (Nshoot2010percent / 100)]
+assemblednutrients[, Pshoot.2010 := Biomass2010 * (Pshoot2010percent / 100)]
+# add to raw_functions
+raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2010", "Pshoot.2010")], by="Plot")
+
+
+# 2011
+assemblednutrients <- merge(Biomass2011, nutrients, by="Plot", all=T)
+assemblednutrients[, Nshoot.2011 := Biomass2011 * (Nshoot2011percent / 100)]
+assemblednutrients[, Pshoot.2011 := Biomass2011 * (Pshoot2011percent / 100)]
+# add to raw_functions
+raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2011", "Pshoot.2011")], by="Plot")
+
+# 2012
+# TODO
+```
+
 
 # Herbivory
 ## 2013
@@ -90,5 +135,25 @@ data.table::setnames(pt, old=c("PlotID", "Total_BC_No"), new=c("Plot", "Parasito
 # append to raw functions list
 raw_functions <- merge(raw_functions, pt, by="Plot", all.x = T)
 #TODO maybe directly append to assembled functions list?
+```
+
+# Total pollinators
+Plot number AEG24 has 939 total pollinators in synthesis dataset, but only 339 total pollinators in the downloaded dataset. All other numbers are perfectly identical.
+
+The number from the downloaded dataset is taken, but the change is recorded.
+```{r}
+Total.pollinators <- list_raw_functions$Total.pollinators
+Total.pollinators <- aggregate(Total.pollinators~Plot, Total.pollinators, sum)
+raw_functions <- merge(raw_functions, Total.pollinators, by="Plot", all=T)
+```
+
+
+
+
+
+# store assembled dataset
+store as .csv document
+```{r}
+write.csv(raw_functions, file="~/Desktop/december2018_assembled_functions_dataset.csv")
 ```
 
