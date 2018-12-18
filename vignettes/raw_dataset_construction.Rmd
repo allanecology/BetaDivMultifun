@@ -40,6 +40,11 @@ raw_functions <- data.table::copy(PlotExplo)
 list_raw_functions <- list()
 ```
 
+# Temperature and moisture
+```{r}
+#TODO where is this dataset?
+```
+
 
 # Biomass
 years 2008 to 2017. **caution**, 2008 might not be reliable.
@@ -49,20 +54,23 @@ all biomasses in g/m^2
 2009 : Biomass was clipped in each two subplots per plot. In each subplot we clipped four 50 x 50 cm plots 2-3 cm above-ground.
 two treatments, K1 and K2, K2 is taken in synthesis. 149 plots only.
 ```{r}
+#TODO check if units are the same in each year
+
 # 2008
 Biomass2008 <- data.table::fread(info_data$path_unix[grep("Biomass2008", info_data$ColumnName)], header=T, sep='\t')
 Biomass2008 <- Biomass2008[, c("PlotID", "biomass_g_m_2")]
 data.table::setnames(Biomass2008, old= c("PlotID", "biomass_g_m_2"), new = c("Plot", "Biomass2008"))
 raw_functions <- merge(raw_functions, Biomass2008, by="Plot", all=T)
 
-# # 2009
-# Biomass2009 <- data.table::fread(info_data$path_unix[grep("Biomass2009", info_data$ColumnName)], header=T, sep='\t')
-# Biomass2009 <- Biomass2009[Treatment == "K2",]
-# Biomass2009 <- Biomass2009[,c("GpPlotID", "Biomass")]
-# data.table::setnames(Biomass2009, old=c("GpPlotID", "Biomass"), new=c("Plot", "Biomass2009"))
-# # raw_functions <- merge(raw_functions, Biomass2009, by="Plot", all.x=T)
-# # list_raw_functions[["Biomass2009"]] <- Biomass2009
-# # TODO there is something wrong with Biomass2009. is it same area as other years?
+# 2009
+Biomass2009 <- data.table::fread(info_data$path_unix[grep("Biomass2009", info_data$ColumnName)], header=T, sep='\t')
+Biomass2009 <- Biomass2009[Treatment == "K2",]
+Biomass2009 <- Biomass2009[,c("GpPlotID", "Biomass")]
+data.table::setnames(Biomass2009, old=c("GpPlotID", "Biomass"), new=c("Plot", "Biomass2009"))
+# raw_functions <- merge(raw_functions, Biomass2009, by="Plot", all.x=T)
+# list_raw_functions[["Biomass2009"]] <- Biomass2009
+# TODO there is something wrong with Biomass2009. is it same area as other years?
+#TODO linear model day vs. biomass and take fitted values
 
 # 2010
 Biomass2010 <- data.table::fread(info_data$path_unix[grep("Biomass2010", info_data$ColumnName)], header=T, sep='\t')
@@ -232,7 +240,7 @@ more ADF/ NDF --> less nutritional value because less easy to digest
 according to forage quality estimation based on alfalfa (medicago sativa) values. [source](https://openprairie.sdstate.edu/cgi/viewcontent.cgi?referer=https://scholar.google.ch/&httpsredir=1&article=1351&context=extension_extra)
 
 [% concentration in aboveground grassland plant community biomass without litter]
-```{r}
+```{r, eval=F}
 forage.quality <- data.table::fread(info_data$path_unix[grep("forage.quality", info_data$ColumnName)], header=T, sep='\t')
 # 2009
 forage.quality.2009 <- forage.quality[year == "2009"]
@@ -397,7 +405,7 @@ Groundwater recharge and discharge areas differ considerably in terms of soil pH
 ```{r}
 Groundwater.recharge <- data.table::fread(info_data$path_unix[grep("Groundwater.recharge", info_data$ColumnName)])
 Groundwater.recharge <- Groundwater.recharge[,c("EP_Plotid", "year", "NF1")]
-Gtot <- data.table::copy(PlotExplo)
+Gtot <- data.table::copy(PlotExplo[, "Plot"])
 # 2010
 G <- Groundwater.recharge[year == 2010,]
 data.table::setnames(G, old=c("EP_Plotid", "NF1"), new=c("Plot", "Groundwater.recharge2010"))
@@ -447,7 +455,7 @@ dung with a fresh weight of approx. 220.7 (± 19.9) g of cow, 34.4 (± 3.8) g of
 
 see [PhD thesis](http://tuprints.ulb.tu-darmstadt.de/7402/1/20180502%20Frank.pdf)
 
-```{r}
+```{r, eval=F}
 dw <- c("Cow", "Horse", "Sheep", "Deer", "Fox", "Boar")
 # "Cow"       "Horse"     "Deer"      "Sheep"     "Wildboar"  "Fox"       "Brownbear" "Elephant"  "Elk"       "Wisent"    "Wolf"
 dung.decomposition <- data.table::fread(info_data$path_unix[grep("dung.decomposition", info_data$ColumnName)])
@@ -490,7 +498,7 @@ mean_severity : mean disease severity on plot averaged across all pathogens. The
 
 % infizierte pflanzen
 % pflanzenoberfläche betroffen (über alle pflanzen?!)
-```{r}
+```{r, eval=F}
 pathogen.infection <- data.table::fread(info_data$path_unix[grep("pathogen.infection", info_data$ColumnName)])
 pathogen.infection <- pathogen.infection[, c("EP_plot_ID", "mean_prevalence","mean_severity")]
 data.table::setnames(pathogen.infection, old=c("EP_plot_ID", "mean_prevalence","mean_severity"), new=c("Plot", "mean_prevalence","mean_severity"))
@@ -537,5 +545,18 @@ data.table::setnames(nutrients2013, old=c("N", "P"), new=c("Nshoot2013percent", 
 # take nutrients together for list_raw_functions
 nutrients <- Reduce(function(x, y) merge(x, y, all=TRUE), list(nutrients2009, nutrients2010, nutrients2011, nutrients2012, nutrients2013))
 list_raw_functions[["nutrients"]] <- nutrients
+```
+
+
+# Charismatic butterflys
+Diversity and abundance of day active butterflies and day-active moths along a land use intensity gradient (2008)
+
+```{r, eval=F}
+butterflys <- data.table::fread(info_data$path_unix[grep("Charism.butterfly.Abund", info_data$ColumnName)])
+```
+
+# amoA_AOA and AOB
+```{r}
+data.table::fread("/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/raw_data/21547_Nitrifiers Abundances at Grassland EPs_1.6.8/21547.txt")
 ```
 
