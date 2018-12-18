@@ -140,7 +140,7 @@ NULL
 CompareToReferenceDataset <- function(tocompareset, refset, name, sortcol="Plot"){
   refset <- refset[,c(sortcol, name), with=F]
   data.table::setnames(refset, old="Plot", new="Plotn")
-  return(data.table::all.equal(refset, tocompareset[,c("Plotn", name), with=F], ignore.row.order=T))
+  return(all.equal(refset, tocompareset[,c("Plotn", name), with=F], ignore.row.order=T))
 }
 NULL
 
