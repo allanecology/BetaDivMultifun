@@ -120,7 +120,6 @@ Biomass2017 <- Biomass2017[, c("EpPlotID", "biomass_g")]
 data.table::setnames(Biomass2017, old=c("EpPlotID", "biomass_g"), new=c("Plot", "Biomass2017"))
 raw_functions <- merge(raw_functions, Biomass2017, by="Plot", all=T)
 
-# nutrients <- Reduce(function(x, y) merge(x, y, all=TRUE), list(nutrients2009, nutrients2010, nutrients2011, nutrients2012, nutrients2013))
 ```
 
 
@@ -488,6 +487,8 @@ list_raw_functions[["Parasitoid.traps"]] <- Parasitoid.traps
 # Pathogen infection
 mean_prevalence X mean_severity, combined with 2011 plant cover data (19686) to calculate total area infected by pathogens per plot
 
+**pathogen data**
+
 4 transects of 25x1 m were searched for foliar fungal pathogens on all grassland EP's. The prevalence and severity of each pathogen was estimated.
 
 species_richness : Richness of foliar fungal pathogen species richness on the plot
@@ -498,14 +499,23 @@ mean_severity : mean disease severity on plot averaged across all pathogens. The
 
 % infizierte pflanzen
 % pflanzenoberfläche betroffen (über alle pflanzen?!)
+
+**plant cover data** 
+
 ```{r, eval=F}
-pathogen.infection <- data.table::fread(info_data$path_unix[grep("pathogen.infection", info_data$ColumnName)])
+# infections
+pathogen.infection <- data.table::fread(info_data$path_unix[grep("pathogen.infection", info_data$ColumnName)][[1]])
 pathogen.infection <- pathogen.infection[, c("EP_plot_ID", "mean_prevalence","mean_severity")]
 data.table::setnames(pathogen.infection, old=c("EP_plot_ID", "mean_prevalence","mean_severity"), new=c("Plot", "mean_prevalence","mean_severity"))
 
-# TODO find 2011 plant cover data to calc pathogen infection
-# TODO add raw data to calc path infection to list_raw_functions
+# plant cover
+pathogen.infection2 <- data.table::fread(info_data$path_unix[grep("pathogen.infection2", info_data$ColumnName)])
+pathogen.infection2 <- pathogen.infection2[Year == "2011", c("EP_PlotID", "Species", "Cover")]
+data.table::setnames(pathogen.infection2, old = "EP_PlotID", new= "Plot")
+pathogen.infection2[, Cover := as.numeric(Cover)]
 
+list_raw_functions[["pathogen.infection"]] <- pathogen.infection
+list_raw_functions[["pathogen.infection2"]] <- pathogen.infection2
 ```
 
 # Total pollinators

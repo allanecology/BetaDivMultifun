@@ -5,6 +5,12 @@ date: "December 5, 2018"
 output: html_document
 ---
 
+# create dataset
+```{r}
+assembled_functions <- data.table::copy(raw_functions)
+```
+
+
 # Biomass 2009
 2 treatments, avg 
 
@@ -14,13 +20,13 @@ rb = fine root + coarse root biomass
 Root.biomass <- list_raw_functions$Root.biomass
 Root.biomass[, "Root.biomass" := rowSums(.SD,na.rm=T), .SDcols=c("Fine_Roots_Biomass", "Coarse_Roots_Biomass")]
 Root.biomass <- Root.biomass[, c("Plot", "Root.biomass")]
-raw_functions <- merge(raw_functions, Root.biomass, by="Plot", all=T)
+assembled_functions <- merge(assembled_functions, Root.biomass, by="Plot", all=T)
 ```
 
 # Groundwater recharge
 ```{r}
 Gtot <- list_raw_functions$Groundwater.recharge
-raw_functions[, Groundwater.recharge := rowMeans(Gtot[,c(paste("Groundwater.recharge", seq(2010,2016), sep=""))])]
+assembled_functions[, Groundwater.recharge := rowMeans(Gtot[,c(paste("Groundwater.recharge", seq(2010,2016), sep=""))])]
 ```
 
 
@@ -66,19 +72,29 @@ nutrients <- list_raw_functions$nutrients
 assemblednutrients <- merge(Biomass2010, nutrients, by="Plot", all=T)
 assemblednutrients[, Nshoot.2010 := Biomass2010 * (Nshoot2010percent / 100)]
 assemblednutrients[, Pshoot.2010 := Biomass2010 * (Pshoot2010percent / 100)]
-# add to raw_functions
-raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2010", "Pshoot.2010")], by="Plot")
+# add to assembled_functions
+assembled_functions <- merge(assembled_functions, assemblednutrients[,c("Plot", "Nshoot.2010", "Pshoot.2010")], by="Plot")
 
 
 # 2011
 assemblednutrients <- merge(Biomass2011, nutrients, by="Plot", all=T)
 assemblednutrients[, Nshoot.2011 := Biomass2011 * (Nshoot2011percent / 100)]
 assemblednutrients[, Pshoot.2011 := Biomass2011 * (Pshoot2011percent / 100)]
-# add to raw_functions
-raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2011", "Pshoot.2011")], by="Plot")
+# add to assembled_functions
+assembled_functions <- merge(assembled_functions, assemblednutrients[,c("Plot", "Nshoot.2011", "Pshoot.2011")], by="Plot")
 
 # 2012
-# TODO
+assemblednutrients <- merge(Biomass2012, nutrients, by="Plot", all=T)
+assemblednutrients[, Nshoot.2012 := Biomass2012 * (Nshoot2012percent / 100)]
+assemblednutrients[, Pshoot.2012 := Biomass2012 * (Pshoot2012percent / 100)]
+
+# 2013
+assemblednutrients <- merge(Biomass2013, nutrients, by="Plot", all=T)
+assemblednutrients[, Nshoot.2013 := Biomass2013 * (Nshoot2013percent / 100)]
+assemblednutrients[, Pshoot.2013 := Biomass2013 * (Pshoot2013percent / 100)]
+
+# add to assembled_functions
+assembled_functions <- merge(assembled_functions, assemblednutrients[, c(1, grep("shoot.20", colnames(assemblednutrients))), with = F], all = T)
 ```
 
 
@@ -90,7 +106,7 @@ increased land-use - less invertebrates - less herbivory
 
 Visually estimation of herbivory by eye using templates and measurement of leaf area left after feeding of the herbivores using LI-COR area meter
 
-2 samples per plot in 145 cases, 1 sample for :  "AEG6"  "HEG16" "HEG43" "SEG19" "SEG33" and 3 samples for "SEG45". 2 Columns are included in the raw_functions dataset, 1 for each sample.
+2 samples per plot in 145 cases, 1 sample for :  "AEG6"  "HEG16" "HEG43" "SEG19" "SEG33" and 3 samples for "SEG45". 2 Columns are included in the assembled_functions dataset, 1 for each sample.
 
 SEG45 : The mean of all 3 samples was already taken and stored as sample2. Taking the mean of samples2 first and then with sample1 would lead to different results than in the synthesis dataset.
 ```{r}
@@ -98,7 +114,7 @@ Herbivory.2013 <- list_raw_functions$Herbivory.2013
 
 Herbivory.2013 <- aggregate(PercHerbivory~EP_Plotid, Herbivory.2013, mean)
 data.table::setnames(Herbivory.2013, old=c("EP_Plotid", "PercHerbivory"), new=c("Plot", "herbivory"))
-raw_functions <- merge(raw_functions, Herbivory.2013, by="Plot", all.x=T)
+assembled_functions <- merge(assembled_functions, Herbivory.2013, by="Plot", all.x=T)
 ```
 
 # Litter.decomposition
@@ -108,7 +124,7 @@ Litter.decomposition <- list_raw_functions$Litter.decomposition
 # take the mean daily decomposition rate over all measures, the ones with 2 months and the ones with 4 months decomposition.
 Litter.decomposition <- aggregate(DailyDecompositionRate~EPPlotID,Litter.decomposition,mean)
 data.table::setnames(Litter.decomposition, old=c("EPPlotID", "DailyDecompositionRate"), new=c("Plot", "Litter.decomposition"))
-raw_functions <- merge(raw_functions, Litter.decomposition, by="Plot", all.x = T)
+assembled_functions <- merge(assembled_functions, Litter.decomposition, by="Plot", all.x = T)
 ```
 
 
@@ -129,7 +145,7 @@ pt <- pt[Function == "Parasitoid", c("PlotID", "Total_BC_No")]
 pt <- aggregate(Total_BC_No~PlotID, pt, sum)
 data.table::setnames(pt, old=c("PlotID", "Total_BC_No"), new=c("Plot", "Parasitoid.traps"))
 # append to raw functions list
-raw_functions <- merge(raw_functions, pt, by="Plot", all.x = T)
+assembled_functions <- merge(assembled_functions, pt, by="Plot", all.x = T)
 ```
 
 # Total pollinators
@@ -139,7 +155,7 @@ The number from the downloaded dataset is taken, but the change is recorded.
 ```{r}
 Total.pollinators <- list_raw_functions$Total.pollinators
 Total.pollinators <- aggregate(Total.pollinators~Plot, Total.pollinators, sum)
-raw_functions <- merge(raw_functions, Total.pollinators, by="Plot", all=T)
+assembled_functions <- merge(assembled_functions, Total.pollinators, by="Plot", all=T)
 ```
 
 
@@ -152,10 +168,61 @@ Phosphorus retention (PRI): Pmic (15766; microbial phosphorus in soil), PlantP.c
 #TODO calculate phoshporous retention index for 2014, and if possible 2011
 ```
 
+# pathogen infection
+mean_prevalence : mean disease prevalence on plot averaged across all pathogens. The percentage of plants with visible infection symptoms.
+
+mean_severity : mean disease severity on plot averaged across all pathogens. The percentage of aboveground plant surface affected by pathogen
+
+**pathogen data :**
+% infizierte pflanzen auf plot
+% pflanzenoberfläche betroffen auf plot
+
+**plant cover data :** % species cover in a 4x4 m plot
+* total cover per plot is not 100, because plants can grow on top of each other. 
+* normalisation because plant cover is estimated by different people
+
+calculate total area infected by pathogens per plot: 
+* total foliar pathogen infection (% plants infected x mean % infection per plant x %cover of plant)
+
+```{r, eval=F}
+pathogen.infection <- list_raw_functions[["pathogen.infection"]]
+pathogen.infection2 <- list_raw_functions[["pathogen.infection2"]]
+
+# calculate plant cover
+pathogen.infection2 <- data.table::as.data.table(aggregate(Cover~Plot, pathogen.infection2, sum))
+# normalisation across plots
+pathogen.infection2[,"normCover" := Cover / sum(Cover, na.rm=T)]
+
+# merge datasets
+pathogen.infection <- merge(pathogen.infection, pathogen.infection2, by = "Plot", all = T)
+
+# calculate total foliar pathogen infection
+pathogen.infection[, "pathogen.infection" := normCover * (mean_prevalence/ 100) * (mean_severity/ 100)]
+
+# comparison to synthesis
+d <- merge(pathogen.infection, synthesis[, c("Plot", "pathogen.infection")])
+plot(d$pathogen.infection.x, d$pathogen.infection.y)
+# problem with plto AEG4 : mean prevalence is 83.8 and mean severity is 43.4 - extremely high values !
+d[Plot == "AEG4", "pathogen.infection.x"] <- 0
+d[Plot == "AEG4", "pathogen.infection.y"] <- 0
+# not correlated neither
+# new approach: normalise fungi data
+pathogen.infection[, "normm_prevalence" := mean_prevalence / sum(mean_prevalence, na.rm=T)]
+pathogen.infection[, "normm_severity" := mean_severity / sum(mean_severity, na.rm=T)]
+pathogen.infection[, "pathogen.infection" := normCover * normm_prevalence * normm_severity]
+d <- merge(pathogen.infection, synthesis[, c("Plot", "pathogen.infection")])
+plot(d$pathogen.infection.x, d$pathogen.infection.y, xlim = c(0, 4e-06))
+# still not correlated
+
+# TODO : not correlated with synthesis dataset! there must be an error somewhere... 
+# or can it be because debi cleaned the plant cover data? 
+```
+
+
 
 # store assembled dataset
 store as .csv document
 ```{r}
-write.csv(raw_functions, file="~/Desktop/december2018_assembled_functions_dataset.csv")
+write.csv(assembled_functions, file="~/Desktop/december2018_assembled_functions_dataset.csv")
 ```
 
