@@ -53,3 +53,10 @@ load functions which are encoded in the package.
 devtools::load_all()
 ```
 or with Ctrl-Shift-L
+
+# creating `assembled_functions` dataset
+After installing the package and being connected to the "planteco" drive at IPS:
+* find the file `nonpublic.R`, it is stored at the "planteco" drive where the data is.
+* run `nonpublic.R`
+* run `raw_dataset_construction.Rmd` then `assembled_dataset_construction.R`
+* the file `"~/Desktop/december2018_assembled_functions_dataset.csv"` will be written on your Desktop.

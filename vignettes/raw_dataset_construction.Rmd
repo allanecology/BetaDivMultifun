@@ -436,7 +436,7 @@ Gtot <- merge(Gtot, G[,c("Plot", "Groundwater.recharge2016")], by="Plot")
 
 list_raw_functions[["Groundwater.recharge"]] <- Gtot
 # also include years in raw_functions
-raw_functions <- merge(raw_functions, Gtot, by="Plot")
+# raw_functions <- merge(raw_functions, Gtot, by="Plot")
 ```
 
 

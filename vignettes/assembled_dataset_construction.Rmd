@@ -87,14 +87,14 @@ assembled_functions <- merge(assembled_functions, assemblednutrients[,c("Plot", 
 assemblednutrients <- merge(Biomass2012, nutrients, by="Plot", all=T)
 assemblednutrients[, Nshoot.2012 := Biomass2012 * (Nshoot2012percent / 100)]
 assemblednutrients[, Pshoot.2012 := Biomass2012 * (Pshoot2012percent / 100)]
+assembled_functions <- merge(assembled_functions, assemblednutrients[,c("Plot", "Nshoot.2012", "Pshoot.2012")], by = "Plot", all = T)
 
 # 2013
 assemblednutrients <- merge(Biomass2013, nutrients, by="Plot", all=T)
 assemblednutrients[, Nshoot.2013 := Biomass2013 * (Nshoot2013percent / 100)]
 assemblednutrients[, Pshoot.2013 := Biomass2013 * (Pshoot2013percent / 100)]
+assembled_functions <- merge(assembled_functions, assemblednutrients[,c("Plot", "Nshoot.2013", "Pshoot.2013")], by = "Plot", all = T)
 
-# add to assembled_functions
-assembled_functions <- merge(assembled_functions, assemblednutrients[, c(1, grep("shoot.20", colnames(assemblednutrients))), with = F], all = T)
 ```
 
 
@@ -113,7 +113,7 @@ SEG45 : The mean of all 3 samples was already taken and stored as sample2. Takin
 Herbivory.2013 <- list_raw_functions$Herbivory.2013
 
 Herbivory.2013 <- aggregate(PercHerbivory~EP_Plotid, Herbivory.2013, mean)
-data.table::setnames(Herbivory.2013, old=c("EP_Plotid", "PercHerbivory"), new=c("Plot", "herbivory"))
+data.table::setnames(Herbivory.2013, old=c("EP_Plotid", "PercHerbivory"), new=c("Plot", "herbivory.2013"))
 assembled_functions <- merge(assembled_functions, Herbivory.2013, by="Plot", all.x=T)
 ```
 
