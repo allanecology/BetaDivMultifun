@@ -41,7 +41,7 @@ CompareToReferenceDataset(raw_functions, synthesis, name ="mAMFhyphae", sortcol 
 CompareToReferenceDataset(raw_functions, synthesis, name ="pathogen.infection", sortcol = "Plot")
 
 ```
-Run after running `assembled_dataset_construction.R`. There, the datasets which can not be included in the raw_functions variable are assembled and added to `raw_functions` to be able to compare to `synthesis`.
+Run after running `2calc_raw_dataset.R`. There, the datasets which can not be included in the raw_functions variable are assembled and added to `raw_functions` to be able to compare to `synthesis`.
 ```{r}
 CompareToReferenceDataset(raw_functions, synthesis, name ="herbivory", sortcol = "Plot")
 ```

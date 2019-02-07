@@ -5,10 +5,29 @@ date: "November 8, 2018"
 output: html_document
 ---
 
-# Resources used
+# installing this package as a user
+1. Download the whole folder from [github](https://github.com/allanecology/BetaDivMultifun).
+2. set the R working directory to the parent folder of the downloaded package. (e.g. Downloads if you stored the package folder in Downloads.)
+The devtools::install function also installs packages on which `BetaDivMultifun` depends on.
+```{r, eval=F}
+setwd("<parent-directory-of-the-package>")
+devtools::install("BetaDivMultifun")
+```
+
+Set wd back to the package
+```{r}
+setwd("/home/noelleschenk/Desktop/BetaDivMultifun/")
+```
+
+
+
+# install the package as a developer
+## Literature
 To create the package, I used the blogposts of: [Hilary Parker](https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/), [the book "R packages"](http://r-pkgs.had.co.nz/) and the idea of using `R packages` for an analysis is coming from Robert M. Flight's blogposts, where he explains [why](http://rmflight.github.io/post/analyses-as-packages/) and [how](http://rmflight.github.io/post/vignette-analysis/) to use `R package` for an analysis.
 
-# install required packages
+## Setup
+Only if you like to work on the package (change it). I worked with following packages and RStudio, which is extremely well suited for package development.
+
 If you are linux user, install the following packages with `sudo apt-get install <packagename>`
 - `libssl-dev`
 - `libxml2 libxml2-dev`
@@ -24,39 +43,37 @@ library(roxygen2)
 ```
 
 
-# installing this package
-1. Download the whole folder from [github](https://github.com/allanecology/BetaDivMultifun).
-2. set the R working directory to the parent folder of the downloaded package. (e.g. Downloads if you stored the package folder in Downloads.)
-The devtools::install function also installs packages on which `BetaDivMultifun` depends on.
-```{r, eval=F}
-setwd("<parent-directory-of-the-package>")
-devtools::install("BetaDivMultifun")
-```
+## changing code
+After you generated/changed code of the package, the newly generated code needs to be loaded. (E.g. if you add a function and later want to use it.) Therefore, the function code as well as the functions documentation needs to be loaded as described below. 
 
-Set wd back to the package
-```{r}
-setwd("/home/noelleschenk/Desktop/BetaDivMultifun/")
-```
-
-# working on the package (only if code is changed)
-After working on the package, the newly generated code needs to be loaded. (E.g. if you add a function and later want to use it.) Therefore, the function code as well as the functions documentation needs to be loaded as described below. 
-
-## create documentation
+- create *documentation*
 from roxygen comments, with Ctrl-Shift-D or
 ```{r,eval=F}
 devtools::document()
 ```
 
-## load
-load functions which are encoded in the package.
-```{r}
-devtools::load_all()
-```
-or with Ctrl-Shift-L
+
+- *load functions* which are encoded in the package. `devtools::load_all()` or with Ctrl-Shift-L (while the cursor is placed in the console)
+
+- *install and restart* the package :  Ctrl-Shift-B (console `R CMD INSTALL --no-multiarch --with-keep.source BetaDivMultifun`)
+
+- to *rebuild the source package* .tar.gz file newly : RStudio : Build > Build Source Package `devtools::build()`
+
+### check code
+RStudio : Build > Check
+--> note : don't confuse with "test", this is something else.
+
+### test code
+develop your own tests to prevent introducing bugs.
+
+
 
 # creating `assembled_functions` dataset
 After installing the package and being connected to the "planteco" drive at IPS:
 * find the file `nonpublic.R`, it is stored at the "planteco" drive where the data is.
 * run `nonpublic.R`
-* run `raw_dataset_construction.Rmd` then `assembled_dataset_construction.R`
+* run `1read_raw_datasets.Rmd` then `2calc_raw_dataset.R`
 * the file `"~/Desktop/december2018_assembled_functions_dataset.csv"` will be written on your Desktop.
+
+*CAUTION* this automated workflow currently only works for UNIX Systems. This is because paths are specified in LINUX way (using "/" and not "\\" which is used under Windows. and OSX)
+will be changed at one point.

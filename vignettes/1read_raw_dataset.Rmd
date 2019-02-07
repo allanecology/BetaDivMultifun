@@ -36,11 +36,11 @@ rm(Plot); rm(Plotn)
 ```
 
 # raw dataset
-Generate a dataset which stores all raw data. Will be assembled with the script `assembled_dataset_construction.R`. Datasets that can not be easily included as raw datasets into `raw_functions` are assembled (calculations are done) in `assembled_dataset_construction.R` and then integrated into raw_functions as well (and assembled functions variable, of corse).
+Generate a dataset which stores all raw data. Will be assembled with the script `2calc_raw_dataset.R`. Datasets that can not be easily included as raw datasets into `raw_functions` are assembled (calculations are done) in `2calc_raw_dataset.R` and then integrated into raw_functions as well (and assembled functions variable, of corse).
 ```{r}
 # subset for raw dataset construction
 raw_functions <- data.table::copy(PlotExplo)
-# generate list for datasets that will be constructed in assembled_dataset_construction.R script directly.
+# generate list for datasets that will be constructed in 2calc_raw_dataset.R script directly.
 list_raw_functions <- list()
 ```
 
