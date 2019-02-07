@@ -12,7 +12,8 @@ security_copy <- data.table::copy(raw_functions)
 
 
 # Biomass 2009
-2 treatments, avg 
+2 treatments, avg
+
 
 # Root biomass
 rb = fine root + coarse root biomass
@@ -52,7 +53,7 @@ forage.quality[, forage.quality := apply(scale(forage.quality[,c("RFV", "Crude.p
 See in compare_raw_function_to_synthesis for yearly calculation!
 
 # Nshoot and Pshoot
-same dataset as forage.quality
+same dataset like forage.quality
 ```{r}
 nutrients <- list_raw_functions$nutrients
 #TODO : there is something wrong with Biomass 2009. --> see there
@@ -69,7 +70,8 @@ nutrients <- list_raw_functions$nutrients
 
 
 # 2010
-assemblednutrients <- merge(Biomass2010, nutrients, by="Plot", all=T)
+
+assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2010")], nutrients, by="Plot", all=T)
 assemblednutrients[, Nshoot.2010 := Biomass2010 * (Nshoot2010percent / 100)]
 assemblednutrients[, Pshoot.2010 := Biomass2010 * (Pshoot2010percent / 100)]
 # add to raw_functions
@@ -77,20 +79,20 @@ raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2010
 
 
 # 2011
-assemblednutrients <- merge(Biomass2011, nutrients, by="Plot", all=T)
+assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2011")], nutrients, by="Plot", all=T)
 assemblednutrients[, Nshoot.2011 := Biomass2011 * (Nshoot2011percent / 100)]
 assemblednutrients[, Pshoot.2011 := Biomass2011 * (Pshoot2011percent / 100)]
 # add to raw_functions
 raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2011", "Pshoot.2011")], by="Plot")
 
 # 2012
-assemblednutrients <- merge(Biomass2012, nutrients, by="Plot", all=T)
+assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2012")], nutrients, by="Plot", all=T)
 assemblednutrients[, Nshoot.2012 := Biomass2012 * (Nshoot2012percent / 100)]
 assemblednutrients[, Pshoot.2012 := Biomass2012 * (Pshoot2012percent / 100)]
 raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2012", "Pshoot.2012")], by = "Plot", all = T)
 
 # 2013
-assemblednutrients <- merge(Biomass2013, nutrients, by="Plot", all=T)
+assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2013")], nutrients, by="Plot", all=T)
 assemblednutrients[, Nshoot.2013 := Biomass2013 * (Nshoot2013percent / 100)]
 assemblednutrients[, Pshoot.2013 := Biomass2013 * (Pshoot2013percent / 100)]
 raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2013", "Pshoot.2013")], by = "Plot", all = T)
