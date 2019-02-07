@@ -111,6 +111,8 @@ Visually estimation of herbivory by eye using templates and measurement of leaf 
 2 samples per plot in 145 cases, 1 sample for :  "AEG6"  "HEG16" "HEG43" "SEG19" "SEG33" and 3 samples for "SEG45". 2 Columns are included in the raw_functions dataset, 1 for each sample.
 
 SEG45 : The mean of all 3 samples was already taken and stored as sample2. Taking the mean of samples2 first and then with sample1 would lead to different results than in the synthesis dataset.
+
+note : used measure is very conservative. percent herbivory is on the whole plot, on both grasses and herbs.
 ```{r}
 Herbivory.2013 <- list_raw_functions$Herbivory.2013
 
@@ -118,6 +120,7 @@ Herbivory.2013 <- aggregate(PercHerbivory~EP_Plotid, Herbivory.2013, mean)
 data.table::setnames(Herbivory.2013, old=c("EP_Plotid", "PercHerbivory"), new=c("Plot", "herbivory.2013"))
 raw_functions <- merge(raw_functions, Herbivory.2013, by="Plot", all.x=T)
 ```
+
 
 # Litter.decomposition
 litter bag approach, Mass loss in the litter bags, after two months, and four months. 1.5g of dry plant material. January 2013 put 10 bags each, 2 months later retrieval of 5 bags, 2 more months : retrieval of other 5 bags. calculated daily decomposition rates.

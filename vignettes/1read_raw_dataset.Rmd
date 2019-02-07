@@ -232,21 +232,18 @@ list_raw_functions[["Herbivory.2013"]] <- herb ; rm(herb)
 
 ## 2017 and 2018
 plant material was collected before the first mowing (May 2017/2018). For each plant, we visually estimated the area damaged by herbivorous insects and gall mites on 12 - 200 leaves (depending on leaf size) and measured total leaf area using a leaf area meter. The deduced herbivory rates (% damaged area) per plant species were than summarised to community-level herbivory rates based on the respective plant cover values in the vegetation records of the survey years (2017 for AEG, AEW, HEW, SEW; 2018 for HEG, SEG from data set 24247 (pathogen infection)).
+
+*Noelle :* 
+prop_a_herb : proportion of leaf area damaged of the 10 (8) most abundant species. Serves as estimate for the whole plot and can therefore be taken directly.
+
+AEG plots were measured in 2017, SEG/HEG in 2018. 49 AEG plots, 48 HEG plots and 50 SEG plots.
+
 ```{r}
-herb <- data.table::fread(info_data$path_unix[grep("herbivory.2017", info_data$ColumnName)], header=T, sep='\t')
+herb <- data.table::fread(info_data$path_unix[grep("herbivory.20172018", info_data$ColumnName)], header=T, sep='\t')
 data.table::setnames(herb, old=c("plotid_withzero", "plotid"), new=c("Plotn", "Plot"))
-
-# 2017
-herb2017 <- herb[which(herb$years == "2017")]
-data.table::setorder(herb2017, Plotn)
-list_raw_functions[["Herbivory.2017"]] <- herb2017
-rm(herb2017)
-
-# 2018
-herb2018 <- herb[which(herb$years == "2018")]
-data.table::setorder(herb2018, Plotn)
-list_raw_functions[["Herbivory.2018"]] <- herb2018
-rm(herb2018); rm(herb)
+herb <- herb[grep("G", herb$Plotn)]
+data.table::setorder(herb, Plotn)
+raw_functions <- merge(raw_functions, herb, by="Plot"); rm(herb)
 ```
 
 
