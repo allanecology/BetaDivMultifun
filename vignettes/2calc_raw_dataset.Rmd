@@ -7,7 +7,7 @@ output: html_document
 
 # create dataset
 ```{r}
-assembled_functions <- data.table::copy(raw_functions)
+security_copy <- data.table::copy(raw_functions)
 ```
 
 
@@ -223,6 +223,12 @@ plot(d$pathogen.infection.x, d$pathogen.infection.y, xlim = c(0, 4e-06))
 # store assembled dataset
 store as .csv document
 ```{r}
-write.csv(assembled_functions, file="~/Desktop/december2018_assembled_functions_dataset.csv")
+cat("Dear user, \n
+    Please enter a prefix (=piece of the name which is printed in front of a file).\n
+    It will be used for the assembled functions dataset.\n
+    The dataset will be printed on your Desktop with the prefix you have given together with the following suffix :\n
+    '_assembled_functions_dataset.csv' \n
+    example : 'december2018' would give 'december2018__assembled_functions_dataset.csv'")
+prefix <- readline(prompt="Write now : ")
+write.csv(assembled_functions, file=paste("~/Desktop/", prefix, "_assembled_functions_dataset.csv", sep=""))
 ```
-
