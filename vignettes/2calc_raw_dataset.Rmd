@@ -20,13 +20,13 @@ rb = fine root + coarse root biomass
 Root.biomass <- list_raw_functions$Root.biomass
 Root.biomass[, "Root.biomass" := rowSums(.SD,na.rm=T), .SDcols=c("Fine_Roots_Biomass", "Coarse_Roots_Biomass")]
 Root.biomass <- Root.biomass[, c("Plot", "Root.biomass")]
-assembled_functions <- merge(assembled_functions, Root.biomass, by="Plot", all=T)
+raw_functions <- merge(raw_functions, Root.biomass, by="Plot", all=T)
 ```
 
 # Groundwater recharge
 ```{r}
 Gtot <- list_raw_functions$Groundwater.recharge
-assembled_functions[, Groundwater.recharge := rowMeans(Gtot[,c(paste("Groundwater.recharge", seq(2010,2016), sep=""))])]
+raw_functions[, Groundwater.recharge := rowMeans(Gtot[,c(paste("Groundwater.recharge", seq(2010,2016), sep=""))])]
 ```
 
 
@@ -72,28 +72,28 @@ nutrients <- list_raw_functions$nutrients
 assemblednutrients <- merge(Biomass2010, nutrients, by="Plot", all=T)
 assemblednutrients[, Nshoot.2010 := Biomass2010 * (Nshoot2010percent / 100)]
 assemblednutrients[, Pshoot.2010 := Biomass2010 * (Pshoot2010percent / 100)]
-# add to assembled_functions
-assembled_functions <- merge(assembled_functions, assemblednutrients[,c("Plot", "Nshoot.2010", "Pshoot.2010")], by="Plot")
+# add to raw_functions
+raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2010", "Pshoot.2010")], by="Plot")
 
 
 # 2011
 assemblednutrients <- merge(Biomass2011, nutrients, by="Plot", all=T)
 assemblednutrients[, Nshoot.2011 := Biomass2011 * (Nshoot2011percent / 100)]
 assemblednutrients[, Pshoot.2011 := Biomass2011 * (Pshoot2011percent / 100)]
-# add to assembled_functions
-assembled_functions <- merge(assembled_functions, assemblednutrients[,c("Plot", "Nshoot.2011", "Pshoot.2011")], by="Plot")
+# add to raw_functions
+raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2011", "Pshoot.2011")], by="Plot")
 
 # 2012
 assemblednutrients <- merge(Biomass2012, nutrients, by="Plot", all=T)
 assemblednutrients[, Nshoot.2012 := Biomass2012 * (Nshoot2012percent / 100)]
 assemblednutrients[, Pshoot.2012 := Biomass2012 * (Pshoot2012percent / 100)]
-assembled_functions <- merge(assembled_functions, assemblednutrients[,c("Plot", "Nshoot.2012", "Pshoot.2012")], by = "Plot", all = T)
+raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2012", "Pshoot.2012")], by = "Plot", all = T)
 
 # 2013
 assemblednutrients <- merge(Biomass2013, nutrients, by="Plot", all=T)
 assemblednutrients[, Nshoot.2013 := Biomass2013 * (Nshoot2013percent / 100)]
 assemblednutrients[, Pshoot.2013 := Biomass2013 * (Pshoot2013percent / 100)]
-assembled_functions <- merge(assembled_functions, assemblednutrients[,c("Plot", "Nshoot.2013", "Pshoot.2013")], by = "Plot", all = T)
+raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2013", "Pshoot.2013")], by = "Plot", all = T)
 
 ```
 
@@ -106,7 +106,7 @@ increased land-use - less invertebrates - less herbivory
 
 Visually estimation of herbivory by eye using templates and measurement of leaf area left after feeding of the herbivores using LI-COR area meter
 
-2 samples per plot in 145 cases, 1 sample for :  "AEG6"  "HEG16" "HEG43" "SEG19" "SEG33" and 3 samples for "SEG45". 2 Columns are included in the assembled_functions dataset, 1 for each sample.
+2 samples per plot in 145 cases, 1 sample for :  "AEG6"  "HEG16" "HEG43" "SEG19" "SEG33" and 3 samples for "SEG45". 2 Columns are included in the raw_functions dataset, 1 for each sample.
 
 SEG45 : The mean of all 3 samples was already taken and stored as sample2. Taking the mean of samples2 first and then with sample1 would lead to different results than in the synthesis dataset.
 ```{r}
@@ -114,7 +114,7 @@ Herbivory.2013 <- list_raw_functions$Herbivory.2013
 
 Herbivory.2013 <- aggregate(PercHerbivory~EP_Plotid, Herbivory.2013, mean)
 data.table::setnames(Herbivory.2013, old=c("EP_Plotid", "PercHerbivory"), new=c("Plot", "herbivory.2013"))
-assembled_functions <- merge(assembled_functions, Herbivory.2013, by="Plot", all.x=T)
+raw_functions <- merge(raw_functions, Herbivory.2013, by="Plot", all.x=T)
 ```
 
 # Litter.decomposition
@@ -124,7 +124,7 @@ Litter.decomposition <- list_raw_functions$Litter.decomposition
 # take the mean daily decomposition rate over all measures, the ones with 2 months and the ones with 4 months decomposition.
 Litter.decomposition <- aggregate(DailyDecompositionRate~EPPlotID,Litter.decomposition,mean)
 data.table::setnames(Litter.decomposition, old=c("EPPlotID", "DailyDecompositionRate"), new=c("Plot", "Litter.decomposition"))
-assembled_functions <- merge(assembled_functions, Litter.decomposition, by="Plot", all.x = T)
+raw_functions <- merge(raw_functions, Litter.decomposition, by="Plot", all.x = T)
 ```
 
 
@@ -145,7 +145,7 @@ pt <- pt[Function == "Parasitoid", c("PlotID", "Total_BC_No")]
 pt <- aggregate(Total_BC_No~PlotID, pt, sum)
 data.table::setnames(pt, old=c("PlotID", "Total_BC_No"), new=c("Plot", "Parasitoid.traps"))
 # append to raw functions list
-assembled_functions <- merge(assembled_functions, pt, by="Plot", all.x = T)
+raw_functions <- merge(raw_functions, pt, by="Plot", all.x = T)
 ```
 
 # Total pollinators
@@ -155,7 +155,7 @@ The number from the downloaded dataset is taken, but the change is recorded.
 ```{r}
 Total.pollinators <- list_raw_functions$Total.pollinators
 Total.pollinators <- aggregate(Total.pollinators~Plot, Total.pollinators, sum)
-assembled_functions <- merge(assembled_functions, Total.pollinators, by="Plot", all=T)
+raw_functions <- merge(raw_functions, Total.pollinators, by="Plot", all=T)
 ```
 
 
@@ -227,8 +227,8 @@ cat("Dear user, \n
     Please enter a prefix (=piece of the name which is printed in front of a file).\n
     It will be used for the assembled functions dataset.\n
     The dataset will be printed on your Desktop with the prefix you have given together with the following suffix :\n
-    '_assembled_functions_dataset.csv' \n
-    example : 'december2018' would give 'december2018__assembled_functions_dataset.csv'")
+    '_raw_functions_dataset.csv' \n
+    example : 'december2018' would give 'december2018__raw_functions_dataset.csv'")
 prefix <- readline(prompt="Write now : ")
-write.csv(assembled_functions, file=paste("~/Desktop/", prefix, "_assembled_functions_dataset.csv", sep=""))
+write.csv(raw_functions, file=paste("~/Desktop/", prefix, "_raw_functions_dataset.csv", sep=""))
 ```
