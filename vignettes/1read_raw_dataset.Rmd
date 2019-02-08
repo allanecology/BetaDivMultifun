@@ -160,8 +160,8 @@ TODO : left open as not sure if I include it
 Total.flower.cover <- data.table::fread(info_data$path_unix[grep("Total.flower.cover", info_data$ColumnName)], header=T, sep='\t')
 ```
 
-
-# Microbial phosphorous in soil
+# PRI - Phosphorous retention index
+## Microbial phosphorous in soil
 2011 and 2014
 
 (mg/kg)
@@ -180,6 +180,53 @@ Pmic.2014 <- Pmic.2014[,c("EP", "Pmic")]
 data.table::setnames(Pmic.2014, old=c("EP", "Pmic"), new=c("Plot", "Pmic.2014"))
 raw_functions <- merge(raw_functions, Pmic.2014, by="Plot", all=T) ; rm(Pmic.2014)
 ```
+
+## Soil Phosphorous fractions
+used to calculate PRI
+
+years : 2008, 2009
+
+NaHCO3_Pi is used
+```{r}
+np <- data.table::fread(info_data$path_unix[grep("NaHCO3.Pi", info_data$ColumnName)], header=T, sep='\t') 
+np <- np[grep("G", np$EP)]
+np <- np[, c("EP", "NaHCO3_Pi")]
+data.table::setnames(np, old="EP", new="Plot")
+raw_functions <- merge(raw_functions, np, by="Plot", all=T) ; rm(np)
+```
+
+
+## Plant Nutrients (Pshoot)
+2009, 2010, 2011, 2012, 2013
+
+contains: Nshoot and Pshoot of all years
+
+near infrared spectroscopy (NIRS), 
+
+note : there are **values for 2008** in dataset 5401 (used for Biomass2008)
+```{r}
+nutrients <- data.table::fread(info_data$path_unix[grep("Nshoot.2009", info_data$ColumnName)])
+# 2009
+nutrients2009 <- nutrients[year == "2009", c("Plot", "N", "P")]
+data.table::setnames(nutrients2009, old=c("N", "P"), new=c("Nshoot2009percent", "Pshoot2009percent"))
+# 2010
+nutrients2010 <- nutrients[year == "2010", c("Plot", "N", "P")]
+data.table::setnames(nutrients2010, old=c("N", "P"), new=c("Nshoot2010percent", "Pshoot2010percent"))
+# 2011
+nutrients2011 <- nutrients[year == "2011", c("Plot", "N", "P")]
+data.table::setnames(nutrients2011, old=c("N", "P"), new=c("Nshoot2011percent", "Pshoot2011percent"))
+# 2012
+nutrients2012 <- nutrients[year == "2012", c("Plot", "N", "P")]
+data.table::setnames(nutrients2012, old=c("N", "P"), new=c("Nshoot2012percent", "Pshoot2012percent"))
+# 2013
+nutrients2013 <- nutrients[year == "2013", c("Plot", "N", "P")]
+data.table::setnames(nutrients2013, old=c("N", "P"), new=c("Nshoot2013percent", "Pshoot2013percent"))
+# take nutrients together for list_raw_functions
+nutrients <- Reduce(function(x, y) merge(x, y, all=TRUE), list(nutrients2009, nutrients2010, nutrients2011, nutrients2012, nutrients2013))
+list_raw_functions[["nutrients"]] <- nutrients
+rm(nutrients); rm(nutrients2009); rm(nutrients2010); rm(nutrients2011); rm(nutrients2012); rm(nutrients2013)
+```
+
 
 
 # Root decomposition
@@ -553,36 +600,6 @@ data.table::setnames(Total.pollinators, old=c("EP_ID", "Total"), new=c("Plot", "
 list_raw_functions[["Total.pollinators"]] <- Total.pollinators; rm(Total.pollinators)
 ```
 
-# Nutrients
-2009, 2010, 2011, 2012, 2013
-
-contains: Nshoot and Pshoot of all years
-
-near infrared spectroscopy (NIRS), 
-
-note : there are **values for 2008** in dataset 5401 (used for Biomass2008)
-```{r}
-nutrients <- data.table::fread(info_data$path_unix[grep("Nshoot.2009", info_data$ColumnName)])
-# 2009
-nutrients2009 <- nutrients[year == "2009", c("Plot", "N", "P")]
-data.table::setnames(nutrients2009, old=c("N", "P"), new=c("Nshoot2009percent", "Pshoot2009percent"))
-# 2010
-nutrients2010 <- nutrients[year == "2010", c("Plot", "N", "P")]
-data.table::setnames(nutrients2010, old=c("N", "P"), new=c("Nshoot2010percent", "Pshoot2010percent"))
-# 2011
-nutrients2011 <- nutrients[year == "2011", c("Plot", "N", "P")]
-data.table::setnames(nutrients2011, old=c("N", "P"), new=c("Nshoot2011percent", "Pshoot2011percent"))
-# 2012
-nutrients2012 <- nutrients[year == "2012", c("Plot", "N", "P")]
-data.table::setnames(nutrients2012, old=c("N", "P"), new=c("Nshoot2012percent", "Pshoot2012percent"))
-# 2013
-nutrients2013 <- nutrients[year == "2013", c("Plot", "N", "P")]
-data.table::setnames(nutrients2013, old=c("N", "P"), new=c("Nshoot2013percent", "Pshoot2013percent"))
-# take nutrients together for list_raw_functions
-nutrients <- Reduce(function(x, y) merge(x, y, all=TRUE), list(nutrients2009, nutrients2010, nutrients2011, nutrients2012, nutrients2013))
-list_raw_functions[["nutrients"]] <- nutrients
-rm(nutrients); rm(nutrients2009); rm(nutrients2010); rm(nutrients2011); rm(nutrients2012); rm(nutrients2013)
-```
 
 
 # Charismatic butterflys
@@ -631,4 +648,6 @@ data.table::setnames(soil.depth, old="Plot", new="Plotn")
 raw_functions <- merge(raw_functions, soil.depth[,c("Plotn","soil.depth")], by="Plotn", all = T); rm(soil.depth)
 ```
 
+# pH
+soil PH
 
