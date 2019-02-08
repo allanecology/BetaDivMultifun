@@ -8,6 +8,7 @@ output: html_document
 
 
 sample dataset (from Eric, some Columns will be included), [synthesis dataset](https://www.bexis.uni-jena.de/Data/ShowXml.aspx?DatasetId=21688) (note: access only with access to BExIS)
+TODO : is it really the same? or is it the "internal synthesis dataset"?
 
 synthesis data can only be loaded with help of the file `nonpublic.R`
 ```{r}
@@ -160,73 +161,88 @@ merge(Biomass2009, synthesis[,c("Plot", "Biomass2009")], by="Plot", all=T)
 
 
 ### forage quality
-Note : **multiply with biomass from the given year!**
+Note : **multiply with biomass from the given year!** - doesn't make sense - this would completely change the range!
 ```{r}
-forage.quality.test <- merge(forage.quality[, c("Plot", "forage.quality")], synthesis[, c("Plot", "forage.quality")], by="Plot")
-max(forage.quality.test$forage.quality.x - forage.quality.test$forage.quality.y)
-min(forage.quality.test$forage.quality.x - forage.quality.test$forage.quality.y)
-# too much deviation ! 
+fs <- synthesis[,c("Plot", "forage.quality")]
+include <- c("Plot", colnames(raw_functions)[grep("forage", colnames(raw_functions))])
+fr <- raw_functions[, include, with=F]
+fr[,"means"] <- apply(fr[,-1], 1, mean, na.rm=T)
+test <- merge(fs, fr, by="Plot", all = T)
 
-
-
-# calculating the columns needed for forage quality calc
-# 2009
-forage.quality.2009[, Crude.protein.2009 := 6.25*N.2009]
-forage.quality.2009[, DDM.2009 := 88.9-(0.779* ADF.2009)]
-forage.quality.2009[, DMI.2009 := 120/NDF.2009]
-forage.quality.2009[, RFV.2009 := (DDM.2009*DMI.2009)/1.29]
-forage.quality.2009[, forage.quality.2009 := apply(scale(forage.quality.2009[,c("RFV.2009", "Crude.protein.2009")]), 1, mean)]
-forage.quality.2009 <- merge(PlotExplo, forage.quality.2009, by="Plot")
-# 2010
-forage.quality.2010[, Crude.protein.2010 := 6.25*N.2010]
-forage.quality.2010[, DDM.2010 := 88.9-(0.779* ADF.2010)]
-forage.quality.2010[, DMI.2010 := 120/NDF.2010]
-forage.quality.2010[, RFV.2010 := (DDM.2010*DMI.2010)/1.29]
-forage.quality.2010[, forage.quality.2010 := apply(scale(forage.quality.2010[,c("RFV.2010", "Crude.protein.2010")]), 1, mean)]
-forage.quality.2010 <- merge(PlotExplo, forage.quality.2010, by="Plot")
-# 2011
-forage.quality.2011[, Crude.protein.2011 := 6.25*N.2011]
-forage.quality.2011[, DDM.2011 := 88.9-(0.779* ADF.2011)]
-forage.quality.2011[, DMI.2011 := 120/NDF.2011]
-forage.quality.2011[, RFV.2011 := (DDM.2011*DMI.2011)/1.29]
-forage.quality.2011[, forage.quality.2011 := apply(scale(forage.quality.2011[,c("RFV.2011", "Crude.protein.2011")]), 1, mean)]
-forage.quality.2011 <- merge(PlotExplo, forage.quality.2011, by="Plot")
-# 2012
-forage.quality.2012[, Crude.protein.2012 := 6.25*N.2012]
-forage.quality.2012[, DDM.2012 := 88.9-(0.779* ADF.2012)]
-forage.quality.2012[, DMI.2012 := 120/NDF.2012]
-forage.quality.2012[, RFV.2012 := (DDM.2012*DMI.2012)/1.29]
-forage.quality.2012[, forage.quality.2012 := apply(scale(forage.quality.2012[,c("RFV.2012", "Crude.protein.2012")]), 1, mean)]
-forage.quality.2012 <- merge(PlotExplo, forage.quality.2012, by="Plot")
-# 2013
-forage.quality.2013[, Crude.protein.2013 := 6.25*N.2013]
-forage.quality.2013[, DDM.2013 := 88.9-(0.779* ADF.2013)]
-forage.quality.2013[, DMI.2013 := 120/NDF.2013]
-forage.quality.2013[, RFV.2013 := (DDM.2013*DMI.2013)/1.29]
-forage.quality.2013[, forage.quality.2013 := apply(scale(forage.quality.2013[,c("RFV.2013", "Crude.protein.2013")]), 1, mean)]
-forage.quality.2013 <- merge(PlotExplo, forage.quality.2013, by="Plot")
-
-# tested for each year if equal to forage.quality in synthesis
-# data.table::setnames(forage.quality.2010, old="forage.quality.2010", new="forage.quality")
-# CompareToReferenceDataset(forage.quality.2010, synthesis, name="forage.quality")
-
-# test if mean of all years is given in synthesis
-forage.quality <- merge(forage.quality.2009[,c("Plot", "Plotn", "forage.quality")], forage.quality.2010[,c("Plot", "forage.quality")], by="Plot")
-forage.quality <- merge(forage.quality, forage.quality.2011[,c("Plot", "forage.quality")], by="Plot", suffixes=c(".2011", ".a"))
-forage.quality <- merge(forage.quality, forage.quality.2012[,c("Plot", "forage.quality")], by="Plot", suffixes=c(".2012", ".a"))
-forage.quality <- merge(forage.quality, forage.quality.2013[,c("Plot", "forage.quality")], by="Plot", suffixes = c(".2013", ".a"))
-
-newcol <- rowMeans(forage.quality[, colnames(forage.quality)[grep("forage", colnames(forage.quality))], with=F], na.rm = T)
-fq <- cbind(forage.quality[, c("Plot", "Plotn")], "forage.quality" = newcol)
-CompareToReferenceDataset(fq, synthesis, name="forage.quality")
-
-test <- merge(fq[, c("Plot", "forage.quality")], synthesis[, c("Plot", "forage.quality")], by="Plot")
-max(test$forage.quality.x - test$forage.quality.y)
-min(test$forage.quality.x - test$forage.quality.y)
-
-# TODO is not the same!
+# same range of all values!
+plot(test$forage.quality, ylim=c(3,-3)) ; points(test$forage.quality2009, col="pink"); points(test$forage.quality2010, col="green");
+points(test$forage.quality2011, col="orange"); points(test$forage.quality2012, col="violet"); points(test$forage.quality2013, col="yellow")
+points(test$means, col="red")
 ```
+
+```{r}
+# forage.quality.test <- merge(forage.quality[, c("Plot", "forage.quality")], synthesis[, c("Plot", "forage.quality")], by="Plot")
+# max(forage.quality.test$forage.quality.x - forage.quality.test$forage.quality.y)
+# min(forage.quality.test$forage.quality.x - forage.quality.test$forage.quality.y)
+# # too much deviation ! 
+# 
+# 
+# 
+# # calculating the columns needed for forage quality calc
+# # 2009
+# forage.quality.2009[, Crude.protein.2009 := 6.25*N.2009]
+# forage.quality.2009[, DDM.2009 := 88.9-(0.779* ADF.2009)]
+# forage.quality.2009[, DMI.2009 := 120/NDF.2009]
+# forage.quality.2009[, RFV.2009 := (DDM.2009*DMI.2009)/1.29]
+# forage.quality.2009[, forage.quality.2009 := apply(scale(forage.quality.2009[,c("RFV.2009", "Crude.protein.2009")]), 1, mean)]
+# forage.quality.2009 <- merge(PlotExplo, forage.quality.2009, by="Plot")
+# # 2010
+# forage.quality.2010[, Crude.protein.2010 := 6.25*N.2010]
+# forage.quality.2010[, DDM.2010 := 88.9-(0.779* ADF.2010)]
+# forage.quality.2010[, DMI.2010 := 120/NDF.2010]
+# forage.quality.2010[, RFV.2010 := (DDM.2010*DMI.2010)/1.29]
+# forage.quality.2010[, forage.quality.2010 := apply(scale(forage.quality.2010[,c("RFV.2010", "Crude.protein.2010")]), 1, mean)]
+# forage.quality.2010 <- merge(PlotExplo, forage.quality.2010, by="Plot")
+# # 2011
+# forage.quality.2011[, Crude.protein.2011 := 6.25*N.2011]
+# forage.quality.2011[, DDM.2011 := 88.9-(0.779* ADF.2011)]
+# forage.quality.2011[, DMI.2011 := 120/NDF.2011]
+# forage.quality.2011[, RFV.2011 := (DDM.2011*DMI.2011)/1.29]
+# forage.quality.2011[, forage.quality.2011 := apply(scale(forage.quality.2011[,c("RFV.2011", "Crude.protein.2011")]), 1, mean)]
+# forage.quality.2011 <- merge(PlotExplo, forage.quality.2011, by="Plot")
+# # 2012
+# forage.quality.2012[, Crude.protein.2012 := 6.25*N.2012]
+# forage.quality.2012[, DDM.2012 := 88.9-(0.779* ADF.2012)]
+# forage.quality.2012[, DMI.2012 := 120/NDF.2012]
+# forage.quality.2012[, RFV.2012 := (DDM.2012*DMI.2012)/1.29]
+# forage.quality.2012[, forage.quality.2012 := apply(scale(forage.quality.2012[,c("RFV.2012", "Crude.protein.2012")]), 1, mean)]
+# forage.quality.2012 <- merge(PlotExplo, forage.quality.2012, by="Plot")
+# # 2013
+# forage.quality.2013[, Crude.protein.2013 := 6.25*N.2013]
+# forage.quality.2013[, DDM.2013 := 88.9-(0.779* ADF.2013)]
+# forage.quality.2013[, DMI.2013 := 120/NDF.2013]
+# forage.quality.2013[, RFV.2013 := (DDM.2013*DMI.2013)/1.29]
+# forage.quality.2013[, forage.quality.2013 := apply(scale(forage.quality.2013[,c("RFV.2013", "Crude.protein.2013")]), 1, mean)]
+# forage.quality.2013 <- merge(PlotExplo, forage.quality.2013, by="Plot")
+# 
+# # tested for each year if equal to forage.quality in synthesis
+# # data.table::setnames(forage.quality.2010, old="forage.quality.2010", new="forage.quality")
+# # CompareToReferenceDataset(forage.quality.2010, synthesis, name="forage.quality")
+# 
+# # test if mean of all years is given in synthesis
+# forage.quality <- merge(forage.quality.2009[,c("Plot", "Plotn", "forage.quality")], forage.quality.2010[,c("Plot", "forage.quality")], by="Plot")
+# forage.quality <- merge(forage.quality, forage.quality.2011[,c("Plot", "forage.quality")], by="Plot", suffixes=c(".2011", ".a"))
+# forage.quality <- merge(forage.quality, forage.quality.2012[,c("Plot", "forage.quality")], by="Plot", suffixes=c(".2012", ".a"))
+# forage.quality <- merge(forage.quality, forage.quality.2013[,c("Plot", "forage.quality")], by="Plot", suffixes = c(".2013", ".a"))
+# 
+# newcol <- rowMeans(forage.quality[, colnames(forage.quality)[grep("forage", colnames(forage.quality))], with=F], na.rm = T)
+# fq <- cbind(forage.quality[, c("Plot", "Plotn")], "forage.quality" = newcol)
+# CompareToReferenceDataset(fq, synthesis, name="forage.quality")
+# 
+# test <- merge(fq[, c("Plot", "forage.quality")], synthesis[, c("Plot", "forage.quality")], by="Plot")
+# max(test$forage.quality.x - test$forage.quality.y)
+# min(test$forage.quality.x - test$forage.quality.y)
+# 
+# # TODO is not the same!
+```
+
 TODO : **different values than in synthesis!!** Really calculated with 2009? Or is it the mean among all years (2009 - 2013). If yes - take mean among years AFTER forage.quality calculation?! Note : the column names given in assembled dataset do not correspond to columns in "my" dataset - e.g. ShootN.conc in Erics dataset is "N" in mine.
+
 
 # Nshoot and Pshoot 2009
 same problem as with forage quality : not the same numbers as in synthesis! Due to Biomass 2009?

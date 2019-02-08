@@ -43,12 +43,25 @@ according to forage quality estimation based on alfalfa (medicago sativa) values
 [% concentration in aboveground grassland plant community biomass without litter]
 
 ```{r, eval=F}
+forage.quality <- list_raw_functions$forage.quality
 # calculating the columns needed for forage quality calc
 forage.quality[, Crude.protein := 6.25*N]
 forage.quality[, DDM := 88.9-(0.779* ADF)]
 forage.quality[, DMI := 120/NDF]
 forage.quality[, RFV := (DDM*DMI)/1.29]
 forage.quality[, forage.quality := apply(scale(forage.quality[,c("RFV", "Crude.protein")]), 1, mean)]
+
+# take apart the years and add separately to raw_functions
+forage.quality <- forage.quality[,c("Plot", "year", "forage.quality")]
+
+#TODO : multiply with biomass from same year
+
+for(i in unique(forage.quality$year)){
+  newname <- paste("forage.quality", i, sep="")
+  fi <- forage.quality[year == i]
+  data.table::setnames(fi, old="forage.quality", new=newname)
+  raw_functions <- merge(raw_functions, fi[,!"year"], by="Plot", all=T)
+}
 ```
 See in compare_raw_function_to_synthesis for yearly calculation!
 
@@ -76,7 +89,6 @@ assemblednutrients[, Nshoot.2010 := Biomass2010 * (Nshoot2010percent / 100)]
 assemblednutrients[, Pshoot.2010 := Biomass2010 * (Pshoot2010percent / 100)]
 # add to raw_functions
 raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2010", "Pshoot.2010")], by="Plot")
-
 
 # 2011
 assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2011")], nutrients, by="Plot", all=T)
@@ -169,6 +181,10 @@ raw_functions <- merge(raw_functions, Total.pollinators, by="Plot", all=T)
 from synthesis .html : 
 
 Phosphorus retention (PRI): Pmic (15766; microbial phosphorus in soil), PlantP.conc (18869; only 2009 data on P concentrations used and multiplied with biomass to give shoot.P.stock) and NaHCO3_Pi (5241) [PRI = (shoot.P.stock + Pmic)/(NaHCO3_Pi + Pmic + shoot.P.stock)]
+
+2011 : Pmic, 
+
+2014 : Pmic, 
 ```{r}
 #TODO calculate phoshporous retention index for 2014, and if possible 2011
 ```
