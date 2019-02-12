@@ -42,8 +42,6 @@ Generate a dataset which stores all raw data. Will be assembled with the script 
 raw_functions <- data.table::copy(PlotExplo)
 # generate list for datasets that will be constructed in 2calc_raw_dataset.R script directly.
 list_raw_functions <- list()
-# generate raw covariates dataset
-raw_covariates <- data.table::copy(PlotExplo)
 ```
 
 # Temperature and moisture
@@ -59,8 +57,12 @@ all biomasses in g/m^2
 
 2009 : Biomass was clipped in each two subplots per plot. In each subplot we clipped four 50 x 50 cm plots 2-3 cm above-ground.
 two treatments, K1 and K2, K2 is taken in synthesis. 149 plots only.
+
+*difference of 2009 to other years* : 
+- clipped mid april to mid may, instead of mid may to mid june
+- same area, more replicates per subplot
+solution : either correct all samples to mid may to mid june or take average
 ```{r}
-#TODO check if units are the same in each year
 
 # 2008
 Biomass2008 <- data.table::fread(info_data$path_unix[grep("Biomass2008", info_data$ColumnName)], header=T, sep='\t')
@@ -71,13 +73,12 @@ rm(Biomass2008)
 
 # 2009
 Biomass2009 <- data.table::fread(info_data$path_unix[grep("Biomass2009", info_data$ColumnName)], header=T, sep='\t')
-Biomass2009 <- Biomass2009[Treatment == "K2",]
-Biomass2009 <- Biomass2009[,c("GpPlotID", "Biomass")]
+# Biomass2009 <- Biomass2009[Treatment == "K2",]
+# Biomass2009 <- Biomass2009[,c("GpPlotID", "Biomass")]
+Biomass2009 <- Biomass2009[, c("GpPlotID", "Day_of_year", "Treatment", "Biomass")]
 data.table::setnames(Biomass2009, old=c("GpPlotID", "Biomass"), new=c("Plot", "Biomass2009"))
 # raw_functions <- merge(raw_functions, Biomass2009, by="Plot", all.x=T)
-# list_raw_functions[["Biomass2009"]] <- Biomass2009
-# TODO there is something wrong with Biomass2009. is it same area as other years?
-#TODO linear model day vs. biomass and take fitted values
+list_raw_functions[["Biomass2009"]] <- Biomass2009; rm(Biomass2009)
 
 # 2010
 Biomass2010 <- data.table::fread(info_data$path_unix[grep("Biomass2010", info_data$ColumnName)], header=T, sep='\t')
@@ -154,13 +155,13 @@ data.table::setnames(Root.biomass, old="EP_Plotid", new="Plot")
 list_raw_functions[["Root.biomass"]] <- Root.biomass ; rm(Root.biomass)
 ```
 
-<!-- # Flower cover -->
-<!-- **leave out** -->
-<!-- We can go from "total_influorescence_area_in_cm" of each species to a total flower cover. The total area measured was : 600m² per grassland plot. -->
-<!-- TODO : left open as not sure if I include it -->
-<!-- ```{r, eval=F} -->
-<!-- Total.flower.cover <- data.table::fread(info_data$path_unix[grep("Total.flower.cover", info_data$ColumnName)], header=T, sep='\t') -->
-<!-- ``` -->
+# Flower cover
+**leave out**
+We can go from "total_influorescence_area_in_cm" of each species to a total flower cover. The total area measured was : 600m² per grassland plot.
+TODO : left open as not sure if I include it
+```{r, eval=F}
+Total.flower.cover <- data.table::fread(info_data$path_unix[grep("Total.flower.cover", info_data$ColumnName)], header=T, sep='\t')
+```
 
 # PRI - Phosphorous retention index
 ## Microbial phosphorous in soil
@@ -314,8 +315,32 @@ according to forage quality estimation based on alfalfa (medicago sativa) values
 [% concentration in aboveground grassland plant community biomass without litter]
 ```{r, eval=F}
 forage.quality <- data.table::fread(info_data$path_unix[grep("forage.quality", info_data$ColumnName)], header=T, sep='\t')
-# add all years to list_raw_functions
-list_raw_functions[["forage.quality"]] <- forage.quality ; rm(forage.quality)
+# 2009
+forage.quality.2009 <- forage.quality[year == "2009"]
+forage.quality.2009 <- forage.quality.2009[, c("Plot", "N", "ADF", "NDF")]
+data.table::setnames(forage.quality.2009, old=c("N", "ADF", "NDF"), new = c("N.2009", "ADF.2009", "NDF.2009"))
+# 2010
+forage.quality.2010 <- forage.quality[year == "2010"]
+forage.quality.2010 <- forage.quality.2010[, c("Plot", "N", "ADF", "NDF")]
+data.table::setnames(forage.quality.2010, old=c("N", "ADF", "NDF"), new = c("N.2010", "ADF.2010", "NDF.2010"))
+# 2011
+forage.quality.2011 <- forage.quality[year == "2011"]
+forage.quality.2011 <- forage.quality.2011[, c("Plot", "N", "ADF", "NDF")]
+data.table::setnames(forage.quality.2011, old=c("N", "ADF", "NDF"), new = c("N.2011", "ADF.2011", "NDF.2011"))
+# 2012
+forage.quality.2012 <- forage.quality[year == "2012"]
+forage.quality.2012 <- forage.quality.2012[, c("Plot", "N", "ADF", "NDF")]
+data.table::setnames(forage.quality.2012, old=c("N", "ADF", "NDF"), new = c("N.2012", "ADF.2012", "NDF.2012"))
+# 2013
+forage.quality.2013 <- forage.quality[year == "2013"]
+forage.quality.2013 <- forage.quality.2013[, c("Plot", "N", "ADF", "NDF")]
+data.table::setnames(forage.quality.2013, old=c("N", "ADF", "NDF"), new = c("N.2013", "ADF.2013", "NDF.2013"))
+# merge all years with raw_functions
+raw_functions <- merge(raw_functions, forage.quality.2009, by="Plot", all=T)
+raw_functions <- merge(raw_functions, forage.quality.2010, by="Plot", all=T)
+raw_functions <- merge(raw_functions, forage.quality.2011, by="Plot", all=T)
+raw_functions <- merge(raw_functions, forage.quality.2012, by="Plot", all=T)
+raw_functions <- merge(raw_functions, forage.quality.2013, by="Plot", all=T)
 ```
 
 
@@ -374,39 +399,19 @@ raw_functions <- merge(raw_functions, microbial_enzyme_activities, by="Plot", al
 
 
 
-# Potential nitrification, nifH 2011
+# Potential nitrification
 Abundance of nitrogen fixing microbes and ammonia oxidizers. abundance and activity of nitrogen fixing microbes and ammonia oxidizing bacteria and archaea.
 
 potential nitrification is determined according to Hoffmann et al, 2007. [ngN / g DW soil / h]
 
 year is not clear, but probably 2011. start date is 1.9.2011, end date is 30.01.2013.
 
-*nifH* : The abundance of different functional genes (nifH, amoA) is quantified via real-time qPCR analysis.
-
 ```{r}
 Potential.nitrification <- data.table::fread(info_data$path_unix[grep("Potential.nitrification", info_data$ColumnName)])
-Potential.nitrification <- Potential.nitrification[,c("PlotID", "pot_nitrification", "nifH", "amoA_AOA", "amoA_AOB")]
-data.table::setnames(Potential.nitrification, old=c("PlotID", "pot_nitrification", "amoA_AOA", "amoA_AOB"), 
-                     new=c("Plot", "Potential.nitrification", "amoA_AOA.2011", "amoA_AOB.2011"))
-# set value of 0 to NA
-Potential.nitrification$amoA_AOB.2011[which(Potential.nitrification$amoA_AOB.2011 == 0)] <- NA
-Potential.nitrification$nifH[which(Potential.nitrification$nifH == 0)] <- NA
+Potential.nitrification <- Potential.nitrification[,c("PlotID", "pot_nitrification")]
+data.table::setnames(Potential.nitrification, old=c("PlotID", "pot_nitrification"), new=c("Plot", "Potential.nitrification"))
 raw_functions <- merge(raw_functions, Potential.nitrification, by="Plot", all=T); rm(Potential.nitrification)
 ```
-
-# amoA_AOA and AOB
-Nitrifiers Abundances at Grassland, The abundance of ammonia oxidizing bacteria and archaea was estimated using respective amoA gene.
-
-AOA : ammonia oxidizing archaea
-
-AOB : ammonia oxidizing bacteria
-
-```{r, eval=F}
-amo <- data.table::fread(info_data$path_unix[grep("amoA_AOA", info_data$ColumnName)])
-data.table::setnames(amo, old=c("Plot_ID"), new=c("Plot"))
-raw_functions <- merge(raw_functions, amo[,c("Plot","amoA_AOA", "amoA_AOB")], by="Plot", all = T); rm(amo)
-```
-
 
 # Nmic
 Within the soil sampling campaign 2011 all samples are taken in the beginning of May 2011 as a mixed sample from the top horizon (0-10 cm) of the all 50 grassland experimental plots of all three exploratories.
@@ -607,15 +612,20 @@ Diversity and abundance of day active butterflies and day-active moths along a l
 butterflys <- data.table::fread(info_data$path_unix[grep("Charism.butterfly.Abund", info_data$ColumnName)])
 ```
 
+# amoA_AOA and AOB
+Nitrifiers Abundances at Grassland, The abundance of ammonia oxidizing bacteria and archaea was estimated using respective amoA gene.
 
+AOA : ammonia oxidizing archaea
 
+AOB : ammonia oxidizing bacteria
 
+```{r, eval=F}
+amo <- data.table::fread("/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/raw_data/21547_Nitrifiers Abundances at Grassland EPs_1.6.8/21547.txt")
+data.table::setnames(amo, old=c("Plot_ID"), new=c("Plot"))
+raw_functions <- merge(raw_functions, amo[,c("Plot","amoA_AOA", "amoA_AOB")], by="Plot", all = T); rm(amo)
+```
 
-# Covariates
-load and calculate
-
-
-## soil depth
+# soil depth
 soil.depth
 
 <!-- Soils were described according to the German soil classification system (KA 5) and the FAO-Guidelines for Soil Description (2006). -->
@@ -641,15 +651,11 @@ data.table::setnames(soil.depth, old="Plot", new="Plotn")
 raw_functions <- merge(raw_functions, soil.depth[,c("Plotn","soil.depth")], by="Plotn", all = T); rm(soil.depth)
 ```
 
-
-
-
-
-
-## pH
+# pH
 soil PH
-
+ 
 2 measures per site, take mean of them.
+ 
 ```{r}
 ph <- data.table::fread(info_data$path_unix[grep("PH", info_data$ColumnName)])
 ph <- ph[Type == "G", c("EP_Plotid", "pH_1", "pH_2")]
@@ -657,4 +663,3 @@ ph[,"PH"] <- apply(ph[, c("pH_1", "pH_2")], 1, mean, na.rm=T)
 data.table::setnames(ph, old="EP_Plotid", new="Plot")
 raw_covariates <- merge(raw_covariates, ph[,c("Plot","PH")], by="Plot", all=T); rm(ph)
 ```
-

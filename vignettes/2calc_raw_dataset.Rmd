@@ -12,7 +12,84 @@ security_copy <- data.table::copy(raw_functions)
 
 
 # Biomass 2009
-2 treatments, avg
+## take as it is
+Because ranges are comparable to other years.
+```{r, eval=F}
+Biomass2009 <- list_raw_functions$Biomass2009
+# how different are 2009 values of other years?
+plot(rep(2008, 150), raw_functions$Biomass2008, ylim= c(0, 2000), xlim=c(2007,2018))
+
+points(rep(2010, 150), raw_functions$Biomass2010)
+points(rep(2011, 150), raw_functions$Biomass2011)
+points(rep(2012, 150), raw_functions$Biomass2012)
+points(rep(2013, 150), raw_functions$Biomass2013)
+points(rep(2014, 150), raw_functions$Biomass2014)
+points(rep(2015, 150), raw_functions$Biomass2015)
+points(rep(2016, 150), raw_functions$Biomass2016)
+points(rep(2017, 150), raw_functions$Biomass2017)
+
+points(rep(2009, 149), Biomass2009[Treatment == "K2", Biomass2009], col="green")
+```
+
+```{r}
+Biomass2009 <- list_raw_functions$Biomass2009
+Biomass2009 <- aggregate(Biomass2009~Plot, Biomass2009, mean)
+raw_functions <- merge(raw_functions, Biomass2009, by = "Plot", all = T) ; rm(Biomass2009)
+```
+
+
+## linear model day vs. biomass
+
+$$Biomass = -161.959 + (3.131 * day)$$
+- Take + 30 days of Biomass production for all plots.
+- how much biomass is produced in 30 days?
+- add this value to all data points
+```{r, eval=F}
+Biomass2009 <- list_raw_functions$Biomass2009
+# construct linear model
+# Biomass calculation as a function of day
+# Biomass = -161.959 + (3.131 * day)
+mod <- lm(Biomass2009 ~ Day_of_year, data=Biomass2009)
+# summary(mod)
+
+
+# newvalues
+impBiomass2009I <- data.table::copy(Biomass2009)
+impBiomass2009I[,"Day_of_year" := Day_of_year + 30]
+data.table::setnames(impBiomass2009I, old="Biomass2009", new="oldBiomass2009")
+impBiomass2009I[, "Biomass2009" := predict(mod, impBiomass2009I)]
+
+# plot result
+par(mfrow=c(1,2))
+plot((impBiomass2009I$Day_of_year - 30)/30, impBiomass2009I$oldBiomass2009, col="darkgreen", xlim = c(4,6.6))
+points((impBiomass2009I$Day_of_year)/30, impBiomass2009I$Biomass2009, col="darkred")
+
+
+# variant 2
+# to keep the variation
+# calculate how much difference in Biomass are 30 days
+doy <- data.table("Day_of_year" = c(0, 30))
+doy <- predict(mod, doy)
+increase <- doy[2] - doy[1]
+
+# newvalues
+impBiomass2009 <- data.table::copy(Biomass2009)
+impBiomass2009[,"Day_of_year" := Day_of_year + 30]
+data.table::setnames(impBiomass2009, old="Biomass2009", new="oldBiomass2009")
+impBiomass2009[, "Biomass2009" := oldBiomass2009 + increase]
+
+plot((impBiomass2009$Day_of_year - 30)/30, impBiomass2009$oldBiomass2009, col="darkgreen", xlim = c(4,6.6))
+points((impBiomass2009$Day_of_year)/30, impBiomass2009$Biomass2009, col="darkred")
+
+# criticism on imputation with linear model : it's very easy, maybe linear is not 
+# the best way
+# it's expected to depend on LUI too - take LUI into account?
+# we will in the end anyways take the mean of biomasses
+# --> is it necessary to have the same months?
+
+rm(impBiomass2009); rm(impBiomass2009I); rm(mod); rm(increase); rm(doy)
+```
+
 
 
 # Root biomass
