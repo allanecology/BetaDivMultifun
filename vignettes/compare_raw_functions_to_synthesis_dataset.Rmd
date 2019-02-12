@@ -155,8 +155,9 @@ CompareToReferenceDataset(raw_functions, synthesis, name ="Total.pollinators", s
 
 ### Biomass 2009
 two treatments, neither was used in synthesis for Biomass2009
-```{r}
-merge(Biomass2009, synthesis[,c("Plot", "Biomass2009")], by="Plot", all=T)
+```{r, eval=F}
+Biomass2009 <- raw_functions[, c("Plot", "Biomass2009")]
+deleteme <- merge(Biomass2009, synthesis[,c("Plot", "Biomass2009")], by="Plot", all=T)
 ```
 
 

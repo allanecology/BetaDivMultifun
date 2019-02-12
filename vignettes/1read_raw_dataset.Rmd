@@ -37,6 +37,8 @@ rm(Plot); rm(Plotn)
 
 # raw dataset
 Generate a dataset which stores all raw data. Will be assembled with the script `2calc_raw_dataset.R`. Datasets that can not be easily included as raw datasets into `raw_functions` are assembled (calculations are done) in `2calc_raw_dataset.R` and then integrated into raw_functions as well (and assembled functions variable, of corse).
+
+*Covariates* : are also included in the functions dataset and taken out later.
 ```{r}
 # subset for raw dataset construction
 raw_functions <- data.table::copy(PlotExplo)
@@ -653,7 +655,7 @@ raw_functions <- merge(raw_functions, soil.depth[,c("Plotn","soil.depth")], by="
 
 # pH
 soil PH
- 
+
 2 measures per site, take mean of them.
  
 ```{r}
@@ -661,5 +663,5 @@ ph <- data.table::fread(info_data$path_unix[grep("PH", info_data$ColumnName)])
 ph <- ph[Type == "G", c("EP_Plotid", "pH_1", "pH_2")]
 ph[,"PH"] <- apply(ph[, c("pH_1", "pH_2")], 1, mean, na.rm=T)
 data.table::setnames(ph, old="EP_Plotid", new="Plot")
-raw_covariates <- merge(raw_covariates, ph[,c("Plot","PH")], by="Plot", all=T); rm(ph)
+raw_functions <- merge(raw_functions, ph[,c("Plot","PH")], by="Plot", all=T); rm(ph)
 ```
