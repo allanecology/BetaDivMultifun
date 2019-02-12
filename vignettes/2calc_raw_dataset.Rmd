@@ -144,6 +144,8 @@ See in compare_raw_function_to_synthesis for yearly calculation!
 
 # Nshoot and Pshoot
 same dataset like forage.quality
+
+first convert soil P and microbial P to stocks rather than concentrations; concentrations are mg/kg, convert to g/g
 ```{r}
 nutrients <- list_raw_functions$nutrients
 #TODO : there is something wrong with Biomass 2009. --> see there
@@ -158,6 +160,12 @@ nutrients <- list_raw_functions$nutrients
 # # the larger the total values, the larger the deviation. Could be acceptable?
 # plot(bal$Nshoot.2009.x, bal$Nshoot.2009.x - bal$Nshoot.2009.y)
 
+# 2009
+assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2009")], nutrients, by="Plot", all=T)
+assemblednutrients[, Nshoot.2009 := Biomass2009 * (Nshoot2009percent / 100)]
+assemblednutrients[, Pshoot.2009 := Biomass2009 * (Pshoot2010percent / 100)]
+# add to raw_functions
+raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2009", "Pshoot.2009")], by="Plot", all=T)
 
 # 2010
 
@@ -165,7 +173,7 @@ assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2010")], nutrients,
 assemblednutrients[, Nshoot.2010 := Biomass2010 * (Nshoot2010percent / 100)]
 assemblednutrients[, Pshoot.2010 := Biomass2010 * (Pshoot2010percent / 100)]
 # add to raw_functions
-raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2010", "Pshoot.2010")], by="Plot")
+raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2010", "Pshoot.2010")], by="Plot", all=T)
 
 # 2011
 assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2011")], nutrients, by="Plot", all=T)
@@ -259,12 +267,52 @@ from synthesis .html :
 
 Phosphorus retention (PRI): Pmic (15766; microbial phosphorus in soil), PlantP.conc (18869; only 2009 data on P concentrations used and multiplied with biomass to give shoot.P.stock) and NaHCO3_Pi (5241) [PRI = (shoot.P.stock + Pmic)/(NaHCO3_Pi + Pmic + shoot.P.stock)]
 
-2011 : Pmic, 
+*2014* : Pmic.2014, Pshoot.2013 (Biomass2013, Pshoot concentration 2013), Bulk.density2014
 
-2014 : Pmic, 
+*2011* : ?
+
+$$PRI = \frac{microbial Phosphorous + plant shoot Phosphorous}{microbial Phosphorous + plant shoot Phosphorous + soil Phosphorous}$$
+where 
+$$microbial Phosphorous = (Pmic (mg/kg) / 1000000) * (bulk density (g/cm^3) * 100000 cm^3/ m^2)$$
+$$plant shoot P = Pshoot (\%) * Biomass (g/m^2) $$
+$$soil P  = \frac{Olsen Pi (mg/kg)}{1000000} * (bulk density (g/cm^3) * 100000 cm^3/ m^2)$$
+
 ```{r}
-#TODO calculate phoshporous retention index for 2014, and if possible 2011
+# 2014
+# Pmic.2014 Pshoot.2013, OlsenPi2014 in raw_functions
+#TODO : exchange bulk density with the 2014 one as soon as I get it.
+rPRI <- raw_functions[, c("Plot", "Pmic.2014", "Bulk.density2011", "OlsenPi2014", "Pshoot.2013", "Biomass2013")]
+rPRI[, "micPstock":= (Pmic.2014 / 1000000)*(Bulk.density2011 * 100000)]
+rPRI[, "soilPstock" := (OlsenPi2014 / 1000000) * (Bulk.density2011 * 100000)]
+rPRI[, "plantPstock" := Pshoot.2013 * Biomass2013]
+rPRI[, "PRI" := (micPstock + plantPstock)/(micPstock + plantPstock + soilPstock)]
+raw_functions <- merge(raw_functions, rPRI[,c("Plot", "PRI")], by = "Plot", all = T) ; rm(rPRI)
+
+
+# 2011
+# could be done, but only using NaHCO3_Pi from 2008/2009
 ```
+
+
+```{r}
+## calculate PRI
+# first convert soil P and microbial P to stocks rather than concentrations
+# concentrations are mg/kg, convert to g/g
+# bulk density is in g/cm3 to 10cm depth, multiply by 100,000 to convert to g soil per m2
+soilPstock <- (fonly6$OlsenPi2014/1000000) * (fonly6$Bulk.density2014 * 100000)
+micPstock <- (fonly6$Pmic/1000000) * (fonly6$Bulk.density2014 * 100000)
+
+PRI <- with(fonly6, (micPstock + Pshoot) / (micPstock + Pshoot + OlsenPi2014)) ## use averages for Pmic and Pshoot as we only have one value of Olsen P
+P_loss_comb <- multidiv(cbind(ploss, PRI), sc="sd", cent=TRUE)[,1]
+
+```
+
+
+
+
+
+
+
 
 # pathogen infection
 mean_prevalence : mean disease prevalence on plot averaged across all pathogens. The percentage of plants with visible infection symptoms.
@@ -284,33 +332,44 @@ calculate total area infected by pathogens per plot:
 
 ```{r, eval=F}
 pathogen.infection <- list_raw_functions[["pathogen.infection"]]
-pathogen.infection2 <- list_raw_functions[["pathogen.infection2"]]
+plantcover <- list_raw_functions[["plantcover"]]
 
 # calculate plant cover
-pathogen.infection2 <- data.table::as.data.table(aggregate(Cover~Plot, pathogen.infection2, sum))
-# normalisation across plots
-pathogen.infection2[,"normCover" := Cover / sum(Cover, na.rm=T)]
+plantcover <- data.table::as.data.table(aggregate(Cover~Plot, plantcover, sum))
+plantcover[,"areaCover" := Cover * 2500 / 100]
+
+# # normalisation across plots
+# plantcover[,"normCover" := Cover / sum(Cover, na.rm=T)]
+# # center around 1
+# plantcover[, "centCover" := Cover - mean(plantcover$Cover)]
+# dividemean
+plantcover[, "divnormCover" := Cover / mean(plantcover$areaCover)]
+# standardisation
+plantcover[, "standCover" := scale(Cover)]
 
 # merge datasets
-pathogen.infection <- merge(pathogen.infection, pathogen.infection2, by = "Plot", all = T)
+pathogen.infection <- merge(pathogen.infection, plantcover, by = "Plot", all = T)
 
 # calculate total foliar pathogen infection
-pathogen.infection[, "pathogen.infection" := normCover * (mean_prevalence/ 100) * (mean_severity/ 100)]
+# pathogen.infection[, "pathogen.infection" := normCover * (mean_prevalence/ 100) * (mean_severity/ 100)]
+pathogen.infection[, "pathogen.infection" := standCover * ((mean_prevalence) * (mean_severity)/100) / 100]
 
 # comparison to synthesis
-d <- merge(pathogen.infection, synthesis[, c("Plot", "pathogen.infection")])
+d <- merge(pathogen.infection, synthesis[, c("Plot", "pathogen.infection")], by="Plot")
 plot(d$pathogen.infection.x, d$pathogen.infection.y)
+
 # problem with plto AEG4 : mean prevalence is 83.8 and mean severity is 43.4 - extremely high values !
 d[Plot == "AEG4", "pathogen.infection.x"] <- 0
 d[Plot == "AEG4", "pathogen.infection.y"] <- 0
 # not correlated neither
-# new approach: normalise fungi data
-pathogen.infection[, "normm_prevalence" := mean_prevalence / sum(mean_prevalence, na.rm=T)]
-pathogen.infection[, "normm_severity" := mean_severity / sum(mean_severity, na.rm=T)]
-pathogen.infection[, "pathogen.infection" := normCover * normm_prevalence * normm_severity]
-d <- merge(pathogen.infection, synthesis[, c("Plot", "pathogen.infection")])
-plot(d$pathogen.infection.x, d$pathogen.infection.y, xlim = c(0, 4e-06))
-# still not correlated
+
+# # new approach: normalise fungi data
+# pathogen.infection[, "normm_prevalence" := mean_prevalence / sum(mean_prevalence, na.rm=T)]
+# pathogen.infection[, "normm_severity" := mean_severity / sum(mean_severity, na.rm=T)]
+# pathogen.infection[, "pathogen.infection" := normCover * normm_prevalence * normm_severity]
+# d <- merge(pathogen.infection, synthesis[, c("Plot", "pathogen.infection")])
+# plot(d$pathogen.infection.x, d$pathogen.infection.y, xlim = c(0, 4e-06))
+# # still not correlated
 
 # TODO : not correlated with synthesis dataset! there must be an error somewhere... 
 # or can it be because debi cleaned the plant cover data? 
@@ -330,3 +389,5 @@ cat("Dear user, \n
 prefix <- readline(prompt="Write now : ")
 write.csv(raw_functions, file=paste("~/Desktop/", prefix, "_raw_functions_dataset.csv", sep=""))
 ```
+
+TODO : take out all functions which were only included to calculate others, e.g. Pmic 2011, 2014

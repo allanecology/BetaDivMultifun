@@ -579,21 +579,24 @@ mean_severity : mean disease severity on plot averaged across all pathogens. The
 % pflanzenoberfläche betroffen (über alle pflanzen?!)
 
 **plant cover data** 
+sampled all species in an area of 4m x 4m and estimated the percentage cover of each species.
 
-```{r, eval=F}
+only take total plant cover area
+```{r}
 # infections
 pathogen.infection <- data.table::fread(info_data$path_unix[grep("pathogen.infection", info_data$ColumnName)][[1]])
+
 pathogen.infection <- pathogen.infection[, c("EP_plot_ID", "mean_prevalence","mean_severity")]
 data.table::setnames(pathogen.infection, old=c("EP_plot_ID", "mean_prevalence","mean_severity"), new=c("Plot", "mean_prevalence","mean_severity"))
 
 # plant cover
-pathogen.infection2 <- data.table::fread(info_data$path_unix[grep("pathogen.infection2", info_data$ColumnName)])
-pathogen.infection2 <- pathogen.infection2[Year == "2011", c("EP_PlotID", "Species", "Cover")]
-data.table::setnames(pathogen.infection2, old = "EP_PlotID", new= "Plot")
-pathogen.infection2[, Cover := as.numeric(Cover)]
+plantcover <- data.table::fread(info_data$path_unix[grep("plant.cover", info_data$ColumnName)])
+plantcover <- plantcover[Year == "2011", c("EP_PlotID", "Species", "Cover")]
+data.table::setnames(plantcover, old = "EP_PlotID", new= "Plot")
+plantcover[, Cover := as.numeric(Cover)]
 
 list_raw_functions[["pathogen.infection"]] <- pathogen.infection; rm(pathogen.infection)
-list_raw_functions[["pathogen.infection2"]] <- pathogen.infection2; rm(pathogen.infection2)
+list_raw_functions[["plantcover"]] <- plantcover; rm(plantcover)
 ```
 
 # Total pollinators
