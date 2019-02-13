@@ -44,12 +44,11 @@ Generate a dataset which stores all raw data. Will be assembled with the script 
 raw_functions <- data.table::copy(PlotExplo)
 # generate list for datasets that will be constructed in 2calc_raw_dataset.R script directly.
 list_raw_functions <- list()
+# create vector for helper variables which are used to calculate functions
+helper_funs <- c()
+#TODO : take helper fun out again? Do I want this?
 ```
 
-# Temperature and moisture
-```{r}
-#TODO where is this dataset?
-```
 
 
 # Biomass
@@ -539,13 +538,23 @@ dung with a fresh weight of approx. 220.7 (± 19.9) g of cow, 34.4 (± 3.8) g of
 
 see [PhD thesis](http://tuprints.ulb.tu-darmstadt.de/7402/1/20180502%20Frank.pdf)
 
+Easiest : 
+- only summer 2014 (month must contain 2014)
+just add up the removal_g per plot and divide by number of contributors
 ```{r, eval=F}
 dw <- c("Cow", "Horse", "Sheep", "Deer", "Fox", "Boar")
 # "Cow"       "Horse"     "Deer"      "Sheep"     "Wildboar"  "Fox"       "Brownbear" "Elephant"  "Elk"       "Wisent"    "Wolf"
 dung.decomposition <- data.table::fread(info_data$path_unix[grep("dung.decomposition", info_data$ColumnName)])
-dung.decomposition[EP == "AEG2" & dungtype == "Cow", ]
-# 0.458213653
-#TODO : ask if there is a script around. 
+# only take Grassland plots
+dung.decomposition <- dung.decomposition[grep("G", dung.decomposition$EP)]
+dung.decomposition <- dung.decomposition[grep("2014", dung.decomposition$month)]
+
+aug <- dung.decomposition[month == "August_2014"]
+#TODO : check in which month all plots were measured equally often.
+barplot(table(dung.decomposition$EP))
+
+p <- ggplot(dung.decomposition, aes(x=EP)) + 
+  geom_density()
 ```
 
 # Litter decomposition
