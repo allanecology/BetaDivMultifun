@@ -262,6 +262,12 @@ Bulk.density.soil.C.stock.2011 <- data.table::fread(info_data$path_unix[grep("So
 Bulk.density.soil.C.stock.2011 <- Bulk.density.soil.C.stock.2011[Type == "G"]
 Bulk.density.soil.C.stock.2011 <- data.table::setnames(Bulk.density.soil.C.stock.2011[,c("EP_Plotid", "BD", "OC_stock")], old=c("EP_Plotid", "BD", "OC_stock"), new=c("Plot", "Bulk.density2011", "Soil.C.stock"))
 raw_functions <- merge(raw_functions, Bulk.density.soil.C.stock.2011, by="Plot", all=T); rm(Bulk.density.soil.C.stock.2011)
+
+# 2014
+Bulk.density2014 <- data.table::fread(info_data$path_unix[grep("Bulk.density2014", info_data$ColumnName)], header=T, sep='\t')
+Bulk.density2014 <- Bulk.density2014[, c("EP_Plot_ID", "Bulk_density")]
+data.table::setnames(Bulk.density2014, old = c("EP_Plot_ID", "Bulk_density"), new = c("Plot", "Bulk.density2014"))
+raw_functions <- merge(raw_functions, Bulk.density2014, by="Plot", all=T); rm(Bulk.density2014)
 ```
 
 # Herbivory
@@ -414,6 +420,7 @@ Potential.nitrification <- Potential.nitrification[,c("PlotID", "pot_nitrificati
 data.table::setnames(Potential.nitrification, old=c("PlotID", "pot_nitrification"), new=c("Plot", "Potential.nitrification"))
 raw_functions <- merge(raw_functions, Potential.nitrification, by="Plot", all=T); rm(Potential.nitrification)
 ```
+
 
 # Nmic
 Within the soil sampling campaign 2011 all samples are taken in the beginning of May 2011 as a mixed sample from the top horizon (0-10 cm) of the all 50 grassland experimental plots of all three exploratories.

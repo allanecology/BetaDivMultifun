@@ -5,12 +5,6 @@ date: "December 5, 2018"
 output: html_document
 ---
 
-# create dataset
-```{r}
-security_copy <- data.table::copy(raw_functions)
-```
-
-
 # Biomass 2009
 ## take as it is
 Because ranges are comparable to other years.
@@ -35,6 +29,7 @@ points(rep(2009, 149), Biomass2009[Treatment == "K2", Biomass2009], col="green")
 Biomass2009 <- list_raw_functions$Biomass2009
 Biomass2009 <- aggregate(Biomass2009~Plot, Biomass2009, mean)
 raw_functions <- merge(raw_functions, Biomass2009, by = "Plot", all = T) ; rm(Biomass2009)
+list_raw_functions["Biomass2009"] <- NULL
 ```
 
 
@@ -98,13 +93,16 @@ rb = fine root + coarse root biomass
 Root.biomass <- list_raw_functions$Root.biomass
 Root.biomass[, "Root.biomass" := rowSums(.SD,na.rm=T), .SDcols=c("Fine_Roots_Biomass", "Coarse_Roots_Biomass")]
 Root.biomass <- Root.biomass[, c("Plot", "Root.biomass")]
-raw_functions <- merge(raw_functions, Root.biomass, by="Plot", all=T)
+raw_functions <- merge(raw_functions, Root.biomass, by="Plot", all=T); rm(Root.biomass)
+list_raw_functions["Root.biomass"] <- NULL
 ```
 
 # Groundwater recharge
 ```{r}
 Gtot <- list_raw_functions$Groundwater.recharge
 raw_functions[, Groundwater.recharge := rowMeans(Gtot[,c(paste("Groundwater.recharge", seq(2010,2016), sep=""))])]
+rm(Gtot)
+list_raw_functions["Groundwater.recharge"] <- NULL
 ```
 
 
@@ -148,7 +146,6 @@ same dataset like forage.quality
 first convert soil P and microbial P to stocks rather than concentrations; concentrations are mg/kg, convert to g/g
 ```{r}
 nutrients <- list_raw_functions$nutrients
-#TODO : there is something wrong with Biomass 2009. --> see there
 
 # multiply with biomass!
 # nutrients <- list_raw_functions$nutrients
@@ -161,7 +158,7 @@ nutrients <- list_raw_functions$nutrients
 # plot(bal$Nshoot.2009.x, bal$Nshoot.2009.x - bal$Nshoot.2009.y)
 
 # 2009
-assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2009")], nutrients, by="Plot", all=T)
+assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2009")], nutrients, by="Plot", all=T) 
 assemblednutrients[, Nshoot.2009 := Biomass2009 * (Nshoot2009percent / 100)]
 assemblednutrients[, Pshoot.2009 := Biomass2009 * (Pshoot2010percent / 100)]
 # add to raw_functions
@@ -192,8 +189,9 @@ raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2012
 assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2013")], nutrients, by="Plot", all=T)
 assemblednutrients[, Nshoot.2013 := Biomass2013 * (Nshoot2013percent / 100)]
 assemblednutrients[, Pshoot.2013 := Biomass2013 * (Pshoot2013percent / 100)]
-raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2013", "Pshoot.2013")], by = "Plot", all = T)
+raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2013", "Pshoot.2013")], by = "Plot", all = T) ; rm(assemblednutrients); rm(nutrients)
 
+list_raw_functions["nutrients"] <- NULL
 ```
 
 
@@ -215,7 +213,8 @@ Herbivory.2013 <- list_raw_functions$Herbivory.2013
 
 Herbivory.2013 <- aggregate(PercHerbivory~EP_Plotid, Herbivory.2013, mean)
 data.table::setnames(Herbivory.2013, old=c("EP_Plotid", "PercHerbivory"), new=c("Plot", "herbivory.2013"))
-raw_functions <- merge(raw_functions, Herbivory.2013, by="Plot", all.x=T)
+raw_functions <- merge(raw_functions, Herbivory.2013, by="Plot", all.x=T) ; rm(Herbivory.2013)
+list_raw_functions["Herbivory.2013"] <- NULL
 ```
 
 
@@ -226,7 +225,8 @@ Litter.decomposition <- list_raw_functions$Litter.decomposition
 # take the mean daily decomposition rate over all measures, the ones with 2 months and the ones with 4 months decomposition.
 Litter.decomposition <- aggregate(DailyDecompositionRate~EPPlotID,Litter.decomposition,mean)
 data.table::setnames(Litter.decomposition, old=c("EPPlotID", "DailyDecompositionRate"), new=c("Plot", "Litter.decomposition"))
-raw_functions <- merge(raw_functions, Litter.decomposition, by="Plot", all.x = T)
+raw_functions <- merge(raw_functions, Litter.decomposition, by="Plot", all.x = T) ; rm(Litter.decomposition)
+list_raw_functions["Litter.decomposition"] <- NULL
 ```
 
 
@@ -247,7 +247,8 @@ pt <- pt[Function == "Parasitoid", c("PlotID", "Total_BC_No")]
 pt <- aggregate(Total_BC_No~PlotID, pt, sum)
 data.table::setnames(pt, old=c("PlotID", "Total_BC_No"), new=c("Plot", "Parasitoid.traps"))
 # append to raw functions list
-raw_functions <- merge(raw_functions, pt, by="Plot", all.x = T)
+raw_functions <- merge(raw_functions, pt, by="Plot", all.x = T); rm(pt)
+list_raw_functions["Parasitoid.traps"] <- NULL
 ```
 
 # Total pollinators
@@ -257,7 +258,8 @@ The number from the downloaded dataset is taken, but the change is recorded.
 ```{r}
 Total.pollinators <- list_raw_functions$Total.pollinators
 Total.pollinators <- aggregate(Total.pollinators~Plot, Total.pollinators, sum)
-raw_functions <- merge(raw_functions, Total.pollinators, by="Plot", all=T)
+raw_functions <- merge(raw_functions, Total.pollinators, by="Plot", all=T) ; rm(Total.pollinators)
+list_raw_functions["Total.pollinators"] <- NULL
 ```
 
 
@@ -280,10 +282,9 @@ $$soil P  = \frac{Olsen Pi (mg/kg)}{1000000} * (bulk density (g/cm^3) * 100000 c
 ```{r}
 # 2014
 # Pmic.2014 Pshoot.2013, OlsenPi2014 in raw_functions
-#TODO : exchange bulk density with the 2014 one as soon as I get it.
-rPRI <- raw_functions[, c("Plot", "Pmic.2014", "Bulk.density2011", "OlsenPi2014", "Pshoot.2013", "Biomass2013")]
-rPRI[, "micPstock":= (Pmic.2014 / 1000000)*(Bulk.density2011 * 100000)]
-rPRI[, "soilPstock" := (OlsenPi2014 / 1000000) * (Bulk.density2011 * 100000)]
+rPRI <- raw_functions[, c("Plot", "Pmic.2014", "Bulk.density2014", "OlsenPi2014", "Pshoot.2013", "Biomass2013")]
+rPRI[, "micPstock":= (Pmic.2014 / 1000000)*(Bulk.density2014 * 100000)]
+rPRI[, "soilPstock" := (OlsenPi2014 / 1000000) * (Bulk.density2014 * 100000)]
 rPRI[, "plantPstock" := Pshoot.2013 * Biomass2013]
 rPRI[, "PRI" := (micPstock + plantPstock)/(micPstock + plantPstock + soilPstock)]
 raw_functions <- merge(raw_functions, rPRI[,c("Plot", "PRI")], by = "Plot", all = T) ; rm(rPRI)
@@ -292,26 +293,6 @@ raw_functions <- merge(raw_functions, rPRI[,c("Plot", "PRI")], by = "Plot", all 
 # 2011
 # could be done, but only using NaHCO3_Pi from 2008/2009
 ```
-
-
-```{r}
-## calculate PRI
-# first convert soil P and microbial P to stocks rather than concentrations
-# concentrations are mg/kg, convert to g/g
-# bulk density is in g/cm3 to 10cm depth, multiply by 100,000 to convert to g soil per m2
-soilPstock <- (fonly6$OlsenPi2014/1000000) * (fonly6$Bulk.density2014 * 100000)
-micPstock <- (fonly6$Pmic/1000000) * (fonly6$Bulk.density2014 * 100000)
-
-PRI <- with(fonly6, (micPstock + Pshoot) / (micPstock + Pshoot + OlsenPi2014)) ## use averages for Pmic and Pshoot as we only have one value of Olsen P
-P_loss_comb <- multidiv(cbind(ploss, PRI), sc="sd", cent=TRUE)[,1]
-
-```
-
-
-
-
-
-
 
 
 # pathogen infection
@@ -373,6 +354,10 @@ d[Plot == "AEG4", "pathogen.infection.y"] <- 0
 
 # TODO : not correlated with synthesis dataset! there must be an error somewhere... 
 # or can it be because debi cleaned the plant cover data? 
+
+
+# list_raw_functions["pathogen.infection"] <- NULL
+# list_raw_functions["plantcover"] <- NULL
 ```
 
 
