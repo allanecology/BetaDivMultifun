@@ -361,6 +361,7 @@ d[Plot == "AEG4", "pathogen.infection.y"] <- 0
 ```
 
 # dung decomposition
+Taking the mean over all 5 dung types for each plot.
 ```{r}
 dung.decomposition <- list_raw_functions[["dung.decomposition"]]
 dung.decomposition <- aggregate(removal_g~EP, dung.decomposition, mean)
