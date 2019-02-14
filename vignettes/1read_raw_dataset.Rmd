@@ -540,21 +540,19 @@ see [PhD thesis](http://tuprints.ulb.tu-darmstadt.de/7402/1/20180502%20Frank.pdf
 
 Easiest : 
 - only summer 2014 (month must contain 2014)
+- AEG : August, HEG : July, SEG : June, 5 replicates (dung types) per plot
+- the long-term plots were measured during this time as well, always 5 replicates per plot
 just add up the removal_g per plot and divide by number of contributors
+
 ```{r, eval=F}
-dw <- c("Cow", "Horse", "Sheep", "Deer", "Fox", "Boar")
-# "Cow"       "Horse"     "Deer"      "Sheep"     "Wildboar"  "Fox"       "Brownbear" "Elephant"  "Elk"       "Wisent"    "Wolf"
 dung.decomposition <- data.table::fread(info_data$path_unix[grep("dung.decomposition", info_data$ColumnName)])
 # only take Grassland plots
 dung.decomposition <- dung.decomposition[grep("G", dung.decomposition$EP)]
 dung.decomposition <- dung.decomposition[grep("2014", dung.decomposition$month)]
-
-aug <- dung.decomposition[month == "August_2014"]
-#TODO : check in which month all plots were measured equally often.
-barplot(table(dung.decomposition$EP))
-
-p <- ggplot(dung.decomposition, aes(x=EP)) + 
-  geom_density()
+dung.decomposition <- dung.decomposition[month %in% c("June_2014", "July_2014", "August_2014")]
+# p <- ggplot(dung.decomposition, aes(x=EP, color=dungtype)) +
+#   geom_histogram(stat="count", alpha=1)
+list_raw_functions[["dung.decomposition"]] <- dung.decomposition[,c("EP", "dungtype", "removal_g")] ; rm(dung.decomposition)
 ```
 
 # Litter decomposition

@@ -360,6 +360,14 @@ d[Plot == "AEG4", "pathogen.infection.y"] <- 0
 # list_raw_functions["plantcover"] <- NULL
 ```
 
+# dung decomposition
+```{r}
+dung.decomposition <- list_raw_functions[["dung.decomposition"]]
+dung.decomposition <- aggregate(removal_g~EP, dung.decomposition, mean)
+data.table::setnames(dung.decomposition, old = c("EP", "removal_g"), new=c("Plot", "dung.decomposition"))
+raw_functions <- merge(raw_functions, dung.decomposition, by = "Plot", all = T) ; rm(dung.decomposition)
+list_raw_functions["dung.decomposition"] <- NULL
+```
 
 
 # store assembled dataset
