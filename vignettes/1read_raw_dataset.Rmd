@@ -544,7 +544,7 @@ Easiest :
 - the long-term plots were measured during this time as well, always 5 replicates per plot
 just add up the removal_g per plot and divide by number of contributors
 
-```{r, eval=F}
+```{r}
 dung.decomposition <- data.table::fread(info_data$path_unix[grep("dung.decomposition", info_data$ColumnName)])
 # only take Grassland plots
 dung.decomposition <- dung.decomposition[grep("G", dung.decomposition$EP)]

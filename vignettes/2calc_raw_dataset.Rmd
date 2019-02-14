@@ -118,7 +118,7 @@ according to forage quality estimation based on alfalfa (medicago sativa) values
 [% concentration in aboveground grassland plant community biomass without litter]
 
 ```{r, eval=F}
-forage.quality <- list_raw_functions$forage.quality
+forage.quality <- list_raw_functions[["forage.quality"]]
 # calculating the columns needed for forage quality calc
 forage.quality[, Crude.protein := 6.25*N]
 forage.quality[, DDM := 88.9-(0.779* ADF)]
@@ -128,8 +128,6 @@ forage.quality[, forage.quality := apply(scale(forage.quality[,c("RFV", "Crude.p
 
 # take apart the years and add separately to raw_functions
 forage.quality <- forage.quality[,c("Plot", "year", "forage.quality")]
-
-#TODO : multiply with biomass from same year
 
 for(i in unique(forage.quality$year)){
   newname <- paste("forage.quality", i, sep="")
