@@ -19,7 +19,7 @@ synthesis <- merge(PlotExplo[,c("Plot", "Plotn")], synthesis, by="Plotn")
 
 
 ```{r}
-CompareToReferenceDataset(raw_functions, synthesis, name="Biomass2011")
+CompareToReferenceDataset(raw_functions, synthesis, name="Biomass2011", sortcol="Plot")
 CompareToReferenceDataset(raw_functions, synthesis, name="Biomass2014")
 CompareToReferenceDataset(raw_functions, synthesis, name="SoilOrganicC")
 CompareToReferenceDataset(raw_functions, synthesis, name="Pmic.2011")
@@ -38,98 +38,46 @@ CompareToReferenceDataset(raw_functions, synthesis, name ="Potential.nitrificati
 CompareToReferenceDataset(raw_functions, synthesis, name ="Nmic.2011", sortcol = "Plot")
 CompareToReferenceDataset(raw_functions, synthesis, name ="NH4.2014", sortcol = "Plot")
 CompareToReferenceDataset(raw_functions, synthesis, name ="mAMFhyphae", sortcol = "Plot")
+CompareToReferenceDataset(raw_functions, synthesis, name="Parasitoid.traps")
+CompareToReferenceDataset(raw_functions, synthesis, name="Groundwater.recharge")
+CompareToReferenceDataset(raw_functions, synthesis, name="Phosphatase")
+CompareToReferenceDataset(raw_functions, synthesis, name="NO3.2014")
+CompareToReferenceDataset(raw_functions, synthesis, name="Root.biomass")
+CompareToReferenceDataset(raw_functions, synthesis, name="Litter.decomposition")
+CompareToReferenceDataset(raw_functions, synthesis, name="Nshoot.2011")
+CompareToReferenceDataset(raw_functions, synthesis, name="Pshoot.2011")
+CompareToReferenceDataset(raw_functions, synthesis, name="NH4.2014")
+CompareToReferenceDataset(raw_functions, synthesis, name="NO3.2014")
 
-CompareToReferenceDataset(raw_functions, synthesis, name ="pathogen.infection", sortcol = "Plot")
 
-```
-Run after running `2calc_raw_dataset.R`. There, the datasets which can not be included in the raw_functions variable are assembled and added to `raw_functions` to be able to compare to `synthesis`.
-```{r}
-CompareToReferenceDataset(raw_functions, synthesis, name ="herbivory", sortcol = "Plot")
-```
-
-
-## within range
-### Parasitoid traps
-see calculation in raw_dataset
-```{r}
-test <- merge(synthesis[,c("Plot", "Parasitoid.traps")], raw_functions[,c("Plot", "Parasitoid.traps")], by="Plot")
-max(test$Parasitoid.traps.x - test$Parasitoid.traps.y, na.rm=T)
-CompareToReferenceDataset(raw_functions, synthesis, name ="Parasitoid.traps", sortcol = "Plot")
-```
-
-### Groundwater recharge
-
-```{r}
-test <- merge(synthesis[, c("Plot", "Groundwater.recharge")], raw_functions[, c("Plot", "Groundwater.recharge")], by="Plot")
-max(test$Groundwater.recharge.x - test$Groundwater.recharge.y)
-```
-
-### Phosphatase
-```{r}
-CompareToReferenceDataset(raw_functions, synthesis, name="Phosphatase", sortcol = "Plot")
-test <- merge(raw_functions[, c("Plot", "Phosphatase")], synthesis[, c("Plot", "Phosphatase")], by="Plot")
-max(test$Phosphatase.x - test$Phosphatase.y)
-min(test$Phosphatase.x - test$Phosphatase.y)
-```
-### Nitrate NO3.2014
-```{r}
-test <- merge(synthesis[,c("Plot", "NO3.2014")], raw_functions, by="Plot")
-max(test$NO3.2014.x - test$NO3.2014.y)
-```
-
-### root biomass
-```{r}
-Root.biomass <- data.table::fread(info_data$path_unix[grep("Root.biomass", info_data$ColumnName)], header=T, sep='\t')
-Root.biomass <- Root.biomass[Type == "G"]
-Root.biomass <- Root.biomass[,c("EP_Plotid", "Fine_Roots_Biomass", "Coarse_Roots_Biomass")]
-data.table::setnames(Root.biomass, old="EP_Plotid", new="Plot")
-
-Root.biomass[,"Root.biomass":= rowSums(Root.biomass[,c("Fine_Roots_Biomass", "Coarse_Roots_Biomass")], na.rm=T)]
-Root.biomass <- merge(PlotExplo, Root.biomass, by="Plot")
-# comparing the two columns finds that they are not the same
-CompareToReferenceDataset(Root.biomass, synthesis, name="Root.biomass")
-# when closely comparing, they do not deviate much (most 1e-15, which is acceptable)
-test <- merge(Root.biomass, synthesis[,c("Plot", "Root.biomass")], by="Plot")
-max(test$Root.biomass.x - test$Root.biomass.y, na.rm=T)
-```
-### Herbivory
-```{r}
-raw_functions[,"herbivory" := rowMeans(raw_functions[, c("Herbivory1", "Herbivory2")], na.rm=T)]
+# change the naming
+raw_functions[,"herbivory" := herbivory.2013]
 CompareToReferenceDataset(raw_functions, synthesis, name="herbivory")
+raw_functions[, "herbivory" := NULL]
 
-deleteme <- merge(synthesis[,c("Plot","herbivory")], raw_functions, by="Plot")
-del <- deleteme$herbivory.x - deleteme$herbivory.y
-sum(del > 0.000001, na.rm=T)
-rm(del, deleteme); gc()
-```
-deviation from synthesis dataset is smaller than 0.000001.
-
-### Litter.decomposition
-```{r}
-t <- merge(synthesis[,c("Plot", "Litter.decomposition")], Litter.decomposition, by="Plot")
-max(t$Litter.decomposition.x - t$Litter.decomposition.y)
-```
-
-### Nshoot and Pshoot 2011
-```{r}
-t <- merge(synthesis[,c("Plot", "Nshoot.2011", "Pshoot.2011")], raw_functions[,c("Plot", "Nshoot.2011", "Pshoot.2011")], by="Plot")
-max(t$Nshoot.2011.x - t$Nshoot.2011.y, na.rm=T)
-max(t$Pshoot.2011.x - t$Pshoot.2011.y, na.rm=T)
-```
-
-
-
-## wrong name
-### Bulk density
-is from 2011, not 2014
-```{r}
-# correct error in synthesis : bulk density is from 2011, not 2014
 data.table::setnames(synthesis, old="Bulk.density2014", new="Bulk.density2011")
 CompareToReferenceDataset(raw_functions, synthesis, name="Bulk.density2011")
 ```
+Run after running `2calc_raw_dataset.R` and `1read_raw_datasets.Rmd`.
+
+## Erroneous entry in Synthesis
+```{r}
+CompareToReferenceDataset(raw_functions, synthesis, name ="Total.pollinators", sortcol = "Plot")
+```
+
+1 Value (AEG24) is 939 in synthesis and 339 in raw_functions. Was changed in synthesis (out of range).
+```{r}
+synthesis[Plot == "AEG24", ]$Total.pollinators <- 339
+CompareToReferenceDataset(raw_functions, synthesis, name ="Total.pollinators", sortcol = "Plot")
+```
+
+
+
 
 ## special cases
 ### NH4 and NO3
+not problematic, but : 
+
 11 duplicates, but in synthesis, only first occurrence is taken.
 ```{r}
 dups <- NH4.2014[duplicated(NH4.2014$Plot_ID), Plot_ID]
@@ -139,26 +87,30 @@ synthesis[synthesis$Plot %in% dups, c("Plot", "NH4.2014", "NO3.2014")]
 
 
 ## problematic
-### Total.pollinators
-Plot number AEG24 has 939 total pollinators in synthesis dataset, but only 339 total pollinators in the downloaded dataset. All other numbers are perfectly identical.
 
-The number from the downloaded dataset is taken, but the change is recorded.
-```{r, eval=F}
-test <- merge(synthesis[, c("Plot", "Total.pollinators")], raw_functions, by="Plot")
-test[which(test$Total.pollinators.x - test$Total.pollinators.y > 1),]
-# change number from synthesis dataset
-synthesis[Plot == "AEG24", ]$Total.pollinators <- 339
-#TODO : still returns FALSE; but I controlled all by hand and it seems to be correct. (equal number of NAs, all values are the same.)
-CompareToReferenceDataset(raw_functions, synthesis, name ="Total.pollinators", sortcol = "Plot")
+### pathogen.infection
+not even correlated.
+```{r}
+CompareToReferenceDataset(raw_functions, synthesis, name ="pathogen.infection", sortcol = "Plot")
 ```
 
 
 ### Biomass 2009
+Not the same values as in synthesis, but they are correlated.
 two treatments, neither was used in synthesis for Biomass2009
 ```{r, eval=F}
-Biomass2009 <- raw_functions[, c("Plot", "Biomass2009")]
-deleteme <- merge(Biomass2009, synthesis[,c("Plot", "Biomass2009")], by="Plot", all=T)
+CompareToReferenceDataset(raw_functions, synthesis, name="Biomass2009")
+deleteme <- merge(raw_functions[, c("Plot", "Biomass2009")], synthesis[,c("Plot", "Biomass2009")], by="Plot", all=T)
+plot(deleteme$Biomass2009.x, deleteme$Biomass2009.y)
 ```
+
+
+
+
+
+
+
+
 
 
 ### forage quality

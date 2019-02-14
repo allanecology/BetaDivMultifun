@@ -137,10 +137,13 @@ NULL
 #' @param sortcol name of the column which is used to sort rows
 #' @return Boolean value which indicates wheter the columns are identical or not.
 #' @export
-CompareToReferenceDataset <- function(tocompareset, refset, name, sortcol="Plot"){
+CompareToReferenceDataset <- function(tocompareset, refset, name, sortcol="Plot", tolerance=0.0001){
   refset <- refset[,c(sortcol, name), with=F]
-  data.table::setnames(refset, old="Plot", new="Plotn")
-  return(all.equal(refset, tocompareset[,c("Plotn", name), with=F], ignore.row.order=T))
+  tocompareset <- tocompareset[, c(sortcol, name), with=F]
+  m <- merge(refset, tocompareset, by=sortcol)
+  m[,"control" := m[,2] - m[,3]]
+  print("The following rows are not equal to the synthesis dataset (first refset (synthesis), then to compareset (raw_function):")
+  return(m[which(m[,"control"] > tolerance), ])
 }
 NULL
 
