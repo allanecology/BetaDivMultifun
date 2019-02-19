@@ -79,7 +79,7 @@ CompareToReferenceDataset(raw_functions, synthesis, name ="Total.pollinators", s
 not even correlated.
 ```{r, eval=F}
 # comparison to synthesis
-d <- merge(pathogen.infection, synthesis[, c("Plot", "pathogen.infection")], by="Plot")
+d <- merge(raw_functions[, c("Plot", "pathogen.infection")], synthesis[, c("Plot", "pathogen.infection")], by="Plot")
 plot(d$pathogen.infection.x, d$pathogen.infection.y)
 hist(d$pathogen.infection.y)
 CompareToReferenceDataset(raw_functions, synthesis, name ="pathogen.infection", sortcol = "Plot")

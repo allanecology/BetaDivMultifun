@@ -330,7 +330,7 @@ mean_severity : mean disease severity on plot averaged across all pathogens. The
 calculate total area infected by pathogens per plot: 
 * total foliar pathogen infection (% plants infected x mean % infection per plant x %cover of plant)
 
-```{r, eval=F}
+```{r}
 pathogen.infection <- list_raw_functions[["pathogen.infection"]]
 plantcover <- list_raw_functions[["plantcover"]]
 
@@ -354,9 +354,6 @@ pathogen.infection <- merge(pathogen.infection, plantcover, by = "Plot", all = T
 # pathogen.infection[, "pathogen.infection" := normCover * (mean_prevalence/ 100) * (mean_severity/ 100)]
 pathogen.infection[, "pathogen.infection" := standCover * ((mean_prevalence) * (mean_severity)/100) / 100]
 
-# comparison to synthesis
-d <- merge(pathogen.infection, synthesis[, c("Plot", "pathogen.infection")], by="Plot")
-plot(d$pathogen.infection.x, d$pathogen.infection.y)
 
 # # problem with plto AEG4 : mean prevalence is 83.8 and mean severity is 43.4 - extremely high values !
 # d[Plot == "AEG4", "pathogen.infection.x"] <- 0
