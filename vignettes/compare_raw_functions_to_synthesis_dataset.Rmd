@@ -73,24 +73,15 @@ CompareToReferenceDataset(raw_functions, synthesis, name ="Total.pollinators", s
 
 
 
-
-## special cases
-### NH4 and NO3
-not problematic, but : 
-
-11 duplicates, but in synthesis, only first occurrence is taken.
-```{r}
-dups <- NH4.2014[duplicated(NH4.2014$Plot_ID), Plot_ID]
-synthesis[synthesis$Plot %in% dups, c("Plot", "NH4.2014", "NO3.2014")]
-```
-
-
-
 ## problematic
 
 ### pathogen.infection
 not even correlated.
-```{r}
+```{r, eval=F}
+# comparison to synthesis
+d <- merge(pathogen.infection, synthesis[, c("Plot", "pathogen.infection")], by="Plot")
+plot(d$pathogen.infection.x, d$pathogen.infection.y)
+hist(d$pathogen.infection.y)
 CompareToReferenceDataset(raw_functions, synthesis, name ="pathogen.infection", sortcol = "Plot")
 ```
 
@@ -102,12 +93,8 @@ two treatments, neither was used in synthesis for Biomass2009
 CompareToReferenceDataset(raw_functions, synthesis, name="Biomass2009")
 deleteme <- merge(raw_functions[, c("Plot", "Biomass2009")], synthesis[,c("Plot", "Biomass2009")], by="Plot", all=T)
 plot(deleteme$Biomass2009.x, deleteme$Biomass2009.y)
+rm(deleteme)
 ```
-
-
-
-
-
 
 
 
@@ -115,17 +102,24 @@ plot(deleteme$Biomass2009.x, deleteme$Biomass2009.y)
 
 ### forage quality
 Note : **multiply with biomass from the given year!** - doesn't make sense - this would completely change the range!
+ohne biomasse - es geht um qualität, oder? "normalisation" der Jahre mit
+biomasse macht keinen sinn, da wir sowieso mit konzentrationen arbeiten...
+oder?
 ```{r}
-fs <- synthesis[,c("Plot", "forage.quality")]
-include <- c("Plot", colnames(raw_functions)[grep("forage", colnames(raw_functions))])
-fr <- raw_functions[, include, with=F]
-fr[,"means"] <- apply(fr[,-1], 1, mean, na.rm=T)
-test <- merge(fs, fr, by="Plot", all = T)
+# fs <- synthesis[,c("Plot", "forage.quality")]
+# include <- c("Plot", colnames(raw_functions)[grep("forage", colnames(raw_functions))])
+# fr <- raw_functions[, include, with=F]
+# fr[,"means"] <- apply(fr[,-1], 1, mean, na.rm=T)
+# test <- merge(fs, fr, by="Plot", all = T)
+# 
+# # same range of all values!
+# plot(test$forage.quality, ylim=c(3,-3)) ; points(test$forage.quality2009, col="pink"); points(test$forage.quality2010, col="green");
+# points(test$forage.quality2011, col="orange"); points(test$forage.quality2012, col="violet"); points(test$forage.quality2013, col="yellow")
+# points(test$means, col="red")
+CompareToReferenceDataset(raw_functions, synthesis, name="forage.quality")
 
-# same range of all values!
-plot(test$forage.quality, ylim=c(3,-3)) ; points(test$forage.quality2009, col="pink"); points(test$forage.quality2010, col="green");
-points(test$forage.quality2011, col="orange"); points(test$forage.quality2012, col="violet"); points(test$forage.quality2013, col="yellow")
-points(test$means, col="red")
+d <- merge(forage.quality, synthesis[, c("Plot", "forage.quality")], by="Plot", all=T)
+plot(d$forage.quality.x, d$forage.quality.y)
 ```
 
 ```{r}

@@ -320,34 +320,36 @@ more ADF/ NDF --> less nutritional value because less easy to digest
 according to forage quality estimation based on alfalfa (medicago sativa) values. [source](https://openprairie.sdstate.edu/cgi/viewcontent.cgi?referer=https://scholar.google.ch/&httpsredir=1&article=1351&context=extension_extra)
 
 [% concentration in aboveground grassland plant community biomass without litter]
-```{r, eval=F}
+```{r}
 forage.quality <- data.table::fread(info_data$path_unix[grep("forage.quality", info_data$ColumnName)], header=T, sep='\t')
-# 2009
-forage.quality.2009 <- forage.quality[year == "2009"]
-forage.quality.2009 <- forage.quality.2009[, c("Plot", "N", "ADF", "NDF")]
-data.table::setnames(forage.quality.2009, old=c("N", "ADF", "NDF"), new = c("N.2009", "ADF.2009", "NDF.2009"))
-# 2010
-forage.quality.2010 <- forage.quality[year == "2010"]
-forage.quality.2010 <- forage.quality.2010[, c("Plot", "N", "ADF", "NDF")]
-data.table::setnames(forage.quality.2010, old=c("N", "ADF", "NDF"), new = c("N.2010", "ADF.2010", "NDF.2010"))
-# 2011
-forage.quality.2011 <- forage.quality[year == "2011"]
-forage.quality.2011 <- forage.quality.2011[, c("Plot", "N", "ADF", "NDF")]
-data.table::setnames(forage.quality.2011, old=c("N", "ADF", "NDF"), new = c("N.2011", "ADF.2011", "NDF.2011"))
-# 2012
-forage.quality.2012 <- forage.quality[year == "2012"]
-forage.quality.2012 <- forage.quality.2012[, c("Plot", "N", "ADF", "NDF")]
-data.table::setnames(forage.quality.2012, old=c("N", "ADF", "NDF"), new = c("N.2012", "ADF.2012", "NDF.2012"))
-# 2013
-forage.quality.2013 <- forage.quality[year == "2013"]
-forage.quality.2013 <- forage.quality.2013[, c("Plot", "N", "ADF", "NDF")]
-data.table::setnames(forage.quality.2013, old=c("N", "ADF", "NDF"), new = c("N.2013", "ADF.2013", "NDF.2013"))
-# merge all years with raw_functions
-raw_functions <- merge(raw_functions, forage.quality.2009, by="Plot", all=T)
-raw_functions <- merge(raw_functions, forage.quality.2010, by="Plot", all=T)
-raw_functions <- merge(raw_functions, forage.quality.2011, by="Plot", all=T)
-raw_functions <- merge(raw_functions, forage.quality.2012, by="Plot", all=T)
-raw_functions <- merge(raw_functions, forage.quality.2013, by="Plot", all=T)
+list_raw_functions[["forage.quality"]] <- forage.quality; rm(forage.quality)
+
+# # 2009
+# forage.quality.2009 <- forage.quality[year == "2009"]
+# forage.quality.2009 <- forage.quality.2009[, c("Plot", "N", "ADF", "NDF")]
+# data.table::setnames(forage.quality.2009, old=c("N", "ADF", "NDF"), new = c("N.2009", "ADF.2009", "NDF.2009"))
+# # 2010
+# forage.quality.2010 <- forage.quality[year == "2010"]
+# forage.quality.2010 <- forage.quality.2010[, c("Plot", "N", "ADF", "NDF")]
+# data.table::setnames(forage.quality.2010, old=c("N", "ADF", "NDF"), new = c("N.2010", "ADF.2010", "NDF.2010"))
+# # 2011
+# forage.quality.2011 <- forage.quality[year == "2011"]
+# forage.quality.2011 <- forage.quality.2011[, c("Plot", "N", "ADF", "NDF")]
+# data.table::setnames(forage.quality.2011, old=c("N", "ADF", "NDF"), new = c("N.2011", "ADF.2011", "NDF.2011"))
+# # 2012
+# forage.quality.2012 <- forage.quality[year == "2012"]
+# forage.quality.2012 <- forage.quality.2012[, c("Plot", "N", "ADF", "NDF")]
+# data.table::setnames(forage.quality.2012, old=c("N", "ADF", "NDF"), new = c("N.2012", "ADF.2012", "NDF.2012"))
+# # 2013
+# forage.quality.2013 <- forage.quality[year == "2013"]
+# forage.quality.2013 <- forage.quality.2013[, c("Plot", "N", "ADF", "NDF")]
+# data.table::setnames(forage.quality.2013, old=c("N", "ADF", "NDF"), new = c("N.2013", "ADF.2013", "NDF.2013"))
+# # merge all years with raw_functions
+# raw_functions <- merge(raw_functions, forage.quality.2009, by="Plot", all=T)
+# raw_functions <- merge(raw_functions, forage.quality.2010, by="Plot", all=T)
+# raw_functions <- merge(raw_functions, forage.quality.2011, by="Plot", all=T)
+# raw_functions <- merge(raw_functions, forage.quality.2012, by="Plot", all=T)
+# raw_functions <- merge(raw_functions, forage.quality.2013, by="Plot", all=T)
 ```
 
 

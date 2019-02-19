@@ -118,23 +118,44 @@ according to forage quality estimation based on alfalfa (medicago sativa) values
 [% concentration in aboveground grassland plant community biomass without litter]
 
 ```{r, eval=F}
-forage.quality <- list_raw_functions[["forage.quality"]]
-# calculating the columns needed for forage quality calc
+forage.quality <- list_raw_functions$forage.quality
+
+# 1. calc fq for each plot
 forage.quality[, Crude.protein := 6.25*N]
 forage.quality[, DDM := 88.9-(0.779* ADF)]
 forage.quality[, DMI := 120/NDF]
 forage.quality[, RFV := (DDM*DMI)/1.29]
 forage.quality[, forage.quality := apply(scale(forage.quality[,c("RFV", "Crude.protein")]), 1, mean)]
+# mean of years
+forage.quality <- aggregate(forage.quality~Plot_name, forage.quality, mean)
+forage.quality <- data.table::data.table(forage.quality)
+data.table::setnames(forage.quality, old="Plot_name", new="Plot")
 
-# take apart the years and add separately to raw_functions
-forage.quality <- forage.quality[,c("Plot", "year", "forage.quality")]
+raw_functions <- merge(raw_functions, forage.quality, by="Plot", all=T)
 
-for(i in unique(forage.quality$year)){
-  newname <- paste("forage.quality", i, sep="")
-  fi <- forage.quality[year == i]
-  data.table::setnames(fi, old="forage.quality", new=newname)
-  raw_functions <- merge(raw_functions, fi[,!"year"], by="Plot", all=T)
-}
+
+# ohne biomasse - es geht um qualität, oder? "normalisation" der Jahre mit
+# biomasse macht keinen sinn, da wir sowieso mit konzentrationen arbeiten...
+# oder?
+
+
+# forage.quality <- list_raw_functions[["forage.quality"]]
+# # calculating the columns needed for forage quality calc
+# forage.quality[, Crude.protein := 6.25*N]
+# forage.quality[, DDM := 88.9-(0.779* ADF)]
+# forage.quality[, DMI := 120/NDF]
+# forage.quality[, RFV := (DDM*DMI)/1.29]
+# forage.quality[, forage.quality := apply(scale(forage.quality[,c("RFV", "Crude.protein")]), 1, mean)]
+# 
+# # take apart the years and add separately to raw_functions
+# forage.quality <- forage.quality[,c("Plot", "year", "forage.quality")]
+# 
+# for(i in unique(forage.quality$year)){
+#   newname <- paste("forage.quality", i, sep="")
+#   fi <- forage.quality[year == i]
+#   data.table::setnames(fi, old="forage.quality", new=newname)
+#   raw_functions <- merge(raw_functions, fi[,!"year"], by="Plot", all=T)
+# }
 ```
 See in compare_raw_function_to_synthesis for yearly calculation!
 
@@ -322,9 +343,9 @@ plantcover[,"areaCover" := Cover * 2500 / 100]
 # # center around 1
 # plantcover[, "centCover" := Cover - mean(plantcover$Cover)]
 # dividemean
-plantcover[, "divnormCover" := Cover / mean(plantcover$areaCover)]
-# standardisation
-plantcover[, "standCover" := scale(Cover)]
+plantcover[, "divnormCover" := areaCover / mean(plantcover$areaCover)]
+# standardisation (substract the mean and divide by sd)
+plantcover[, "standCover" := scale(areaCover, center = T, scale = T)]
 
 # merge datasets
 pathogen.infection <- merge(pathogen.infection, plantcover, by = "Plot", all = T)
@@ -337,10 +358,12 @@ pathogen.infection[, "pathogen.infection" := standCover * ((mean_prevalence) * (
 d <- merge(pathogen.infection, synthesis[, c("Plot", "pathogen.infection")], by="Plot")
 plot(d$pathogen.infection.x, d$pathogen.infection.y)
 
-# problem with plto AEG4 : mean prevalence is 83.8 and mean severity is 43.4 - extremely high values !
-d[Plot == "AEG4", "pathogen.infection.x"] <- 0
-d[Plot == "AEG4", "pathogen.infection.y"] <- 0
-# not correlated neither
+# # problem with plto AEG4 : mean prevalence is 83.8 and mean severity is 43.4 - extremely high values !
+# d[Plot == "AEG4", "pathogen.infection.x"] <- 0
+# d[Plot == "AEG4", "pathogen.infection.y"] <- 0
+# # not correlated neither
+
+
 
 # # new approach: normalise fungi data
 # pathogen.infection[, "normm_prevalence" := mean_prevalence / sum(mean_prevalence, na.rm=T)]
@@ -354,8 +377,9 @@ d[Plot == "AEG4", "pathogen.infection.y"] <- 0
 # or can it be because debi cleaned the plant cover data? 
 
 
-# list_raw_functions["pathogen.infection"] <- NULL
-# list_raw_functions["plantcover"] <- NULL
+list_raw_functions["pathogen.infection"] <- NULL
+list_raw_functions["plantcover"] <- NULL
+raw_functions <- merge(raw_functions, pathogen.infection[, c("Plot", "pathogen.infection")], by = "Plot", all = T) ; rm(pathogen.infection)
 ```
 
 # dung decomposition
