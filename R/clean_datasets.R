@@ -141,9 +141,11 @@ CompareToReferenceDataset <- function(tocompareset, refset, name, sortcol="Plot"
   refset <- refset[,c(sortcol, name), with=F]
   tocompareset <- tocompareset[, c(sortcol, name), with=F]
   m <- merge(refset, tocompareset, by=sortcol)
-  m[,"control" := m[,2] - m[,3]]
+  m <- data.table::data.table(m)
+  m[, "control" := m[,2] - m[,3]]
   print("The following rows are not equal to the synthesis dataset (first refset (synthesis), then to compareset (raw_function):")
   return(m[which(m[,"control"] > tolerance), ])
 }
 NULL
+
 
