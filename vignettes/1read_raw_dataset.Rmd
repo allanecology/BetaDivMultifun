@@ -607,6 +607,103 @@ list_raw_functions[["pathogen.infection"]] <- pathogen.infection; rm(pathogen.in
 list_raw_functions[["plantcover"]] <- plantcover; rm(plantcover)
 ```
 
+assembled data.
+
+The datasets are stored at the same place as other raw_datasets. 
+
+- "BE.grassland.flower.numbers.txt" contains flower numbers per species. 
+- "Flower_sizes.txt" contains information on how large a flower unit is, and which unit was measured in the field (e.g. single flowers or total area flowers). 
+- "Trap.nests.txt" contains information on BC numbers, Order, Family and Species as well as Function (parasitoid or host).
+- "BE.pathogen.abs.txt" : contains abbreviations for each species
+
+
+
+note : code adapted from Eric Allan
+```{r}
+path <- info_data$path_unix[grep("pathogen.infection", info_data$ColumnName)]
+# read in 3 datasets with the following names
+datasetnames <- c("BE.grassland.flower.numbers.txt", "Flower_sizes.txt", "Trap.nests.txt")
+paths <- paste(path, datasetnames, sep="")
+```
+
+**flower cover**
+```{r}
+fl.num <- read.table(paths[1], header = T)
+fl.size <- read.table(paths[2], header = T)
+#  calculate total flower cover in each plot
+size <- fl.size$flower_size[match(fl.num$Species, fl.size$species)]
+tot.cov <- size*fl.num$Number_of_flowering_units
+cov.plot <- with(fl.num, tapply(tot.cov, Plot_ID, sum))
+
+#TODO write.table(as.matrix(cov.plot), "flower.cover.plot.total.txt")
+```
+
+**Trap nesting**
+```{r}
+traps <- read.table(paths[3], header = T)
+# get summary of data
+parsum <- with(traps, tapply(Total_BC_No, list(Plot,Function), sum))
+
+Parasitoid.traps <- parsum[,2]
+Parasitoid.traps[is.na(Parasitoid.traps)] <- 0
+
+pParasitoid.traps <- parsum[,2]/parsum[,1] # get parasitoid to host ratio
+pParasitoid.traps[is.na(pParasitoid.traps)] <- 0
+
+traps2 <- data.frame(Parasitoid.traps, pParasitoid.traps)
+traps2 <- cbind("Plot" = rownames(traps2), traps2)
+
+#TODO write.table(traps2,"Trap.nest.Parasitoids.txt", row.names =F)
+```
+
+*Pathogens*
+```{r}
+pab <- read.table(paste(path, "BE.pathogen.abs.txt", sep=""), header = T)
+
+pat <- read.table(paste(path, "BE.foliar pathogen grass.txt", sep=""), header =T)
+# Originally, a file called "BE Plant cover 2011.txt" was used. This file was not found. Therefore, plant cover data with BExIS ID 24247 was used. 
+# plant cover
+# pla <- data.table::fread(info_data$path_unix[grep("plant.cover", info_data$ColumnName)])
+# Our data is already relative abundances.
+pla <- data.table::fread("/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/raw_data/24247_Vegetation Records for Grassland EPs, 2008 - 2018_1.1.1/24247.txt", header=T)
+pla <- pla[Year == "2011", c("Useful_EP_PlotID", "Species", "Cover")]
+data.table::setnames(pla, old = "Useful_EP_PlotID", new= "Plot")
+pla[, Cover := as.numeric(Cover)]
+plar <- data.table::copy(pla)
+
+tot.infect <- with(pat, perc_plants_infected*perc_infection_severity)/10000   ### calculate infection as prop plants infected x mean severity of infection per plant
+
+##### SB only identified Poa to genus, so need to combine Poas in Barbara data
+# aggregate all Poa from same plots
+Poa <- aggregate(Cover~Plot, pla[grep("Poa", Species)], sum)
+Poa <- data.table::as.data.table(Poa)
+# add column for "Species" to Poa
+Poa[, Species := "Poa"]
+pla2 <- rbind(plar[-grep("Poa", Species)], Poa)
+
+
+##################### not possible to go further because this file is missing. Without this file, species names are not matching!
+# pc <- read.table("Plants 2011 species classification.txt", header =T)
+# #TODO : the file path is not given for the above file. I could not find it.
+# pc2 <- pc[-grep("Poa", pc$Species),]
+# pc2$Species <- as.character(pc2$Species)
+# p <- c("Poa","G")
+# pc2 <- rbind(p, pc2)
+# pc2$Species <- as.factor(pc2$Species)
+# pc2 <- pc2[order(pc2$Species),]
+# ....
+
+
+```
+
+```{r}
+# "wrong" pathogen data
+vilichglich <- read.table("/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/raw_data/18546_Foliar fungal pathogens - species richness, prevalence and severity (2011, all grassland Eps)_1.1.4_PublicDataset/18546.txt")
+plantcoverdebi <- read.table("/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/raw_data/24247_Vegetation Records for Grassland EPs, 2008 - 2018_1.1.1/24247.txt", header=T)
+```
+
+
+
 # Total pollinators
 The total amount of visits per plot will be taken as total pollinators function.
 ```{r}
