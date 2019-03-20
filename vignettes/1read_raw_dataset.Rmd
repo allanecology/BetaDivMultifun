@@ -614,33 +614,30 @@ The datasets are stored at the same place as other raw_datasets.
 - "BE.grassland.flower.numbers.txt" contains flower numbers per species. 
 - "Flower_sizes.txt" contains information on how large a flower unit is, and which unit was measured in the field (e.g. single flowers or total area flowers). 
 - "Trap.nests.txt" contains information on BC numbers, Order, Family and Species as well as Function (parasitoid or host).
-- "BE.pathogen.abs.txt" : contains abbreviations for each species
-
+- "BE.pathogen.abs.txt" : contains abbreviations for each pathogen species
+- "BE Plant cover 2011.txt" : Tells for each plot and each plant species how much cover is there.
 
 
 note : code adapted from Eric Allan
 ```{r}
 path <- info_data$path_unix[grep("pathogen.infection", info_data$ColumnName)]
-# read in 3 datasets with the following names
-datasetnames <- c("BE.grassland.flower.numbers.txt", "Flower_sizes.txt", "Trap.nests.txt")
-paths <- paste(path, datasetnames, sep="")
 ```
 
 **flower cover**
 ```{r}
-fl.num <- read.table(paths[1], header = T)
-fl.size <- read.table(paths[2], header = T)
+fl.num <- read.table(paste(path,"BE.grassland.flower.numbers.txt", sep=""), header = T)
+fl.size <- read.table(paste(path, "Flower_sizes.txt", sep=""), header = T)
 #  calculate total flower cover in each plot
 size <- fl.size$flower_size[match(fl.num$Species, fl.size$species)]
 tot.cov <- size*fl.num$Number_of_flowering_units
-cov.plot <- with(fl.num, tapply(tot.cov, Plot_ID, sum))
 
-#TODO write.table(as.matrix(cov.plot), "flower.cover.plot.total.txt")
+cov.plot <- with(fl.num, tapply(tot.cov, Plot_ID, sum))
+cov.plot <- as.matrix(cov.plot)
 ```
 
 **Trap nesting**
 ```{r}
-traps <- read.table(paths[3], header = T)
+traps <- read.table(paste(path, "Trap.nests.txt", sep=""), header = T)
 # get summary of data
 parsum <- with(traps, tapply(Total_BC_No, list(Plot,Function), sum))
 
@@ -650,17 +647,131 @@ Parasitoid.traps[is.na(Parasitoid.traps)] <- 0
 pParasitoid.traps <- parsum[,2]/parsum[,1] # get parasitoid to host ratio
 pParasitoid.traps[is.na(pParasitoid.traps)] <- 0
 
+#TODO : probably, next 2 lines ar not used --> can be deleted!
 traps2 <- data.frame(Parasitoid.traps, pParasitoid.traps)
 traps2 <- cbind("Plot" = rownames(traps2), traps2)
-
-#TODO write.table(traps2,"Trap.nest.Parasitoids.txt", row.names =F)
 ```
 
 *Pathogens*
+Eric version with old plantcover
+```{r}
+pab <- read.table(paste(path, "BE.pathogen.abs.txt", sep=""), header = T)
+pat <- read.table(paste(path, "BE.foliar pathogen grass.txt", sep=""), header =T)
+pla <- read.table(paste(path, "BE Plant cover 2011.txt", sep=""), header=T)
+
+plab <- pla[,-1] # take out plots
+
+plar <- sweep(plab,1,apply(plab,1,sum),"/")       ### convert plant data to relative abundances
+# calculate total cover per plot and divide each value by this.
+
+pc <- read.table(paste(path, "Plants 2011 species classification.txt", sep=""), header =T)
+
+tot.infect <- with(pat, perc_plants_infected*perc_infection_severity)/10000   ### calculate infection as prop plants infected x mean severity of infection per plant
+
+
+
+
+
+##### SB only identified Poa to genus, so need to combine Poas in Barbara data
+Poa <- apply(plar[,grep("Poa", names(plar))],1,sum)
+#TODO : In the above line, I changed "pla" to "plar", that means for all Poa species, the absolute and not relative abundances had been taken.
+pla2 <- cbind(plar[, -grep("Poa", names(plar))], Poa)
+
+pc2 <- pc[-grep("Poa", pc$Species),] # correct this in the species classification as well
+pc2$Species <- as.character(pc2$Species)
+p <- c("Poa","G")
+pc2 <- rbind(p, pc2)
+pc2$Species <- as.factor(pc2$Species)
+pc2 <- pc2[order(pc2$Species),]
+
+#TODO delete this?
+# ### frame with only plants
+# pla3 <- pla2[,-1]
+# #TODO : this takes out the column for Achillea.millefolium.agg. - why? It is a plant and there are 5 more aggregated species. Maybe Poa was taken out?
+# #TODO : maybe take this block out and only work with pla2?
+# pla3 <- pla3[,order(names(pla3))]
+
+### total infection per plant species per plot
+p.infect <- with(pat, tapply(tot.infect, list(Plot,host), sum, na.rm=T))  
+
+colnames(p.infect) <- pab$Species.Schmitt[match(colnames(p.infect),pab$Ab)]
+
+p.infect[is.na(p.infect)] <- 0
+
+p.infect2 <- data.frame("Plot" =rownames(p.infect), p.infect)
+plt <- pla[,"Plot",drop=FALSE] # take plot names from somewhere
+p.infect3 <- merge(plt, p.infect2, by ="Plot", all.x=TRUE)
+
+###### multiply total infection by relative cover of plant species, assume that a missing species is not infected.
+
+allsp.infect <- matrix(nrow=150, ncol = ncol(pla2))
+
+for(i in 1:ncol(pla2)){
+#TODO : changed starting at 2 with starting at 1. Because the first species, "Aegopodium.podagraria" is taken out if the loop starts at 2.
+  # probably, this was still remaining from an extra species at the first column in an old dataset? Same reason why pla3 has the 
+  # first species deleted?
+#TODO : changed pla3 to pla2 everywhere in this loop and above
+p <- pla2[,i]
+m <- match(names(pla2)[i], colnames(p.infect3))
+
+if(is.na(m)){
+allsp.infect[,i] <- rep(0, 150)
+}
+else{
+allsp.infect[,i] <- p*p.infect3[,m]
+}
+}
+
+# allsp.infect <- allsp.infect[,-1]
+#TODO : the first column is taken out again in the above row which I commented out
+names(allsp.infect) <- colnames(p.infect)
+
+
+################## try with grasses multplying SB pathogen data with Barbara's data, assume that a missing species is not infected.
+
+grasses <- pla3[,which(pc2$FG=="G")]
+grasses <- data.frame(grasses)
+grasses2 <- cbind("Plot" = pla[,1], grasses)
+
+#dg <- apply(grasses[,-1], 1, function(x)which(x==max(x, na.rm=T)))
+
+grass.infect <- matrix(nrow=150, ncol = ncol(grasses2))
+
+for(i in 2:ncol(grasses2)){
+
+g <- grasses2[,i]
+m <- match(names(grasses2)[i], colnames(p.infect3))
+
+if(is.na(m)){
+grass.infect[,i] <- rep(0, 150)
+}
+else{
+grass.infect[,i] <- g*p.infect3[,m]
+}
+}
+
+grass.infect <- grass.infect[,-1]
+names(grass.infect) <- colnames(grasses2)
+
+### calculate summed pathogen infection
+path.infect <- apply(allsp.infect, 1, sum)
+path.infect.gr <- apply(grass.infect, 1, sum)
+
+pathogen.infection <- cbind("Plot" = plt, path.infect, path.infect.gr)
+
+write.table(pathogen.infection, "O:\\PROJECTS\\Exploratories Synthesis\\Syntheses 2011\\Processes - raw data files\\Text files\\Pathogen.infection.txt", row.names=FALSE)
+
+```
+
+
+
+
+noelle version with new plantcover
 ```{r}
 pab <- read.table(paste(path, "BE.pathogen.abs.txt", sep=""), header = T)
 
 pat <- read.table(paste(path, "BE.foliar pathogen grass.txt", sep=""), header =T)
+# ------------------------------------ new plantcover data ---------------------------------------------
 # Originally, a file called "BE Plant cover 2011.txt" was used. This file was not found. Therefore, plant cover data with BExIS ID 24247 was used. 
 # plant cover
 # pla <- data.table::fread(info_data$path_unix[grep("plant.cover", info_data$ColumnName)])
@@ -681,19 +792,7 @@ Poa <- data.table::as.data.table(Poa)
 Poa[, Species := "Poa"]
 pla2 <- rbind(plar[-grep("Poa", Species)], Poa)
 
-
-##################### not possible to go further because this file is missing. Without this file, species names are not matching!
-# pc <- read.table("Plants 2011 species classification.txt", header =T)
-# #TODO : the file path is not given for the above file. I could not find it.
-# pc2 <- pc[-grep("Poa", pc$Species),]
-# pc2$Species <- as.character(pc2$Species)
-# p <- c("Poa","G")
-# pc2 <- rbind(p, pc2)
-# pc2$Species <- as.factor(pc2$Species)
-# pc2 <- pc2[order(pc2$Species),]
-# ....
-
-
+# -----------------------------------------
 ```
 
 ```{r}
