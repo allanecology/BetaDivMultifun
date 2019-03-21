@@ -625,36 +625,6 @@ note : code adapted from Eric Allan
 path <- info_data$path_unix[grep("pathogen.infection", info_data$ColumnName)]
 ```
 
-**flower cover**
-```{r}
-fl.num <- read.table(paste(path,"BE.grassland.flower.numbers.txt", sep=""), header = T)
-fl.size <- read.table(paste(path, "Flower_sizes.txt", sep=""), header = T)
-#  calculate total flower cover in each plot
-size <- fl.size$flower_size[match(fl.num$Species, fl.size$species)]
-tot.cov <- size*fl.num$Number_of_flowering_units
-
-cov.plot <- with(fl.num, tapply(tot.cov, Plot_ID, sum))
-cov.plot <- as.matrix(cov.plot)
-```
-
-**Trap nesting**
-```{r}
-traps <- read.table(paste(path, "Trap.nests.txt", sep=""), header = T)
-# get summary of data
-parsum <- with(traps, tapply(Total_BC_No, list(Plot,Function), sum))
-
-Parasitoid.traps <- parsum[,2]
-Parasitoid.traps[is.na(Parasitoid.traps)] <- 0
-
-pParasitoid.traps <- parsum[,2]/parsum[,1] # get parasitoid to host ratio
-pParasitoid.traps[is.na(pParasitoid.traps)] <- 0
-
-#TODO : probably, next 2 lines ar not used --> can be deleted!
-traps2 <- data.frame(Parasitoid.traps, pParasitoid.traps)
-traps2 <- cbind("Plot" = rownames(traps2), traps2)
-```
-
-*Pathogens*
 Eric version with old plantcover
 ```{r}
 pab <- read.table(paste(path, "BE.pathogen.abs.txt", sep=""), header = T)
@@ -766,17 +736,14 @@ write.table(pathogen.infection, "O:\\PROJECTS\\Exploratories Synthesis\\Synthese
 
 ```
 
-
-
 ## new plantcover data
 noelle version with new plantcover
 ```{r}
 pab <- read.table(paste(path, "BE.pathogen.abs.txt", sep=""), header = T)
 pat <- read.table(paste(path, "BE.foliar pathogen grass.txt", sep=""), header =T)
-pc <- read.table(paste(path, "Plants 2011 species classification.txt", sep=""), header =T)
 
 # data is in relative abundances.
-npla <- data.table::fread("/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/raw_data/24247_Vegetation Records for Grassland EPs, 2008 - 2018_1.1.1/24247.txt", header=T)
+npla <- data.table::fread(info_data$path_unix[grep("plant.cover", info_data$ColumnName)][[1]])
 npla <- npla[Year == "2011", c("Useful_EP_PlotID", "Species", "Cover")]
 data.table::setnames(npla, old = "Useful_EP_PlotID", new= "Plot")
 npla[, Cover := as.numeric(Cover)]
@@ -790,14 +757,6 @@ Poa <- data.table::as.data.table(Poa)
 # add column for "Species" to Poa
 Poa[, Species := "Poa"]
 pla2 <- rbind(npla[-grep("Poa", Species)], Poa)
-
-#TODO I guess pc is not needed here...
-pc2 <- pc[-grep("Poa", pc$Species),] # correct this in the species classification as well
-pc2$Species <- as.character(pc2$Species)
-p <- c("Poa","G")
-pc2 <- rbind(p, pc2)
-pc2$Species <- as.factor(pc2$Species)
-pc2 <- pc2[order(pc2$Species),]
 
 ### total infection per plant species per plot
 # aggregate different pathogens per plant and plot (for all plant species which are affected by more than one pathogen)
@@ -945,7 +904,7 @@ test <- merge(p.infect, pla2, by=c("Plot", "Species"), all.x=T)
 test <- data.table::as.data.table(test)
 ###### multiply total infection by relative cover of plant species, assume that a missing species is not infected.
 test[, p.inf := tot.infect * Cover]
-pathogen.infection <- aggregate(p.inf.perplant~Plot, test, sum)
+pathogen.infection <- aggregate(p.inf~Plot, test, sum)
 ```
 
 
