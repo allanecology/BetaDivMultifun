@@ -571,6 +571,8 @@ list_raw_functions[["Parasitoid.traps"]] <- Parasitoid.traps ; rm(Parasitoid.tra
 
 
 # Pathogen infection
+update : is created from assembled data, available locally only.
+
 mean_prevalence X mean_severity, combined with 2011 plant cover data (19686) to calculate total area infected by pathogens per plot
 
 **pathogen data**
@@ -657,6 +659,9 @@ Eric version with old plantcover
 ```{r}
 pab <- read.table(paste(path, "BE.pathogen.abs.txt", sep=""), header = T)
 pat <- read.table(paste(path, "BE.foliar pathogen grass.txt", sep=""), header =T)
+```
+
+```{r}
 pla <- read.table(paste(path, "BE Plant cover 2011.txt", sep=""), header=T)
 
 plab <- pla[,-1] # take out plots
@@ -667,11 +672,9 @@ plar <- sweep(plab,1,apply(plab,1,sum),"/")       ### convert plant data to rela
 pc <- read.table(paste(path, "Plants 2011 species classification.txt", sep=""), header =T)
 
 tot.infect <- with(pat, perc_plants_infected*perc_infection_severity)/10000   ### calculate infection as prop plants infected x mean severity of infection per plant
+```
 
-
-
-
-
+```{r}
 ##### SB only identified Poa to genus, so need to combine Poas in Barbara data
 Poa <- apply(plar[,grep("Poa", names(plar))],1,sum)
 #TODO : In the above line, I changed "pla" to "plar", that means for all Poa species, the absolute and not relative abundances had been taken.
@@ -765,41 +768,188 @@ write.table(pathogen.infection, "O:\\PROJECTS\\Exploratories Synthesis\\Synthese
 
 
 
-
+## new plantcover data
 noelle version with new plantcover
 ```{r}
 pab <- read.table(paste(path, "BE.pathogen.abs.txt", sep=""), header = T)
-
 pat <- read.table(paste(path, "BE.foliar pathogen grass.txt", sep=""), header =T)
-# ------------------------------------ new plantcover data ---------------------------------------------
-# Originally, a file called "BE Plant cover 2011.txt" was used. This file was not found. Therefore, plant cover data with BExIS ID 24247 was used. 
-# plant cover
-# pla <- data.table::fread(info_data$path_unix[grep("plant.cover", info_data$ColumnName)])
-# Our data is already relative abundances.
-pla <- data.table::fread("/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/raw_data/24247_Vegetation Records for Grassland EPs, 2008 - 2018_1.1.1/24247.txt", header=T)
-pla <- pla[Year == "2011", c("Useful_EP_PlotID", "Species", "Cover")]
-data.table::setnames(pla, old = "Useful_EP_PlotID", new= "Plot")
-pla[, Cover := as.numeric(Cover)]
-plar <- data.table::copy(pla)
+pc <- read.table(paste(path, "Plants 2011 species classification.txt", sep=""), header =T)
+
+# data is in relative abundances.
+npla <- data.table::fread("/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/raw_data/24247_Vegetation Records for Grassland EPs, 2008 - 2018_1.1.1/24247.txt", header=T)
+npla <- npla[Year == "2011", c("Useful_EP_PlotID", "Species", "Cover")]
+data.table::setnames(npla, old = "Useful_EP_PlotID", new= "Plot")
+npla[, Cover := as.numeric(Cover)]
 
 tot.infect <- with(pat, perc_plants_infected*perc_infection_severity)/10000   ### calculate infection as prop plants infected x mean severity of infection per plant
 
 ##### SB only identified Poa to genus, so need to combine Poas in Barbara data
 # aggregate all Poa from same plots
-Poa <- aggregate(Cover~Plot, pla[grep("Poa", Species)], sum)
+Poa <- aggregate(Cover~Plot, npla[grep("Poa", Species)], sum)
 Poa <- data.table::as.data.table(Poa)
 # add column for "Species" to Poa
 Poa[, Species := "Poa"]
-pla2 <- rbind(plar[-grep("Poa", Species)], Poa)
+pla2 <- rbind(npla[-grep("Poa", Species)], Poa)
 
-# -----------------------------------------
+#TODO I guess pc is not needed here...
+pc2 <- pc[-grep("Poa", pc$Species),] # correct this in the species classification as well
+pc2$Species <- as.character(pc2$Species)
+p <- c("Poa","G")
+pc2 <- rbind(p, pc2)
+pc2$Species <- as.factor(pc2$Species)
+pc2 <- pc2[order(pc2$Species),]
+
+### total infection per plant species per plot
+# aggregate different pathogens per plant and plot (for all plant species which are affected by more than one pathogen)
+patt <- cbind(pat, tot.infect)
+# aggregate
+p.infect <- aggregate(tot.infect~Plot+host, patt, sum)
+```
+### Plant abbreviations reference table.
+```{r}
+### generate plant name reference table from npla and p.infect
+# to find back host species in plant cover data
+Speciesref <-unique(npla$Species)
+pla_reftable <- data.table::data.table("Abbrev" = as.character(unique(p.infect$host)))
+# create regex searchpattern
+pla_reftable[, "pattern" := lapply(Abbrev, function(w) paste(strsplit(w, split=NULL)[[1]], sep="", collapse=".{0,10}"))]
+# find pattern in plantcover data
+pla_reftable[, "Species" := lapply(pattern, function(p) unique(Speciesref[grep(p, Speciesref, perl=T)]))]
+pla_reftable[, "pattern" := NULL]
+# resolve rows with more than one match
+# is there another, unique match? If yes, the unique match is taken out from the double matches.
+len <- length(pla_reftable$Species[which(lengths(pla_reftable$Species) > 1)])
+for(i in 1:(len-1)){
+  e <- pla_reftable$Species[which(lengths(pla_reftable$Species) > 1)][[i]]
+  if(any(e %in% pla_reftable$Species[which(lengths(pla_reftable$Species) == 1)])){
+    # if one of the species names was identified as "single", delete it from the double one.
+    ne <- e[-which(e %in% pla_reftable$Species[which(lengths(pla_reftable$Species) == 1)])]
+    # store new species names
+    pla_reftable$Species[which(lengths(pla_reftable$Species) > 1)][[i]] <- ne
+  }
+}
+# still some doubles left. By hand.
+pla_reftable[Abbrev == "Achmil", Species := as.list("Achillea_millefolium_aggr.")]  # and not "Alchemilla_vulgaris_aggr." (1)
+pla_reftable[Abbrev == "Arrela", Species := as.list("Arrhenatherum_elatius")]  # and not "Arenaria_serpyllifolia" (11)
+pla_reftable[Abbrev == "Caracu", Species := as.list("Carex_acutiformis")]  # and not "Campanula_rapunculoides" or "Carlina_acaulis" (17)
+pla_reftable[Abbrev == "Carfla", Species := as.list("Carex_flacca")]  # and not "Campanula_persicifolia,Campanula_rotundifolia,Carduus_defloratus" (18)
+pla_reftable[Abbrev == "Crulae", Species := as.list("Cruciata_laevipes")]  # and not "Cirsium_vulgare" (27)
+pla_reftable[Abbrev == "Eupros", Species := as.list("Euphrasia_rostkoviana_aggr.")]  # and not "Euphorbia_helioscopia" (35)
+pla_reftable[Abbrev == "Falvul", Species := as.list("Falcaria_vulgaris")]  # and not "Fallopia_convolvulus" (37)
+
+pla_reftable[Abbrev == "Gentin", Species := as.list("Genista_tinctoria")]  # and not "Gentiana_verna,Gentianella_germanica" (47)
+pla_reftable[Abbrev == "Gerpra", Species := as.list("Geranium_pratense")]  # and not "Geranium_pyrenaicum" (49)
+pla_reftable[Abbrev == "Plalan", Species := as.list("Plantago_lanceolata")]  # and not "Platanthera_chlorantha" (67)
+pla_reftable[Abbrev == "Plamaj", Species := as.list("Plantago_major")]  # and not "Pimpinella_major" (68)
+pla_reftable[Abbrev == "Symoff", Species := as.list("Symphytum_officinale")]  # and not "Sisymbrium_officinale" (88)
+pla_reftable[Abbrev == "Trifla", Species := as.list("Trisetum_flavescens")]  # and not "Trifolium_alpestre, Trifolium_arvense, Trifolium_campestre, Trifolium_montanum, Trifolium_pratense" (91)
+pla_reftable[Abbrev == "Tripra", Species := as.list("Trifolium_pratense")]  # and not "Tripleurospermum_perforatum" (92)
+pla_reftable[Abbrev == "Trirep", Species := as.list("Trifolium_repens")]  # and not "Tripleurospermum_perforatum" (93)
+pla_reftable[Abbrev == "Vicsep", Species := as.list("Vicia_sepium")]  # and not "Veronica_serpyllifolia" (96)
+
+# delete
+pla_reftable <- pla_reftable[Abbrev != "Des", ] # because only Deschampsia_cespitosa which has Abbreviation Desces (30)
+
+# change Fes to "Fesaru", because " Festuca_arundinacea" is only (logical) member of "Fes" (38) - other members were Festulolium_loliaceum,Fragaria_vesca,Fraxinus_excelsior
+# there is already a lina for it.
+pla_reftable <- pla_reftable[Abbrev == "Fes", Abbrev := "Fesaru"]
+pla_reftable[Abbrev == "Fesaru", Species := as.list("Festuca_arundinacea")] # and not "Festulolium_loliaceum,Fragaria_vesca,Fraxinus_excelsior"
+
+# 19: Carhir  Carex_hirta,Cardamine_hirsuta
+sum(npla[Species == "Carex_hirta",Cover])
+sum(npla[Species == "Cardamine_hirsuta",Cover])
+# There is no cover of Cardamine hirsuta, therefore take Carex hirta
+pla_reftable[Abbrev == "Carhir", Species := as.list("Carex_hirta")]  # and not "Cardamine_hirsuta" (19)
+
+# combine "Poa_annua", "Poa_pratensis_aggr.", "Poa_sp", "Poa_trivialis" to "Poa"
+npla$Species[grep("Poa", npla$Species)] <- "Poa"
+pla_reftable[Abbrev == "Poa", Species := as.list("Poa")]
+
+# Rumace : put together acetosa and acetosella in plantcover
+# 81: Rumace   Rumex_acetosa,Rumex_acetosella
+sum(npla[Species == "Rumex_acetosa",Cover])
+sum(npla[Species == "Rumex_acetosella",Cover])
+npla$Species[grep("Rumex_a", npla$Species)] <- "Rumex_acetos."
+pla_reftable[Abbrev == "Rumace", Species := as.list("Rumex_acetos.")]
+
+# Note : the below by-hand changes were only done for very small total infection rates (see table below) with max 3.6 and mean 0.42
+# host tot.infect
+# 1  Atrpat    0.00050
+# 2  Eupmin    0.00105
+# 3  Fessp.    0.02100
+# 4  Galalb    0.00175
+# 5  Polamp    0.00490
+# 6  Potsp.    0.15000
+# 7  Rhiale    0.06270
+# 8  Rhimin    0.00525
+# 9  Rossp.    0.74150
+# 10 Sissp.    0.09000
+# 11 Tarrud    3.61925
+
+# abbreviation "Tarrud" with no match in plantcover
+# Is most probably referring to "Taraxacum ruderalia
+pla_reftable[Abbrev == "Tarrud", Species := as.list("Taraxacum_sp")]
+
+# abbreviation "Sissp." with no match in plantcover
+# Is most probably referring to Sisymbrium_officinale
+pla_reftable[Abbrev == "Sissp.", Species := as.list("Sisymbrium_officinale")]
+
+# Potsp. with no match in plantcover
+# most probably is a Potentilla. but which? Potentilla reptans is the most common one.
+pla_reftable[Abbrev == "Potsp.", Species := as.list("Potentilla_reptans")]
+
+# Fessp. : most probably is Festuca species, but which? "Festuca_arundinacea", "Festuca_ovina_aggr.", "Festuca_pratensis", "Festuca_rubra_aggr."
+# Festuca_rubra_aggr is the most common, followed by Festuca_pratensis.
+# put to Festuca_rubra_aggr.
+pla_reftable[Abbrev == "Fessp.", Species := as.list("Festuca_rubra_aggr.")]
+
+# Polamp : assume typo - change to Polygala_amarella
+pla_reftable[Abbrev == "Polamp", Species := as.list("Polygala_amarella")]
+
+# Rhiale and Rhimin : most probably is part of Rhinanthus_aggr (the only species name starting with "Rhi")
+pla_reftable[Abbrev == "Rhiale", Species := as.list("Rhinanthus_aggr.")]
+pla_reftable[Abbrev == "Rhimin", Species := as.list("Rhinanthus_aggr.")]
+
+# Rossp. : most probably part of "Rosa_sp" (the other option would be Rosa_canina_aggr., so it does not matter too much)
+pla_reftable[Abbrev == "Rossp.", Species := as.list("Rosa_sp")]
+
+# Atrpat : could be Agrimonia_eupatoria, but this doesn't seem probable. Don't include.
+
+# Galalb : "Galeopsis_sp"         "Galium_aparine"       "Galium_mollugo_aggr." "Galium_pumilum"       "Galium_verum"
+# is there a alb in one of the aggregates? Not for Galeopsis. For Galium molluno aggr. it would be a very strange abbreviation.
+# very very small amount of tot. infection - can leave out.
+
+# Eupmin : no probable candidate, leave out (very small number)
+
+
+# -----------------------------------------Code which is useful to search things
+# pla_reftable$Abbrev[which(lengths(pla_reftable$Species) < 1)]
+# # p.infect[which(p.infect$host %in% pla_reftable$Abbrev[which(lengths(pla_reftable$Species) < 1)]),]
+# aggregate(tot.infect~host, p.infect[which(p.infect$host %in% pla_reftable$Abbrev[which(lengths(pla_reftable$Species) < 1)]),], sum)
+# 
+# unique(npla$Species[grep("Pot", npla$Species)])
+# # look up amount of plant cover.
+# sum(npla[grep("Potentilla_verna_aggr.", npla$Species), Cover])
+
+# make Species column as character
+pla_reftable[, "Species" := as.character(Species)]
 ```
 
 ```{r}
-# "wrong" pathogen data
-vilichglich <- read.table("/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/raw_data/18546_Foliar fungal pathogens - species richness, prevalence and severity (2011, all grassland Eps)_1.1.4_PublicDataset/18546.txt")
-plantcoverdebi <- read.table("/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/raw_data/24247_Vegetation Records for Grassland EPs, 2008 - 2018_1.1.1/24247.txt", header=T)
+# Translate p.infect Abbreviated species names to long names as used in plantcover data
+data.table::setnames(pla_reftable, old="Abbrev", new="host")
+p.infect <- merge(p.infect, pla_reftable, by="host", all.x=T)
+
+
+test <- merge(p.infect, pla2, by=c("Plot", "Species"), all.x=T)
+test <- data.table::as.data.table(test)
+###### multiply total infection by relative cover of plant species, assume that a missing species is not infected.
+test[, p.inf := tot.infect * Cover]
+pathogen.infection <- aggregate(p.inf.perplant~Plot, test, sum)
 ```
+
+
+
 
 
 
