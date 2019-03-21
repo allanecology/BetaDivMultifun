@@ -315,9 +315,22 @@ raw_functions <- merge(raw_functions, rPRI[,c("Plot", "PRI")], by = "Plot", all 
 
 
 # pathogen infection
-TODO : describe way of calculation
+
+pathogen infection data: 
+- per plot, the pathogen and host plant were identified, and % of plants infecten as well as severity were recorded.
+- multiplied percent plants infected with severity (and divide by 1000 to have a number between 0 and 1). Per pathogen species.
+- took together plant species within one plot (one plant species can be infected of several pathogens with different severity)
+
+plant cover data:
+- took together all Poa because pathogen data recorded host Poa species as "Poa" only
+- created plant abbreviation reference table, because pathogen data host species (plants) were recorded with abbreviated names only
+- multiplied infection severity per plant species with the according plant species cover on each plot separately.
 
 ```{r}
+#TODO : clean variable names
+#TODO : test adding to raw_functions (last line)
+#TODO : proofread
+
 pat <- list_raw_functions[["pathogen.infection"]]
 npla <- list_raw_functions[["plantcover"]]
 
@@ -478,6 +491,7 @@ test <- data.table::as.data.table(test)
 ###### multiply total infection by relative cover of plant species, assume that a missing species is not infected.
 test[, p.inf := tot.infect * Cover]
 pathogen.infection <- aggregate(p.inf~Plot, test, sum)
+raw_functions <- merge(raw_functions, pathogen.infection, by="Plot", all=T) ; rm(dung.decomposition)
 ```
 
 # dung decomposition
