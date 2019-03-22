@@ -307,10 +307,17 @@ rPRI[, "soilPstock" := (OlsenPi2014 / 1000000) * (Bulk.density2014 * 100000)]
 rPRI[, "plantPstock" := Pshoot.2013 * Biomass2013]
 rPRI[, "PRI" := (micPstock + plantPstock)/(micPstock + plantPstock + soilPstock)]
 raw_functions <- merge(raw_functions, rPRI[,c("Plot", "PRI")], by = "Plot", all = T) ; rm(rPRI)
+```
 
+# NRI - Nitrogen retention index
+requires : Bulk.density2014, Nshoot.2013, NH4.2014, NO3.2014, Biomass2014, Nmic.2014
 
-# 2011
-# could be done, but only using NaHCO3_Pi from 2008/2009
+Most of these datasets are already read in in this script. Nshoot is stored in `list_raw_functions` "nutrients". Only Nmic.2014 needs to be read in.
+```{r}
+#TODO : for now, I add a column of NA to raw_functions which is called "Nmic.2014" to start working.
+
+nridat <- raw_functions[,c("Plot", "Bulk.density2014", "NH4.2014", "NO3.2014", "Biomass2014", "Nmic.2014")]
+Nshoot.2013 <- list_raw_functions$nutrients
 ```
 
 
@@ -327,12 +334,10 @@ plant cover data:
 - multiplied infection severity per plant species with the according plant species cover on each plot separately.
 
 ```{r}
-#TODO : clean variable names
-#TODO : test adding to raw_functions (last line)
 #TODO : proofread
 
-pat <- list_raw_functions[["pathogen.infection"]]
-npla <- list_raw_functions[["plantcover"]]
+pat <- list_raw_functions$pathogen.infection
+npla <- list_raw_functions$plant.cover
 
 tot.infect <- with(pat, perc_plants_infected*perc_infection_severity)/10000   ### calculate infection as prop plants infected x mean severity of infection per plant
 
@@ -342,14 +347,15 @@ Poa <- aggregate(Cover~Plot, npla[grep("Poa", Species)], sum)
 Poa <- data.table::as.data.table(Poa)
 # add column for "Species" to Poa
 Poa[, Species := "Poa"]
-pla2 <- rbind(npla[-grep("Poa", Species)], Poa)
+npla <- rbind(npla[-grep("Poa", Species)], Poa); rm(Poa)
 
 ### total infection per plant species per plot
-# aggregate different pathogens per plant and plot (for all plant species which are affected by more than one pathogen)
-patt <- cbind(pat, tot.infect)
+# aggregate different pathogens per plant and plot (for all plant species which are affected by more than one pathogen) with cbind(pat, tot.infect)
 # aggregate
-p.infect <- aggregate(tot.infect~Plot+host, patt, sum)
+p.infect <- aggregate(tot.infect~Plot+host, cbind(pat, tot.infect), sum)
+rm(pat); rm(tot.infect)
 ```
+
 ### Plant abbreviations reference table.
 ```{r}
 ### generate plant name reference table from npla and p.infect
@@ -360,7 +366,7 @@ pla_reftable <- data.table::data.table("Abbrev" = as.character(unique(p.infect$h
 pla_reftable[, "pattern" := lapply(Abbrev, function(w) paste(strsplit(w, split=NULL)[[1]], sep="", collapse=".{0,10}"))]
 # find pattern in plantcover data
 pla_reftable[, "Species" := lapply(pattern, function(p) unique(Speciesref[grep(p, Speciesref, perl=T)]))]
-pla_reftable[, "pattern" := NULL]
+pla_reftable[, "pattern" := NULL] ; rm(Speciesref)
 # resolve rows with more than one match
 # is there another, unique match? If yes, the unique match is taken out from the double matches.
 len <- length(pla_reftable$Species[which(lengths(pla_reftable$Species) > 1)])
@@ -373,6 +379,7 @@ for(i in 1:(len-1)){
     pla_reftable$Species[which(lengths(pla_reftable$Species) > 1)][[i]] <- ne
   }
 }
+rm(i); rm(e); rm(len); rm(ne)
 # still some doubles left. By hand.
 pla_reftable[Abbrev == "Achmil", Species := as.list("Achillea_millefolium_aggr.")]  # and not "Alchemilla_vulgaris_aggr." (1)
 pla_reftable[Abbrev == "Arrela", Species := as.list("Arrhenatherum_elatius")]  # and not "Arenaria_serpyllifolia" (11)
@@ -485,13 +492,14 @@ pla_reftable[, "Species" := as.character(Species)]
 data.table::setnames(pla_reftable, old="Abbrev", new="host")
 p.infect <- merge(p.infect, pla_reftable, by="host", all.x=T)
 
-
-test <- merge(p.infect, pla2, by=c("Plot", "Species"), all.x=T)
-test <- data.table::as.data.table(test)
+pinf <- merge(p.infect, npla, by=c("Plot", "Species"), all.x=T) 
+pinf <- data.table::as.data.table(pinf)
 ###### multiply total infection by relative cover of plant species, assume that a missing species is not infected.
-test[, p.inf := tot.infect * Cover]
-pathogen.infection <- aggregate(p.inf~Plot, test, sum)
-raw_functions <- merge(raw_functions, pathogen.infection, by="Plot", all=T) ; rm(dung.decomposition)
+pinf[, p.inf := tot.infect * (Cover/100)]
+pathogen.infection <- aggregate(p.inf~Plot, pinf, sum)
+data.table::setnames(pathogen.infection, old=c("p.inf", "Plot"), new=c("pathogen.infection", "Plotn"))
+raw_functions <- merge(raw_functions, pathogen.infection, by="Plotn", all=T) ; rm(pathogen.infection)
+rm(pla_reftable); rm(npla); rm(p.infect); rm(pinf)
 ```
 
 # dung decomposition
