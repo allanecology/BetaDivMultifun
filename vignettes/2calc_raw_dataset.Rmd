@@ -315,9 +315,19 @@ requires : Bulk.density2014, Nshoot.2013, NH4.2014, NO3.2014, Biomass2014, Nmic.
 Most of these datasets are already read in in this script. Nshoot is stored in `list_raw_functions` "nutrients". Only Nmic.2014 needs to be read in.
 ```{r}
 #TODO : for now, I add a column of NA to raw_functions which is called "Nmic.2014" to start working.
+raw_functions[, "Nmic.2014" := NA]
 
-nridat <- raw_functions[,c("Plot", "Bulk.density2014", "NH4.2014", "NO3.2014", "Biomass2014", "Nmic.2014")]
+nridat <- raw_functions[,c("Plot", "Bulk.density2014", "NH4.2014", "NO3.2014", "Biomass2013", "Nmic.2014")]
 Nshoot.2013 <- list_raw_functions$nutrients
+Nshoot.2013 <- Nshoot.2013[, c("Plot", "Nshoot2013percent")]
+nridat <- merge(nridat, Nshoot.2013, by="Plot", all = T)
+
+nridat[, "micNstock":= (Nmic.2014 / 1000000)*(Bulk.density2014 * 100000)]
+nridat[, "soilNstock" := ((NH4.2014 + NO3.2014) / 1000000) * (Bulk.density2014 * 100000)]
+
+nridat[, "plantNstock" := Nshoot2013percent * Biomass2013]
+nridat[, "NRI" := (micNstock + plantNstock)/(micNstock + plantNstock + soilNstock)]
+raw_functions <- merge(raw_functions, nridat[,c("Plot", "NRI")], by = "Plot", all = T) ; rm(nridat)
 ```
 
 

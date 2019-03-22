@@ -235,10 +235,12 @@ rm(nutrients); rm(nutrients2009); rm(nutrients2010); rm(nutrients2011); rm(nutri
 requires : Bulk.density2014, Nshoot.2013, NH4.2014, NO3.2014, Biomass2014, Nmic.2014
 
 Most of these datasets are already read in in this script. Nshoot is stored in `list_raw_functions` "nutrients". Only Nmic.2014 needs to be read in.
+
 ```{r, eval=F}
 #TODO : wait for acces to nmic dataset
 Nmic.2014 <- data.table::fread(info_data$path_unix[grep("Nmic.2014", info_data$ColumnName)])
 ```
+
 
 
 # Root decomposition
