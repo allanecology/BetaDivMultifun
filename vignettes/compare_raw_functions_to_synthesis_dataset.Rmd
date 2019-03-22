@@ -80,9 +80,12 @@ not even correlated.
 ```{r, eval=F}
 # comparison to synthesis
 d <- merge(raw_functions[, c("Plot", "pathogen.infection")], synthesis[, c("Plot", "pathogen.infection")], by="Plot")
-plot(d$pathogen.infection.x, d$pathogen.infection.y)
+plot(d$pathogen.infection.x, d$pathogen.infection.y, ylim=c(0,0.1))
+mod <- lm(pathogen.infection.x~pathogen.infection.y, data=d)
 hist(d$pathogen.infection.y)
 CompareToReferenceDataset(raw_functions, synthesis, name ="pathogen.infection", sortcol = "Plot")
+
+rm(d); rm(mod)
 ```
 
 
