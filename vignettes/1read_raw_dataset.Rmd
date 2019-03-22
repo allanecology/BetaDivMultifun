@@ -17,7 +17,7 @@ at server where the whole analysis is stored.
 
 ```{r}
 # only show lines which contain path info
-info_data <- info_data[grep("txt", info_data$path_unix),c("ColumnName", "path_unix")]
+info_data <- info_data[grep("/raw_data/", info_data$path_unix),c("ColumnName", "path_unix")]
 ```
 
 
@@ -170,7 +170,6 @@ Total.flower.cover <- data.table::fread(info_data$path_unix[grep("Total.flower.c
 
 (mg/kg)
 
-used to calculate PRI
 ```{r}
 Pmic.2011 <- data.table::fread(info_data$path_unix[grep("Pmic.2011", info_data$ColumnName)], header=T, sep='\t')
 Pmic.2011 <- Pmic.2011[grep("G", Pmic.2011$EP)]
@@ -190,7 +189,7 @@ used to calculate PRI
 
 years : 2008, 2009
 
-NaHCO3_Pi is used
+better use Olsen Pi than NaHCO3_Pi, because olsen measurese the plant available P
 ```{r}
 np <- data.table::fread(info_data$path_unix[grep("NaHCO3.Pi", info_data$ColumnName)], header=T, sep='\t') 
 np <- np[grep("G", np$EP)]
@@ -231,6 +230,15 @@ list_raw_functions[["nutrients"]] <- nutrients
 rm(nutrients); rm(nutrients2009); rm(nutrients2010); rm(nutrients2011); rm(nutrients2012); rm(nutrients2013)
 ```
 
+
+# NRI - Nitrogen retention index
+requires : Bulk.density2014, Nshoot.2013, NH4.2014, NO3.2014, Biomass2014, Nmic.2014
+
+Most of these datasets are already read in in this script. Nshoot is stored in `list_raw_functions` "nutrients". Only Nmic.2014 needs to be read in.
+```{r, eval=F}
+#TODO : wait for acces to nmic dataset
+Nmic.2014 <- data.table::fread(info_data$path_unix[grep("Nmic.2014", info_data$ColumnName)])
+```
 
 
 # Root decomposition
