@@ -645,16 +645,16 @@ AOB : ammonia oxidizing bacteria
 nifH : (only 2011) nitrogen fixing locus
 
 2011 and 2016 datasets.
-```{r, eval=F}
+```{r}
 # 2016
 amo <- data.table::fread(info_data$path_unix[grep("amoA_AOB.2016", info_data$ColumnName)])
-data.table::setnames(amo, old=c("Plot_ID"), new=c("Plot"))
+data.table::setnames(amo, old=c("Plot_ID", "amoA_AOA", "amoA_AOB"), new=c("Plot", "amoA_AOA.2016", "amoA_AOB.2016"))
 raw_functions <- merge(raw_functions, amo[,c("Plot","amoA_AOA.2016", "amoA_AOB.2016")], by="Plot", all = T); rm(amo)
 
 # 2011
 nit2011 <- data.table::fread(info_data$path_unix[grep("nifH", info_data$ColumnName)])
 data.table::setnames(nit2011, old=c("PlotID", "amoA_AOA", "amoA_AOB"), new=c("Plot", "amoA_AOA.2011", "amoA_AOB.2011"))
-raw_functions <- merge(raw_functions, nit2011[, c("Plot", "amoA_AOA.2011", "amoA_AOB.2011", "nifH")], by="Plot", all=T)
+raw_functions <- merge(raw_functions, nit2011[, c("Plot", "amoA_AOA.2011", "amoA_AOB.2011", "nifH")], by="Plot", all=T) ; rm(nit2011)
 ```
 
 # soil depth
