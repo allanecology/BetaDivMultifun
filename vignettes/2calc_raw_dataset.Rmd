@@ -163,7 +163,7 @@ See in compare_raw_function_to_synthesis for yearly calculation!
 same dataset like forage.quality
 
 first convert soil P and microbial P to stocks rather than concentrations; concentrations are mg/kg, convert to g/g
-```{r}
+```{r, eval=F}
 nutrients <- list_raw_functions$nutrients
 
 # multiply with biomass!
@@ -211,6 +211,8 @@ assemblednutrients[, Pshoot.2013 := Biomass2013 * (Pshoot2013percent / 100)]
 raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2013", "Pshoot.2013")], by = "Plot", all = T) ; rm(assemblednutrients); rm(nutrients)
 
 list_raw_functions["nutrients"] <- NULL
+
+#TODO : delete this chapter? Pshoot and Nshoot are only used for PRI and NRI, right? They can be read in from list_raw_functions$nutrients
 ```
 
 
@@ -300,32 +302,41 @@ $$soil P  = \frac{Olsen Pi (mg/kg)}{1000000} * (bulk density (g/cm^3) * 100000 c
 
 ```{r}
 # 2014
-# Pmic.2014 Pshoot.2013, OlsenPi2014 in raw_functions
-rPRI <- raw_functions[, c("Plot", "Pmic.2014", "Bulk.density2014", "OlsenPi2014", "Pshoot.2013", "Biomass2013")]
+# Pmic.2014 OlsenPi2014 in raw_functions
+rPRI <- raw_functions[, c("Plot", "Pmic.2014", "Bulk.density2014", "OlsenPi2014", "Biomass2014")]
+nutrients <- list_raw_functions$nutrients
+
+nutrients <- nutrients[, c("Plot", "Pshoot2014percent")]
+nutrients <- nutrients[, Pshoot2014percent := Pshoot2014percent/100]
+rPRI <- merge(rPRI, nutrients, by="Plot", all=T)
+
 rPRI[, "micPstock":= (Pmic.2014 / 1000000)*(Bulk.density2014 * 100000)]
 rPRI[, "soilPstock" := (OlsenPi2014 / 1000000) * (Bulk.density2014 * 100000)]
-rPRI[, "plantPstock" := Pshoot.2013 * Biomass2013]
+rPRI[, "plantPstock" := Pshoot2014percent * Biomass2014]
 rPRI[, "PRI" := (micPstock + plantPstock)/(micPstock + plantPstock + soilPstock)]
-raw_functions <- merge(raw_functions, rPRI[,c("Plot", "PRI")], by = "Plot", all = T) ; rm(rPRI)
+raw_functions <- merge(raw_functions, rPRI[,c("Plot", "PRI")], by = "Plot", all = T)
+rm(rPRI); rm(nutrients)
 ```
 
 # NRI - Nitrogen retention index
-requires : Bulk.density2014, Nshoot.2013, NH4.2014, NO3.2014, Biomass2014, Nmic.2014
+requires : Bulk.density2014, Nshoot.2014, NH4.2014, NO3.2014, Biomass2014, Nmic.2014
 
 Most of these datasets are already read in in this script. Nshoot is stored in `list_raw_functions` "nutrients". Only Nmic.2014 needs to be read in.
 ```{r}
 #TODO : for now, I add a column of NA to raw_functions which is called "Nmic.2014" to start working.
 raw_functions[, "Nmic.2014" := NA]
 
-nridat <- raw_functions[,c("Plot", "Bulk.density2014", "NH4.2014", "NO3.2014", "Biomass2013", "Nmic.2014")]
-Nshoot.2013 <- list_raw_functions$nutrients
-Nshoot.2013 <- Nshoot.2013[, c("Plot", "Nshoot2013percent")]
-nridat <- merge(nridat, Nshoot.2013, by="Plot", all = T)
+nridat <- raw_functions[,c("Plot", "Bulk.density2014", "NH4.2014", "NO3.2014", "Biomass2014", "Nmic.2014")]
+Nshoot.2014 <- list_raw_functions$nutrients
+Nshoot.2014 <- Nshoot.2014[, c("Plot", "Nshoot2014percent")]
+# convert to stocks rather than concentrations; concentrations are mg/kg, convert to g/g
+Nshoot.2014[, Nshoot2014percent :=  Nshoot2014percent/100]
+nridat <- merge(nridat, Nshoot.2014, by="Plot", all = T)
 
 nridat[, "micNstock":= (Nmic.2014 / 1000000)*(Bulk.density2014 * 100000)]
 nridat[, "soilNstock" := ((NH4.2014 + NO3.2014) / 1000000) * (Bulk.density2014 * 100000)]
 
-nridat[, "plantNstock" := Nshoot2013percent * Biomass2013]
+nridat[, "plantNstock" := Nshoot2014percent * Biomass2014]
 nridat[, "NRI" := (micNstock + plantNstock)/(micNstock + plantNstock + soilNstock)]
 raw_functions <- merge(raw_functions, nridat[,c("Plot", "NRI")], by = "Plot", all = T) ; rm(nridat)
 ```

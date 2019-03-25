@@ -206,6 +206,8 @@ contains: Nshoot and Pshoot of all years
 
 near infrared spectroscopy (NIRS), 
 
+*2014* data comes from different dataset.
+
 note : there are **values for 2008** in dataset 5401 (used for Biomass2008)
 ```{r}
 nutrients <- data.table::fread(info_data$path_unix[grep("Nshoot.2009", info_data$ColumnName)])
@@ -224,21 +226,29 @@ data.table::setnames(nutrients2012, old=c("N", "P"), new=c("Nshoot2012percent", 
 # 2013
 nutrients2013 <- nutrients[year == "2013", c("Plot", "N", "P")]
 data.table::setnames(nutrients2013, old=c("N", "P"), new=c("Nshoot2013percent", "Pshoot2013percent"))
+
+# read in 2014 data
+nutrients2014 <- data.table::fread(info_data$path_unix[grep("Nshoot.2014", info_data$ColumnName)])
+nutrients2014 <- nutrients2014[Year == "2014", c("Plot_ID", "N", "P")]
+data.table::setnames(nutrients2014, old = c("Plot_ID", "N", "P"), new=c("Plot", "Nshoot2014percent", "Pshoot2014percent"))
+
 # take nutrients together for list_raw_functions
-nutrients <- Reduce(function(x, y) merge(x, y, all=TRUE), list(nutrients2009, nutrients2010, nutrients2011, nutrients2012, nutrients2013))
+nutrients <- Reduce(function(x, y) merge(x, y, all=TRUE), list(nutrients2009, nutrients2010, nutrients2011, nutrients2012, nutrients2013, nutrients2014))
 list_raw_functions[["nutrients"]] <- nutrients
-rm(nutrients); rm(nutrients2009); rm(nutrients2010); rm(nutrients2011); rm(nutrients2012); rm(nutrients2013)
+rm(nutrients); rm(nutrients2009); rm(nutrients2010); rm(nutrients2011); rm(nutrients2012); rm(nutrients2013); rm(nutrients2014)
 ```
 
 
 # NRI - Nitrogen retention index
-requires : Bulk.density2014, Nshoot.2013, NH4.2014, NO3.2014, Biomass2014, Nmic.2014
+requires : Bulk.density2014, Nshoot.2014, NH4.2014, NO3.2014, Biomass2014, Nmic.2014
 
-Most of these datasets are already read in in this script. Nshoot is stored in `list_raw_functions` "nutrients". Only Nmic.2014 needs to be read in.
+Most of these datasets are already read in in this script. Nmic.2014 needs to be read in.
 
 ```{r, eval=F}
 #TODO : wait for acces to nmic dataset
 Nmic.2014 <- data.table::fread(info_data$path_unix[grep("Nmic.2014", info_data$ColumnName)])
+
+raw_functions <- merge(raw_functions, Nmic.2014, by="Plot", all=T); rm(Root.decomposition)
 ```
 
 
