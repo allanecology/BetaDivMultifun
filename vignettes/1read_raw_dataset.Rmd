@@ -3,8 +3,9 @@ title: "prepare functions"
 author: "noelle"
 date: "November 14, 2018"
 output: html_document
+  toc: true
+  toc_depth: 2
 ---
-
 
 # Loading file paths
 The paths of file locations are stored externally in "info_data.csv" where all information is stored.

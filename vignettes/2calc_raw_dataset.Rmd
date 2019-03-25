@@ -532,5 +532,3 @@ cat("Dear user, \n
 prefix <- readline(prompt="Write now : ")
 write.csv(raw_functions, file=paste("~/Desktop/", prefix, "_raw_functions_dataset.csv", sep=""))
 ```
-
-TODO : take out all functions which were only included to calculate others, e.g. Pmic 2011, 2014
