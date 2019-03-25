@@ -14,12 +14,22 @@ Assembled functions were constructed according to E. Allan (cite project?).
 Enzymes related to soil C. All measured in the year 2011.
 ```{r}
 sce <- raw_functions[, c("beta_Glucosidase", "N_Acetyl_beta_Glucosaminidase", "Xylosidase")]
-soilCflxs <- multidiv(sce, sc="sd", cent=TRUE)[,1]
+raw_functions[, "soilCflxs" := multidiv(sce, sc="sd", cent=TRUE)[,1]]
+rm(sce)
 ```
 
 ## soilNflxs
+Enzymes related to soil N. A measure of soil N cycling with enzyme activities and functional gene abundances
+
+All from 2011
+```{r}
+nce <- raw_functions[,c("Urease", "DEA","Potential.nitrification","nifH","amoA_AOB.2011","amoA_AOA.2011")]
+raw_functions[, "soilNflxs" := multidiv(nce, sc="sd", cent=TRUE)[,1]]
+rm(nce)
+```
 
 ## P_loss_comb
+
 
 ## N_loss_comb
 
