@@ -1,0 +1,26 @@
+---
+title: "Select and Combine functions"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+Here, ecosystem functions which were read in in `1read_raw_dataset.Rmd` and calculated in `2calc_raw_dataset` are further processed. The functions needed for the project *BetaDivMultifun* are selected and assembled functions are created.
+
+
+# Create assembled functions
+Assembled functions were constructed according to E. Allan (cite project?).
+
+## soilCflxs
+Enzymes related to soil C. All measured in the year 2011.
+```{r}
+sce <- raw_functions[, c("beta_Glucosidase", "N_Acetyl_beta_Glucosaminidase", "Xylosidase")]
+soilCflxs <- multidiv(sce, sc="sd", cent=TRUE)[,1]
+```
+
+## soilNflxs
+
+## P_loss_comb
+
+## N_loss_comb
+
+# Select functions for BetaDivMultifun project
