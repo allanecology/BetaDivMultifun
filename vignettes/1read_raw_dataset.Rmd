@@ -635,17 +635,26 @@ Diversity and abundance of day active butterflies and day-active moths along a l
 butterflys <- data.table::fread(info_data$path_unix[grep("Charism.butterfly.Abund", info_data$ColumnName)])
 ```
 
-# amoA_AOA and AOB
+# amoA_AOA, AOB and nifH
 Nitrifiers Abundances at Grassland, The abundance of ammonia oxidizing bacteria and archaea was estimated using respective amoA gene.
 
 AOA : ammonia oxidizing archaea
 
 AOB : ammonia oxidizing bacteria
 
+nifH : (only 2011) nitrogen fixing locus
+
+2011 and 2016 datasets.
 ```{r, eval=F}
-amo <- data.table::fread("/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/raw_data/21547_Nitrifiers Abundances at Grassland EPs_1.6.8/21547.txt")
+# 2016
+amo <- data.table::fread(info_data$path_unix[grep("amoA_AOB.2016", info_data$ColumnName)])
 data.table::setnames(amo, old=c("Plot_ID"), new=c("Plot"))
-raw_functions <- merge(raw_functions, amo[,c("Plot","amoA_AOA", "amoA_AOB")], by="Plot", all = T); rm(amo)
+raw_functions <- merge(raw_functions, amo[,c("Plot","amoA_AOA.2016", "amoA_AOB.2016")], by="Plot", all = T); rm(amo)
+
+# 2011
+nit2011 <- data.table::fread(info_data$path_unix[grep("nifH", info_data$ColumnName)])
+data.table::setnames(nit2011, old=c("PlotID", "amoA_AOA", "amoA_AOB"), new=c("Plot", "amoA_AOA.2011", "amoA_AOB.2011"))
+raw_functions <- merge(raw_functions, nit2011[, c("Plot", "amoA_AOA.2011", "amoA_AOB.2011", "nifH")], by="Plot", all=T)
 ```
 
 # soil depth
@@ -686,3 +695,5 @@ ph[,"PH"] <- apply(ph[, c("pH_1", "pH_2")], 1, mean, na.rm=T)
 data.table::setnames(ph, old="EP_Plotid", new="Plot")
 raw_functions <- merge(raw_functions, ph[,c("Plot","PH")], by="Plot", all=T); rm(ph)
 ```
+
+
