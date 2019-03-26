@@ -318,7 +318,7 @@ raw_functions[, "Nmic.2014" := NA]
 nridat <- raw_functions[,c("Plot", "Bulk.density2014", "NH4.2014", "NO3.2014", "Biomass2014", "Nmic.2014")]
 Nshoot.2014 <- list_raw_functions$nutrients
 Nshoot.2014 <- Nshoot.2014[, c("Plot", "Nshoot2014percent")]
-nridat <- merge(nridat, Nshoot.2014, by="Plot", all = T)
+nridat <- merge(nridat, Nshoot.2014, by="Plot", all = T); rm(Nshoot.2014)
 
 nridat[, "micNstock":= (Nmic.2014 / 1000000)*(Bulk.density2014 * 100000)]
 nridat[, "soilNstock" := ((NH4.2014 + NO3.2014) / 1000000) * (Bulk.density2014 * 100000)]

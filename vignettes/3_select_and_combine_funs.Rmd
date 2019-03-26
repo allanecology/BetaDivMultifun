@@ -14,23 +14,53 @@ Assembled functions were constructed according to E. Allan (cite project?).
 Enzymes related to soil C. All measured in the year 2011.
 ```{r}
 sce <- raw_functions[, c("beta_Glucosidase", "N_Acetyl_beta_Glucosaminidase", "Xylosidase")]
-raw_functions[, "soilCflxs" := multidiv(sce, sc="sd", cent=TRUE)[,1]]
+# take z-scores of the functions
+raw_functions[, "soilCflxs" := multidiv(t(sce), sc="sd", cent=TRUE)[,1]]
 rm(sce)
 ```
 
 ## soilNflxs
 Enzymes related to soil N. A measure of soil N cycling with enzyme activities and functional gene abundances
 
-All from 2011
+amoA_AOB and A are from both 2011 and 2016, took the mean of both years.
 ```{r}
-nce <- raw_functions[,c("Urease", "DEA","Potential.nitrification","nifH","amoA_AOB.2011","amoA_AOA.2011")]
+nce <- raw_functions[,c("Urease", "DEA","Potential.nitrification2011", "Potential.nitrification2014","nifH","amoA_AOB.2011","amoA_AOA.2011", "amoA_AOB.2016", "amoA_AOA.2016", "nxrA_NS", "16S_NB")]
+# take mean of multi-year-measurements
+nce[, "amoA_AOB" := apply(nce[,c("amoA_AOB.2011", "amoA_AOB.2016")],1, mean)]
+nce[, "amoA_AOA" := apply(nce[,c("amoA_AOA.2011", "amoA_AOA.2016")],1, mean)]
+nce[, "Potential.nitrification" := apply(nce[, c("Potential.nitrification2014", "Potential.nitrification2011")], 1, mean)]
+nce[, c("amoA_AOB.2011", "amoA_AOB.2016", "amoA_AOA.2011", "amoA_AOA.2016", "Potential.nitrification2014", "Potential.nitrification2011") := NULL]
+
 raw_functions[, "soilNflxs" := multidiv(nce, sc="sd", cent=TRUE)[,1]]
 rm(nce)
 ```
 
 ## P_loss_comb
+combination of PRI and P_loss.
+
+mean of P_loss 2011 and 2015.
+```{r}
+plc <- raw_functions[, c("P_loss2011", "P_loss2015", "PRI")]
+# take mean of P_loss 2011 and 2015
+plc[, "P_loss" := apply(plc[,c("P_loss2011", "P_loss2015")],1, mean)]
+plc[, c("P_loss2011", "P_loss2015") := NULL]
+raw_functions[, "P_loss_comb" := multidiv(plc, sc="sd", cent=TRUE)[,1]]; rm(plc)
+```
 
 
 ## N_loss_comb
+combination of NRI and N_loss
+
+```{r}
+#TODO there is no N_loss dataset!
+```
+
 
 # Select functions for BetaDivMultifun project
+
+# check distributions
+normality?
+
+log transform non-normally distributed ones
+
+check distributions again
