@@ -42,12 +42,9 @@ Generate a dataset which stores all raw data. Will be assembled with the script 
 *Covariates* : are also included in the functions dataset and taken out later.
 ```{r}
 # subset for raw dataset construction
-raw_functions <- data.table::copy(PlotExplo)
+raw_functions <- data.table::copy(PlotExplo); rm(PlotExplo)
 # generate list for datasets that will be constructed in 2calc_raw_dataset.R script directly.
 list_raw_functions <- list()
-# create vector for helper variables which are used to calculate functions
-helper_funs <- c()
-#TODO : take helper fun out again? Do I want this?
 ```
 
 
@@ -517,7 +514,7 @@ Groundwater.recharge <- data.table::fread(info_data$path_unix[grep("Groundwater.
 # note (why do we need the [1] in the above line?): the info_data file contains entries for all years fo Groundwater recharge separately. 
 # But each year uses the same dataset, therefore only the first entry is used to load the dataset for all years.
 Groundwater.recharge <- Groundwater.recharge[,c("EP_Plotid", "year", "NF1")]
-Gtot <- data.table::copy(PlotExplo[, "Plot"])
+Gtot <- data.table::copy(raw_functions[, "Plot"])
 # 2010
 G <- Groundwater.recharge[year == 2010,]
 data.table::setnames(G, old=c("EP_Plotid", "NF1"), new=c("Plot", "Groundwater.recharge2010"))
