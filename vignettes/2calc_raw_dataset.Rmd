@@ -5,9 +5,10 @@ date: "December 5, 2018"
 output: html_document
 ---
 
-# Biomass 2009
-## take as it is
-Because ranges are comparable to other years.
+# Biomass
+## Biomass2009
+Take as it is, 
+because ranges are comparable to other years.
 ```{r, eval=F}
 Biomass2009 <- list_raw_functions$Biomass2009
 # how different are 2009 values of other years?
@@ -25,6 +26,7 @@ points(rep(2017, 150), raw_functions$Biomass2017)
 points(rep(2009, 149), Biomass2009[Treatment == "K2", Biomass2009], col="green")
 ```
 
+attempts to correct it:
 ```{r}
 Biomass2009 <- list_raw_functions$Biomass2009
 Biomass2009 <- aggregate(Biomass2009~Plot, Biomass2009, mean)
@@ -32,8 +34,7 @@ raw_functions <- merge(raw_functions, Biomass2009, by = "Plot", all = T) ; rm(Bi
 list_raw_functions["Biomass2009"] <- NULL
 ```
 
-
-## linear model day vs. biomass
+### linear model day vs. biomass
 
 $$Biomass = -161.959 + (3.131 * day)$$
 - Take + 30 days of Biomass production for all plots.
@@ -85,6 +86,12 @@ points((impBiomass2009$Day_of_year)/30, impBiomass2009$Biomass2009, col="darkred
 rm(impBiomass2009); rm(impBiomass2009I); rm(mod); rm(increase); rm(doy)
 ```
 
+## Combining Biomass of years
+2009 - 2017 (9 years)
+Mean, not median. We excluded outliers when excluding year 2008. For combining the remaining years, outliers need to be weighted - therefore the mean.
+```{r}
+raw_functions[, "Biomass" := apply(raw_functions[, c("Biomass2009", "Biomass2010", "Biomass2011", "Biomass2012", "Biomass2013", "Biomass2014", "Biomass2015", "Biomass2016", "Biomass2017")], 1, mean)]
+```
 
 
 # Root biomass
@@ -133,7 +140,6 @@ data.table::setnames(forage.quality, old="Plot_name", new="Plot")
 
 raw_functions <- merge(raw_functions, forage.quality, by="Plot", all=T)
 
-
 # ohne biomasse - es geht um qualität, oder? "normalisation" der Jahre mit
 # biomasse macht keinen sinn, da wir sowieso mit konzentrationen arbeiten...
 # oder?
@@ -156,54 +162,9 @@ raw_functions <- merge(raw_functions, forage.quality, by="Plot", all=T)
 #   data.table::setnames(fi, old="forage.quality", new=newname)
 #   raw_functions <- merge(raw_functions, fi[,!"year"], by="Plot", all=T)
 # }
+list_raw_functions["forage.quality"] <- NULL
 ```
 See in compare_raw_function_to_synthesis for yearly calculation!
-
-# Nshoot and Pshoot
-same dataset like forage.quality
-
-first convert soil P to stocks rather than concentrations; concentrations are mg/kg, convert to g/g
-```{r, eval=F}
-nutrients <- list_raw_functions$nutrients
-
-# 2009
-assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2009")], nutrients, by="Plot", all=T) 
-assemblednutrients[, Nshoot.2009 := Biomass2009 * (Nshoot.2009 / 100)]
-assemblednutrients[, Pshoot.2009 := Biomass2009 * (Pshoot.2010 / 100)]
-# add to raw_functions
-raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2009", "Pshoot.2009")], by="Plot", all=T)
-
-# 2010
-
-assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2010")], nutrients, by="Plot", all=T)
-assemblednutrients[, Nshoot.2010 := Biomass2010 * (Nshoot.2010 / 100)]
-assemblednutrients[, Pshoot.2010 := Biomass2010 * (Pshoot.2010 / 100)]
-# add to raw_functions
-raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2010", "Pshoot.2010")], by="Plot", all=T)
-
-# 2011
-assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2011")], nutrients, by="Plot", all=T)
-assemblednutrients[, Nshoot.2011 := Biomass2011 * (Nshoot.2011 / 100)]
-assemblednutrients[, Pshoot.2011 := Biomass2011 * (Pshoot.2011 / 100)]
-# add to raw_functions
-raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2011", "Pshoot.2011")], by="Plot")
-
-# 2012
-assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2012")], nutrients, by="Plot", all=T)
-assemblednutrients[, Nshoot.2012 := Biomass2012 * (Nshoot.2012 / 100)]
-assemblednutrients[, Pshoot.2012 := Biomass2012 * (Pshoot.2012 / 100)]
-raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2012", "Pshoot.2012")], by = "Plot", all = T)
-
-# 2013
-assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2013")], nutrients, by="Plot", all=T)
-assemblednutrients[, Nshoot.2013 := Biomass2013 * (Nshoot.2013 / 100)]
-assemblednutrients[, Pshoot.2013 := Biomass2013 * (Pshoot.2013 / 100)]
-raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2013", "Pshoot.2013")], by = "Plot", all = T) ; rm(assemblednutrients); rm(nutrients)
-
-list_raw_functions["nutrients"] <- NULL
-
-#TODO : delete this chapter? Pshoot and Nshoot are only used for PRI and NRI, right? They can be read in from list_raw_functions$nutrients
-```
 
 
 # Herbivory
@@ -278,9 +239,9 @@ list_raw_functions["Total.pollinators"] <- NULL
 # PRI
 from synthesis .html : 
 
-Phosphorus retention (PRI): Pmic (15766; microbial phosphorus in soil), PlantP.conc (18869; only 2009 data on P concentrations used and multiplied with biomass to give shoot.P.stock) and NaHCO3_Pi (5241) [PRI = (shoot.P.stock + Pmic)/(NaHCO3_Pi + Pmic + shoot.P.stock)]
+Phosphorus retention (PRI): Pmic (15766; microbial phosphorus in soil), PlantP.conc (18869; only 2009 data on P concentrations used and multiplied with biomass to give shoot.P.stock) and OlsenPi2014 (19286) [PRI = (shoot.P.stock + Pmic)/(OlsenPi2014 + Pmic + shoot.P.stock)]
 
-*2014* : Pmic.2014, Pshoot.2013 (Biomass2013, Pshoot concentration 2013), Bulk.density2014
+*2014* : Pmic.2014, Pshoot.2014, Biomass2014, Bulk.density2014
 
 *2011* : ?
 
@@ -325,6 +286,7 @@ nridat[, "soilNstock" := ((NH4.2014 + NO3.2014) / 1000000) * (Bulk.density2014 *
 nridat[, "plantNstock" := Nshoot.2014 * Biomass2014]
 nridat[, "NRI" := (micNstock + plantNstock)/(micNstock + plantNstock + soilNstock)]
 raw_functions <- merge(raw_functions, nridat[,c("Plot", "NRI")], by = "Plot", all = T) ; rm(nridat)
+list_raw_functions["nutrients"] <- NULL
 ```
 
 
@@ -345,6 +307,8 @@ plant cover data:
 
 pat <- list_raw_functions$pathogen.infection
 npla <- list_raw_functions$plant.cover
+list_raw_functions["plant.cover"] <- NULL
+list_raw_functions["pathogen.infection"] <- NULL
 
 tot.infect <- with(pat, perc_plants_infected*perc_infection_severity)/10000   ### calculate infection as prop plants infected x mean severity of infection per plant
 
@@ -364,7 +328,7 @@ rm(pat); rm(tot.infect)
 ```
 
 ### Plant abbreviations reference table.
-```{r}
+```{r, results="hide"}
 ### generate plant name reference table from npla and p.infect
 # to find back host species in plant cover data
 Speciesref <-unique(npla$Species)
@@ -415,8 +379,8 @@ pla_reftable <- pla_reftable[Abbrev == "Fes", Abbrev := "Fesaru"]
 pla_reftable[Abbrev == "Fesaru", Species := as.list("Festuca_arundinacea")] # and not "Festulolium_loliaceum,Fragaria_vesca,Fraxinus_excelsior"
 
 # 19: Carhir  Carex_hirta,Cardamine_hirsuta
-sum(npla[Species == "Carex_hirta",Cover])
-sum(npla[Species == "Cardamine_hirsuta",Cover])
+# sum(npla[Species == "Carex_hirta",Cover]) # 124.2
+# sum(npla[Species == "Cardamine_hirsuta",Cover]) # 0
 # There is no cover of Cardamine hirsuta, therefore take Carex hirta
 pla_reftable[Abbrev == "Carhir", Species := as.list("Carex_hirta")]  # and not "Cardamine_hirsuta" (19)
 
@@ -426,8 +390,8 @@ pla_reftable[Abbrev == "Poa", Species := as.list("Poa")]
 
 # Rumace : put together acetosa and acetosella in plantcover
 # 81: Rumace   Rumex_acetosa,Rumex_acetosella
-sum(npla[Species == "Rumex_acetosa",Cover])
-sum(npla[Species == "Rumex_acetosella",Cover])
+# sum(npla[Species == "Rumex_acetosa",Cover]) # 152
+# sum(npla[Species == "Rumex_acetosella",Cover]) # 13
 npla$Species[grep("Rumex_a", npla$Species)] <- "Rumex_acetos."
 pla_reftable[Abbrev == "Rumace", Species := as.list("Rumex_acetos.")]
 
@@ -519,6 +483,10 @@ raw_functions <- merge(raw_functions, dung.decomposition, by = "Plot", all = T) 
 list_raw_functions["dung.decomposition"] <- NULL
 ```
 
+# Soil Carbon
+```{r}
+#TODO calc something here?
+```
 
 
 # calc combined functions "mini- multifunctionalities"
@@ -573,6 +541,11 @@ combination of NRI and N_loss
 
 
 # store assembled dataset
+clean unneeded variables
+```{r}
+rm(list_raw_functions); rm(info_data)
+```
+
 store as .csv document
 ```{r}
 cat("Dear user, \n
@@ -583,4 +556,5 @@ cat("Dear user, \n
     example : 'december2018' would give 'december2018__raw_functions_dataset.csv'")
 prefix <- readline(prompt="Write now : ")
 write.csv(raw_functions, file=paste("~/Desktop/", prefix, "_raw_functions_dataset.csv", sep=""))
+rm(prefix)
 ```
