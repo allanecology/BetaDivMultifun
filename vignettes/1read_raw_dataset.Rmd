@@ -432,22 +432,6 @@ raw_functions <- merge(raw_functions, microbial_enzyme_activities, by="Plot", al
 ```
 
 
-
-# Potential nitrification
-Abundance of nitrogen fixing microbes and ammonia oxidizers. abundance and activity of nitrogen fixing microbes and ammonia oxidizing bacteria and archaea.
-
-potential nitrification is determined according to Hoffmann et al, 2007. [ngN / g DW soil / h]
-
-year is not clear, but probably 2011. start date is 1.9.2011, end date is 30.01.2013.
-
-```{r}
-Potential.nitrification <- data.table::fread(info_data$path_unix[grep("Potential.nitrification", info_data$ColumnName)])
-Potential.nitrification <- Potential.nitrification[,c("PlotID", "pot_nitrification")]
-data.table::setnames(Potential.nitrification, old=c("PlotID", "pot_nitrification"), new=c("Plot", "Potential.nitrification"))
-raw_functions <- merge(raw_functions, Potential.nitrification, by="Plot", all=T); rm(Potential.nitrification)
-```
-
-
 # Nmic
 Within the soil sampling campaign 2011 all samples are taken in the beginning of May 2011 as a mixed sample from the top horizon (0-10 cm) of the all 50 grassland experimental plots of all three exploratories.
 
@@ -457,6 +441,20 @@ Nmic.2011 <- data.table::fread(info_data$path_unix[grep("Nmic.2011", info_data$C
 Nmic.2011 <- Nmic.2011[,c("EP_Plot_ID", "Microbial_nitrogen")]
 data.table::setnames(Nmic.2011, old=c("EP_Plot_ID", "Microbial_nitrogen"), new=c("Plot", "Nmic.2011"))
 raw_functions <- merge(raw_functions, Nmic.2011, by="Plot", all=T); rm(Nmic.2011)
+```
+
+# Potential nitrification
+Abundance of nitrogen fixing microbes and ammonia oxidizers. abundance and activity of nitrogen fixing microbes and ammonia oxidizing bacteria and archaea.
+
+potential nitrification is determined according to Hoffmann et al, 2007. [ngN / g DW soil / h]
+
+year is not clear, but probably 2011. start date is 1.9.2011, end date is 30.01.2013.
+
+```{r}
+Potential.nitrification <- data.table::fread(info_data$path_unix[grep("Potential.nitrification2011", info_data$ColumnName)])
+Potential.nitrification <- Potential.nitrification[,c("PlotID", "pot_nitrification")]
+data.table::setnames(Potential.nitrification, old=c("PlotID", "pot_nitrification"), new=c("Plot", "Potential.nitrification2011"))
+raw_functions <- merge(raw_functions, Potential.nitrification, by="Plot", all=T); rm(Potential.nitrification)
 ```
 
 
@@ -473,15 +471,17 @@ NH4 : µg / g DW soil, Ammonium
 NO3 : mg / g DW soil, Nitrate
 ```{r}
 NH4.2014 <- data.table::fread(info_data$path_unix[grep("NH4.2014", info_data$ColumnName)])
-NH4.2014 <- NH4.2014[grep("G", NH4.2014$Plot_ID), c("Plot_ID", "NH4", "NO3")]
+NH4.2014 <- NH4.2014[grep("G", NH4.2014$Plot_ID), c("Plot_ID", "NH4", "NO3", "PNR")]
 # show duplicates
 # NH4.2014[NH4.2014$Plot_ID %in% NH4.2014[duplicated(NH4.2014$Plot_ID), Plot_ID]]
 # filter out second duplicate.
 NH4.2014 <- NH4.2014[!which(duplicated(NH4.2014$Plot_ID)),]
-# translate "bdl" to "0.000000" as in synthesis dataset
-NH4.2014$NH4 <- as.numeric(sub("bdl", "0.000000000", NH4.2014$NH4))
-NH4.2014$NO3 <- as.numeric(sub("bdl", "0.000000000", NH4.2014$NO3))
-data.table::setnames(NH4.2014, old=c("Plot_ID", "NH4", "NO3"), new=c("Plot", "NH4.2014", "NO3.2014"))
+# translate "bdl" (below detection limit) to "0.000000" as in synthesis dataset. 
+# "nd" (not detectable) is automatically translated to NA
+NH4.2014$NH4 <- as.numeric(sub("bdl", "0.000000", NH4.2014$NH4))
+NH4.2014$NO3 <- as.numeric(sub("bdl", "0.000000", NH4.2014$NO3))
+NH4.2014$PNR <- as.numeric(sub("bdl", "0.000000", NH4.2014$PNR))
+data.table::setnames(NH4.2014, old=c("Plot_ID", "NH4", "NO3", "PNR"), new=c("Plot", "NH4.2014", "NO3.2014", "Potential.nitrification2014"))
 raw_functions <- merge(raw_functions, NH4.2014, by="Plot", all=T); rm(NH4.2014)
 ```
 
