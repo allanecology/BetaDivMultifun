@@ -168,36 +168,36 @@ nutrients <- list_raw_functions$nutrients
 
 # 2009
 assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2009")], nutrients, by="Plot", all=T) 
-assemblednutrients[, Nshoot.2009 := Biomass2009 * (Nshoot2009percent / 100)]
-assemblednutrients[, Pshoot.2009 := Biomass2009 * (Pshoot2010percent / 100)]
+assemblednutrients[, Nshoot.2009 := Biomass2009 * (Nshoot.2009 / 100)]
+assemblednutrients[, Pshoot.2009 := Biomass2009 * (Pshoot.2010 / 100)]
 # add to raw_functions
 raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2009", "Pshoot.2009")], by="Plot", all=T)
 
 # 2010
 
 assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2010")], nutrients, by="Plot", all=T)
-assemblednutrients[, Nshoot.2010 := Biomass2010 * (Nshoot2010percent / 100)]
-assemblednutrients[, Pshoot.2010 := Biomass2010 * (Pshoot2010percent / 100)]
+assemblednutrients[, Nshoot.2010 := Biomass2010 * (Nshoot.2010 / 100)]
+assemblednutrients[, Pshoot.2010 := Biomass2010 * (Pshoot.2010 / 100)]
 # add to raw_functions
 raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2010", "Pshoot.2010")], by="Plot", all=T)
 
 # 2011
 assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2011")], nutrients, by="Plot", all=T)
-assemblednutrients[, Nshoot.2011 := Biomass2011 * (Nshoot2011percent / 100)]
-assemblednutrients[, Pshoot.2011 := Biomass2011 * (Pshoot2011percent / 100)]
+assemblednutrients[, Nshoot.2011 := Biomass2011 * (Nshoot.2011 / 100)]
+assemblednutrients[, Pshoot.2011 := Biomass2011 * (Pshoot.2011 / 100)]
 # add to raw_functions
 raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2011", "Pshoot.2011")], by="Plot")
 
 # 2012
 assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2012")], nutrients, by="Plot", all=T)
-assemblednutrients[, Nshoot.2012 := Biomass2012 * (Nshoot2012percent / 100)]
-assemblednutrients[, Pshoot.2012 := Biomass2012 * (Pshoot2012percent / 100)]
+assemblednutrients[, Nshoot.2012 := Biomass2012 * (Nshoot.2012 / 100)]
+assemblednutrients[, Pshoot.2012 := Biomass2012 * (Pshoot.2012 / 100)]
 raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2012", "Pshoot.2012")], by = "Plot", all = T)
 
 # 2013
 assemblednutrients <- merge(raw_functions[,c("Plot", "Biomass2013")], nutrients, by="Plot", all=T)
-assemblednutrients[, Nshoot.2013 := Biomass2013 * (Nshoot2013percent / 100)]
-assemblednutrients[, Pshoot.2013 := Biomass2013 * (Pshoot2013percent / 100)]
+assemblednutrients[, Nshoot.2013 := Biomass2013 * (Nshoot.2013 / 100)]
+assemblednutrients[, Pshoot.2013 := Biomass2013 * (Pshoot.2013 / 100)]
 raw_functions <- merge(raw_functions, assemblednutrients[,c("Plot", "Nshoot.2013", "Pshoot.2013")], by = "Plot", all = T) ; rm(assemblednutrients); rm(nutrients)
 
 list_raw_functions["nutrients"] <- NULL
@@ -296,12 +296,12 @@ $$soil P  = \frac{Olsen Pi (mg/kg)}{1000000} * (bulk density (g/cm^3) * 100000 c
 rPRI <- raw_functions[, c("Plot", "Pmic.2014", "Bulk.density2014", "OlsenPi2014", "Biomass2014")]
 nutrients <- list_raw_functions$nutrients
 
-nutrients <- nutrients[, c("Plot", "Pshoot2014percent")]
+nutrients <- nutrients[, c("Plot", "Pshoot.2014")]
 rPRI <- merge(rPRI, nutrients, by="Plot", all=T)
 
 rPRI[, "micPstock":= (Pmic.2014 / 1000000)*(Bulk.density2014 * 100000)]
 rPRI[, "soilPstock" := (OlsenPi2014 / 1000000) * (Bulk.density2014 * 100000)]
-rPRI[, "plantPstock" := Pshoot2014percent * Biomass2014]
+rPRI[, "plantPstock" := Pshoot.2014 * Biomass2014]
 rPRI[, "PRI" := (micPstock + plantPstock)/(micPstock + plantPstock + soilPstock)]
 raw_functions <- merge(raw_functions, rPRI[,c("Plot", "PRI")], by = "Plot", all = T)
 rm(rPRI); rm(nutrients)
@@ -317,12 +317,12 @@ raw_functions[, "Nmic.2014" := NA]
 
 nridat <- raw_functions[,c("Plot", "Bulk.density2014", "NH4.2014", "NO3.2014", "Biomass2014", "Nmic.2014")]
 Nshoot.2014 <- list_raw_functions$nutrients
-Nshoot.2014 <- Nshoot.2014[, c("Plot", "Nshoot2014percent")]
+Nshoot.2014 <- Nshoot.2014[, c("Plot", "Nshoot.2014")]
 nridat <- merge(nridat, Nshoot.2014, by="Plot", all = T); rm(Nshoot.2014)
 
 nridat[, "micNstock":= (Nmic.2014 / 1000000)*(Bulk.density2014 * 100000)]
 nridat[, "soilNstock" := ((NH4.2014 + NO3.2014) / 1000000) * (Bulk.density2014 * 100000)]
-nridat[, "plantNstock" := Nshoot2014percent * Biomass2014]
+nridat[, "plantNstock" := Nshoot.2014 * Biomass2014]
 nridat[, "NRI" := (micNstock + plantNstock)/(micNstock + plantNstock + soilNstock)]
 raw_functions <- merge(raw_functions, nridat[,c("Plot", "NRI")], by = "Plot", all = T) ; rm(nridat)
 ```
@@ -518,6 +518,58 @@ data.table::setnames(dung.decomposition, old = c("EP", "removal_g"), new=c("Plot
 raw_functions <- merge(raw_functions, dung.decomposition, by = "Plot", all = T) ; rm(dung.decomposition)
 list_raw_functions["dung.decomposition"] <- NULL
 ```
+
+
+
+# calc combined functions "mini- multifunctionalities"
+
+Assembled functions were constructed according to E. Allan (cite project?).
+
+## soilCflxs
+Enzymes related to soil C. All measured in the year 2011.
+```{r}
+sce <- raw_functions[, c("beta_Glucosidase", "N_Acetyl_beta_Glucosaminidase", "Xylosidase")]
+# take z-scores of the functions
+raw_functions[, "soilCflxs" := multidiv(t(sce), sc="sd", cent=TRUE)[,1]]
+rm(sce)
+```
+
+## soilNflxs
+Enzymes related to soil N. A measure of soil N cycling with enzyme activities and functional gene abundances
+
+amoA_AOB and A are from both 2011 and 2016, took the mean of both years.
+```{r}
+nce <- raw_functions[,c("Urease", "DEA","Potential.nitrification2011", "Potential.nitrification2014","nifH","amoA_AOB.2011","amoA_AOA.2011", "amoA_AOB.2016", "amoA_AOA.2016", "nxrA_NS", "16S_NB")]
+# take mean of multi-year-measurements
+nce[, "amoA_AOB" := apply(nce[,c("amoA_AOB.2011", "amoA_AOB.2016")],1, mean)]
+nce[, "amoA_AOA" := apply(nce[,c("amoA_AOA.2011", "amoA_AOA.2016")],1, mean)]
+nce[, "Potential.nitrification" := apply(nce[, c("Potential.nitrification2014", "Potential.nitrification2011")], 1, mean)]
+nce[, c("amoA_AOB.2011", "amoA_AOB.2016", "amoA_AOA.2011", "amoA_AOA.2016", "Potential.nitrification2014", "Potential.nitrification2011") := NULL]
+
+raw_functions[, "soilNflxs" := multidiv(nce, sc="sd", cent=TRUE)[,1]]
+rm(nce)
+```
+
+## P_loss_comb
+combination of PRI and P_loss.
+
+mean of P_loss 2011 and 2015.
+```{r}
+plc <- raw_functions[, c("P_loss2011", "P_loss2015", "PRI")]
+# take mean of P_loss 2011 and 2015
+plc[, "P_loss" := apply(plc[,c("P_loss2011", "P_loss2015")],1, mean)]
+plc[, c("P_loss2011", "P_loss2015") := NULL]
+raw_functions[, "P_loss_comb" := multidiv(plc, sc="sd", cent=TRUE)[,1]]; rm(plc)
+```
+
+
+## N_loss_comb
+combination of NRI and N_loss
+
+```{r}
+#TODO there is no N_loss dataset!
+```
+
 
 
 # store assembled dataset
