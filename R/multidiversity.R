@@ -18,11 +18,14 @@ maxx <- function(x, n, ...){
 #'
 #' Blabla, created by Eric Allan
 #'
-#' @param treshold Input data frame or matrix. It can be a proportion of the maximum e.g. 0.5 or can be the median or mean it can also 
+#' @param x Input data frame or matrix. Rows are different diversities/ functions for multifun/div calculation. Columns are
+#' replicates, e.g. plots.
+#' @param threshold can be a proportion of the maximum e.g. 0.5 or can be the median or mean. It can also 
 #' be a vector of the same length as the number of diversities to allow different thresholds for different diversities.
 #' threshold = FALSE calculates the mean of the scaled diversities or functions
-#' @param sc scaling can be by any function specified in "sc", i.e. max, mean, sd etc., max is the default if the maximum 
+#' @param sc scaling can be by any function specified in "sc", i.e. max, mean, sd etc., max is the default. If the maximum 
 #' should be a mean of the top n values specify sc = "maxx", mx = n
+#' @param mx only if sc = "maxx", when the maximum should be a mean of the top n values, mx = n. 
 #' @param cent centering by the mean is possible with cent = TRUE, to take z-scores of the diversities/processes, use sc="sd" and cent = TRUE
 #' @param by specifies a vector of the same length as nrow(x) to be used to split the data and use different thresholds for the groups in "by"
 #' @param weights allows different weightings for the different diversities/functions and should be a vector of the same length 
@@ -30,9 +33,15 @@ maxx <- function(x, n, ...){
 #' code the weight as "NA" 
 #' the default is weights = 1: all diversities weighted the same
 #' 
-#' @return Multidiversity TODO
+#' @return matrix with 2 columns, the first column is the multidiversity/ -functionality of each plot, the second being the 
+#' number of measured (non NA) functions per plot.
 #' @examples
-#' blabla TODO
+#' # create fantasy dataset with 3 functions f1, f2 and f3 and 30 plots.
+#' set.seed(2)
+#' fundataset <- data.table::data.table(f1 = runif(30, min=0, max=100), f2 = runif(30, min=0, max=1), f3 = runif(30, min=0, max=10))
+#' # calculate multifunctionality of this dataset, being the proportion of functions per plot which exceed the threshold of 0.5
+#' # of the mean of maximum 5 functions.
+#' multidiv(fundataset, threshold = 0.5, sc = "maxx", mx = 5, cent=FALSE, weights = 1)
 #' 
 #' @export
 multidiv <- function(x, threshold=FALSE, sc = "max", mx = 1, cent = FALSE, by =FALSE, weights = 1){
@@ -68,7 +77,6 @@ multidiv <- function(x, threshold=FALSE, sc = "max", mx = 1, cent = FALSE, by =F
   x2 <- sweep(x, 2, weights, "*")  ## remove diversities with NA threshold from calc. of how many measured
   gm <- apply(x2, 1, function(x)(sum(complete.cases(x))))
   
-  
   ### no threshold: average standardised values
   if(FALSE %in% threshold){  ### prevent error message if threshold is vector
     x.stand2 <- sweep(x.stand, 2, weights, "*")
@@ -90,7 +98,6 @@ multidiv <- function(x, threshold=FALSE, sc = "max", mx = 1, cent = FALSE, by =F
     }
     
     else{ 
-      
       x.thresh <- 1*sweep(x.stand, 2, threshold, ">")  ### does each variable pass threshold?
       
       weights2 <- matrix(rep(weights, nrow(x.thresh)), nrow=nrow(x.thresh), byrow=TRUE)
@@ -108,4 +115,6 @@ multidiv <- function(x, threshold=FALSE, sc = "max", mx = 1, cent = FALSE, by =F
   return(result)
 }
 NULL
+
+
 
