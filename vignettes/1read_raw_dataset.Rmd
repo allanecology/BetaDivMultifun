@@ -385,6 +385,8 @@ P_loss2011 <- data.table::fread(info_data$path_unix[grep("P_loss2011", info_data
 P_loss2011 <- P_loss2011[grep("G", P_loss2011$EP)]
 # get new plot names
 data.table::setnames(P_loss2011, old=c("EP","Resin_P"), new=c("Plot","P_loss2011"))
+# take reverse values so high values represent low loss
+P_loss2011[, P_loss2011 := (max(P_loss2011, na.rm=T) - P_loss2011)]
 raw_functions <- merge(raw_functions, P_loss2011, by="Plot", all=T); rm(P_loss2011)
 ```
 
@@ -396,6 +398,8 @@ Resin P : small bags with filled with resin: a granular material onto which nutr
 P_loss2015 <- data.table::fread(info_data$path_unix[grep("P_loss2015", info_data$ColumnName)], header=T, sep='\t')
 P_loss2015 <- P_loss2015[,c("Plot", "Mean_P")]
 data.table::setnames(P_loss2015, old=c("Mean_P"), new=c("P_loss2015"))
+# take reverse values so high values represent low loss
+P_loss2015[, P_loss2015 := (max(P_loss2015, na.rm=T) - P_loss2015)]
 raw_functions <- merge(raw_functions, P_loss2015, by="Plot", all=T); rm(P_loss2015)
 ```
 
@@ -644,12 +648,14 @@ AOB : ammonia oxidizing bacteria
 
 nifH : (only 2011) nitrogen fixing locus
 
+nxrA_NS and 16S_NB are present in nitrite-oxidizing bacteria (NOB)
+
 2011 and 2016 datasets.
 ```{r}
 # 2016
 amo <- data.table::fread(info_data$path_unix[grep("amoA_AOB.2016", info_data$ColumnName)])
 data.table::setnames(amo, old=c("Plot_ID", "amoA_AOA", "amoA_AOB"), new=c("Plot", "amoA_AOA.2016", "amoA_AOB.2016"))
-raw_functions <- merge(raw_functions, amo[,c("Plot","amoA_AOA.2016", "amoA_AOB.2016")], by="Plot", all = T); rm(amo)
+raw_functions <- merge(raw_functions, amo[,c("Plot","amoA_AOA.2016", "amoA_AOB.2016", "nxrA_NS", "16S_NB")], by="Plot", all = T); rm(amo)
 
 # 2011
 nit2011 <- data.table::fread(info_data$path_unix[grep("nifH", info_data$ColumnName)])
