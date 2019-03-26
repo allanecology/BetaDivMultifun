@@ -1,6 +1,6 @@
 #' Calculate the mean of top X values
 #'
-#' Blabla, created by Eric Allan
+#' created by Eric Allan
 #'
 #' @param x a vector?
 #' @param n Specifies the number of values which are chosen for mean calculation.
@@ -16,7 +16,7 @@ maxx <- function(x, n, ...){
 
 #' Calculate multifunctionality
 #'
-#' Blabla, created by Eric Allan
+#' created by Eric Allan
 #'
 #' @param x Input data frame or matrix. Rows are different diversities/ functions for multifun/div calculation. Columns are
 #' replicates, e.g. plots.
