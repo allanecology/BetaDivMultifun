@@ -214,28 +214,29 @@ note : there are **values for 2008** in dataset 5401 (used for Biomass2008)
 nutrients <- data.table::fread(info_data$path_unix[grep("Nshoot.2009", info_data$ColumnName)])
 # 2009
 nutrients2009 <- nutrients[year == "2009", c("Plot", "N", "P")]
-data.table::setnames(nutrients2009, old=c("N", "P"), new=c("Nshoot2009percent", "Pshoot2009percent"))
+data.table::setnames(nutrients2009, old=c("N", "P"), new=c("Nshoot.2009", "Pshoot.2009"))
 # 2010
 nutrients2010 <- nutrients[year == "2010", c("Plot", "N", "P")]
-data.table::setnames(nutrients2010, old=c("N", "P"), new=c("Nshoot2010percent", "Pshoot2010percent"))
+data.table::setnames(nutrients2010, old=c("N", "P"), new=c("Nshoot.2010", "Pshoot.2010"))
 # 2011
 nutrients2011 <- nutrients[year == "2011", c("Plot", "N", "P")]
-data.table::setnames(nutrients2011, old=c("N", "P"), new=c("Nshoot2011percent", "Pshoot2011percent"))
+data.table::setnames(nutrients2011, old=c("N", "P"), new=c("Nshoot.2011", "Pshoot.2011"))
 # 2012
 nutrients2012 <- nutrients[year == "2012", c("Plot", "N", "P")]
-data.table::setnames(nutrients2012, old=c("N", "P"), new=c("Nshoot2012percent", "Pshoot2012percent"))
+data.table::setnames(nutrients2012, old=c("N", "P"), new=c("Nshoot.2012", "Pshoot.2012"))
 # 2013
 nutrients2013 <- nutrients[year == "2013", c("Plot", "N", "P")]
-data.table::setnames(nutrients2013, old=c("N", "P"), new=c("Nshoot2013percent", "Pshoot2013percent"))
+data.table::setnames(nutrients2013, old=c("N", "P"), new=c("Nshoot.2013", "Pshoot.2013"))
 
 # read in 2014 data
 nutrients2014 <- data.table::fread(info_data$path_unix[grep("Nshoot.2014", info_data$ColumnName)])
 nutrients2014 <- nutrients2014[Year == "2014", c("Plot_ID", "N", "P")]
-data.table::setnames(nutrients2014, old = c("Plot_ID", "N", "P"), new=c("Plot", "Nshoot2014percent", "Pshoot2014percent"))
+data.table::setnames(nutrients2014, old = c("Plot_ID", "N", "P"), new=c("Plot", "Nshoot.2014", "Pshoot.2014"))
 
 # take nutrients together for list_raw_functions
 nutrients <- Reduce(function(x, y) merge(x, y, all=TRUE), list(nutrients2009, nutrients2010, nutrients2011, nutrients2012, nutrients2013, nutrients2014))
 list_raw_functions[["nutrients"]] <- nutrients
+raw_functions <- merge(raw_functions, nutrients, by="Plot", all=T)
 rm(nutrients); rm(nutrients2009); rm(nutrients2010); rm(nutrients2011); rm(nutrients2012); rm(nutrients2013); rm(nutrients2014)
 ```
 
@@ -321,7 +322,8 @@ herb <- data.table::fread(info_data$path_unix[grep("herbivory.20172018", info_da
 data.table::setnames(herb, old=c("plotid_withzero", "plotid"), new=c("Plotn", "Plot"))
 herb <- herb[grep("G", herb$Plotn)]
 data.table::setorder(herb, Plotn)
-raw_functions <- merge(raw_functions, herb[,c("Plot", "prop_a_herb")], by="Plot", all=T); rm(herb)
+data.table::setnames(herb, old="prop_a_herb", new="herbivory.20172018")
+raw_functions <- merge(raw_functions, herb[,c("Plot", "herbivory.20172018")], by="Plot", all=T); rm(herb)
 ```
 
 
@@ -545,9 +547,9 @@ G <- Groundwater.recharge[year == 2016,]
 data.table::setnames(G, old=c("EP_Plotid", "NF1"), new=c("Plot", "Groundwater.recharge2016"))
 Gtot <- merge(Gtot, G[,c("Plot", "Groundwater.recharge2016")], by="Plot")
 
-list_raw_functions[["Groundwater.recharge"]] <- Gtot ; rm(Gtot); rm(G); rm(Groundwater.recharge)
+list_raw_functions[["Groundwater.recharge"]] <- Gtot ; rm(G); rm(Groundwater.recharge)
 # also include years in raw_functions
-# raw_functions <- merge(raw_functions, Gtot, by="Plot", all=T)
+raw_functions <- merge(raw_functions, Gtot, by="Plot", all=T) ; rm(Gtot)
 ```
 
 
