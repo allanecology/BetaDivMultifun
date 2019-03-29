@@ -550,7 +550,7 @@ raw_functions <- merge(raw_functions, Gtot, by="Plot", all=T) ; rm(Gtot)
 ```
 
 
-# dung decomposition NOT INCLUDED YET
+# dung decomposition
 assessing work of Dung beetles (Scarabaeidae)
 
 quantitative surveys of dung beetles and their dung removal rates. The measure is removal in g dry weight after 48 hours. percentage of dung dry mass removed after 48 h. fresh dung was placed in bags accessible to beatles and weighted before and after. after 48h, the samples were removed.

@@ -4,12 +4,15 @@ output:
   pdf_document: default
   html_notebook: default
 ---
-Here, ecosystem functions which were read in in `1read_raw_dataset.Rmd` and calculated in `2calc_raw_dataset` are further processed. The functions needed for the project *BetaDivMultifun* are selected and ...
-
-
-TODO : maybe rename this file. 
+This Vignette relies on the dataset `raw_functions` which is read in and constructed with `1read_raw_dataset.Rmd` and `2calc_raw_dataset`. 
 
 # Select functions for BetaDivMultifun project
+```{r}
+# waiting for following functions
+# "N_loss_comb", 
+funselect <- c()
+```
+
 
 # check distributions
 normality?

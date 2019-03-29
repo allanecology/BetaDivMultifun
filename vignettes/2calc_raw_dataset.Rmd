@@ -469,6 +469,11 @@ pinf <- data.table::as.data.table(pinf)
 pinf[, p.inf := tot.infect * (Cover/100)]
 pathogen.infection <- aggregate(p.inf~Plot, pinf, sum)
 data.table::setnames(pathogen.infection, old=c("p.inf", "Plot"), new=c("pathogen.infection", "Plotn"))
+pathogen.infection <- data.table::as.data.table(pathogen.infection)
+
+# invert the function, such that high values represent low infection
+pathogen.infection[, pathogen.infection := (max(pathogen.infection, na.rm=T) - pathogen.infection)]
+
 raw_functions <- merge(raw_functions, pathogen.infection, by="Plotn", all=T) ; rm(pathogen.infection)
 rm(pla_reftable); rm(npla); rm(p.infect); rm(pinf)
 ```
@@ -477,11 +482,25 @@ rm(pla_reftable); rm(npla); rm(p.infect); rm(pinf)
 Taking the mean over all 5 dung types for each plot.
 ```{r}
 dung.decomposition <- list_raw_functions[["dung.decomposition"]]
-dung.decomposition <- aggregate(removal_g~EP, dung.decomposition, mean)
-data.table::setnames(dung.decomposition, old = c("EP", "removal_g"), new=c("Plot", "dung.decomposition"))
-raw_functions <- merge(raw_functions, dung.decomposition, by = "Plot", all = T) ; rm(dung.decomposition)
+# scale values for dungtype
+dung.decomposition[, scaled_removal_g := lapply(.SD, function(x) as.vector(scale(x))), by = dungtype, .SDcols = "removal_g"]
+dd <- data.table::copy(dung.decomposition)
+
+dung.decomposition <- aggregate(scaled_removal_g~EP, dung.decomposition, mean)
+data.table::setnames(dung.decomposition, old = c("EP", "scaled_removal_g"), new=c("Plot", "dung.decomposition"))
+raw_functions <- merge(raw_functions, dung.decomposition, by = "Plot", all = T)
 list_raw_functions["dung.decomposition"] <- NULL
 ```
+
+graphical representation
+```{r}
+ggplot(data = dd, aes(x = removal_g, y = scaled_removal_g, colour = dungtype)) +
+  geom_point() + 
+  scale_color_brewer(palette="Set1")
+
+rm(dung.decomposition); rm(dd)
+```
+
 
 # Soil Carbon
 ```{r}
