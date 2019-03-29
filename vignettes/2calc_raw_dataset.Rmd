@@ -107,6 +107,29 @@ list_raw_functions["Root.biomass"] <- NULL
 # Groundwater recharge
 ```{r}
 Gtot <- list_raw_functions$Groundwater.recharge
+names(Gtot) <- c("Plot", seq(2010, 2016,1))
+```
+```{r}
+# unscaled
+Gtot[, "unscaled_mean" := apply(.SD, 1, mean), .SDcols = names(Gtot)[-1]]
+unscaled <- ggplot(melt(Gtot), aes(factor(variable), value, fill = variable)) + geom_violin() + scale_color_brewer(palette="Set1")
+
+#scaled
+scd <- cbind(Gtot[,c("Plot")], apply(Gtot[, c("2010", "2011", "2012", "2013", "2014", "2015", "2016")], 2, scale))
+scd[, "mean_of_years" := apply(.SD, 1, mean), .SDcols = names(scd)[-1]]
+scaled <- ggplot(melt(scd), aes(factor(variable), value, fill=variable)) + geom_violin() + scale_color_brewer(palette="Set1")
+
+# comparing means
+means <- merge(scd, Gtot, by="Plot")
+means <- means[, c("Plot", "mean_of_years", "unscaled_mean")]
+means[, c("mean_of_years", "unscaled_mean") := apply(means[,-1], 2, scale)]
+
+scmeans <- ggplot(melt(means), aes(factor(variable), value, fill=variable)) + geom_violin() + scale_color_brewer(palette="Set1")
+
+plot_grid(unscaled, scaled, scmeans, labels = c("A","B", "C"))
+```
+
+```{r}
 raw_functions[, Groundwater.recharge := rowMeans(Gtot[,c(paste("Groundwater.recharge", seq(2010,2016), sep=""))])]
 rm(Gtot)
 list_raw_functions["Groundwater.recharge"] <- NULL

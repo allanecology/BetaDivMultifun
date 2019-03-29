@@ -25,5 +25,7 @@ Imports:
     data.table,
     reshape2,
     devtools,
-    betapart
+    betapart,
+    ggplot2,
+    cowplot
 RoxygenNote: 6.1.0.9000

@@ -509,10 +509,9 @@ NF1 [mm]: net flux betw. 0 - 0.15 m soil layer and deeper soil
 
 Groundwater recharge and discharge areas differ considerably in terms of soil pH and plant species richness, with both increasing towards discharge areas (Giesler et al., 1998; Zinko et al., 2005).
 
+
 ```{r}
 Groundwater.recharge <- data.table::fread(info_data$path_unix[grep("Groundwater.recharge", info_data$ColumnName)][1])
-# note (why do we need the [1] in the above line?): the info_data file contains entries for all years fo Groundwater recharge separately. 
-# But each year uses the same dataset, therefore only the first entry is used to load the dataset for all years.
 Groundwater.recharge <- Groundwater.recharge[,c("EP_Plotid", "year", "NF1")]
 Gtot <- data.table::copy(raw_functions[, "Plot"])
 # 2010
