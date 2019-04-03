@@ -218,9 +218,19 @@ Herbivory.2013 <- list_raw_functions$Herbivory.2013
 Herbivory.2013 <- aggregate(PercHerbivory~EP_Plotid, Herbivory.2013, mean)
 data.table::setnames(Herbivory.2013, old=c("EP_Plotid", "PercHerbivory"), new=c("Plot", "herbivory.2013"))
 
+# invert the function, such that high values represent low herbivory
+Herbivory.2013$herbivory.2013 <- max(Herbivory.2013$herbivory.2013, na.rm=T) - Herbivory.2013$herbivory.2013
+
 raw_functions <- merge(raw_functions, Herbivory.2013, by="Plot", all.x=T) ; rm(Herbivory.2013)
 list_raw_functions["Herbivory.2013"] <- NULL
 ```
+
+## 2017 2018
+Invert values, such that high values represent low herbivory.
+```{r}
+raw_functions$herbivory.20172018 <- max(raw_functions$herbivory.20172018, na.rm=T) - raw_functions$herbivory.20172018
+```
+
 
 ## Combining 2013 with 2017/2018?
 TODO : can we combine them?
@@ -242,7 +252,7 @@ litter bag approach, Mass loss in the litter bags, after two months, and four mo
 ```{r}
 Litter.decomposition <- list_raw_functions$Litter.decomposition
 # take the mean daily decomposition rate over all measures, the ones with 2 months and the ones with 4 months decomposition.
-Litter.decomposition <- aggregate(DailyDecompositionRate~EPPlotID,Litter.decomposition,mean)
+Litter.decomposition <- aggregate(DailyDecompositionRate~EPPlotID, Litter.decomposition, mean)
 data.table::setnames(Litter.decomposition, old=c("EPPlotID", "DailyDecompositionRate"), new=c("Plot", "Litter.decomposition"))
 raw_functions <- merge(raw_functions, Litter.decomposition, by="Plot", all.x = T) ; rm(Litter.decomposition)
 list_raw_functions["Litter.decomposition"] <- NULL
