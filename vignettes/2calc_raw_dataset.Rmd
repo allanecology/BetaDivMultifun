@@ -112,28 +112,37 @@ names(Gtot) <- c("Plot", seq(2010, 2016,1))
 ```{r}
 # unscaled
 Gtot[, "unscaled_mean" := apply(.SD, 1, mean), .SDcols = names(Gtot)[-1]]
-unscaled <- ggplot(melt(Gtot), aes(factor(variable), value, fill = variable)) + geom_violin() + scale_color_brewer(palette="Set1")
+unscaled <- ggplot2::ggplot(data.table::melt(Gtot), ggplot2::aes(factor(variable), value, fill = variable)) + ggplot2::geom_violin() + ggplot2::scale_color_brewer(palette="Set1")
 
 #scaled
 scd <- cbind(Gtot[,c("Plot")], apply(Gtot[, c("2010", "2011", "2012", "2013", "2014", "2015", "2016")], 2, scale))
 scd[, "mean_of_years" := apply(.SD, 1, mean), .SDcols = names(scd)[-1]]
-scaled <- ggplot(melt(scd), aes(factor(variable), value, fill=variable)) + geom_violin() + scale_color_brewer(palette="Set1")
+scaled <- ggplot2::ggplot(data.table::melt(scd), ggplot2::aes(factor(variable), value, fill=variable)) + ggplot2::geom_violin() + ggplot2::scale_color_brewer(palette="Set1")
 
 # comparing means
 means <- merge(scd, Gtot, by="Plot")
 means <- means[, c("Plot", "mean_of_years", "unscaled_mean")]
-means[, c("mean_of_years", "unscaled_mean") := apply(means[,-1], 2, scale)]
+one <- scale(means$unscaled_mean)
+two <- scale(means$mean_of_years)
+test <- cbind(one, two); rm(one); rm(two)
+test2 <- data.table::melt(test)
 
-scmeans <- ggplot(melt(means), aes(factor(variable), value, fill=variable)) + geom_violin() + scale_color_brewer(palette="Set1")
+scmeans <- ggplot2::ggplot(test2, ggplot2::aes(factor(Var2), value, fill = Var2)) + ggplot2::geom_violin() + 
+  ggplot2::scale_color_brewer(palette="Set1")
 
-plot_grid(unscaled, scaled, scmeans, labels = c("A","B", "C"))
+cowplot::plot_grid(unscaled, scaled, scmeans, labels = c("A","B", "C"))
+rm(means); rm(scaled); rm(scmeans); rm(test); rm(test2); rm(unscaled)
 ```
+above : A shows the unscaled years and right (pink) the unscaled years. B shows the scaled years and their mean. C plots the scales mean of unscaled years and the scaled mean of scaled years. They are not identical, however, very similar.
 
+Therefore, the years are first scaled and subsequently, their mean is taken. 
 ```{r}
-raw_functions[, Groundwater.recharge := rowMeans(Gtot[,c(paste("Groundwater.recharge", seq(2010,2016), sep=""))])]
-rm(Gtot)
+scd <- cbind(Gtot[,c("Plot")], apply(Gtot[, c("2010", "2011", "2012", "2013", "2014", "2015", "2016")], 2, scale))
+raw_functions[, "Groundwater.recharge" := rowMeans(scd[, c("2010", "2011", "2012", "2013", "2014", "2015", "2016")])]
+rm(Gtot); rm(scd)
 list_raw_functions["Groundwater.recharge"] <- NULL
 ```
+
 
 
 # forage quality
@@ -208,8 +217,23 @@ Herbivory.2013 <- list_raw_functions$Herbivory.2013
 
 Herbivory.2013 <- aggregate(PercHerbivory~EP_Plotid, Herbivory.2013, mean)
 data.table::setnames(Herbivory.2013, old=c("EP_Plotid", "PercHerbivory"), new=c("Plot", "herbivory.2013"))
+
 raw_functions <- merge(raw_functions, Herbivory.2013, by="Plot", all.x=T) ; rm(Herbivory.2013)
 list_raw_functions["Herbivory.2013"] <- NULL
+```
+
+## Combining 2013 with 2017/2018?
+TODO : can we combine them?
+
+The range differs.
+```{r}
+hist(scale(raw_functions$herbivory.2013))
+hist(scale(raw_functions$herbivory.20172018))
+plot(scale(raw_functions$herbivory.2013), scale(raw_functions$herbivory.20172018))
+hbv <- scale(raw_functions[, c("herbivory.2013", "herbivory.20172018")])
+
+ggplot2::ggplot(data.table::melt(hbv), ggplot2::aes(factor(Var2), value, fill = Var2)) + ggplot2::geom_violin() + 
+  ggplot2::scale_color_brewer(palette="Set1") + ggplot2::geom_jitter(shape=16, position=ggplot2::position_jitter(0.4)) # ggplot2::geom_dotplot(binaxis='y', stackdir='center', dotsize=0.4, fill="black")
 ```
 
 
@@ -502,7 +526,7 @@ rm(pla_reftable); rm(npla); rm(p.infect); rm(pinf)
 ```
 
 # dung decomposition
-Taking the mean over all 5 dung types for each plot.
+Taking the mean over all 5 dung types for each plot. Dung removal in g and not in %, because the treatments (dung types) were (almost) the same in all plots and can therefore be compared.
 ```{r}
 dung.decomposition <- list_raw_functions[["dung.decomposition"]]
 # scale values for dungtype
