@@ -484,21 +484,25 @@ data.table::setnames(NH4.2014, old=c("Plot_ID", "NH4", "NO3", "PNR"), new=c("Plo
 raw_functions <- merge(raw_functions, NH4.2014, by="Plot", all=T); rm(NH4.2014)
 ```
 
-# mAMFhyphae
+# mAMFhyphae and Aggreggation
 on 93 grassland EPs, 2011. 17 from AEG, 22 from HEG and 18 from SEG.
+
+explore how land use was affecting the ability of soil microbes to aggregate soil.
 
 extraradical fungal hyphal length, measured in hyphae per gram soil
 ```{r}
 mAMFhyphae <- data.table::fread(info_data$path_unix[grep("mAMFhyphae", info_data$ColumnName)])
-mAMFhyphae <- mAMFhyphae[,c("Plot", "mAMFhyphaepergramsoil")]
+mAMFhyphae <- mAMFhyphae[,c("Plot", "percentAggregation", "mAMFhyphaepergramsoil")]
 # plots measured, number of plots per exploratory
 # pm <- raw_functions$Plot[!raw_functions$Plot %in% mAMFhyphae$Plot]
 # length(grep("AEG", pm))
 # length(grep("HEG", pm))
 # length(grep("SEG", pm))
-data.table::setnames(mAMFhyphae, old="mAMFhyphaepergramsoil", new="mAMFhyphae")
+data.table::setnames(mAMFhyphae, old=c("percentAggregation", "mAMFhyphaepergramsoil"), new=c("Aggregation", "mAMFhyphae"))
 raw_functions <- merge(raw_functions, mAMFhyphae, by="Plot", all=T); rm(mAMFhyphae)
 ```
+
+
 
 # Groundwater recharge
 contains values from 2010 to 2016, each year will be added to a separate column
