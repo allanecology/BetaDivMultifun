@@ -14,7 +14,7 @@ synthesis data can only be loaded with help of the file `nonpublic.R`
 ```{r}
 synthesis <- data.table::fread(paste(pathtodata, "../assembled_data/EP grass functions & services.txt", sep=""), header=T)
 data.table::setnames(synthesis, old="Plot", "Plotn")
-synthesis <- merge(PlotExplo[,c("Plot", "Plotn")], synthesis, by="Plotn")
+synthesis <- merge(raw_functions[,c("Plot", "Plotn")], synthesis, by="Plotn")
 ```
 
 
