@@ -218,17 +218,16 @@ Herbivory.2013 <- list_raw_functions$Herbivory.2013
 Herbivory.2013 <- aggregate(PercHerbivory~EP_Plotid, Herbivory.2013, mean)
 data.table::setnames(Herbivory.2013, old=c("EP_Plotid", "PercHerbivory"), new=c("Plot", "herbivory.2013"))
 
-# invert the function, such that high values represent low herbivory
-Herbivory.2013$herbivory.2013 <- max(Herbivory.2013$herbivory.2013, na.rm=T) - Herbivory.2013$herbivory.2013
-
 raw_functions <- merge(raw_functions, Herbivory.2013, by="Plot", all.x=T) ; rm(Herbivory.2013)
 list_raw_functions["Herbivory.2013"] <- NULL
 ```
 
 ## 2017 2018
-Invert values, such that high values represent low herbivory.
+
 ```{r}
-raw_functions$herbivory.20172018 <- max(raw_functions$herbivory.20172018, na.rm=T) - raw_functions$herbivory.20172018
+data<-iris
+plot(data$Sepal.Length, data$Sepal.Width, col=data$Species)
+legend(7,4.3,unique(data$Species),col=1:length(data$Species),pch=1)
 ```
 
 
@@ -528,9 +527,6 @@ pathogen.infection <- aggregate(p.inf~Plot, pinf, sum)
 data.table::setnames(pathogen.infection, old=c("p.inf", "Plot"), new=c("pathogen.infection", "Plotn"))
 pathogen.infection <- data.table::as.data.table(pathogen.infection)
 
-# invert the function, such that high values represent low infection
-pathogen.infection[, pathogen.infection := (max(pathogen.infection, na.rm=T) - pathogen.infection)]
-
 raw_functions <- merge(raw_functions, pathogen.infection, by="Plotn", all=T) ; rm(pathogen.infection)
 rm(pla_reftable); rm(npla); rm(p.infect); rm(pinf)
 ```
@@ -557,13 +553,6 @@ ggplot(data = dd, aes(x = removal_g, y = scaled_removal_g, colour = dungtype)) +
 
 rm(dung.decomposition); rm(dd)
 ```
-
-
-# Soil Carbon
-```{r}
-#TODO calc something here?
-```
-
 
 # calc combined functions "mini- multifunctionalities"
 
