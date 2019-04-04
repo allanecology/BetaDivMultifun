@@ -223,27 +223,21 @@ list_raw_functions["Herbivory.2013"] <- NULL
 ```
 
 ## 2017 2018
-
-```{r}
-data<-iris
-plot(data$Sepal.Length, data$Sepal.Width, col=data$Species)
-legend(7,4.3,unique(data$Species),col=1:length(data$Species),pch=1)
-```
-
+Was read in as it is.
 
 ## Combining 2013 with 2017/2018?
-TODO : can we combine them?
-
-The range differs.
+Dataset collection differed between them. They do not correlate and their range differ.
 ```{r}
-hist(scale(raw_functions$herbivory.2013))
-hist(scale(raw_functions$herbivory.20172018))
-plot(scale(raw_functions$herbivory.2013), scale(raw_functions$herbivory.20172018))
-hbv <- scale(raw_functions[, c("herbivory.2013", "herbivory.20172018")])
-
-ggplot2::ggplot(data.table::melt(hbv), ggplot2::aes(factor(Var2), value, fill = Var2)) + ggplot2::geom_violin() + 
-  ggplot2::scale_color_brewer(palette="Set1") + ggplot2::geom_jitter(shape=16, position=ggplot2::position_jitter(0.4)) # ggplot2::geom_dotplot(binaxis='y', stackdir='center', dotsize=0.4, fill="black")
+m <- lm(raw_functions$herbivory.2013 ~ raw_functions$herbivory.20172018)
+summary(m)
 ```
+
+```{r}
+ggplot2::ggplot(raw_functions, ggplot2::aes(x=herbivory.2013, y=herbivory.20172018)) +
+  ggplot2::geom_point(ggplot2::aes(colour = Explo)) +
+  ggplot2::geom_smooth(method = "lm", se=F)
+```
+
 
 
 # Litter.decomposition
