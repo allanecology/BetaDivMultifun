@@ -6,6 +6,8 @@ output: html_document
   toc: true
   toc_depth: 2
 ---
+# Automatic running
+This file should run automatically, the user needs to change/ take an action at lines starting with "#USER".
 
 # Loading raw data
 An overview of the data is given in "info_data.csv". From there, the path of data files can be read out. 
@@ -20,10 +22,10 @@ will be merged with "12706_Measurement of biomass (2010, all grassland EPs)_1.1.
 
 Reading pathtodata and the file "info_data.csv"
 ```{r}
-#TODO : insert needed path.
+#USER : insert needed path.
 # pathtodata <- "C:/Documents/Projects/Synthesis/Functions_dataset/BExIS_raw_data/"
 
-#TODO : insert path to info_data.csv
+#USER : insert path to info_data.csv
 # info_data <- data.table::fread("C:/Documents/Projects/Synthesis/Functions_dataset/info_data.csv")
 ```
 
@@ -32,11 +34,17 @@ In case you are a member of the University of Bern and have access to the shared
 
 *note* : In order to read in data, you need to be connected to server. 
 
+The paths in Windows systems are given with "\\", while in Unix systems with "/". Therefore, info_data has 2 columns with file path, one with / and the other with \\. Uncomment the according lines below.
 ```{r}
-# only show lines which contain path info
-info_data <- info_data[grep("/", info_data$subpath),c("ColumnName", "subpath")]
-#TODO : for windows : change "/" to "\" in info_data
+#USER : uncomment the needed line (see above in text)
+# Unix-like : uncomment the following line
+info_data <- info_data[grep("_", info_data$subpath),c("ColumnName", "subpath")] # only show lines which contain path info
+
+# Windows-like : uncomment the following line
+#TODO : test if this works
+# info_data <- info_data[grep("_", info_data$subpath_windows),c("ColumnName", "subpath_windows")] # only show lines which contain path info
 ```
+
 
 
 # Plot, exploratories
