@@ -7,23 +7,40 @@ output: html_document
   toc_depth: 2
 ---
 
-# Loading file paths
-The paths of file locations are stored externally in "info_data.csv" where all information is stored.
-Load this file externally and store in variable "info_data". More information is given in "nonpublic.R", 
-at server where the whole analysis is stored.
+# Loading raw data
+An overview of the data is given in "info_data.csv". From there, the path of data files can be read out. 
 
-*note* : to read in data, you need to be connected to server. 
+In order to read in data correctly, the path to the folder which contains the data needs to be given (`pathtodata`). The data means the downloaded and unzipped data files as they are downloaded from Bexis. The names of the BExIS files are given in "info_data.csv". The path in `pathtodata` is pasted together with the path given in "info_data.csv" (column "subpath").
 
-*note2* : if info_data.xls is changed, it needs to be saved as .csv before the changes apply here!
+Example : 
+
+`pathtodata <- "C:/Documents/Projects/Synthesis/Functions_dataset/BExIS_raw_data/"`
+
+will be merged with "12706_Measurement of biomass (2010, all grassland EPs)_1.1.8_PublicDataset/12706.txt" from "info_data.csv" to load Biomass data from 2010.
+
+Reading pathtodata and the file "info_data.csv"
+```{r}
+#TODO : insert needed path.
+# pathtodata <- "C:/Documents/Projects/Synthesis/Functions_dataset/BExIS_raw_data/"
+
+#TODO : insert path to info_data.csv
+# info_data <- data.table::fread("C:/Documents/Projects/Synthesis/Functions_dataset/info_data.csv")
+```
+
+## Loading raw data, University of Bern
+In case you are a member of the University of Bern and have access to the shared network drive from the University of Bern, you can use the file `nonpublic.R` to load the required paths. In this case, no `pathtodata` variable needs to be given (because this is done in `nonpublic.R`).
+
+*note* : In order to read in data, you need to be connected to server. 
 
 ```{r}
 # only show lines which contain path info
-info_data <- info_data[grep("/raw_data/", info_data$path_unix),c("ColumnName", "path_unix")]
+info_data <- info_data[grep("/", info_data$subpath),c("ColumnName", "subpath")]
 ```
 
 
 # Plot, exploratories
 ```{r}
+PlotExplo <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Biomass2011", info_data$ColumnName)], sep=""), header=T, sep='\t')
 PlotExplo <- data.table::fread(info_data$path_unix[grep("Biomass2011", info_data$ColumnName)], header=T, sep='\t')
 PlotExplo <- PlotExplo[,c("EpPlotID", "explo")]
 data.table::setnames(PlotExplo, old=c("EpPlotID", "explo"), new=c("Plot", "Explo"))
