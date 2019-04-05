@@ -85,9 +85,8 @@ two treatments, K1 and K2, K2 is taken in synthesis. 149 plots only.
 *difference of 2009 to other years* : 
 - clipped mid april to mid may, instead of mid may to mid june
 - same area, more replicates per subplot
-solution : either correct all samples to mid may to mid june or take average
-```{r}
 
+```{r}
 # 2008
 Biomass2008 <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Biomass2008", info_data$ColumnName)], sep=""), header=T, sep='\t')
 Biomass2008 <- Biomass2008[, c("PlotID", "biomass_g_m_2")]
@@ -169,8 +168,7 @@ raw_functions <- merge(raw_functions, SoilOrganicC, by="Plot", all=T); rm(SoilOr
 
 
 # Root biomass
-2011, 
-Includes fine and coarse biomass, will add them together.
+2011, Includes fine and coarse biomass, will add them together.
 ```{r}
 Root.biomass <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Root.biomass", info_data$ColumnName)], sep=""), header=T, sep='\t')
 Root.biomass <- Root.biomass[Type == "G"]
@@ -182,16 +180,15 @@ list_raw_functions[["Root.biomass"]] <- Root.biomass ; rm(Root.biomass)
 # Flower cover
 **leave out**
 We can go from "total_influorescence_area_in_cm" of each species to a total flower cover. The total area measured was : 600m² per grassland plot.
-TODO : left open as not sure if I include it
+
+Not included.
 ```{r, eval=F}
 Total.flower.cover <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Total.flower.cover", info_data$ColumnName)], sep=""), header=T, sep='\t')
 ```
 
 # PRI - Phosphorous retention index
 ## Microbial phosphorous in soil
-2011 and 2014
-
-(mg/kg)
+2011 and 2014, (mg/kg)
 
 ```{r}
 Pmic.2011 <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Pmic.2011", info_data$ColumnName)], sep=""), header=T, sep='\t')
@@ -208,11 +205,9 @@ raw_functions <- merge(raw_functions, Pmic.2014, by="Plot", all=T) ; rm(Pmic.201
 ```
 
 ## Soil Phosphorous fractions
-used to calculate PRI
-
 years : 2008, 2009
 
-better use Olsen Pi than NaHCO3_Pi, because olsen measurese the plant available P
+note : Olsen Pi is better suited than NaHCO3_Pi, because olsen measurese the plant available P only.
 ```{r}
 np <- data.table::fread(paste(pathtodata, info_data$subpath[grep("NaHCO3.Pi", info_data$ColumnName)], sep=""), header=T, sep='\t') 
 np <- np[grep("G", np$EP)]
@@ -225,9 +220,7 @@ raw_functions <- merge(raw_functions, np, by="Plot", all=T) ; rm(np)
 ## Plant Nutrients (Pshoot)
 2009, 2010, 2011, 2012, 2013
 
-contains: Nshoot and Pshoot of all years
-
-near infrared spectroscopy (NIRS), 
+contains: Nshoot and Pshoot of all years, near infrared spectroscopy (NIRS), 
 
 *2014* data comes from different dataset.
 
@@ -266,13 +259,21 @@ rm(nutrients); rm(nutrients2009); rm(nutrients2010); rm(nutrients2011); rm(nutri
 # NRI - Nitrogen retention index
 requires : Bulk.density2014, Nshoot.2014, NH4.2014, NO3.2014, Biomass2014, Nmic.2014
 
-Most of these datasets are already read in in this script. Nmic.2014 needs to be read in.
+Most of these datasets are already read in in this script - only Nmic.2014 needs to be read in.
 
 ```{r, eval=F}
-#TODO : wait for acces to nmic dataset
-Nmic.2014 <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Nmic.2014", info_data$ColumnName)], sep=""), header=T, sep='\t')
-
-raw_functions <- merge(raw_functions, Nmic.2014, by="Plot", all=T); rm(Root.decomposition)
+data.table::fread("/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/raw_data/20251_Microbial soil properties of all grassland EPs, soil sampling campaign (SSC) 2014, SCALEMIC_1.2.13/20251.txt")
+#TODO : there is a problem with the columns. If dataset is read in, the Nmic column only contains NA.
+# there are (too much?) many tabs in the .txt data file.
+# 24 column names and 24 columns, - but not enough column content to fill those contents!
+# Report that problem?
+# after the NAs, there is a column which is the ratio of the previous 2 columns... could that be Nmic and Cmic?
+# should be confirmed!!
+# wahrscheinlich nur bis a15_0 eingelesen, denn letzte spalte sieht nicht aus wie summe!
+# assuming that, take 5th column with data.
+Nmic.2014 <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Nmic.2014", info_data$ColumnName)], sep=""), header=T)
+data.table::setnames(Nmic.2014, old=c("EP_Plot_ID", "fungi"), new=c("Plot", "Nmic.2014"))
+raw_functions <- merge(raw_functions, Nmic.2014[, c("Plot", "Nmic.2014")], by="Plot", all=T); rm(Nmic.2014)
 ```
 
 
@@ -298,9 +299,8 @@ Determination bulk density and calculated CN stocks for the upper 10 cm of the m
 
 [g/cm^3]
 
-**data is from 2011, not 2014!**
-
 ```{r}
+#2011
 Bulk.density.soil.C.stock.2011 <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Soil.C.stock", info_data$ColumnName)], sep=""), header=T, sep='\t')
 Bulk.density.soil.C.stock.2011 <- Bulk.density.soil.C.stock.2011[Type == "G"]
 Bulk.density.soil.C.stock.2011 <- data.table::setnames(Bulk.density.soil.C.stock.2011[,c("EP_Plotid", "BD", "OC_stock")], old=c("EP_Plotid", "BD", "OC_stock"), new=c("Plot", "Bulk.density2011", "Soil.C.stock"))
@@ -318,8 +318,6 @@ raw_functions <- merge(raw_functions, Bulk.density2014, by="Plot", all=T); rm(Bu
 ## 2013
 invertebrate herbivory in 146 managed temperate grasslands. Year: 2013
 
-increased land-use - less invertebrates - less herbivory
-
 Visually estimation of herbivory by eye using templates and measurement of leaf area left after feeding of the herbivores using LI-COR area meter
 
 2 samples per plot in 145 cases, 1 sample for :  "AEG6"  "HEG16" "HEG43" "SEG19" "SEG33" and 3 samples for "SEG45". 2 Columns are included in the raw_functions dataset, 1 for each sample.
@@ -332,9 +330,8 @@ list_raw_functions[["Herbivory.2013"]] <- herb ; rm(herb)
 ```
 
 ## 2017 and 2018
-plant material was collected before the first mowing (May 2017/2018). For each plant, we visually estimated the area damaged by herbivorous insects and gall mites on 12 - 200 leaves (depending on leaf size) and measured total leaf area using a leaf area meter. The deduced herbivory rates (% damaged area) per plant species were than summarised to community-level herbivory rates based on the respective plant cover values in the vegetation records of the survey years (2017 for AEG, AEW, HEW, SEW; 2018 for HEG, SEG from data set 24247 (pathogen infection)).
+"plant material was collected before the first mowing (May 2017/2018). For each plant, we visually estimated the area damaged by herbivorous insects and gall mites on 12 - 200 leaves (depending on leaf size) and measured total leaf area using a leaf area meter. The deduced herbivory rates (% damaged area) per plant species were than summarised to community-level herbivory rates based on the respective plant cover values in the vegetation records of the survey years (2017 for AEG, AEW, HEW, SEW; 2018 for HEG, SEG from data set 24247 (pathogen infection))."
 
-*Noelle :* 
 prop_a_herb : proportion of leaf area damaged of the 10 (8) most abundant species. Serves as estimate for the whole plot and can therefore be taken directly.
 
 AEG plots were measured in 2017, SEG/HEG in 2018. 49 AEG plots, 48 HEG plots and 50 SEG plots.
@@ -348,10 +345,11 @@ data.table::setnames(herb, old="prop_a_herb", new="herbivory.20172018")
 raw_functions <- merge(raw_functions, herb[,c("Plot", "herbivory.20172018")], by="Plot", all=T); rm(herb)
 ```
 
+# Forage quality - NOT Calculated
+Was not used, therefore not calculated and not read in.
 
-
-# Forage quality - NOT READY YET
 "Futter qualität", year : 2009
+
 forage quality (index based on crude protein concentration and relative forage value) - Eric Ecology Letters LUI
 
 RFV : Relative Feed Value
@@ -365,10 +363,14 @@ more ADF/ NDF --> less nutritional value because less easy to digest
 according to forage quality estimation based on alfalfa (medicago sativa) values. [source](https://openprairie.sdstate.edu/cgi/viewcontent.cgi?referer=https://scholar.google.ch/&httpsredir=1&article=1351&context=extension_extra)
 
 [% concentration in aboveground grassland plant community biomass without litter]
-```{r}
-forage.quality <- data.table::fread(paste(pathtodata, info_data$subpath[grep("forage.quality", info_data$ColumnName)], sep=""), header=T, sep='\t')
-list_raw_functions[["forage.quality"]] <- forage.quality; rm(forage.quality)
 
+calc forage quality of each plot separately (all years separately), then calc mean of each plot over the years. Plant.ADF, Plant.NDF, PlantN.conc (18866; only 2009 data used) [Crude.protein = 6.25*ShootN.conc; DDM = 88.9-(0.779*Shoot.ADF); DMI = 120/Shoot.NDF RFV = (DDM*DMI)/1.29 forgage.quality = apply(scale(cbind(RFV, Crude.protein)),1,mean)].
+
+```{r}
+# forage.quality <- data.table::fread(paste(pathtodata, info_data$subpath[grep("forage.quality", info_data$ColumnName)], sep=""), header=T, sep='\t')
+# list_raw_functions[["forage.quality"]] <- forage.quality; rm(forage.quality)
+
+# The code below is possibly helpful to calculate forage quality once this service is planned to get calculated. But it is not finished and tested code as the other.
 # # 2009
 # forage.quality.2009 <- forage.quality[year == "2009"]
 # forage.quality.2009 <- forage.quality.2009[, c("Plot", "N", "ADF", "NDF")]
@@ -398,11 +400,12 @@ list_raw_functions[["forage.quality"]] <- forage.quality; rm(forage.quality)
 ```
 
 
-
-# Phosphorous (loss) 2011
+# Phosphorous (loss)
 measures phoshporous that is not stored in plants or microbes.
 
-Resin refers to the method of phosphorous measurement in soil.
+Resin refers to the method of phosphorous measurement in soil: small bags with filled with resin: a granular material onto which nutrients are adsorbed that comes into contact with the material. These bags are incubated at a certain depth in order that all nutrients that are in solution around the bags is caught in the bag. After incubation, nitrate is detached from the resin and the concentrations are measured.
+
+## 2011
 ```{r}
 P_loss2011 <- data.table::fread(paste(pathtodata, info_data$subpath[grep("P_loss2011", info_data$ColumnName)], sep=""), header=T, sep='\t')
 # filter out grassland plots
@@ -415,8 +418,6 @@ raw_functions <- merge(raw_functions, P_loss2011, by="Plot", all=T); rm(P_loss20
 ```
 
 ## 2015
-Resin P : small bags with filled with resin: a granular material onto which nutrients are adsorbed that comes into contact with the material. These bags are incubated at a certain depth in order that all nutrients that are in solution around the bags is caught in the bag. After incubation, nitrate is detached from the resin and the concentrations are measured.
-
 [µg/g Resin] 	
 ```{r}
 P_loss2015 <- data.table::fread(paste(pathtodata, info_data$subpath[grep("P_loss2015", info_data$ColumnName)], sep=""), header=T, sep='\t')
@@ -428,8 +429,8 @@ raw_functions <- merge(raw_functions, P_loss2015, by="Plot", all=T); rm(P_loss20
 ```
 
 
-## Phosphorous 2014
-Olsen method, Pi is inorganic Phosphorous
+## Olsen Phosphorous 2014
+Olsen method, measures P available to plants.
 ```{r}
 OlsenPi2014 <- data.table::fread(paste(pathtodata, info_data$subpath[grep("OlsenPi2014", info_data$ColumnName)], sep=""), header=T, sep='\t')
 # grassland plots are abbreviated with a "G", e.g. "AEG", forest plots with "W", e.g. "AEW"
@@ -439,15 +440,14 @@ raw_functions <- merge(raw_functions, OlsenPi2014, by="Plotn", all=T); rm(OlsenP
 ```
 
 
-
-## Microbial Enzyme activities
+# Microbial Enzyme activities
 from dataset of study which characterised soil microbial communities at three levels of resolution (gene abundance, enzyme activity, and community level).
 
-beginning of May 2011 as a mixed sample from the top horizon (0-10 cm)
+beginning of May 2011, mixed sample from the top horizon (0-10 cm)
 
 beta_Glucosidase [nmol MUF g-1 h-1], Xylosidase [nmol MUF g-1 h-1], N_Acetyl_beta_Glucosaminidase [nmol MUF g-1 h-1], Urease [µg N g-1 DM 2h-1], DEA = DEA_with_C2H2 [µg N2O-N+N2 g-1 soil dw h-1], Phosphatase [nmol MUF g-1 h-1]
 
-all concentrations given g-1.
+all concentrations given [g-1].
 
 ```{r}
 microbial_enzyme_activities <- data.table::fread(paste(pathtodata, info_data$subpath[grep("beta_Glucosidase", info_data$ColumnName)], sep=""), header=T, sep='\t', drop=c("Exploratory", "Year"))
@@ -459,7 +459,6 @@ raw_functions <- merge(raw_functions, microbial_enzyme_activities, by="Plot", al
 # Nmic
 Within the soil sampling campaign 2011 all samples are taken in the beginning of May 2011 as a mixed sample from the top horizon (0-10 cm) of the all 50 grassland experimental plots of all three exploratories.
 
-For our study, we only use Microbial nitrogen.
 ```{r}
 Nmic.2011 <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Nmic.2011", info_data$ColumnName)], sep=""), header=T, sep='\t')
 Nmic.2011 <- Nmic.2011[,c("EP_Plot_ID", "Microbial_nitrogen")]
@@ -472,9 +471,10 @@ Abundance of nitrogen fixing microbes and ammonia oxidizers. abundance and activ
 
 potential nitrification is determined according to Hoffmann et al, 2007. [ngN / g DW soil / h]
 
-year is not clear, but probably 2011. start date is 1.9.2011, end date is 30.01.2013.
+year is not clear, but most probably 2011. start date is 1.9.2011, end date is 30.01.2013.
 
 ```{r}
+# 2011
 Potential.nitrification <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Potential.nitrification2011", info_data$ColumnName)], sep=""), header=T, sep='\t')
 Potential.nitrification <- Potential.nitrification[,c("PlotID", "pot_nitrification")]
 data.table::setnames(Potential.nitrification, old=c("PlotID", "pot_nitrification"), new=c("Plot", "Potential.nitrification2011"))
@@ -490,10 +490,9 @@ bdl : below detection limit
 11 Plots are measured twice : "SEG40" "SEG41" "SEG42" "SEG43" "SEG44" "SEG45" "SEG46" "SEG47" "SEG48" "SEG49" "SEG50". 
 Like in synthesis dataset, the first measure only is taken.
 
-NH4 : µg / g DW soil, Ammonium
-
-NO3 : mg / g DW soil, Nitrate
+NH4 : µg / g DW soil, Ammonium ; NO3 : mg / g DW soil, Nitrate
 ```{r}
+# 2014
 NH4.2014 <- data.table::fread(paste(pathtodata, info_data$subpath[grep("NH4.2014", info_data$ColumnName)], sep=""), header=T, sep='\t')
 NH4.2014 <- NH4.2014[grep("G", NH4.2014$Plot_ID), c("Plot_ID", "NH4", "NO3", "PNR")]
 # show duplicates
@@ -538,7 +537,6 @@ NF1 [mm]: net flux betw. 0 - 0.15 m soil layer and deeper soil
 
 Groundwater recharge and discharge areas differ considerably in terms of soil pH and plant species richness, with both increasing towards discharge areas (Giesler et al., 1998; Zinko et al., 2005).
 
-
 ```{r}
 Groundwater.recharge <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Groundwater.recharge", info_data$ColumnName)][1], sep=""), header=T, sep='\t')
 Groundwater.recharge <- Groundwater.recharge[,c("EP_Plotid", "year", "NF1")]
@@ -579,9 +577,9 @@ raw_functions <- merge(raw_functions, Gtot, by="Plot", all=T) ; rm(Gtot)
 
 
 # dung decomposition
-assessing work of Dung beetles (Scarabaeidae)
+assessing work of Dung beetles (Scarabaeidae).
 
-quantitative surveys of dung beetles and their dung removal rates. The measure is removal in g dry weight after 48 hours. percentage of dung dry mass removed after 48 h. fresh dung was placed in bags accessible to beatles and weighted before and after. after 48h, the samples were removed.
+Quantitative surveys of dung beetles and their dung removal rates. The measure is removal in g dry weight after 48 hours. percentage of dung dry mass removed after 48 h. fresh dung was placed in bags accessible to beetles and weighted before and after. after 48h, the samples were removed.
 dung with a fresh weight of approx. 220.7 (± 19.9) g of cow, 34.4 (± 3.8) g of horse, 50.5 (± 3.6) g of sheep, 32.6 (± 1.6) g of deer, 14.5 (± 1.4) g of fox and 47.6 (± 2.4) g of wild boar.
 
 see [PhD thesis](http://tuprints.ulb.tu-darmstadt.de/7402/1/20180502%20Frank.pdf)
@@ -601,21 +599,21 @@ dung.decomposition <- dung.decomposition[month %in% c("June_2014", "July_2014", 
 list_raw_functions[["dung.decomposition"]] <- dung.decomposition[,c("EP", "dungtype", "removal_g")] ; rm(dung.decomposition)
 ```
 
+
 # Litter decomposition
 litter bag approach, Mass loss in the litter bags, after two months, and four months. 1.5g of dry plant material. January 2013 put 10 bags each, 2 months later retrieval of 5 bags, 2 more months : retrieval of other 5 bags. calculated daily decomposition rates.
 
-will be assembled from input data.
 ```{r}
 Litter.decomposition <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Litter.decomposition", info_data$ColumnName)], sep=""), header=T, sep='\t')
 list_raw_functions[["Litter.decomposition"]] <- Litter.decomposition ; rm(Litter.decomposition)
 ```
 
 # Parasitoid traps
-will be assembled from input data.
+Will be assembled from input data.
 ```{r}
-AEGpt <- data.table::fread(strsplit(info_data$subpath[grep("Parasitoid.traps", info_data$ColumnName)], split=", ")[[1]][1])
-HEGpt <- data.table::fread(strsplit(info_data$subpath[grep("Parasitoid.traps", info_data$ColumnName)], split=", ")[[1]][2])
-SEGpt <- data.table::fread(strsplit(info_data$subpath[grep("Parasitoid.traps", info_data$ColumnName)], split=", ")[[1]][3])
+AEGpt <- data.table::fread(paste(pathtodata, strsplit(info_data$subpath[grep("Parasitoid.traps", info_data$ColumnName)], split=", ")[[1]][1], sep=""), header = T, sep="\t")
+HEGpt <- data.table::fread(paste(pathtodata, strsplit(info_data$subpath[grep("Parasitoid.traps", info_data$ColumnName)], split=", ")[[1]][2], sep=""), header=T, sep="\t")
+SEGpt <- data.table::fread(paste(pathtodata, strsplit(info_data$subpath[grep("Parasitoid.traps", info_data$ColumnName)], split=", ")[[1]][3], sep=""), header=T, sep="\t")
 Parasitoid.traps <- rbind(AEGpt, HEGpt, SEGpt)
 # store in list of raw datasets
 list_raw_functions[["Parasitoid.traps"]] <- Parasitoid.traps ; rm(Parasitoid.traps); rm(AEGpt); rm(HEGpt); rm(SEGpt)

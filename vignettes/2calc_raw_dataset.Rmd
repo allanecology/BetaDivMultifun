@@ -590,14 +590,6 @@ raw_functions[, "P_loss_comb" := multidiv(plc, sc="sd", cent=TRUE)[,1]]; rm(plc)
 ```
 
 
-## N_loss_comb
-combination of NRI and N_loss
-
-```{r}
-#TODO there is no N_loss dataset!
-```
-
-
 
 # store assembled dataset
 clean unneeded variables
