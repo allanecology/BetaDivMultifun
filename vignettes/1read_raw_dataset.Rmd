@@ -7,14 +7,14 @@ output: html_document
   toc_depth: 2
 ---
 # Automatic running
-This file should run automatically, the user needs to change/ take an action at lines starting with "#USER".
+This file should run automatically, the user needs to change/ take an action at lines starting with "#USER". This file loads the datasets from BExIS and is the prerequisite for "2calc_raw_dataset.Rmd". The latter calculates (if needed) the functions from the loaded variables.
 
 # Loading raw data
 An overview of the data is given in "info_data.csv". From there, the path of data files can be read out. 
 
-In order to read in data correctly, the path to the folder which contains the data needs to be given (`pathtodata`). The data means the downloaded and unzipped data files as they are downloaded from Bexis. The names of the BExIS files are given in "info_data.csv". The path in `pathtodata` is pasted together with the path given in "info_data.csv" (column "subpath").
+In order to read in data correctly, the path to the folder which contains the data needs to be given (as variable `pathtodata`). "The data" refers to the downloaded and unzipped data files as they are downloaded from Bexis. The names of the BExIS files are given in "info_data.csv", in order to confirm versions. In the below script, the path in `pathtodata` is pasted together with the path given in "info_data.csv" (column "subpath").
 
-Example : 
+Example : (if the BExIS unzipped data files (folders) are stored in the folder "BExIS_raw_data")
 
 `pathtodata <- "C:/Documents/Projects/Synthesis/Functions_dataset/BExIS_raw_data/"`
 
@@ -30,7 +30,7 @@ Reading pathtodata and the file "info_data.csv"
 ```
 
 ## Loading raw data, University of Bern
-In case you are a member of the University of Bern and have access to the shared network drive from the University of Bern, you can use the file `nonpublic.R` to load the required paths. In this case, no `pathtodata` variable needs to be given (because this is done in `nonpublic.R`).
+In case you are a member of the University of Bern and have access to the shared network drive from the University of Bern, you can use the file `nonpublic.R` which is storead at the same location as this script in order to load the required paths. In this case, no `pathtodata` variable needs to be given (because this is done in `nonpublic.R`).
 
 *note* : In order to read in data, you need to be connected to server. 
 
@@ -49,22 +49,22 @@ info_data <- info_data[grep("_", info_data$subpath),c("ColumnName", "subpath")] 
 
 # Plot, exploratories
 ```{r}
-PlotExplo <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Biomass2011", info_data$ColumnName)], sep=""), header=T, sep='\t')
-PlotExplo <- PlotExplo[,c("EpPlotID", "explo")]
-data.table::setnames(PlotExplo, old=c("EpPlotID", "explo"), new=c("Plot", "Explo"))
 # generate old plot names
 Plot <- c(paste("AEG", seq(1,50), sep=""), paste("HEG", seq(1,50), sep=""), paste("SEG", seq(1,50), sep=""))
 # generate new plot names
 Plotn <- c(paste("AEG", sprintf("%02d", 1:50), sep=""), paste("HEG", sprintf("%02d", 1:50), sep=""), paste("SEG", sprintf("%02d", 1:50), sep=""))
-PlotExplo <- merge(PlotExplo, cbind(Plot, Plotn), by = "Plot")
+# generate Exploratories names
+Explo <- c(rep("ALB", 50), rep("HAI", 50), rep("SCH", 50))
+PlotExplo <- data.table::data.table(cbind(Plot, Plotn, Explo))
 
-rm(Plot); rm(Plotn)
+rm(Plot); rm(Plotn); rm(Explo)
 ```
 
 # raw dataset
-Generate a dataset which stores all raw data. Will be assembled with the script `2calc_raw_dataset.R`. Datasets that can not be easily included as raw datasets into `raw_functions` are assembled (calculations are done) in `2calc_raw_dataset.R` and then integrated into raw_functions as well (and assembled functions variable, of corse).
+Initialise a dataset `raw_functions` which stores all loaded data in columns, which is needed to calculate functions in `2calc_raw_dataset.R`.
 
-*Covariates* : are also included in the functions dataset and taken out later.
+Data which can't be stored as columns (as vectors) is stored in the initialised dataset `list_raw_functions` for later calculation in `2calc_raw_dataset.R`.
+
 ```{r}
 # subset for raw dataset construction
 raw_functions <- data.table::copy(PlotExplo); rm(PlotExplo)
@@ -73,13 +73,12 @@ list_raw_functions <- list()
 ```
 
 
-
 # Biomass
-years 2008 to 2017. **caution**, 2008 might not be reliable.
+years 2008 to 2017. **caution**, 2008 might not be reliable, will be assessed in `2calc_raw_dataset.R`.
 
 all biomasses in g/m^2
 
-2009 : Biomass was clipped in each two subplots per plot. In each subplot we clipped four 50 x 50 cm plots 2-3 cm above-ground.
+special case 2009 : Biomass was clipped in each two subplots per plot. In each subplot we clipped four 50 x 50 cm plots 2-3 cm above-ground.
 two treatments, K1 and K2, K2 is taken in synthesis. 149 plots only.
 
 *difference of 2009 to other years* : 
@@ -96,11 +95,8 @@ rm(Biomass2008)
 
 # 2009
 Biomass2009 <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Biomass2009", info_data$ColumnName)], sep=""), header=T, sep='\t')
-# Biomass2009 <- Biomass2009[Treatment == "K2",]
-# Biomass2009 <- Biomass2009[,c("GpPlotID", "Biomass")]
 Biomass2009 <- Biomass2009[, c("GpPlotID", "Day_of_year", "Treatment", "Biomass")]
 data.table::setnames(Biomass2009, old=c("GpPlotID", "Biomass"), new=c("Plot", "Biomass2009"))
-# raw_functions <- merge(raw_functions, Biomass2009, by="Plot", all.x=T)
 list_raw_functions[["Biomass2009"]] <- Biomass2009; rm(Biomass2009)
 
 # 2010
@@ -156,7 +152,6 @@ raw_functions <- merge(raw_functions, Biomass2017, by="Plot", all=T); rm(Biomass
 ```
 
 
-
 # Soil Organic C
 2011
 ```{r}
@@ -168,7 +163,7 @@ raw_functions <- merge(raw_functions, SoilOrganicC, by="Plot", all=T); rm(SoilOr
 
 
 # Root biomass
-2011, Includes fine and coarse biomass, will add them together.
+2011, Includes fine and coarse biomass, will add them together in `2calc_raw_dataset.R`.
 ```{r}
 Root.biomass <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Root.biomass", info_data$ColumnName)], sep=""), header=T, sep='\t')
 Root.biomass <- Root.biomass[Type == "G"]
@@ -177,19 +172,10 @@ data.table::setnames(Root.biomass, old="EP_Plotid", new="Plot")
 list_raw_functions[["Root.biomass"]] <- Root.biomass ; rm(Root.biomass)
 ```
 
-# Flower cover
-**leave out**
-We can go from "total_influorescence_area_in_cm" of each species to a total flower cover. The total area measured was : 600m² per grassland plot.
-
-Not included.
-```{r, eval=F}
-Total.flower.cover <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Total.flower.cover", info_data$ColumnName)], sep=""), header=T, sep='\t')
-```
 
 # PRI - Phosphorous retention index
 ## Microbial phosphorous in soil
 2011 and 2014, (mg/kg)
-
 ```{r}
 Pmic.2011 <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Pmic.2011", info_data$ColumnName)], sep=""), header=T, sep='\t')
 Pmic.2011 <- Pmic.2011[grep("G", Pmic.2011$EP)]
@@ -205,9 +191,10 @@ raw_functions <- merge(raw_functions, Pmic.2014, by="Plot", all=T) ; rm(Pmic.201
 ```
 
 ## Soil Phosphorous fractions
+
+### NaHCO3 Phosphorous
 years : 2008, 2009
 
-note : Olsen Pi is better suited than NaHCO3_Pi, because olsen measurese the plant available P only.
 ```{r}
 np <- data.table::fread(paste(pathtodata, info_data$subpath[grep("NaHCO3.Pi", info_data$ColumnName)], sep=""), header=T, sep='\t') 
 np <- np[grep("G", np$EP)]
@@ -216,9 +203,19 @@ data.table::setnames(np, old="EP", new="Plot")
 raw_functions <- merge(raw_functions, np, by="Plot", all=T) ; rm(np)
 ```
 
+### Olsen Phosphorous 2014
+Olsen method, measures P available to plants. Is better suited than NaHCO3.
+```{r}
+OlsenPi2014 <- data.table::fread(paste(pathtodata, info_data$subpath[grep("OlsenPi2014", info_data$ColumnName)], sep=""), header=T, sep='\t')
+# grassland plots are abbreviated with a "G", e.g. "AEG", forest plots with "W", e.g. "AEW"
+OlsenPi2014 <- OlsenPi2014[grep("G",OlsenPi2014$Plot_ID),c("Plot_ID","OlsenPi")]
+data.table::setnames(OlsenPi2014, old=c("Plot_ID", "OlsenPi"), new=c("Plotn", "OlsenPi2014"))
+raw_functions <- merge(raw_functions, OlsenPi2014, by="Plotn", all=T); rm(OlsenPi2014)
+```
+
 
 ## Plant Nutrients (Pshoot)
-2009, 2010, 2011, 2012, 2013
+years 2009, 2010, 2011, 2012, 2013
 
 contains: Nshoot and Pshoot of all years, near infrared spectroscopy (NIRS), 
 
@@ -261,6 +258,7 @@ requires : Bulk.density2014, Nshoot.2014, NH4.2014, NO3.2014, Biomass2014, Nmic.
 
 Most of these datasets are already read in in this script - only Nmic.2014 needs to be read in.
 
+## Nmic 2014
 ```{r, eval=F}
 #TODO : there is a problem with the columns. If dataset is read in, the Nmic column only contains NA.
 # there are (too much?) many tabs in the .txt data file.
@@ -275,17 +273,14 @@ data.table::setnames(Nmic.2014, old=c("EP_Plot_ID", "fungi"), new=c("Plot", "Nmi
 raw_functions <- merge(raw_functions, Nmic.2014[, c("Plot", "Nmic.2014")], by="Plot", all=T); rm(Nmic.2014)
 ```
 
+## Nmic 2011
+Within the soil sampling campaign 2011 all samples are taken in the beginning of May 2011 as a mixed sample from the top horizon (0-10 cm) of the all 50 grassland experimental plots of all three exploratories.
 
-
-# Root decomposition
-Decomposition measurements of fine roots (<2mm) within the upper 10 cm of the mineral soil. Determination of mass loss after 6 months. Litterbag method. Standardized control material: beech roots for forest sites and herbaceous roots for grassland sites. Numbers in [%]
-
-mass "loss" because decomposed roots are lost.
 ```{r}
-Root.decomposition <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Root.decomposition", info_data$ColumnName)], sep=""), header=T, sep='\t')
-Root.decomposition <- Root.decomposition[Type == "G"]
-Root.decomposition <- data.table::setnames(Root.decomposition[,c("EP_Plotid", "Mass_loss_October_2012")], old=c("EP_Plotid", "Mass_loss_October_2012"), new=c("Plot", "Root.decomposition"))
-raw_functions <- merge(raw_functions, Root.decomposition, by="Plot", all=T); rm(Root.decomposition)
+Nmic.2011 <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Nmic.2011", info_data$ColumnName)], sep=""), header=T, sep='\t')
+Nmic.2011 <- Nmic.2011[,c("EP_Plot_ID", "Microbial_nitrogen")]
+data.table::setnames(Nmic.2011, old=c("EP_Plot_ID", "Microbial_nitrogen"), new=c("Plot", "Nmic.2011"))
+raw_functions <- merge(raw_functions, Nmic.2011, by="Plot", all=T); rm(Nmic.2011)
 ```
 
 
@@ -312,16 +307,25 @@ data.table::setnames(Bulk.density2014, old = c("EP_Plot_ID", "Bulk_density"), ne
 raw_functions <- merge(raw_functions, Bulk.density2014, by="Plot", all=T); rm(Bulk.density2014)
 ```
 
+
+# Root decomposition
+Decomposition measurements of fine roots (<2mm) within the upper 10 cm of the mineral soil. Determination of mass loss after 6 months. Litterbag method. Standardized control material: beech roots for forest sites and herbaceous roots for grassland sites. Numbers in [%]
+
+mass "loss" because decomposed roots are lost.
+```{r}
+Root.decomposition <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Root.decomposition", info_data$ColumnName)], sep=""), header=T, sep='\t')
+Root.decomposition <- Root.decomposition[Type == "G"]
+Root.decomposition <- data.table::setnames(Root.decomposition[,c("EP_Plotid", "Mass_loss_October_2012")], old=c("EP_Plotid", "Mass_loss_October_2012"), new=c("Plot", "Root.decomposition"))
+raw_functions <- merge(raw_functions, Root.decomposition, by="Plot", all=T); rm(Root.decomposition)
+```
+
+
 # Herbivory
 
 ## 2013
 invertebrate herbivory in 146 managed temperate grasslands. Year: 2013
 
-Visually estimation of herbivory by eye using templates and measurement of leaf area left after feeding of the herbivores using LI-COR area meter
-
-2 samples per plot in 145 cases, 1 sample for :  "AEG6"  "HEG16" "HEG43" "SEG19" "SEG33" and 3 samples for "SEG45". 2 Columns are included in the raw_functions dataset, 1 for each sample.
-
-SEG45 : The mean of all 3 samples was already taken and stored as sample2. Taking the mean of samples2 first and then with sample1 would lead to different results than in the synthesis dataset.
+Visually estimation of herbivory by eye using templates and measurement of leaf area left after feeding of the herbivores using LI-COR area meter. 2 samples per plot in 145 cases, 1 sample for :  "AEG6"  "HEG16" "HEG43" "SEG19" "SEG33" and 3 samples for "SEG45". 2 Columns are included in the raw_functions dataset, 1 for each sample. SEG45 : The mean of all 3 samples was already taken and stored as sample2. Taking the mean of samples2 first and then with sample1 would lead to different results than in the synthesis dataset.
 ```{r}
 herb <- data.table::fread(paste(pathtodata, info_data$subpath[grep("herbivory.2013", info_data$ColumnName)], sep=""), header=T, sep='\t')
 data.table::setorder(herb, EP_Plotid)
@@ -329,7 +333,7 @@ list_raw_functions[["Herbivory.2013"]] <- herb ; rm(herb)
 ```
 
 ## 2017 and 2018
-"plant material was collected before the first mowing (May 2017/2018). For each plant, we visually estimated the area damaged by herbivorous insects and gall mites on 12 - 200 leaves (depending on leaf size) and measured total leaf area using a leaf area meter. The deduced herbivory rates (% damaged area) per plant species were than summarised to community-level herbivory rates based on the respective plant cover values in the vegetation records of the survey years (2017 for AEG, AEW, HEW, SEW; 2018 for HEG, SEG from data set 24247 (pathogen infection))."
+plant material was collected before the first mowing (May 2017/2018) of the 10 most abundant species. For each plant, we visually estimated the area damaged by herbivorous insects and gall mites on 12 - 200 leaves (depending on leaf size) and measured total leaf area using a leaf area meter. The deduced herbivory rates (% damaged area) per plant species were than summarised to community-level herbivory rates based on the respective plant cover values in the vegetation records of the survey years (2017 for AEG, AEW, HEW, SEW; 2018 for HEG, SEG from data set 24247 (pathogen infection)).
 
 prop_a_herb : proportion of leaf area damaged of the 10 (8) most abundant species. Serves as estimate for the whole plot and can therefore be taken directly.
 
@@ -344,62 +348,8 @@ data.table::setnames(herb, old="prop_a_herb", new="herbivory.20172018")
 raw_functions <- merge(raw_functions, herb[,c("Plot", "herbivory.20172018")], by="Plot", all=T); rm(herb)
 ```
 
-# Forage quality - NOT Calculated
-Was not used, therefore not calculated and not read in.
 
-"Futter qualität", year : 2009
-
-forage quality (index based on crude protein concentration and relative forage value) - Eric Ecology Letters LUI
-
-RFV : Relative Feed Value
-RFQ : Relative Forage Quality
-ADL : acid detergent lignin, Lignin
-ADF : Acid Detergent Fibre, Säure-Detergenz-Faser, ein Teil der Gerüstsubstanzen von Futtermitteln
-NDF : Neutral Detergent Fibre, Neutral-Detergenz-Faser, fasrige Anteile von Futtermitteln 
-
-more ADF/ NDF --> less nutritional value because less easy to digest
-
-according to forage quality estimation based on alfalfa (medicago sativa) values. [source](https://openprairie.sdstate.edu/cgi/viewcontent.cgi?referer=https://scholar.google.ch/&httpsredir=1&article=1351&context=extension_extra)
-
-[% concentration in aboveground grassland plant community biomass without litter]
-
-calc forage quality of each plot separately (all years separately), then calc mean of each plot over the years. Plant.ADF, Plant.NDF, PlantN.conc (18866; only 2009 data used) [Crude.protein = 6.25*ShootN.conc; DDM = 88.9-(0.779*Shoot.ADF); DMI = 120/Shoot.NDF RFV = (DDM*DMI)/1.29 forgage.quality = apply(scale(cbind(RFV, Crude.protein)),1,mean)].
-
-```{r}
-# forage.quality <- data.table::fread(paste(pathtodata, info_data$subpath[grep("forage.quality", info_data$ColumnName)], sep=""), header=T, sep='\t')
-# list_raw_functions[["forage.quality"]] <- forage.quality; rm(forage.quality)
-
-# The code below is possibly helpful to calculate forage quality once this service is planned to get calculated. But it is not finished and tested code as the other.
-# # 2009
-# forage.quality.2009 <- forage.quality[year == "2009"]
-# forage.quality.2009 <- forage.quality.2009[, c("Plot", "N", "ADF", "NDF")]
-# data.table::setnames(forage.quality.2009, old=c("N", "ADF", "NDF"), new = c("N.2009", "ADF.2009", "NDF.2009"))
-# # 2010
-# forage.quality.2010 <- forage.quality[year == "2010"]
-# forage.quality.2010 <- forage.quality.2010[, c("Plot", "N", "ADF", "NDF")]
-# data.table::setnames(forage.quality.2010, old=c("N", "ADF", "NDF"), new = c("N.2010", "ADF.2010", "NDF.2010"))
-# # 2011
-# forage.quality.2011 <- forage.quality[year == "2011"]
-# forage.quality.2011 <- forage.quality.2011[, c("Plot", "N", "ADF", "NDF")]
-# data.table::setnames(forage.quality.2011, old=c("N", "ADF", "NDF"), new = c("N.2011", "ADF.2011", "NDF.2011"))
-# # 2012
-# forage.quality.2012 <- forage.quality[year == "2012"]
-# forage.quality.2012 <- forage.quality.2012[, c("Plot", "N", "ADF", "NDF")]
-# data.table::setnames(forage.quality.2012, old=c("N", "ADF", "NDF"), new = c("N.2012", "ADF.2012", "NDF.2012"))
-# # 2013
-# forage.quality.2013 <- forage.quality[year == "2013"]
-# forage.quality.2013 <- forage.quality.2013[, c("Plot", "N", "ADF", "NDF")]
-# data.table::setnames(forage.quality.2013, old=c("N", "ADF", "NDF"), new = c("N.2013", "ADF.2013", "NDF.2013"))
-# # merge all years with raw_functions
-# raw_functions <- merge(raw_functions, forage.quality.2009, by="Plot", all=T)
-# raw_functions <- merge(raw_functions, forage.quality.2010, by="Plot", all=T)
-# raw_functions <- merge(raw_functions, forage.quality.2011, by="Plot", all=T)
-# raw_functions <- merge(raw_functions, forage.quality.2012, by="Plot", all=T)
-# raw_functions <- merge(raw_functions, forage.quality.2013, by="Plot", all=T)
-```
-
-
-# Phosphorous (loss)
+# Phosphorous loss
 measures phoshporous that is not stored in plants or microbes.
 
 Resin refers to the method of phosphorous measurement in soil: small bags with filled with resin: a granular material onto which nutrients are adsorbed that comes into contact with the material. These bags are incubated at a certain depth in order that all nutrients that are in solution around the bags is caught in the bag. After incubation, nitrate is detached from the resin and the concentrations are measured.
@@ -428,17 +378,6 @@ raw_functions <- merge(raw_functions, P_loss2015, by="Plot", all=T); rm(P_loss20
 ```
 
 
-## Olsen Phosphorous 2014
-Olsen method, measures P available to plants.
-```{r}
-OlsenPi2014 <- data.table::fread(paste(pathtodata, info_data$subpath[grep("OlsenPi2014", info_data$ColumnName)], sep=""), header=T, sep='\t')
-# grassland plots are abbreviated with a "G", e.g. "AEG", forest plots with "W", e.g. "AEW"
-OlsenPi2014 <- OlsenPi2014[grep("G",OlsenPi2014$Plot_ID),c("Plot_ID","OlsenPi")]
-data.table::setnames(OlsenPi2014, old=c("Plot_ID", "OlsenPi"), new=c("Plotn", "OlsenPi2014"))
-raw_functions <- merge(raw_functions, OlsenPi2014, by="Plotn", all=T); rm(OlsenPi2014)
-```
-
-
 # Microbial Enzyme activities
 from dataset of study which characterised soil microbial communities at three levels of resolution (gene abundance, enzyme activity, and community level).
 
@@ -446,24 +385,12 @@ beginning of May 2011, mixed sample from the top horizon (0-10 cm)
 
 beta_Glucosidase [nmol MUF g-1 h-1], Xylosidase [nmol MUF g-1 h-1], N_Acetyl_beta_Glucosaminidase [nmol MUF g-1 h-1], Urease [µg N g-1 DM 2h-1], DEA = DEA_with_C2H2 [µg N2O-N+N2 g-1 soil dw h-1], Phosphatase [nmol MUF g-1 h-1]
 
-all concentrations given [g-1].
-
 ```{r}
 microbial_enzyme_activities <- data.table::fread(paste(pathtodata, info_data$subpath[grep("beta_Glucosidase", info_data$ColumnName)], sep=""), header=T, sep='\t', drop=c("Exploratory", "Year"))
 data.table::setnames(microbial_enzyme_activities, old=c("EP_Plot_ID","DEA_with_C2H2"), new=c("Plot", "DEA"))
 raw_functions <- merge(raw_functions, microbial_enzyme_activities, by="Plot", all=T); rm(microbial_enzyme_activities)
 ```
 
-
-# Nmic
-Within the soil sampling campaign 2011 all samples are taken in the beginning of May 2011 as a mixed sample from the top horizon (0-10 cm) of the all 50 grassland experimental plots of all three exploratories.
-
-```{r}
-Nmic.2011 <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Nmic.2011", info_data$ColumnName)], sep=""), header=T, sep='\t')
-Nmic.2011 <- Nmic.2011[,c("EP_Plot_ID", "Microbial_nitrogen")]
-data.table::setnames(Nmic.2011, old=c("EP_Plot_ID", "Microbial_nitrogen"), new=c("Plot", "Nmic.2011"))
-raw_functions <- merge(raw_functions, Nmic.2011, by="Plot", all=T); rm(Nmic.2011)
-```
 
 # Potential nitrification
 Abundance of nitrogen fixing microbes and ammonia oxidizers. abundance and activity of nitrogen fixing microbes and ammonia oxidizing bacteria and archaea.
@@ -494,7 +421,7 @@ NH4 : µg / g DW soil, Ammonium ; NO3 : mg / g DW soil, Nitrate
 # 2014
 NH4.2014 <- data.table::fread(paste(pathtodata, info_data$subpath[grep("NH4.2014", info_data$ColumnName)], sep=""), header=T, sep='\t')
 NH4.2014 <- NH4.2014[grep("G", NH4.2014$Plot_ID), c("Plot_ID", "NH4", "NO3", "PNR")]
-# show duplicates
+# show duplicates, uncomment if want to see them
 # NH4.2014[NH4.2014$Plot_ID %in% NH4.2014[duplicated(NH4.2014$Plot_ID), Plot_ID]]
 # filter out second duplicate.
 NH4.2014 <- NH4.2014[!which(duplicated(NH4.2014$Plot_ID)),]
@@ -507,16 +434,13 @@ data.table::setnames(NH4.2014, old=c("Plot_ID", "NH4", "NO3", "PNR"), new=c("Plo
 raw_functions <- merge(raw_functions, NH4.2014, by="Plot", all=T); rm(NH4.2014)
 ```
 
+
 # mAMFhyphae and Aggreggation
-on 93 grassland EPs, 2011. 17 from AEG, 22 from HEG and 18 from SEG.
-
-explore how land use was affecting the ability of soil microbes to aggregate soil.
-
-extraradical fungal hyphal length, measured in hyphae per gram soil
+on 93 grassland EPs, 2011. 17 from AEG, 22 from HEG and 18 from SEG. Measured to explore how land use was affecting the ability of soil microbes to aggregate soil. Extraradical fungal hyphal length, measured in hyphae per gram soil
 ```{r}
 mAMFhyphae <- data.table::fread(paste(pathtodata, info_data$subpath[grep("mAMFhyphae", info_data$ColumnName)], sep=""), header=T, sep='\t')
 mAMFhyphae <- mAMFhyphae[,c("Plot", "percentAggregation", "mAMFhyphaepergramsoil")]
-# plots measured, number of plots per exploratory
+# plots measured, number of plots per exploratory, uncomment below lines to get overview.
 # pm <- raw_functions$Plot[!raw_functions$Plot %in% mAMFhyphae$Plot]
 # length(grep("AEG", pm))
 # length(grep("HEG", pm))
@@ -524,7 +448,6 @@ mAMFhyphae <- mAMFhyphae[,c("Plot", "percentAggregation", "mAMFhyphaepergramsoil
 data.table::setnames(mAMFhyphae, old=c("percentAggregation", "mAMFhyphaepergramsoil"), new=c("Aggregation", "mAMFhyphae"))
 raw_functions <- merge(raw_functions, mAMFhyphae, by="Plot", all=T); rm(mAMFhyphae)
 ```
-
 
 
 # Groundwater recharge
@@ -535,7 +458,6 @@ Annual actual evapotranspiration (ETa), downward water flux (DF), upward water f
 NF1 [mm]: net flux betw. 0 - 0.15 m soil layer and deeper soil
 
 Groundwater recharge and discharge areas differ considerably in terms of soil pH and plant species richness, with both increasing towards discharge areas (Giesler et al., 1998; Zinko et al., 2005).
-
 ```{r}
 Groundwater.recharge <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Groundwater.recharge", info_data$ColumnName)][1], sep=""), header=T, sep='\t')
 Groundwater.recharge <- Groundwater.recharge[,c("EP_Plotid", "year", "NF1")]
@@ -579,14 +501,11 @@ raw_functions <- merge(raw_functions, Gtot, by="Plot", all=T) ; rm(Gtot)
 assessing work of Dung beetles (Scarabaeidae).
 
 Quantitative surveys of dung beetles and their dung removal rates. The measure is removal in g dry weight after 48 hours. percentage of dung dry mass removed after 48 h. fresh dung was placed in bags accessible to beetles and weighted before and after. after 48h, the samples were removed.
-dung with a fresh weight of approx. 220.7 (± 19.9) g of cow, 34.4 (± 3.8) g of horse, 50.5 (± 3.6) g of sheep, 32.6 (± 1.6) g of deer, 14.5 (± 1.4) g of fox and 47.6 (± 2.4) g of wild boar.
-
-see [PhD thesis](http://tuprints.ulb.tu-darmstadt.de/7402/1/20180502%20Frank.pdf)
+dung with a fresh weight of approx. 220.7 (± 19.9) g of cow, 34.4 (± 3.8) g of horse, 50.5 (± 3.6) g of sheep, 32.6 (± 1.6) g of deer, 14.5 (± 1.4) g of fox and 47.6 (± 2.4) g of wild boar. see [PhD thesis](http://tuprints.ulb.tu-darmstadt.de/7402/1/20180502%20Frank.pdf)
 
 some measurements only summer 2014, others the whole years (9 grassland plots per year)
 
-Only measurements from summer 2014 taken, where 5 replicates were measured on each plot. 
-
+Only measurements from summer 2014 taken, where 5 replicates were measured on each plot.
 ```{r}
 dung.decomposition <- data.table::fread(paste(pathtodata, info_data$subpath[grep("dung.decomposition", info_data$ColumnName)], sep=""), header=T, sep='\t')
 # only take Grassland plots
@@ -601,14 +520,13 @@ list_raw_functions[["dung.decomposition"]] <- dung.decomposition[,c("EP", "dungt
 
 # Litter decomposition
 litter bag approach, Mass loss in the litter bags, after two months, and four months. 1.5g of dry plant material. January 2013 put 10 bags each, 2 months later retrieval of 5 bags, 2 more months : retrieval of other 5 bags. calculated daily decomposition rates.
-
 ```{r}
 Litter.decomposition <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Litter.decomposition", info_data$ColumnName)], sep=""), header=T, sep='\t')
 list_raw_functions[["Litter.decomposition"]] <- Litter.decomposition ; rm(Litter.decomposition)
 ```
 
+
 # Parasitoid traps
-Will be assembled from input data.
 ```{r}
 AEGpt <- data.table::fread(paste(pathtodata, strsplit(info_data$subpath[grep("Parasitoid.traps", info_data$ColumnName)], split=", ")[[1]][1], sep=""), header = T, sep="\t")
 HEGpt <- data.table::fread(paste(pathtodata, strsplit(info_data$subpath[grep("Parasitoid.traps", info_data$ColumnName)], split=", ")[[1]][2], sep=""), header=T, sep="\t")
@@ -620,18 +538,15 @@ list_raw_functions[["Parasitoid.traps"]] <- Parasitoid.traps ; rm(Parasitoid.tra
 
 
 # Pathogen infection
-note : is created from **assembled data**, available locally only.
-
-**pathogen data** : 4 transects of 25x1 m were searched for foliar fungal pathogens on all grassland EP's. The prevalence and severity of each pathogen was estimated.
+note : is created from **assembled data**, available locally only (excel files).
 
 **plant cover data** : sampled all species in an area of 4m x 4m and estimated the percentage cover of each species.
 
-The datasets are stored at the same place as other raw_datasets. 
+The datasets are stored at the same place as other raw_datasets. Name :  "BE.foliar pathogen grass.txt"
 
 note : code adapted from Eric Allan
 ```{r}
 path <- paste(pathtodata, info_data$subpath[grep("pathogen.infection", info_data$ColumnName)], sep="")
-
 pat <- read.table(paste(path, "BE.foliar pathogen grass.txt", sep=""), header =T)
 # data is in relative abundances.
 npla <- data.table::fread(paste(pathtodata, info_data$subpath[grep("plant.cover", info_data$ColumnName)][[1]], sep=""), header=T, sep="\t")
@@ -654,14 +569,6 @@ data.table::setnames(Total.pollinators, old=c("EP_ID", "Total"), new=c("Plot", "
 list_raw_functions[["Total.pollinators"]] <- Total.pollinators; rm(Total.pollinators)
 ```
 
-
-
-# Charismatic butterflys
-Diversity and abundance of day active butterflies and day-active moths along a land use intensity gradient (2008)
-
-```{r, eval=F}
-butterflys <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Charism.butterfly.Abund", info_data$ColumnName)], sep=""), header=T, sep='\t')
-```
 
 # amoA_AOA, AOB and nifH
 Nitrifiers Abundances at Grassland, The abundance of ammonia oxidizing bacteria and archaea was estimated using respective amoA gene.
@@ -688,25 +595,7 @@ raw_functions <- merge(raw_functions, nit2011[, c("Plot", "amoA_AOA.2011", "amoA
 ```
 
 # soil depth
-soil.depth
-
-<!-- Soils were described according to the German soil classification system (KA 5) and the FAO-Guidelines for Soil Description (2006). -->
-
-<!-- A multitude of soil measures were taken. -->
-
-<!-- theory : plants share the belowground space. A diverse set of plants can vary in their root length - different plants sometimes differ in the depth where they are able to get nutrients. The "potential rooting depth" is the soil depth in which plants can potentially have roots. Soil horizons O, A and B can harbour plant roots. -->
-
-<!-- Mächtigkeit der obsersten bodenschicht herausfinden. -->
-<!-- ```{r, eval=F} -->
-<!-- z <- data.table::fread("/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/raw_data/5340_Soil_ Inventory organic soils grid plots_1.287.23_PublicDataset/5340_Block0.txt") -->
-<!-- o <- data.table::fread("/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/raw_data/5340_Soil_ Inventory organic soils grid plots_1.287.23_PublicDataset/5340_Block1.txt") -->
-<!-- t <- data.table::fread("/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/raw_data/5340_Soil_ Inventory organic soils grid plots_1.287.23_PublicDataset/5340_Block2.txt") -->
-
-<!-- data.table::fread(paste(pathtodata, info_data$subpath[grep("Nshoot.2009", info_data$ColumnName)], sep=""), header=T, sep='\t') -->
-<!-- ``` -->
-
-using soil depth from Eric, who assembled it from dataset 5340 (as indicated in synthesis dataset 21688)
-
+using soil depth from assembled, local data. Assembled by Eric Allan, who assembled it from dataset 5340 (as indicated in synthesis dataset 21688).
 ```{r}
 soil.depth <- data.table::fread(paste(pathtodata, info_data$subpath[grep("soil.depth", info_data$ColumnName)], sep=""), header=T, sep=',')
 data.table::setnames(soil.depth, old="Plot", new="Plotn")
@@ -714,10 +603,7 @@ raw_functions <- merge(raw_functions, soil.depth[,c("Plotn","soil.depth")], by="
 ```
 
 # pH
-soil PH
-
-2 measures per site, take mean of them.
- 
+2 measures per site.
 ```{r}
 ph <- data.table::fread(paste(pathtodata, info_data$subpath[grep("PH", info_data$ColumnName)], sep=""), header=T, sep='\t')
 ph <- ph[Type == "G", c("EP_Plotid", "pH_1", "pH_2")]
@@ -727,3 +613,75 @@ raw_functions <- merge(raw_functions, ph[,c("Plot","PH")], by="Plot", all=T); rm
 ```
 
 
+
+# Code to load, but not included
+Below: code to load or starting to load Flower cover, forage quality and charismatic butterfly. Not finished because not included in functions dataset.
+
+## Flower cover
+**left out**, code to load dataset is left in case it can be used.
+
+We can go from "total_influorescence_area_in_cm" of each species to a total flower cover. The total area measured was : 600m² per grassland plot.
+```{r, eval=F}
+Total.flower.cover <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Total.flower.cover", info_data$ColumnName)], sep=""), header=T, sep='\t')
+```
+
+
+# Forage quality
+**left out**, code to load dataset is left in case it can be used.
+
+"Futter qualität", year : 2009
+
+forage quality (index based on crude protein concentration and relative forage value) - Eric Ecology Letters LUI
+
+RFV : Relative Feed Value
+RFQ : Relative Forage Quality
+ADL : acid detergent lignin, Lignin
+ADF : Acid Detergent Fibre, Säure-Detergenz-Faser, ein Teil der Gerüstsubstanzen von Futtermitteln
+NDF : Neutral Detergent Fibre, Neutral-Detergenz-Faser, fasrige Anteile von Futtermitteln 
+
+more ADF/ NDF --> less nutritional value because less easy to digest
+
+according to forage quality estimation based on alfalfa (medicago sativa) values. [source](https://openprairie.sdstate.edu/cgi/viewcontent.cgi?referer=https://scholar.google.ch/&httpsredir=1&article=1351&context=extension_extra)
+
+[% concentration in aboveground grassland plant community biomass without litter]
+
+calc forage quality of each plot separately (all years separately), then calc mean of each plot over the years. Plant.ADF, Plant.NDF, PlantN.conc (18866; only 2009 data used) [Crude.protein = 6.25*ShootN.conc; DDM = 88.9-(0.779*Shoot.ADF); DMI = 120/Shoot.NDF RFV = (DDM*DMI)/1.29 forgage.quality = apply(scale(cbind(RFV, Crude.protein)),1,mean)].
+
+```{r, eval=F}
+# forage.quality <- data.table::fread(paste(pathtodata, info_data$subpath[grep("forage.quality", info_data$ColumnName)], sep=""), header=T, sep='\t')
+# list_raw_functions[["forage.quality"]] <- forage.quality; rm(forage.quality)
+
+# The code below is possibly helpful to calculate forage quality once this service is planned to get calculated. But it is not finished and tested code as the other.
+# # 2009
+# forage.quality.2009 <- forage.quality[year == "2009"]
+# forage.quality.2009 <- forage.quality.2009[, c("Plot", "N", "ADF", "NDF")]
+# data.table::setnames(forage.quality.2009, old=c("N", "ADF", "NDF"), new = c("N.2009", "ADF.2009", "NDF.2009"))
+# # 2010
+# forage.quality.2010 <- forage.quality[year == "2010"]
+# forage.quality.2010 <- forage.quality.2010[, c("Plot", "N", "ADF", "NDF")]
+# data.table::setnames(forage.quality.2010, old=c("N", "ADF", "NDF"), new = c("N.2010", "ADF.2010", "NDF.2010"))
+# # 2011
+# forage.quality.2011 <- forage.quality[year == "2011"]
+# forage.quality.2011 <- forage.quality.2011[, c("Plot", "N", "ADF", "NDF")]
+# data.table::setnames(forage.quality.2011, old=c("N", "ADF", "NDF"), new = c("N.2011", "ADF.2011", "NDF.2011"))
+# # 2012
+# forage.quality.2012 <- forage.quality[year == "2012"]
+# forage.quality.2012 <- forage.quality.2012[, c("Plot", "N", "ADF", "NDF")]
+# data.table::setnames(forage.quality.2012, old=c("N", "ADF", "NDF"), new = c("N.2012", "ADF.2012", "NDF.2012"))
+# # 2013
+# forage.quality.2013 <- forage.quality[year == "2013"]
+# forage.quality.2013 <- forage.quality.2013[, c("Plot", "N", "ADF", "NDF")]
+# data.table::setnames(forage.quality.2013, old=c("N", "ADF", "NDF"), new = c("N.2013", "ADF.2013", "NDF.2013"))
+# # merge all years with raw_functions
+# raw_functions <- merge(raw_functions, forage.quality.2009, by="Plot", all=T)
+# raw_functions <- merge(raw_functions, forage.quality.2010, by="Plot", all=T)
+# raw_functions <- merge(raw_functions, forage.quality.2011, by="Plot", all=T)
+# raw_functions <- merge(raw_functions, forage.quality.2012, by="Plot", all=T)
+# raw_functions <- merge(raw_functions, forage.quality.2013, by="Plot", all=T)
+```
+
+# Charismatic butterflys
+Diversity and abundance of day active butterflies and day-active moths along a land use intensity gradient (2008)
+```{r, eval=F}
+butterflys <- data.table::fread(paste(pathtodata, info_data$subpath[grep("Charism.butterfly.Abund", info_data$ColumnName)], sep=""), header=T, sep='\t')
+```
