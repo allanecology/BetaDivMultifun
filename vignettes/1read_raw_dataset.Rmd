@@ -1,13 +1,23 @@
 ---
-title: "prepare functions"
-author: "noelle"
-date: "November 14, 2018"
-output: html_document
-  toc: true
-  toc_depth: 2
+title: "Assemble raw dataset for functions"
+author: "Noelle Schenk, Eric Allan, Caterina Penone"
+date: "April, 2019"
+output:
+  html_document:
+    toc: true
+    theme: readable
 ---
+```{r, echo=F}
+# ignore this lines of code and start reading below.
+source("")
+# to knit this document, run rmarkdown::render('<pathtothisdocument>/1read_raw_dataset.Rmd')
+```
+
 # Automatic running
 This file should run automatically, the user needs to change/ take an action at lines starting with "#USER". This file loads the datasets from BExIS and is the prerequisite for "2calc_raw_dataset.Rmd". The latter calculates (if needed) the functions from the loaded variables.
+
+## Knit to HTML
+In order to knit this document to HTML, the file "nonpublic.R" needs to be run, or the variables `pathtodata` and `info_data` need to be given (see below why and how).
 
 # Loading raw data
 An overview of the data is given in "info_data.csv". From there, the path of data files can be read out. 
