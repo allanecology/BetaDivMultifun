@@ -9,7 +9,7 @@ output:
 ---
 ```{r, echo=F}
 # ignore this lines of code and start reading below.
-source("")
+# source("")
 # to knit this document, run rmarkdown::render('<pathtothisdocument>/1read_raw_dataset.Rmd')
 ```
 
@@ -33,6 +33,7 @@ will be merged with "12706_Measurement of biomass (2010, all grassland EPs)_1.1.
 Reading pathtodata and the file "info_data.csv"
 ```{r}
 #USER : insert needed path.
+# NOTE : don't forget to end with / (unix) or \\ (windows)
 # pathtodata <- "C:/Documents/Projects/Synthesis/Functions_dataset/BExIS_raw_data/"
 
 #USER : insert path to info_data.csv
@@ -48,11 +49,10 @@ The paths in Windows systems are given with "\\", while in Unix systems with "/"
 ```{r}
 #USER : uncomment the needed line (see above in text)
 # Unix-like : uncomment the following line
-info_data <- info_data[grep("_", info_data$subpath),c("ColumnName", "subpath")] # only show lines which contain path info
+# info_data <- info_data[grep("_", info_data$subpath),c("ColumnName", "subpath")] # only show lines which contain path info
 
 # Windows-like : uncomment the following line
-#TODO : test if this works
-# info_data <- info_data[grep("_", info_data$subpath_windows),c("ColumnName", "subpath_windows")] # only show lines which contain path info
+info_data <- info_data[grep("_", info_data$subpath_windows),c("ColumnName", "subpath_windows")] # only show lines which contain path info
 ```
 
 
