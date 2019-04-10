@@ -4,6 +4,8 @@ author: "noelle"
 date: "December 5, 2018"
 output: html_document
 ---
+# Dependence
+This document depends on `1read_raw_datasets.Rmd`.
 
 # Biomass
 ## Biomass2009
@@ -323,9 +325,6 @@ requires : Bulk.density2014, Nshoot.2014, NH4.2014, NO3.2014, Biomass2014, Nmic.
 
 Most of these datasets are already read in in this script. Nshoot is stored in `list_raw_functions` "nutrients". Only Nmic.2014 needs to be read in.
 ```{r}
-#TODO : for now, I add a column of NA to raw_functions which is called "Nmic.2014" to start working.
-raw_functions[, "Nmic.2014" := NA]
-
 nridat <- raw_functions[,c("Plot", "Bulk.density2014", "NH4.2014", "NO3.2014", "Biomass2014", "Nmic.2014")]
 Nshoot.2014 <- list_raw_functions$nutrients
 Nshoot.2014 <- Nshoot.2014[, c("Plot", "Nshoot.2014")]
@@ -424,7 +423,7 @@ pla_reftable[Abbrev == "Vicsep", Species := as.list("Vicia_sepium")]  # and not 
 pla_reftable <- pla_reftable[Abbrev != "Des", ] # because only Deschampsia_cespitosa which has Abbreviation Desces (30)
 
 # change Fes to "Fesaru", because " Festuca_arundinacea" is only (logical) member of "Fes" (38) - other members were Festulolium_loliaceum,Fragaria_vesca,Fraxinus_excelsior
-# there is already a lina for it.
+# there is already a line for it.
 pla_reftable <- pla_reftable[Abbrev == "Fes", Abbrev := "Fesaru"]
 pla_reftable[Abbrev == "Fesaru", Species := as.list("Festuca_arundinacea")] # and not "Festulolium_loliaceum,Fragaria_vesca,Fraxinus_excelsior"
 
@@ -541,9 +540,9 @@ list_raw_functions["dung.decomposition"] <- NULL
 
 graphical representation
 ```{r}
-ggplot(data = dd, aes(x = removal_g, y = scaled_removal_g, colour = dungtype)) +
-  geom_point() + 
-  scale_color_brewer(palette="Set1")
+ggplot2::ggplot(data = dd, ggplot2::aes(x = removal_g, y = scaled_removal_g, colour = dungtype)) +
+  ggplot2::geom_point() + 
+  ggplot2::scale_color_brewer(palette="Set1")
 
 rm(dung.decomposition); rm(dd)
 ```
@@ -557,7 +556,7 @@ Enzymes related to soil C. All measured in the year 2011.
 ```{r}
 sce <- raw_functions[, c("beta_Glucosidase", "N_Acetyl_beta_Glucosaminidase", "Xylosidase")]
 # take z-scores of the functions
-raw_functions[, "soilCflxs" := multidiv(t(sce), sc="sd", cent=TRUE)[,1]]
+raw_functions[, "soilCflxs" := multidiv(sce, sc="sd", cent=TRUE)[,1]]
 rm(sce)
 ```
 
@@ -606,6 +605,8 @@ cat("Dear user, \n
     '_raw_functions_dataset.csv' \n
     example : 'december2018' would give 'december2018__raw_functions_dataset.csv'")
 prefix <- readline(prompt="Write now : ")
-write.csv(raw_functions, file=paste("~/Desktop/", prefix, "_raw_functions_dataset.csv", sep=""))
+#USER : change ~/Desktop/ to the directory where the dataset should be stored. 
+#  if you don't know what to write, just write nothing : "" (empty)
+write.table(raw_functions, file=paste("", prefix, "_raw_functions_dataset.csv", sep=""), sep=";")
 rm(prefix)
 ```
