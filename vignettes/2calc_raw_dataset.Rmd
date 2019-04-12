@@ -138,9 +138,12 @@ rm(means); rm(scaled); rm(scmeans); rm(test); rm(test2); rm(unscaled)
 above : A shows the unscaled years and right (pink) the unscaled years. B shows the scaled years and their mean. C plots the scales mean of unscaled years and the scaled mean of scaled years. They are not identical, however, very similar.
 
 Therefore, the years are first scaled and subsequently, their mean is taken. 
+TODO : change : first, mean, then scale
 ```{r}
-scd <- cbind(Gtot[,c("Plot")], apply(Gtot[, c("2010", "2011", "2012", "2013", "2014", "2015", "2016")], 2, scale))
-raw_functions[, "Groundwater.recharge" := rowMeans(scd[, c("2010", "2011", "2012", "2013", "2014", "2015", "2016")])]
+Gtot[, "unscaled_mean" := apply(.SD, 1, mean), .SDcols = c("2010", "2011", "2012", "2013", "2014", "2015", "2016")]
+# scd <- cbind(Gtot[,c("Plot")], apply(Gtot[, c("2010", "2011", "2012", "2013", "2014", "2015", "2016")], 2, scale))
+# raw_functions[, "Groundwater.recharge" := rowMeans(scd[, c("2010", "2011", "2012", "2013", "2014", "2015", "2016")])]
+raw_functions[, "Groundwater.recharge" := apply(Gtot[, unscaled_mean], 2, scale)]
 rm(Gtot); rm(scd)
 list_raw_functions["Groundwater.recharge"] <- NULL
 ```
@@ -597,7 +600,7 @@ rm(list_raw_functions); rm(info_data)
 ```
 
 store as .csv document
-```{r}
+```{r, eval=F}
 cat("Dear user, \n
     Please enter a prefix (=piece of the name which is printed in front of a file).\n
     It will be used for the assembled functions dataset.\n
@@ -610,3 +613,11 @@ prefix <- readline(prompt="Write now : ")
 write.table(raw_functions, file=paste("", prefix, "_raw_functions_dataset.csv", sep=""), sep=";")
 rm(prefix)
 ```
+
+select variables used in BetaDivMultifun and variables used to calculate them:
+```{r}
+raw_functions_betadivmultifun_raw <- raw_functions[, selection, with=F]
+raw_functions_betadivmultifun <- raw_functions[, s3, with=F]
+write.table(raw_functions_betadivmultifun, file="~/Desktop/functions_dataset_april2019.csv", sep=",", row.names = F)
+```
+
