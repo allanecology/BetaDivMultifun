@@ -1,8 +1,0 @@
----
-title: "assembled dataset construction"
-author: "noelle"
-date: "December 5, 2018"
-output: html_document
----
-
-see https://github.com/biodiversity-exploratories-synthesis/2019_grassland_functions
