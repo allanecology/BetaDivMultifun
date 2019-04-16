@@ -137,13 +137,11 @@ rm(means); rm(scaled); rm(scmeans); rm(test); rm(test2); rm(unscaled)
 ```
 above : A shows the unscaled years and right (pink) the unscaled years. B shows the scaled years and their mean. C plots the scales mean of unscaled years and the scaled mean of scaled years. They are not identical, however, very similar.
 
-Therefore, the years are first scaled and subsequently, their mean is taken. 
-TODO : change : first, mean, then scale
+If scaling is done, it is done after taking the mean.
 ```{r}
-Gtot[, "unscaled_mean" := apply(.SD, 1, mean), .SDcols = c("2010", "2011", "2012", "2013", "2014", "2015", "2016")]
+Gtot[, "Groundwater.recharge" := apply(.SD, 1, mean), .SDcols = c("2010", "2011", "2012", "2013", "2014", "2015", "2016")]
 # scd <- cbind(Gtot[,c("Plot")], apply(Gtot[, c("2010", "2011", "2012", "2013", "2014", "2015", "2016")], 2, scale))
 # raw_functions[, "Groundwater.recharge" := rowMeans(scd[, c("2010", "2011", "2012", "2013", "2014", "2015", "2016")])]
-raw_functions[, "Groundwater.recharge" := apply(Gtot[, unscaled_mean], 2, scale)]
 rm(Gtot); rm(scd)
 list_raw_functions["Groundwater.recharge"] <- NULL
 ```
@@ -531,7 +529,7 @@ rm(pla_reftable); rm(npla); rm(p.infect); rm(pinf)
 Taking the mean over all 5 dung types for each plot. Dung removal in g and not in %, because the treatments (dung types) were (almost) the same in all plots and can therefore be compared.
 ```{r}
 dung.decomposition <- list_raw_functions[["dung.decomposition"]]
-# scale values for dungtype
+# scale values for dungtype to be able to combine different dungtypes
 dung.decomposition[, scaled_removal_g := lapply(.SD, function(x) as.vector(scale(x))), by = dungtype, .SDcols = "removal_g"]
 dd <- data.table::copy(dung.decomposition)
 
