@@ -14,7 +14,7 @@ setwd("<parent-directory-of-the-package>")
 devtools::install("BetaDivMultifun")
 ```
 
-Set wd back to the package
+Set wd *back* to the package
 ```{r}
 setwd("/home/noelleschenk/Desktop/BetaDivMultifun/")
 ```
@@ -68,12 +68,11 @@ develop your own tests to prevent introducing bugs.
 
 
 
-# creating `assembled_functions` dataset
+# creating `assembled_functions` dataset (noelle notes)
+is described in 3 scripts in another github folder. 
+
 After installing the package and being connected to the "planteco" drive at IPS:
 * find the file `nonpublic.R`, it is stored at the "planteco" drive where the data is.
 * run `nonpublic.R`
 * run `1read_raw_datasets.Rmd` then `2calc_raw_dataset.R`
 * the file `"~/Desktop/december2018_assembled_functions_dataset.csv"` will be written on your Desktop.
-
-*CAUTION* this automated workflow currently only works for UNIX Systems. This is because paths are specified in LINUX way (using "/" and not "\\" which is used under Windows. and OSX)
-will be changed at one point.
