@@ -68,8 +68,11 @@ develop your own tests to prevent introducing bugs.
 
 
 
-# creating `assembled_functions` dataset (noelle notes)
-is described in 3 scripts in another github folder. 
+# creating `assembled_functions` dataset
+is described in 3 scripts in another github folder : 
+https://github.com/biodiversity-exploratories-synthesis/2019_grassland_functions
+
+In this package, the required dataset is just read in and an analysis is performed. As the dataset was constructed from within this directory, the commits can be looked up here.
 
 After installing the package and being connected to the "planteco" drive at IPS:
 * find the file `nonpublic.R`, it is stored at the "planteco" drive where the data is.
