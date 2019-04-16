@@ -142,6 +142,7 @@ If scaling is done, it is done after taking the mean.
 Gtot[, "Groundwater.recharge" := apply(.SD, 1, mean), .SDcols = c("2010", "2011", "2012", "2013", "2014", "2015", "2016")]
 # scd <- cbind(Gtot[,c("Plot")], apply(Gtot[, c("2010", "2011", "2012", "2013", "2014", "2015", "2016")], 2, scale))
 # raw_functions[, "Groundwater.recharge" := rowMeans(scd[, c("2010", "2011", "2012", "2013", "2014", "2015", "2016")])]
+raw_functions <- merge(raw_functions, Gtot[, c("Plot", "Groundwater.recharge")], by="Plot", all = T)
 rm(Gtot); rm(scd)
 list_raw_functions["Groundwater.recharge"] <- NULL
 ```
@@ -598,7 +599,7 @@ rm(list_raw_functions); rm(info_data)
 ```
 
 store as .csv document
-```{r, eval=F}
+```{r}
 cat("Dear user, \n
     Please enter a prefix (=piece of the name which is printed in front of a file).\n
     It will be used for the assembled functions dataset.\n
@@ -608,12 +609,12 @@ cat("Dear user, \n
 prefix <- readline(prompt="Write now : ")
 #USER : change ~/Desktop/ to the directory where the dataset should be stored. 
 #  if you don't know what to write, just write nothing : "" (empty)
-write.table(raw_functions, file=paste("", prefix, "_raw_functions_dataset.csv", sep=""), sep=";")
+write.table(raw_functions, file=paste("", prefix, "_raw_functions_dataset.csv", sep=""), sep=";", row.names = F)
 rm(prefix)
 ```
 
 select variables used in BetaDivMultifun and variables used to calculate them:
-```{r}
+```{r, eval=F}
 raw_functions_betadivmultifun_raw <- raw_functions[, selection, with=F]
 raw_functions_betadivmultifun <- raw_functions[, s3, with=F]
 write.table(raw_functions_betadivmultifun, file="~/Desktop/functions_dataset_april2019.csv", sep=",", row.names = F)
