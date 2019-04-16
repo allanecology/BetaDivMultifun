@@ -1,0 +1,85 @@
+---
+title: "prepare_covariates"
+author: "noelleschenk"
+date: "April 16, 2019"
+output: html_document
+---
+
+Here, covariates are prepared.
+
+# soil
+```{r}
+#USER : change paths and uncomment wanted
+# main_glsoil <- fread("../data/Grassland EP soil descriptors.txt")
+# small_glsoil <- fread("../data/BE env covariates.txt") # from here, I only take soil type and TWI
+small_glsoil <- small_glsoil[, c("Plot", "Soil.type", "TWI")]
+# names_gl <- fread("../data/20826_plotNames.txt") # read a file where the different plotnames are documented
+```
+clean and merge covariate dataset
+```{r}
+names_gl <- names_gl[Landuse == "G",.(EP_PlotID,PlotID)]
+data.table::setnames(names_gl, old="EP_PlotID", new="Plot")
+# add useful plot IDs
+names_gl <- merge(names_gl, grlfuns[, c("Plot", "Plotn")], by="Plot", all=T)
+# merge main_glsoil with names_gl to get the wanted names
+data.table::setnames(main_glsoil, "plotid","PlotID")
+main_glsoil <- merge(main_glsoil, names_gl, by="PlotID")
+# merge the 2 datasets
+glsoil <- merge(main_glsoil, small_glsoil, by="Plot", all=T)
+rm(main_glsoil) ; rm(names_gl) ; rm(small_glsoil)
+```
+
+
+
+
+
+```{r}
+# remove unwanted columns
+glsoil <- glsoil[ , c("PlotID", "Exploratory.x", "EP_PlotID", "Landuse", "Exploratory.y", "pH.y", "Soil.depth.y", "Soil.type", "elevation") := NULL]
+
+################################
+# Option 1 - SMALL DATASET
+################################
+
+# take out the plots that I exclude from analysis
+glsoil <- glsoil[!Plot %in% plot_NAset ,]
+rm(plot_NAset)
+
+
+#################
+# standardization
+#
+stand_fun <- function(x){
+  return((x - (min(x,na.rm=T)))/(max(x,na.rm=T)-min(x,na.rm=T)))
+}
+mysubset <- names(glsoil)[!names(glsoil) %in% "Plot"]
+glsoil[, (mysubset) := lapply(.SD, stand_fun),.SDcols=mysubset]
+
+############
+# RUN PCA
+############
+# first I need to make Plot information as rows. And I need to change my data.table into a data.frame
+glsoil <- as.data.frame(glsoil)
+pc_glsoil <- glsoil[,-1] # this is the dataset I ll use for pca
+rownames(pc_glsoil) <- glsoil[,1]
+# glsoil <- pc_glsoil ; rm(pc_glsoil)
+
+# run the pca
+pca_from_glsoil <- prcomp(pc_glsoil, scale = TRUE)
+plot(pca_from_glsoil)
+biplot(pca_from_glsoil)
+
+pca_from_glsoil <- scores(pca_from_glsoil, display = "sites")
+# compute DISSIMILARITY MATRICES
+# compute dissimilarities for all principal components I got (10) (euclidian distance)
+edis_glsoil <- vegdist(pca_from_glsoil, method = "euclid")
+
+# prepare for gdm (the desired format)
+edis_glsoil <- as.matrix(edis_glsoil)
+# sum(rownames(edis_glsoil) != sort(rownames(edis_glsoil)))
+edis_glsoil <- cbind("Plot" = seq(1,130), edis_glsoil)
+
+
+# CLEANING away all I don't need to run gdm
+rm(pca_from_glsoil) ; rm(glsoil) ; rm(pc_glsoil) ; rm(mysubset)
+```
