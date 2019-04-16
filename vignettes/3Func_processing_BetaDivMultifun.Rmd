@@ -4,17 +4,28 @@ output:
   pdf_document: default
   html_notebook: default
 ---
-This Vignette relies on the dataset `raw_functions` which is read in and constructed with `1read_raw_dataset.Rmd` and `2calc_raw_dataset`. 
+This Vignette relies on the BExIS grassland functions dataset.
+TODO : add information on where to get it/ ask for access
 
-# Select functions for BetaDivMultifun project
+It also relies on a soil information dataset
+TODO : get more information on where this comes from.
+Clay	Fine.Silt	Medium.Silt	Coarse.Silt	Fine.Sand	Medium.Sand	Coarse.Sand	pH	Soil.depth
+
+
 ```{r}
-# waiting for following functions
-# "N_loss_comb", 
-funselect <- c()
+#USER : insert path to grassland function file and read in as grlfuns (uncomment line below)
+# grlfuns <- data.table::fread("<pathto_grl_functions.csv>", header=T)
+```
+
+# packages
+```{r}
+#TODO make sure the packages will be named at each function call such that they don't need to be loaded.
+require(missForest) ; require(corrplot) ; require(data.table)
 ```
 
 
-# check distributions
+
+check distributions
 normality?
 
 log transform non-normally distributed ones
