@@ -7,12 +7,14 @@ output: html_document
 
 Here, covariates are prepared.
 
-# soil
+# Cleaning soil covariates
 ```{r}
 #USER : change paths and uncomment wanted
 # main_glsoil <- fread("../data/Grassland EP soil descriptors.txt")
 # small_glsoil <- fread("../data/BE env covariates.txt") # from here, I only take soil type and TWI
 small_glsoil <- small_glsoil[, c("Plot", "Soil.type", "TWI")]
+# take out empty row at the end
+small_glsoil <- small_glsoil[Plot != "",]
 # names_gl <- fread("../data/20826_plotNames.txt") # read a file where the different plotnames are documented
 ```
 clean and merge covariate dataset
@@ -23,36 +25,70 @@ data.table::setnames(names_gl, old="EP_PlotID", new="Plot")
 names_gl <- merge(names_gl, grlfuns[, c("Plot", "Plotn")], by="Plot", all=T)
 # merge main_glsoil with names_gl to get the wanted names
 data.table::setnames(main_glsoil, "plotid","PlotID")
-main_glsoil <- merge(main_glsoil, names_gl, by="PlotID")
+main_glsoil <- merge(main_glsoil, names_gl, by="PlotID", all=T)
+main_glsoil[Plotn %in% c("AEG29", "AEG10"),] # there are two duplicated rows without data
+main_glsoil <- main_glsoil[!PlotID %in% c("A32886", "A8338"),]
+
 # merge the 2 datasets
-glsoil <- merge(main_glsoil, small_glsoil, by="Plot", all=T)
+data.table::setnames(small_glsoil, "Plot", "Plotn")
+glsoil <- merge(main_glsoil, small_glsoil, by="Plotn", all=T)
 rm(main_glsoil) ; rm(names_gl) ; rm(small_glsoil)
+
+# remove unwanted columns
+glsoil[, c("PlotID", "Exploratory", "Plot") := NULL]
+```
+
+# Plot selection
+```{r, eval=F}
+#TODO : 
+# take out the plots that I exclude from analysis
+glsoil <- glsoil[!Plot %in% plot_NAset ,]
+rm(plot_NAset)
+```
+
+
+# Create binary data from Soil.type
+Because PCA can not fit categorical data which have > 2 categories.
+```{r}
+stype <- glsoil[, .(Plotn, Soil.type)]
+stype[, Rendzina := ifelse(Soil.type == "Rendzina", 1, 0)]
+stype[, Braunerde := ifelse(Soil.type == "Braunerde", 1, 0)]
+stype[, Pelosol := ifelse(Soil.type == "Pelosol", 1, 0)]
+stype[, Pseudogley := ifelse(Soil.type == "Pseudogley", 1, 0)]
+stype[, Erdniedermoor := ifelse(Soil.type == "Erdniedermoor", 1, 0)]
+stype[, Gley := ifelse(Soil.type == "Gley", 1, 0)]
+stype[, Mulmniedermoor := ifelse(Soil.type == "Mulmniedermoor", 1, 0)]
+stype[, Parabraunerde := ifelse(Soil.type == "Parabraunerde", 1, 0)]
+stype[, Fahlerde := ifelse(Soil.type == "Fahlerde", 1, 0)]
+stype[, Soil.type := NULL]
+glsoil[, Soil.type := NULL]
+# merge to glsoil
+glsoil <- merge(glsoil, stype, by="Plotn", all=T)
+```
+
+
+# Standardisation
+bring to range [0,1]
+```{r}
+scale(glsoil[,-1], scale = apply(glsoil[,-1], 2, max))
+
+#TODO here! not sure how to scale ... bring all to same range, right? why is categorical stuff so strange after scaling?
+# just use the function I wrote below?
+
+# test <- apply(glsoil[,-1], 2, function(x) scale(x, center=F, max(x)))
 ```
 
 
 
-
-
+old stuff:
 ```{r}
-# remove unwanted columns
-glsoil <- glsoil[ , c("PlotID", "Exploratory.x", "EP_PlotID", "Landuse", "Exploratory.y", "pH.y", "Soil.depth.y", "Soil.type", "elevation") := NULL]
-
-################################
-# Option 1 - SMALL DATASET
-################################
-
-# take out the plots that I exclude from analysis
-glsoil <- glsoil[!Plot %in% plot_NAset ,]
-rm(plot_NAset)
-
-
 #################
 # standardization
 #
 stand_fun <- function(x){
   return((x - (min(x,na.rm=T)))/(max(x,na.rm=T)-min(x,na.rm=T)))
 }
-mysubset <- names(glsoil)[!names(glsoil) %in% "Plot"]
+mysubset <- names(glsoil)[!names(glsoil) %in% "Plotn"]
 glsoil[, (mysubset) := lapply(.SD, stand_fun),.SDcols=mysubset]
 
 ############
