@@ -4,7 +4,8 @@
 \alias{CompareToReferenceDataset}
 \title{Test if column is identical with reference dataset}
 \usage{
-CompareToReferenceDataset(tocompareset, refset, name, sortcol = "Plot")
+CompareToReferenceDataset(tocompareset, refset, name, sortcol = "Plot",
+  tolerance = 1e-04)
 }
 \arguments{
 \item{tocompareset}{name of the dataset which is compared (dataset 1). Is a data.table.}
