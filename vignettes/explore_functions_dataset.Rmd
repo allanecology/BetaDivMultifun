@@ -1,0 +1,69 @@
+---
+title: "3explore_functions_dataset"
+author: "Noelle Schenk"
+date: "April 25, 2019"
+output: html_document
+---
+
+*note*: 
+This file requires the functions dataset `raw_functions` which is constructed in the previous scripts `1read_raw_dataset.Rmd` and `2calc_raw_dataset.Rmd`. Here, it is named `raw_grlfuns`.
+```{r}
+library(naniar)
+```
+
+A selection of the functions which are included in the BetaDivMultifun analysis is stored in `grlfuns`.
+
+# Missing data
+```{r}
+vis_miss(grlfuns[, !colnames(grlfuns) %in% c("Explo","Plotn", "Plot"), with=F]) # plot and explo don't contain any missing data
+```
+Values with over 21% missing data are excluded.
+```{r}
+#USER : set treshold for missing values
+treshold <- 0.21
+t <- apply(grlfuns, 2, function(x) sum(is.na(x)))
+exclude <- names(which(t > 150 * treshold))
+
+small_grlfuns <- grlfuns[, !colnames(grlfuns) %in% exclude, with=F]
+```
+Visualisation of new situation
+```{r}
+vis_miss(small_grlfuns[, !colnames(grlfuns) %in% c("Explo","Plotn", "Plot"), with=F])
+```
+
+
+Are there plots which are missing in all variables?
+```{r}
+gg_miss_upset(small_grlfuns)
+```
+No plots are missing in all variables.
+
+
+# Correlations
+```{r}
+M <- cor(small_grlfuns[, !colnames(grlfuns) %in% c("Explo","Plotn", "Plot"), with=F], use="pairwise.complete.obs")
+corrplot::corrplot(M,type="lower",addCoef.col = "black",method="color",diag=F, tl.srt=1, tl.col="black", mar=c(1,0,1,0), number.cex=0.6)
+```
+
+Correlations for analysis should not be over 0.7.
+```{r}
+treshold <- 0.7
+M[M < 0.7 & M > -0.7] <- 0
+corrplot::corrplot(M,type="lower", tl.srt=1, tl.col="black", diag = F, title = "Correlations over 0.7",  mar=c(0,0,2,0))
+```
+High correlations between following variables : 
+
+- Soil.C.stock vs. SoilOrganicC : chose only one and leave out the other
+- Groundwater.recharche vs. soil.depth : ?
+- PRI and NRI (because they both contain Bulk density 2014 AND Biomass 2013)
+- PRI is contained in P loss comb as a mini-multifunctionality
+
+## Variable exclusion
+Either Soil.C.stock or SoilOrganicC.
+```{r}
+vis_miss(small_grlfuns[, colnames(small_grlfuns) %in% c("Soil.C.stock","SoilOrganicC"), with=F])
+```
+
+Soil Organic C is probably contained in Soil C stock, as the stock consists of both organic and anorganic C. Are both available to the ecosystem? Who consumes it? Microbes? Plants? animals? 
+
+
