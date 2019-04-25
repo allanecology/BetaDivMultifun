@@ -5,9 +5,15 @@ date: "April 16, 2019"
 output: html_document
 ---
 
-Here, covariates are prepared.
+Here, covariates are prepared. At the moment : only soil. Will add plot isolation & Co
 
-# Cleaning soil covariates
+```{r}
+#TODO : add Region to the soil pca?
+```
+
+
+# Soil
+## Cleaning soil covariates
 ```{r}
 #USER : change paths and uncomment wanted
 # main_glsoil <- fread("../data/Grassland EP soil descriptors.txt")
@@ -38,7 +44,7 @@ rm(main_glsoil) ; rm(names_gl) ; rm(small_glsoil)
 glsoil[, c("PlotID", "Exploratory", "Plot") := NULL]
 ```
 
-# Plot selection
+## Plot selection
 ```{r, eval=F}
 #TODO : 
 # take out the plots that I exclude from analysis
@@ -47,8 +53,13 @@ rm(plot_NAset)
 ```
 
 
-# Create binary data from Soil.type
-Because PCA can not fit categorical data which have > 2 categories.
+## Create binary data from Soil.type
+Because PCA can not fit categorical data which have > 2 categories. 
+
+This probably adds some overlaping information with the amount of sand, clay etc. But this does not matter, as selecting the PCA components will take this extra information out again.
+
+TODO : *This is a "human" classification, not a "pure physical". Based on which informations? Do we add some "false" information with that, which is then left in the data as only the overlapping information is "removed" in the PCA?*
+
 ```{r}
 stype <- glsoil[, .(Plotn, Soil.type)]
 stype[, Rendzina := ifelse(Soil.type == "Rendzina", 1, 0)]
@@ -61,61 +72,103 @@ stype[, Mulmniedermoor := ifelse(Soil.type == "Mulmniedermoor", 1, 0)]
 stype[, Parabraunerde := ifelse(Soil.type == "Parabraunerde", 1, 0)]
 stype[, Fahlerde := ifelse(Soil.type == "Fahlerde", 1, 0)]
 stype[, Soil.type := NULL]
-glsoil[, Soil.type := NULL]
 # merge to glsoil
 glsoil <- merge(glsoil, stype, by="Plotn", all=T)
 ```
 
 
-# Standardisation
-bring to range [0,1]
+## Normalisation
+scale to range [0,1].
+
+Could be done within PCA computation with parameter `scale = TRUE`.
 ```{r}
-scale(glsoil[,-1], scale = apply(glsoil[,-1], 2, max))
-
-#TODO here! not sure how to scale ... bring all to same range, right? why is categorical stuff so strange after scaling?
-# just use the function I wrote below?
-
-# test <- apply(glsoil[,-1], 2, function(x) scale(x, center=F, max(x)))
+mysubset <- names(glsoil)[!names(glsoil) %in% c("Plotn", "Soil.type")]
+glsoil[, (mysubset) := lapply(.SD, scale01),.SDcols=mysubset]
+#TODO : revise this scaling method - should I better substract the mean and divide by sd?
+# in the latter case, I need to take out the binary variables.
+```
+*note* : The binary categoric columns are not affected by this.
+```{r}
+plot(glsoil$Rendzina)
+points(glsoil$Braunerde)
+points(glsoil$Pelosol)
+points(glsoil$Pseudogley)
+points(glsoil$Erdniedermoor)
+points(glsoil$Gley)
+points(glsoil$Mulmniedermoor)
+points(glsoil$Parabraunerde)
+points(glsoil$Fahlerde)
 ```
 
 
-
-old stuff:
+## soil PCA
 ```{r}
-#################
-# standardization
-#
-stand_fun <- function(x){
-  return((x - (min(x,na.rm=T)))/(max(x,na.rm=T)-min(x,na.rm=T)))
-}
-mysubset <- names(glsoil)[!names(glsoil) %in% "Plotn"]
-glsoil[, (mysubset) := lapply(.SD, stand_fun),.SDcols=mysubset]
-
-############
-# RUN PCA
-############
-# first I need to make Plot information as rows. And I need to change my data.table into a data.frame
-glsoil <- as.data.frame(glsoil)
-pc_glsoil <- glsoil[,-1] # this is the dataset I ll use for pca
-rownames(pc_glsoil) <- glsoil[,1]
-# glsoil <- pc_glsoil ; rm(pc_glsoil)
+# Plot information is taken as rownames of a data.frame (instead of data.table).
+pc_glsoil <- as.data.frame(glsoil[,-1])
+rownames(pc_glsoil) <- glsoil$Plotn
 
 # run the pca
-pca_from_glsoil <- prcomp(pc_glsoil, scale = TRUE)
-plot(pca_from_glsoil)
-biplot(pca_from_glsoil)
+pca_from_glsoil <- prcomp(pc_glsoil[, !(names(pc_glsoil) %in% "Soil.type")], scale = FALSE)
+plot(pca_from_glsoil) 
+```
+The first 4 axis would make sense if the dimensionality would need to be reduced a lot. 
 
-pca_from_glsoil <- scores(pca_from_glsoil, display = "sites")
-# compute DISSIMILARITY MATRICES
+However, here it is not that much about reducing dimensionality, but taking out unnecessary variables. Therefore, Taking PC1 to 17 is suitable, as PC18 and 19 do not add any more information.
+```{r}
+# first 4 axis would make sense
+summary(pca_from_glsoil)
+```
+
+### PCA insights
+```{r}
+# color by soil type
+ggplot2::autoplot(pca_from_glsoil, data = pc_glsoil, colour = 'Soil.type')
+ggplot2::autoplot(pca_from_glsoil, data = pc_glsoil, colour = 'Soil.depth')
+
+ggplot2::autoplot(pca_from_glsoil, data = pc_glsoil, loadings = TRUE, loadings.colour = 'darkgray', loadings.label = TRUE, loadings.label.size = 2)
+```
+
+```{r}
+ggplot2::autoplot(pca_from_glsoil, x=3, y=4, data=pc_glsoil, colour="Soil.type")
+ggplot2::autoplot(pca_from_glsoil, x=3, y=4, data=pc_glsoil, colour="pH")
+```
+
+### Component selection
+Components 1 to 17 (as argued above).
+```{r}
+pca_from_glsoil <- pca_from_glsoil$x[, 1:17]
+```
+
+## Computation of Dissimilarity Matrices
+With euclidian distance : `edis_glsoil`
+With betadiversity : `beta_glsoil`.
+
+*note* beta.pair.abund can not handle negative abundance values. Therefore, data needs to be centered around 0 instead of centered around 0. However, max is `r max(pca_from_glsoil)` and min is `r min(pca_from_glsoil)`. Would need an "abundance" value which makes sense.
+
+```{r}
 # compute dissimilarities for all principal components I got (10) (euclidian distance)
-edis_glsoil <- vegdist(pca_from_glsoil, method = "euclid")
+edis_glsoil <- vegan::vegdist(pca_from_glsoil, method = "euclid")
 
+#TODO : if I want to calc beta, I need to find good solution for handling negative values.
+# beta_glsoil <- betapart::beta.pair.abund(pca_from_glsoil)
+```
+
+## Cleaning for GDM
+```{r}
 # prepare for gdm (the desired format)
 edis_glsoil <- as.matrix(edis_glsoil)
-# sum(rownames(edis_glsoil) != sort(rownames(edis_glsoil)))
-edis_glsoil <- cbind("Plot" = seq(1,130), edis_glsoil)
+# save as RDS
+saveRDS(edis_glsoil, file="../data/original/soil_covariate.RDS")
 
+# select Plots for the analysis
+# edis_glsoil <- cbind("Plot" = seq(1,130), edis_glsoil)
 
 # CLEANING away all I don't need to run gdm
-rm(pca_from_glsoil) ; rm(glsoil) ; rm(pc_glsoil) ; rm(mysubset)
+rm(pca_from_glsoil); rm(pc_glsoil) ; rm(mysubset); rm(stype)
+# glsoil is used for gap-filling and therefore not deleted here.
 ```
+
+
+# Plot isolation
+
+#TODO add more covariates
