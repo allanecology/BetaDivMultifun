@@ -27,5 +27,9 @@ Imports:
     devtools,
     betapart,
     ggplot2,
-    cowplot
+    cowplot,
+    ggfortify,
+    vegan,
+    missForest,
+    corrplot
 RoxygenNote: 6.1.0.9000

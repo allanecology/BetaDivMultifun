@@ -4,26 +4,8 @@ output:
   pdf_document: default
   html_notebook: default
 ---
-This Vignette relies on the BExIS grassland functions dataset.
-TODO : add information on where to get it/ ask for access
-
-It also relies on a soil information dataset
-TODO : get more information on where this comes from.
-Clay	Fine.Silt	Medium.Silt	Coarse.Silt	Fine.Sand	Medium.Sand	Coarse.Sand	pH	Soil.depth
-
-
-```{r}
-#USER : insert path to grassland function file and read in as grlfuns (uncomment line below)
-# grlfuns <- data.table::fread("<pathto_grl_functions.csv>", header=T)
-```
-
-# packages
-```{r}
-#TODO make sure the packages will be named at each function call such that they don't need to be loaded.
-require(missForest) ; require(corrplot) ; require(data.table)
-```
-
-
+------------------------------------------------------------- 
+TODO : where is this done? 
 
 check distributions
 normality?
@@ -31,3 +13,174 @@ normality?
 log transform non-normally distributed ones
 
 check distributions again
+-------------------------------------------------------------
+
+This Vignette relies on the BExIS grassland functions dataset.
+TODO : add information on where to get it/ ask for access
+
+It also relies on a soil information dataset, which is prepared by `prepare_covariates.Rmd`.
+
+# Data
+The dataset used for gap filling is larger than the dataset used for the analysis. More variables enhance the performance of gapfilling.
+```{r}
+#USER : insert path to grassland function file and read in as grlfuns (uncomment line below)
+# grlfuns <- data.table::fread("<pathto_grl_functions.csv>", header=T)
+```
+Grassland functions data stored in `grlfuns`.
+
+
+
+Correlations
+
+
+
+
+
+
+
+
+
+
+
+# Gap filling
+A Gap-filling of the functions dataset is performed, because many values are missing (NA). To enhance the predictions of the gapfilling, soil data is included. This introduces a bias, but reduces the imputation error. 
+
+TODO : It can be commented out. (search for "uncomment if not wanted")
+
+TODO : Two variables are produced, impdat which contains the gapfilled dataset which will be used in further analysis as well as imp_err, which contains the imputation error automatically estimated by missForest.
+
+
+## Data preparation
+Soil predictor data and Region is included to improve Gap filling. uncomment if not wanted!
+```{r}
+#USER : uncomment this block if soil information should not be included.
+remove <- unique(glsoil$Soil.type)
+glsoil[, (remove) := NULL]
+glsoil[, Soil.type := as.factor(Soil.type)] # soil type as factor
+```
+
+```{r}
+befun <- merge(grlfuns, glsoil, by="Plotn")
+rm(glsoil)
+befun[, Explo := as.factor(Explo)] # Region as a factor
+#TODO : need to have parasitoid trap and all other columns which are "int" now as numeric?
+```
+
+## Check Correlations
+Of the non-factor columns only
+```{r}
+corrbefun <- befun[, !colnames(befun) %in% c("Explo", "Soil.type", "Plotn", "Plot"), with=F]
+M <- cor(corrbefun, use="pairwise.complete.obs")
+M[which(M > 0.6 | M < -0.6)]
+
+# grlfun_corrplot1
+corrplot::corrplot(M,type="lower",addCoef.col = "black",method="color",diag=F, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.6)
+
+#grlfun_corrplot2
+corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40)
+```
+
+
+
+
+old stuff
+```{r}
+
+
+####################
+# 3. CHECK CORRELATIONS
+# Check correlations between functions
+M<-cor(befun[,-c(1,36)],use="pairwise.complete.obs")
+corrplot(M,type="lower",addCoef.col = "black",method="color",diag=F,tl.srt=50, tl.col="black", mar=c(0,0,0,0))
+corrplot(M, type = "upper")
+
+####################
+# 4. LOG-TRANSFORMATION
+#first remove negative values (remember to add those again after imputation)
+minpath <- min(befun$pathogen.infection,na.rm=T)
+befun$pathogen.infection <- befun$pathogen.infection+abs(minpath)
+minfor <- min(befun$forage.quality,na.rm=T)
+befun$forage.quality <- befun$forage.quality+abs(minfor)
+
+#log-transform (remember to add 1 when taking the exponential)
+funs <- names(befun)[-1][-35]
+befun <- as.data.table(befun)
+befun[,(funs):= lapply(.SD,as.numeric),.SDcols=funs]
+befun[,(funs):=lapply(.SD,function(x) log(x+1)),.SDcols=funs]
+
+####################
+# 5. IMPUTATION
+# Impute
+imputeall<-missForest(befun[,-1])
+imp_error <- imputeall$OOBerror
+
+#extract imputed data and retransform everything
+impdat <- data.table(Plot0=befun$Plot,exp(imputeall$ximp[,-35])-1, Exploratory=imputeall$ximp[,35])
+impdat$pathogen.infection <- impdat$pathogen.infection-abs(minpath)
+impdat$forage.quality <- impdat$forage.quality-abs(minfor)
+
+# exclude all columns that are not functions : see script "calculate_multifunctionality_dissimilarity_DEMO.r
+
+#################
+# 6. CLEANING
+#################
+# deleting all stored variables which I will not use any more in the analysis.
+rm(befun) ; rm(M) ; rm(imputeall)  ; rm(funs) ; rm(minpath) ; rm(minfor)
+
+
+
+# ##########################################
+# # 7. DIFFERENT WAY OF ERROR ESTIMATION
+# # Check if missForest is doing a good job
+# # read functions table
+# # befun is the table I use.
+# 
+# # calculate  % of missing data in each function (i.e. column)
+# NA_per_column <- apply(befun,2,function(c) sum(is.na(c))/length(c))
+# # remove NA's from the table (rows) - so you have a dataset with no NAs
+# 
+# navals <- apply(befun, 1, function(r) any(is.na(r)))
+# noNA_befun <- befun[!navals,] ; rm(navals)
+# original_noNA_befun <- noNA_befun
+# 
+# # randomly remove the same % in each column (as we had in the real dataset)
+# settoNA <- round(NA_per_column*nrow(noNA_befun)) ; rm(NA_per_column) # the amount of values to set to NA
+# whichrowsNA <- list()
+# for(i in 1:length(settoNA)){
+#   rows <- sample(1:nrow(noNA_befun), settoNA[[i]], replace=F) # get random rows to set to NA
+#   noNA_befun[rows,i] <- NA
+#   # save which rows were set to NA where
+#   whichrowsNA[[i]] <- rows
+# }
+# rm(i) ; rm(rows) ; rm(settoNA)
+# 
+# # impute with missForest
+# imputeall<-missForest(noNA_befun[,-1])
+# imputeall$OOBerror # 12% of estimated error
+# 
+# check_imp <- as.data.frame(imputeall$ximp)
+# 
+# # compare imputed with real data (calculate NRMSE=normalized root mean square error value)
+# nrmse(imputeall$ximp, noNA_befun[,-1], original_noNA_befun[,-1])
+#
+# rm(noNA_befun)
+# ##########
+# # visualization
+# original_noNA_befun <- as.data.frame(original_noNA_befun)
+# imp_no <- c(check_imp[whichrowsNA[[22]],22],check_imp[whichrowsNA[[18]],18], check_imp[whichrowsNA[[17]],17],
+#             check_imp[whichrowsNA[[16]],16] , check_imp[whichrowsNA[[19]],19])
+# rm(check_imp)
+# true_no <- c(original_noNA_befun[whichrowsNA[[22]],22],original_noNA_befun[whichrowsNA[[18]],18],original_noNA_befun[whichrowsNA[[17]],17],
+#              original_noNA_befun[whichrowsNA[[16]],16], original_noNA_befun[whichrowsNA[[19]],19])
+# rm(original_noNA_befun) ; rm(whichrowsNA)
+# imp_true_no <- cbind(imp_no,true_no, c(rep(22,11),rep(18,8),rep(17,8),rep(16,6), rep(19,7))) ; rm(imp_no) ; rm(true_no)
+# plot(imp_true_no[,1],imp_true_no[,2] ,main="imputed versus true", col=imp_true_no[,3],pch=19,
+#      xlab="imputed", ylab="true")
+# rm(imp_true_no)
+# abline(a=0, b=1,col="grey")
+# # without standardization, there is a clustering (because of the different range the values are in)
+# # with standardization, the clusters disappear.
+
+```
+
+
