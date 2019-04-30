@@ -31,5 +31,7 @@ Imports:
     ggfortify,
     vegan,
     missForest,
-    corrplot
+    corrplot,
+    naniar,
+    igraph
 RoxygenNote: 6.1.0.9000

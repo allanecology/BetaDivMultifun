@@ -26,14 +26,7 @@ The dataset used for gap filling is larger than the dataset used for the analysi
 #USER : insert path to grassland function file and read in as grlfuns (uncomment line below)
 # grlfuns <- data.table::fread("<pathto_grl_functions.csv>", header=T)
 ```
-Grassland functions data stored in `grlfuns`.
-
-
-
-Correlations
-
-
-
+Grassland functions data used for gapfilling is stored in `raw_grlfuns`, selected variables according to info data.
 
 
 
@@ -60,41 +53,68 @@ glsoil[, Soil.type := as.factor(Soil.type)] # soil type as factor
 ```
 
 ```{r}
-befun <- merge(grlfuns, glsoil, by="Plotn")
+befun <- merge(raw_grlfuns, glsoil, by="Plotn")
 rm(glsoil)
 befun[, Explo := as.factor(Explo)] # Region as a factor
 #TODO : need to have parasitoid trap and all other columns which are "int" now as numeric?
 ```
+cleaning out variables with too many missing values
+```{r}
+vis_miss(befun, sort_miss = T)
+```
+Values with over 21% missing data are excluded: mAMF hyphae, Parasitoid traps, Aggregation and pathogen infection.
+```{r}
+#USER : set treshold for missing values
+treshold <- 0.21
+t <- apply(befun, 2, function(x) sum(is.na(x)))
+exclude <- names(which(t > 150 * treshold))
+befun <- befun[, !colnames(befun) %in% exclude, with=F]
+```
+
 
 ## Check Correlations
 Of the non-factor columns only
 ```{r}
-corrbefun <- befun[, !colnames(befun) %in% c("Explo", "Soil.type", "Plotn", "Plot"), with=F]
+corrbefun <- befun[, !colnames(befun) %in% c("Explo", "Soil.type", "Plotn"), with=F]
 M <- cor(corrbefun, use="pairwise.complete.obs")
-M[which(M > 0.6 | M < -0.6)]
 
-# grlfun_corrplot1
+# raw_grlfun_corrplot1
 corrplot::corrplot(M,type="lower",addCoef.col = "black",method="color",diag=F, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.6)
 
-#grlfun_corrplot2
-corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40)
+# raw_grlfun_corrplot2
+corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F)
+
+# only show high correlations
+M[which(M < 0.6 & M > -0.6)] <- 0
+corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F)
+```
+Network
+```{r}
+# show network - is there a variable "alone"? bzw. isolated?
+network <- graph_from_adjacency_matrix(M, weighted=T, mode="undirected", diag=F)
+plot(network)
 ```
 
 
+## Log transformation
+remove negative values, remember to add again after imputation!
+```{r}
+par(mar = c(10, 1, 3, 1))
+boxplot(corrbefun, las=2)
+min(apply(befun, 2, function(x) min(x, na.rm=T)))
+```
+There are no negative values
+#TODO : yes there are ! dung decomposition!!
+
+## Imputation
+```{r}
+imp <- missForest::missForest(befun[, !colnames(befun) %in% "Plotn", with=F])
+#TODO still fukinbaaad because negative vals.
+```
 
 
 old stuff
 ```{r}
-
-
-####################
-# 3. CHECK CORRELATIONS
-# Check correlations between functions
-M<-cor(befun[,-c(1,36)],use="pairwise.complete.obs")
-corrplot(M,type="lower",addCoef.col = "black",method="color",diag=F,tl.srt=50, tl.col="black", mar=c(0,0,0,0))
-corrplot(M, type = "upper")
-
-####################
 # 4. LOG-TRANSFORMATION
 #first remove negative values (remember to add those again after imputation)
 minpath <- min(befun$pathogen.infection,na.rm=T)
@@ -107,6 +127,7 @@ funs <- names(befun)[-1][-35]
 befun <- as.data.table(befun)
 befun[,(funs):= lapply(.SD,as.numeric),.SDcols=funs]
 befun[,(funs):=lapply(.SD,function(x) log(x+1)),.SDcols=funs]
+
 
 ####################
 # 5. IMPUTATION
