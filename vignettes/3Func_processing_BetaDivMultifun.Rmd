@@ -50,6 +50,7 @@ Soil predictor data and Region is included to improve Gap filling. uncomment if 
 remove <- unique(glsoil$Soil.type)
 glsoil[, (remove) := NULL]
 glsoil[, Soil.type := as.factor(Soil.type)] # soil type as factor
+rm(remove)
 ```
 
 ```{r}
@@ -60,7 +61,7 @@ befun[, Explo := as.factor(Explo)] # Region as a factor
 ```
 cleaning out variables with too many missing values
 ```{r}
-vis_miss(befun, sort_miss = T)
+visdat::vis_miss(befun, sort_miss = T)
 ```
 Values with over 21% missing data are excluded: mAMF hyphae, Parasitoid traps, Aggregation and pathogen infection.
 ```{r}
@@ -69,6 +70,7 @@ treshold <- 0.21
 t <- apply(befun, 2, function(x) sum(is.na(x)))
 exclude <- names(which(t > 150 * treshold))
 befun <- befun[, !colnames(befun) %in% exclude, with=F]
+rm(t); rm(exclude); rm(treshold)
 ```
 
 
@@ -85,48 +87,121 @@ corrplot::corrplot(M,type="lower",addCoef.col = "black",method="color",diag=F, t
 corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F)
 
 # only show high correlations
-M[which(M < 0.6 & M > -0.6)] <- 0
+tres <- 0.7
+M[which(M < tres & M > -tres)] <- 0
 corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F)
 ```
 Network
 ```{r}
 # show network - is there a variable "alone"? bzw. isolated?
-network <- graph_from_adjacency_matrix(M, weighted=T, mode="undirected", diag=F)
+network <- igraph::graph_from_adjacency_matrix(M, weighted=T, mode="undirected", diag=F)
 plot(network)
+```
+There is no variable which is not connected with at least one line to another variable. Lines represent correlations > threshold.
+```{r}
+rm(M)
 ```
 
 
 ## Log transformation
+
 remove negative values, remember to add again after imputation!
+
+find negative values
 ```{r}
 par(mar = c(10, 1, 3, 1))
 boxplot(corrbefun, las=2)
-min(apply(befun, 2, function(x) min(x, na.rm=T)))
+# minimum of the numeric columns
+negative <- colnames(corrbefun)[which(corrbefun[, lapply(.SD, function(x) min(x, na.rm=T))] < 0)]
 ```
-There are no negative values
-#TODO : yes there are ! dung decomposition!!
+remove negative values - shift whole vector up.
+```{r}
+# DEA
+mindea <- min(befun$DEA, na.rm=T)
+befun$DEA <- befun$DEA + abs(mindea)
+# NO3.2014
+minno <- min(befun$NO3.2014, na.rm=T)
+befun$NO3.2014 <- befun$NO3.2014 + abs(minno)
+# dung.decomposition
+mindung <- min(befun$dung.decomposition, na.rm=T)
+befun$dung.decomposition <- befun$dung.decomposition + abs(mindung)
+```
+Log transformation of the numeric columns. The natural logartithm of values smaller than 1 is negative. Tehrefore, all values are shifted by 1 again to avoid any negative values in the log transformed dataset.
+```{r}
+numcols <- colnames(befun)[!colnames(befun) %in% c("Explo", "Soil.type", "Plotn")]
+befun[, (numcols) := lapply(.SD, as.numeric), .SDcols = numcols]
+# log transform the values + 1, later shift them back.
+befun[, (numcols) := lapply(.SD, function(x) log(x+1)), .SDcols = numcols]
+```
+
 
 ## Imputation
+The imputation is repeated 50 times, and the mean of the imputed values is taken. 
 ```{r}
-imp <- missForest::missForest(befun[, !colnames(befun) %in% "Plotn", with=F])
-#TODO still fukinbaaad because negative vals.
+# record NA value positions
+naloc <- is.na(befun)
+#TODO : maybe delete
+
+# 50 imputations
+impvals <- list()
+imperr <- list()
+
+for(i in 1:50){
+  current <- missForest::missForest(befun[, !colnames(befun) %in% "Plotn", with=F])
+  imperr[[i]] <- current$OOBerror
+  current <- current$ximp
+  # re-transform the numeric variables
+  current[, (numcols) := lapply(.SD, function(x) (exp(x)-1)), .SDcols = numcols]
+  # re-transform the negative values
+  current$DEA <- current$DEA - abs(mindea)
+  current$NO3.2014 <- current$NO3.2014 - abs(minno)
+  current$dung.decomposition <- current$dung.decomposition - abs(mindung)
+  # add back the "Plotn" column which was taken out for imputation
+  current[, Plotn := befun$Plotn]
+  # convert imputed data.table to matrix, as more handy for imputed values handling
+  impvals[[i]] <- as.matrix(current)
+}
+
+#TODO : probably after here the error occurred!
+
+
+# extract imputed values and calculate mean
+# get all imputed values as vectors in a list of 50 vectors and transform to matrix
+impvalsvec <- lapply(impvals, function(x) as.numeric(x[naloc]))
+impvalsmat <- data.frame(matrix(unlist(impvalsvec), ncol=length(impvalsvec), byrow=T))
+# calculate means and plot
+impvalsmat[, "means"] <- rowMeans(impvalsmat)
 ```
+control : visualise the mean imputations
+```{r, eval=F}
+par(mfrow = c(2,7))
+for(i in 1:12){plot(rep(1, 51), impvalsmat[i,]) ; points(1, impvalsmat$means[i], col = "red", pch=19)}
+for(i in 13:25){plot(rep(1, 51), impvalsmat[i,]) ; points(1, impvalsmat$means[i], col = "red", pch=19)}
+for(i in 26:38){plot(rep(1, 51), impvalsmat[i,]) ; points(1, impvalsmat$means[i], col = "red", pch=19)}
+for(i in 39:51){plot(rep(1, 51), impvalsmat[i,]) ; points(1, impvalsmat$means[i], col = "red", pch=19)}
+```
+replace the NA values with the imputed values in the original dataset
+```{r}
+befun <- as.matrix(befun)
+# befun[naloc]
+befun[naloc] <- impvalsmat$means
+```
+control : visualise the imputed values
+```{r}
+#TODO : there is an ugly error somewhere with the values!!
+
+par(mfrow = c(2,7))
+for(i in 1:12){plot(rep(1, 51), befun[,i]) ; points(rep(1, length(befun[,i][naloc[,i]])), befun[,i][naloc[,i]], col = "red", pch=19)}
+for(i in 13:25){plot(rep(1, 51), impvalsmat[i,]) ; points(1, impvalsmat$means[i], col = "red", pch=19)}
+for(i in 26:38){plot(rep(1, 51), impvalsmat[i,]) ; points(1, impvalsmat$means[i], col = "red", pch=19)}
+for(i in 39:51){plot(rep(1, 51), impvalsmat[i,]) ; points(1, impvalsmat$means[i], col = "red", pch=19)}
+```
+
+
 
 
 old stuff
 ```{r}
-# 4. LOG-TRANSFORMATION
-#first remove negative values (remember to add those again after imputation)
-minpath <- min(befun$pathogen.infection,na.rm=T)
-befun$pathogen.infection <- befun$pathogen.infection+abs(minpath)
-minfor <- min(befun$forage.quality,na.rm=T)
-befun$forage.quality <- befun$forage.quality+abs(minfor)
-
-#log-transform (remember to add 1 when taking the exponential)
-funs <- names(befun)[-1][-35]
-befun <- as.data.table(befun)
-befun[,(funs):= lapply(.SD,as.numeric),.SDcols=funs]
-befun[,(funs):=lapply(.SD,function(x) log(x+1)),.SDcols=funs]
 
 
 ####################
@@ -136,7 +211,7 @@ imputeall<-missForest(befun[,-1])
 imp_error <- imputeall$OOBerror
 
 #extract imputed data and retransform everything
-impdat <- data.table(Plot0=befun$Plot,exp(imputeall$ximp[,-35])-1, Exploratory=imputeall$ximp[,35])
+impdat <- data.table(Plot0=befun$Plot, exp(imputeall$ximp[,-35])-1, Exploratory=imputeall$ximp[,35])
 impdat$pathogen.infection <- impdat$pathogen.infection-abs(minpath)
 impdat$forage.quality <- impdat$forage.quality-abs(minfor)
 
