@@ -104,6 +104,10 @@ rm(M)
 
 
 ## Log transformation
+before changing values, store the original dataset
+```{r}
+befunbackup <- data.table::copy(befun)
+```
 
 remove negative values, remember to add again after imputation!
 
@@ -134,7 +138,6 @@ befun[, (numcols) := lapply(.SD, as.numeric), .SDcols = numcols]
 befun[, (numcols) := lapply(.SD, function(x) log(x+1)), .SDcols = numcols]
 ```
 
-
 ## Imputation
 The imputation is repeated 50 times, and the mean of the imputed values is taken. 
 ```{r}
@@ -159,21 +162,43 @@ for(i in 1:50){
   # add back the "Plotn" column which was taken out for imputation
   current[, Plotn := befun$Plotn]
   # convert imputed data.table to matrix, as more handy for imputed values handling
-  impvals[[i]] <- as.matrix(current)
+  impvals[[i]] <- current
 }
+rm(current); rm(i)
+# backup <- impvals
+X <- do.call(rbind, impvals)
+X[, (numcols) := lapply(.SD, as.numeric), .SDcols=numcols]
+# backup2 <- data.table::copy(X)
 
-#TODO : probably after here the error occurred!
-
-
-# extract imputed values and calculate mean
-# get all imputed values as vectors in a list of 50 vectors and transform to matrix
-impvalsvec <- lapply(impvals, function(x) as.numeric(x[naloc]))
-impvalsmat <- data.frame(matrix(unlist(impvalsvec), ncol=length(impvalsvec), byrow=T))
-# calculate means and plot
-impvalsmat[, "means"] <- rowMeans(impvalsmat)
+# two ways of aggregating the 50 imputed values together
+# Y <- aggregate(X[, ..numcols], list(Plotn=X$Plotn), mean)
+Y <- X[, lapply(.SD, mean, na.rm=T), .SDcols=numcols, by=Plotn]
+Y <- data.table::data.table(Y)
 ```
+Compare imputed values with real values.
+```{r}
+# befunbackup is before imputation, Y is after imputation
+plot(rep(1, 150), Y[, get(numcols[i])], col="red") ; points(rep(1, 150), befunbackup[, get(numcols[i])])
+
+par(mfrow = c(2,7))
+for(i in 1:length(numcols)){plot(rep(1, 150), Y[, get(numcols[i])], col="red", main=numcols[i]) ; points(rep(1, 150), befun[, get(numcols[i])])}
+```
+
+Note : still small problem : Clay in Y is scaled with scale01, but no in befun and befunbackup!
+how come?
+glsoil from prepare_covariates comes scaled with scale01.
+where the fuck did I get the original values in the imputed set??
+
+
+
+
+
+
+
+
 control : visualise the mean imputations
 ```{r, eval=F}
+#TODO maybe take out, because this was used in the error prone way of aggregation
 par(mfrow = c(2,7))
 for(i in 1:12){plot(rep(1, 51), impvalsmat[i,]) ; points(1, impvalsmat$means[i], col = "red", pch=19)}
 for(i in 13:25){plot(rep(1, 51), impvalsmat[i,]) ; points(1, impvalsmat$means[i], col = "red", pch=19)}
@@ -182,6 +207,7 @@ for(i in 39:51){plot(rep(1, 51), impvalsmat[i,]) ; points(1, impvalsmat$means[i]
 ```
 replace the NA values with the imputed values in the original dataset
 ```{r}
+#TODO will take this out as well...
 befun <- as.matrix(befun)
 # befun[naloc]
 befun[naloc] <- impvalsmat$means
