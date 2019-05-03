@@ -47,15 +47,14 @@ TODO : Two variables are produced, impdat which contains the gapfilled dataset w
 Soil predictor data and Region is included to improve Gap filling. uncomment if not wanted!
 ```{r}
 #USER : uncomment this block if soil information should not be included.
-remove <- unique(glsoil$Soil.type)
-glsoil[, (remove) := NULL]
-glsoil[, Soil.type := as.factor(Soil.type)] # soil type as factor
+remove <- unique(glsoil_unscaled$Soil.type)
+glsoil_unscaled[, (remove) := NULL]
+glsoil_unscaled[, Soil.type := as.factor(Soil.type)] # soil type as factor
 rm(remove)
 ```
 
 ```{r}
-befun <- merge(raw_grlfuns, glsoil, by="Plotn")
-rm(glsoil)
+befun <- merge(raw_grlfuns, glsoil_unscaled, by="Plotn")
 befun[, Explo := as.factor(Explo)] # Region as a factor
 #TODO : need to have parasitoid trap and all other columns which are "int" now as numeric?
 ```
@@ -63,8 +62,9 @@ cleaning out variables with too many missing values
 ```{r}
 visdat::vis_miss(befun, sort_miss = T)
 ```
+*VARIANT 1* : 
 Values with over 21% missing data are excluded: mAMF hyphae, Parasitoid traps, Aggregation and pathogen infection.
-```{r}
+```{r, eval=F}
 #USER : set treshold for missing values
 treshold <- 0.21
 t <- apply(befun, 2, function(x) sum(is.na(x)))
@@ -72,12 +72,16 @@ exclude <- names(which(t > 150 * treshold))
 befun <- befun[, !colnames(befun) %in% exclude, with=F]
 rm(t); rm(exclude); rm(treshold)
 ```
+*VARIANT 2* : only exclude pathogen infection, because all AEG are missing.
+```{r}
+befun[, pathogen.infection := NULL]
+```
 
 
 ## Check Correlations
 Of the non-factor columns only
 ```{r}
-corrbefun <- befun[, !colnames(befun) %in% c("Explo", "Soil.type", "Plotn"), with=F]
+corrbefun <- befun[, !colnames(befun) %in% c("Explo", "Soil.type", "Plotn", "Plot"), with=F]
 M <- cor(corrbefun, use="pairwise.complete.obs")
 
 # raw_grlfun_corrplot1
@@ -99,7 +103,7 @@ plot(network)
 ```
 There is no variable which is not connected with at least one line to another variable. Lines represent correlations > threshold.
 ```{r}
-rm(M)
+rm(M); rm(network)
 ```
 
 
@@ -108,7 +112,6 @@ before changing values, store the original dataset
 ```{r}
 befunbackup <- data.table::copy(befun)
 ```
-
 remove negative values, remember to add again after imputation!
 
 find negative values
@@ -129,10 +132,11 @@ befun$NO3.2014 <- befun$NO3.2014 + abs(minno)
 # dung.decomposition
 mindung <- min(befun$dung.decomposition, na.rm=T)
 befun$dung.decomposition <- befun$dung.decomposition + abs(mindung)
+rm(negative)
 ```
 Log transformation of the numeric columns. The natural logartithm of values smaller than 1 is negative. Tehrefore, all values are shifted by 1 again to avoid any negative values in the log transformed dataset.
 ```{r}
-numcols <- colnames(befun)[!colnames(befun) %in% c("Explo", "Soil.type", "Plotn")]
+numcols <- colnames(befun)[!colnames(befun) %in% c("Explo", "Soil.type", "Plotn", "Plot")]
 befun[, (numcols) := lapply(.SD, as.numeric), .SDcols = numcols]
 # log transform the values + 1, later shift them back.
 befun[, (numcols) := lapply(.SD, function(x) log(x+1)), .SDcols = numcols]
@@ -141,16 +145,19 @@ befun[, (numcols) := lapply(.SD, function(x) log(x+1)), .SDcols = numcols]
 ## Imputation
 The imputation is repeated 50 times, and the mean of the imputed values is taken. 
 ```{r}
-# record NA value positions
+# record NA value positions for visualistation
 naloc <- is.na(befun)
-#TODO : maybe delete
 
 # 50 imputations
 impvals <- list()
 imperr <- list()
+```
 
+
+```{r imputation, results="hide", eval=F}
 for(i in 1:50){
-  current <- missForest::missForest(befun[, !colnames(befun) %in% "Plotn", with=F])
+  print(i)
+  current <- missForest::missForest(befun[, !colnames(befun) %in% c("Plotn", "Plot"), with=F], variablewise = T)
   imperr[[i]] <- current$OOBerror
   current <- current$ximp
   # re-transform the numeric variables
@@ -164,9 +171,30 @@ for(i in 1:50){
   # convert imputed data.table to matrix, as more handy for imputed values handling
   impvals[[i]] <- current
 }
-rm(current); rm(i)
+rm(current); rm(i); rm(mindea); rm(minno); rm(mindung)
+# USER : may change filename
+saveRDS(impvals, file="raw_imputed_function_values_complete.rds")
+# impvals <- readRDS("raw_imputed_function_values_complete.rds")
+```
+
+Check imputation error
+```{r}
+imperr <- do.call(rbind, imperr)
+mean(imperr[,1])
+#TODO : need to to once the imperr is there
+plot(rep(1, nrow(imperr)), imperr[,1],
+     main = "range of the imputation error of 50 imputations e [0, 1]",
+     ylim = c(0.143, 0.151), xlab="", ylab = "imputation error")
+abline(h = mean(imperr[,1]), col = "darkgreen")
+abline(h = median(imperr[,1]), col = "lightgreen")
+```
+The imputation error range is extremely small. The possible range is between 0 and 1, however here the range is between 0.143 and 0.151.
+
+Get together imputed dataset from 50 imputations.
+```{r}
 # backup <- impvals
 X <- do.call(rbind, impvals)
+X <- data.table::as.data.table(X)
 X[, (numcols) := lapply(.SD, as.numeric), .SDcols=numcols]
 # backup2 <- data.table::copy(X)
 
@@ -175,56 +203,105 @@ X[, (numcols) := lapply(.SD, as.numeric), .SDcols=numcols]
 Y <- X[, lapply(.SD, mean, na.rm=T), .SDcols=numcols, by=Plotn]
 Y <- data.table::data.table(Y)
 ```
-Compare imputed values with real values.
-```{r}
-# befunbackup is before imputation, Y is after imputation
-plot(rep(1, 150), Y[, get(numcols[i])], col="red") ; points(rep(1, 150), befunbackup[, get(numcols[i])])
 
-par(mfrow = c(2,7))
-for(i in 1:length(numcols)){plot(rep(1, 150), Y[, get(numcols[i])], col="red", main=numcols[i]) ; points(rep(1, 150), befun[, get(numcols[i])])}
-```
-
-Note : still small problem : Clay in Y is scaled with scale01, but no in befun and befunbackup!
-how come?
-glsoil from prepare_covariates comes scaled with scale01.
-where the fuck did I get the original values in the imputed set??
-
-
-
-
-
-
-
-
-control : visualise the mean imputations
+Compare imputed values with real values. Creates the pdf `imputed_values.pdf`
 ```{r, eval=F}
-#TODO maybe take out, because this was used in the error prone way of aggregation
+pdf("imputed_values.pdf", paper="a4r")
 par(mfrow = c(2,7))
-for(i in 1:12){plot(rep(1, 51), impvalsmat[i,]) ; points(1, impvalsmat$means[i], col = "red", pch=19)}
-for(i in 13:25){plot(rep(1, 51), impvalsmat[i,]) ; points(1, impvalsmat$means[i], col = "red", pch=19)}
-for(i in 26:38){plot(rep(1, 51), impvalsmat[i,]) ; points(1, impvalsmat$means[i], col = "red", pch=19)}
-for(i in 39:51){plot(rep(1, 51), impvalsmat[i,]) ; points(1, impvalsmat$means[i], col = "red", pch=19)}
+for(i in 1:length(numcols)){
+  x <- rep(1, 150)
+  colname <- numcols[i]
+  # length of the imputed value vector
+  rowlocations <- naloc[, colname]
+  y <- Y[rowlocations, get(colname)]
+  plot(x, befunbackup[, get(colname)], xlab="", ylab="range of values", main=colname, sub=paste(length(y), "NAs"))
+  x <- x[0:length(y)]
+  points(x, y, col="red",pch=19)
+}
+dev.off()
 ```
-replace the NA values with the imputed values in the original dataset
+
+Take out soil variables again and store imputed grassland function dataset.
 ```{r}
-#TODO will take this out as well...
-befun <- as.matrix(befun)
-# befun[naloc]
-befun[naloc] <- impvalsmat$means
+# take out colnames of glsoil_unscaled, except "Plotn"
+Y[, (colnames(glsoil_unscaled)[!colnames(glsoil_unscaled) %in% c("Plotn", "Soil.type")]) := NULL]
+saveRDS(Y, file="imputed_function_values.rds")
+# clean a bit
+imputed_grlfuns <- data.table::copy(Y)
 ```
-control : visualise the imputed values
+
+# Calculate mini-multifunctionalities
+The mini-multifunctionalities are calculated from the imputed values.
+
+## soilCflxs
+Enzymes related to soil C. All measured in the year 2011.
 ```{r}
-#TODO : there is an ugly error somewhere with the values!!
+sce <- imputed_grlfuns[, c("beta_Glucosidase", "N_Acetyl_beta_Glucosaminidase", "Xylosidase")]
+# take z-scores of the functions
+imputed_grlfuns[, "soilCflxs" := multidiv(sce, sc="sd", cent=TRUE)[,1]]
+rm(sce)
+```
 
-par(mfrow = c(2,7))
-for(i in 1:12){plot(rep(1, 51), befun[,i]) ; points(rep(1, length(befun[,i][naloc[,i]])), befun[,i][naloc[,i]], col = "red", pch=19)}
-for(i in 13:25){plot(rep(1, 51), impvalsmat[i,]) ; points(1, impvalsmat$means[i], col = "red", pch=19)}
-for(i in 26:38){plot(rep(1, 51), impvalsmat[i,]) ; points(1, impvalsmat$means[i], col = "red", pch=19)}
-for(i in 39:51){plot(rep(1, 51), impvalsmat[i,]) ; points(1, impvalsmat$means[i], col = "red", pch=19)}
+## soilNflxs
+Enzymes related to soil N. A measure of soil N cycling with enzyme activities and functional gene abundances
+
+amoA_AOB and A are from both 2011 and 2016, took the mean of both years.
+```{r}
+nce <- imputed_grlfuns[,c("Urease", "DEA","Potential.nitrification2011", "Potential.nitrification2014","nifH","amoA_AOB.2011","amoA_AOA.2011", "amoA_AOB.2016", "amoA_AOA.2016", "nxrA_NS", "16S_NB")]
+# take mean of multi-year-measurements
+nce[, "amoA_AOB" := apply(nce[,c("amoA_AOB.2011", "amoA_AOB.2016")],1, mean)]
+nce[, "amoA_AOA" := apply(nce[,c("amoA_AOA.2011", "amoA_AOA.2016")],1, mean)]
+nce[, "Potential.nitrification" := apply(nce[, c("Potential.nitrification2014", "Potential.nitrification2011")], 1, mean)]
+nce[, c("amoA_AOB.2011", "amoA_AOB.2016", "amoA_AOA.2011", "amoA_AOA.2016", "Potential.nitrification2014", "Potential.nitrification2011") := NULL]
+
+imputed_grlfuns[, "soilNflxs" := multidiv(nce, sc="sd", cent=TRUE)[,1]]
+rm(nce)
+```
+
+## P_loss_comb
+combination of PRI and P_loss.
+
+mean of P_loss 2011 and 2015.
+```{r}
+plc <- imputed_grlfuns[, c("P_loss2011", "P_loss2015", "PRI")]
+# take mean of P_loss 2011 and 2015
+plc[, "P_loss" := apply(plc[,c("P_loss2011", "P_loss2015")],1, mean)]
+plc[, c("P_loss2011", "P_loss2015") := NULL]
+imputed_grlfuns[, "P_loss_comb" := multidiv(plc, sc="sd", cent=TRUE)[,1]]; rm(plc)
 ```
 
 
 
+```{r}
+# select variables which are included in betadiv multifun analysis
+usedforBetadivMultifun <- usedforBetadivMultifun[!usedforBetadivMultifun == "Plot"]
+imputed_grlfuns <- imputed_grlfuns[, ..usedforBetadivMultifun]
+```
+
+
+# Correlations
+Of the non-factor columns only
+```{r}
+# the dataset is complete now, use "complete.obs" for the cor() function now
+M <- cor(imputed_grlfuns[, !colnames(imputed_grlfuns) %in% "Plotn", with=F], use="complete.obs")
+
+# imputed_grlfun_corrplot1
+corrplot::corrplot(M,type="lower",addCoef.col = "black",method="color",diag=F, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.6)
+
+# imputed_grlfun_corrplot2
+corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F)
+
+# only show high correlations
+tres <- 0.7
+M[which(M < tres & M > -tres)] <- 0
+corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F)
+```
+- PRI and NRI: constructed partly with same data
+- PRI and P_loss_comb : the latter contains the first
+
+- Groundwater recharche and soil depth: ? the deeper the soil, the less groundwater recharche? soil depth defines the soil type. 
+
+- SoilOrganicC and Soil.C.stock : 
 
 old stuff
 ```{r}
