@@ -28,7 +28,7 @@ clean and merge covariate dataset
 names_gl <- names_gl[Landuse == "G",.(EP_PlotID,PlotID)]
 data.table::setnames(names_gl, old="EP_PlotID", new="Plot")
 # add useful plot IDs
-names_gl <- merge(names_gl, grlfuns[, c("Plot", "Plotn")], by="Plot", all=T)
+names_gl <- merge(names_gl, raw_grlfuns[, c("Plot", "Plotn")], by="Plot", all=T)
 # merge main_glsoil with names_gl to get the wanted names
 data.table::setnames(main_glsoil, "plotid","PlotID")
 main_glsoil <- merge(main_glsoil, names_gl, by="PlotID", all=T)
@@ -74,18 +74,23 @@ stype[, Fahlerde := ifelse(Soil.type == "Fahlerde", 1, 0)]
 stype[, Soil.type := NULL]
 # merge to glsoil
 glsoil <- merge(glsoil, stype, by="Plotn", all=T)
+# store unscaled dataset for functions imputation
+glsoil_unscaled <- data.table::copy(glsoil)
 ```
 
 
 ## Normalisation
-scale to range [0,1].
+scale the columns which are neither binary nor factors. Scaled by centering around 0 (substracting the mean) and dividing by standard deviation.
+```{r}
+# create scaling vector T/F of which columns to scale in pcr
+scalecols <- c("Clay", "Fine.Silt", "Medium.Silt", "Coarse.Silt", "Fine.Sand", "Medium.Sand", "Coarse.Sand", "pH", "Soil.depth", "TWI")
+glsoil[, (scalecols) := lapply(.SD, function(x) scale(x, center = T)), .SDcols = scalecols]
+```
+
 
 Could be done within PCA computation with parameter `scale = TRUE`.
 ```{r}
 mysubset <- names(glsoil)[!names(glsoil) %in% c("Plotn", "Soil.type")]
-glsoil[, (mysubset) := lapply(.SD, scale01),.SDcols=mysubset]
-#TODO : revise this scaling method - should I better substract the mean and divide by sd?
-# in the latter case, I need to take out the binary variables.
 ```
 *note* : The binary categoric columns are not affected by this.
 ```{r}
@@ -106,9 +111,10 @@ points(glsoil$Fahlerde)
 # Plot information is taken as rownames of a data.frame (instead of data.table).
 pc_glsoil <- as.data.frame(glsoil[,-1])
 rownames(pc_glsoil) <- glsoil$Plotn
+rm(glsoil)
 
 # run the pca
-pca_from_glsoil <- prcomp(pc_glsoil[, !(names(pc_glsoil) %in% "Soil.type")], scale = FALSE)
+pca_from_glsoil <- prcomp(pc_glsoil[, !(names(pc_glsoil) %in% "Soil.type")], scale = F)
 plot(pca_from_glsoil) 
 ```
 The first 4 axis would make sense if the dimensionality would need to be reduced a lot. 
@@ -120,7 +126,7 @@ summary(pca_from_glsoil)
 ```
 
 ### PCA insights
-```{r}
+```{r, eval=F}
 # color by soil type
 ggplot2::autoplot(pca_from_glsoil, data = pc_glsoil, colour = 'Soil.type')
 ggplot2::autoplot(pca_from_glsoil, data = pc_glsoil, colour = 'Soil.depth')
@@ -128,7 +134,7 @@ ggplot2::autoplot(pca_from_glsoil, data = pc_glsoil, colour = 'Soil.depth')
 ggplot2::autoplot(pca_from_glsoil, data = pc_glsoil, loadings = TRUE, loadings.colour = 'darkgray', loadings.label = TRUE, loadings.label.size = 2)
 ```
 
-```{r}
+```{r, eval=F}
 ggplot2::autoplot(pca_from_glsoil, x=3, y=4, data=pc_glsoil, colour="Soil.type")
 ggplot2::autoplot(pca_from_glsoil, x=3, y=4, data=pc_glsoil, colour="pH")
 ```
@@ -165,7 +171,7 @@ saveRDS(edis_glsoil, file="../data/original/soil_covariate.RDS")
 
 # CLEANING away all I don't need to run gdm
 rm(pca_from_glsoil); rm(pc_glsoil) ; rm(mysubset); rm(stype)
-# glsoil is used for gap-filling and therefore not deleted here.
+# glsoil_unscaled is used for gap-filling and therefore not deleted here.
 ```
 
 
