@@ -140,26 +140,65 @@ numcols <- colnames(befun)[!colnames(befun) %in% c("Explo", "Soil.type", "Plotn"
 befun[, (numcols) := lapply(.SD, as.numeric), .SDcols = numcols]
 # log transform the values + 1, later shift them back.
 befun[, (numcols) := lapply(.SD, function(x) log(x+1)), .SDcols = numcols]
+# record NA value positions for visualistation
+naloc <- is.na(befun)
 ```
 
 ## Imputation
-The imputation is repeated 50 times, and the mean of the imputed values is taken. 
-```{r}
-# record NA value positions for visualistation
-naloc <- is.na(befun)
 
-# 50 imputations
-impvals <- list()
-imperr <- list()
+### Imputation test
+Find and evaluate the imputation error of a single iteration and optimise the process for 50x imputation. (The code for the imputation loop is copied, just one imputation done.)
+```{r}
+# based on one-time imputation, take out : "amoA_AOA.2016" ,"amoA_AOB.2016",  "nxrA_NS", "16S_NB"
+#TODO : change back to plot and plotn only.
+numcols <- numcols[which(!numcols %in% c("Plotn", "Plot", "amoA_AOA.2016" ,"amoA_AOB.2016",  "nxrA_NS", "16S_NB"))]
+dataset <- befun[, !colnames(befun) %in% c("Plotn", "Plot", "amoA_AOA.2016" ,"amoA_AOB.2016",  "nxrA_NS", "16S_NB"), with=F]
+
+# run one imputation with missforest.
+returnobj <- perform_missforest_imputations(dataset = dataset, numcols = numcols, im=1)
+imperr <- returnobj$errors
+impvals <- returnobj$values
+rm(returnobj)
+```
+Visualise imputation results.
+```{r}
+barplot(imperr[[1]][, columns], height=imperr[[1]][,errors])
+library(cowplot)
+p<-ggplot2::ggplot(data=imperr[[1]], ggplot2::aes(x=columns, y=errors)) +
+  ggplot2::geom_bar(stat="identity") +
+  theme(axis.text.x=element_text(color = "black", size=5, angle=30, vjust=.8, hjust=0.8)) +
+  geom_hline(yintercept=0.25, linetype="dashed", color = "gray")
+p
+```
+Need to take out Parasitoid traps, Potential nitrification (2011 and 2014) and total pollinators.
+TODO : check if the imputation is better if only the selected plots are worked with.
+
+
+```{r}
+# USER : may change filename
+saveRDS(impvals, file="raw_imputed_function_values_complete.rds")
+# impvals <- readRDS("raw_imputed_function_values_complete.rds")
 ```
 
 
+#---------------------------------------------------------------------------------------------------------------------------
+from here : not done yet, want to check if it makes a difference if I already only use the plot set
+
+The imputation is repeated 50 times, and the mean of the imputed values is taken. 
 ```{r imputation, results="hide", eval=F}
-for(i in 1:50){
+# 50 imputations
+impvals <- list()
+imperr <- list()
+# based on one-time imputation, take out : "amoA_AOA.2016" ,"amoA_AOB.2016",  "nxrA_NS", "16S_NB"
+#TODO : change back to plot and plotn only.
+numcols <- numcols[which(!numcols %in% c("Plotn", "Plot", "amoA_AOA.2016" ,"amoA_AOB.2016",  "nxrA_NS", "16S_NB"))]
+dataset <- befun[, !colnames(befun) %in% c("Plotn", "Plot", "amoA_AOA.2016" ,"amoA_AOB.2016",  "nxrA_NS", "16S_NB"), with=F]
+
+for(i in 1:1){
   print(i)
-  current <- missForest::missForest(befun[, !colnames(befun) %in% c("Plotn", "Plot"), with=F], variablewise = T)
-  imperr[[i]] <- current$OOBerror
-  current <- current$ximp
+  current <- missForest::missForest(dataset, variablewise = T)
+  imperr[[i]] <- data.table::data.table("columns" = colnames(dataset), "errors" =current$OOBerror)
+  current <- as.data.table(current$ximp)
   # re-transform the numeric variables
   current[, (numcols) := lapply(.SD, function(x) (exp(x)-1)), .SDcols = numcols]
   # re-transform the negative values
