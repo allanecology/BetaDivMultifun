@@ -1,0 +1,319 @@
+---
+title: "test"
+author: "Noelle Schenk"
+date: "May 7, 2019"
+output: html_document
+---
+*requires* : spdiv, spinfo (spinfo is the file containing information about all species, spdiv is the collected data.)
+
+# Calculate beta diversities
+here I prepare the raw diversity dataset, prepare it for betapart and calculate beta diversities (abundance and presence-absence based).
+Note: the beginning of the script is almost completely from Caterina until splitting into trophic levels (Thank you!)
+```{r}
+# to chose between presence absence or abundance, uncomment one of these lines (or, if both are commented, the script is sourced
+# from another script where the vector is saved.)
+# presence_absence or abundance?
+typeofbeta <- "presenceabsence"
+# typeofbeta <- "abundance"
+```
+
+```{r}
+# table of contents
+# 1. CLEAN THE DATASET
+# 2. PREPARE FOR BETAPART (assess some problems)
+# 3. RUN BETAPART presence - absence
+# 4. RUN BETAPART abundance
+# 5. CLEANING RESULTS
+
+# by commenting, chose one of these options and therefore either the small or the larger dataset.
+# ################################
+# # Option 1 - SMALL DATASET
+# # load the vector of plots to include in the analysis
+# plot_NAset <- scan("plot_NAset_small_functions.txt" , character(), quote = "") # I saved this vector as a file as I will constantly use it.
+
+################################
+# Option 2 - LARGE DATASET
+# load the vector of plots to include in the analysis
+# plot_NAset <- scan("plot_NAset.txt" , character(), quote = "") # I saved this vector as a file as I will constantly use it.
+
+```
+
+## Dataset Cleaning
+From cleaning, getting numbers : 
+- 334700 species in the dataset
+- 28 different trophic levels
+- type = presenceabsence : plant pathogen, ant omnivore
+
+*trophic levels*:
+- autotroph
+- herbivore
+- decomposer
+- belowground predator
+- tertiary consumers
+- 
+- pollinator (if not used for functions)
+
+```{r}
+# delete Plot_bexis (old plot names)
+spdiv[, Plot_bexis := NULL]
+# spdiv[, c("Dataversion", "DataID") := NULL]
+spinfo <- unique(spinfo) # fix mini-bug
+spdiv <- merge(spdiv, spinfo, by = "Species", all.x=T)
+# now I can remove the original datasets, so I save cpu:
+rm(spinfo); gc()
+```
+
+## Select trophic levels
+Group trophic levels as following
+```{r}
+bdm_trlevels <- c("autotroph", "bacteria.RNA", "belowground.herbivore", "decomposer", "herbivore", "omnivore", "plant.pathogen", "pollinator", "protist.bacterivore", "protist.eukaryvore", "protist.omnivore", "protist.plant.parasite", "secondary.consumer", "soilfungi.decomposer", "soilfungi.pathotroph", "soilfungi.plant.pathogen", "soilfungi.symbiont", "tertiary.consumer")
+# group the trophic levels which consist of multiple in spinfo
+herbivore <- c("herbivore", "herbivore.snail")
+omnivore <- c("ant.omnivore", "omnivore", "omnivore.snail")
+protist.bacterivore <- c("protist.bacterivore", "protist.mainly.bacterivore")
+```
+18 trophic levels, 3 of those not sure yet (need to be tested)
+TODO : maybe take out the 3 unused levels? (belowground herbi and predator and soilfungi pathogen)
+
+```{r}
+
+
+dcast(DT.m1, family_id + age_mother ~ child, value.var = "dob")
+```
+
+
+
+
+
+
+
+
+
+below : the old script I wrote in 2017
+```{r}
+
+
+#######################
+# get an overview of the years I have
+unique(grl[,.(Group_broad, Trophic_level, Year , DataID)])
+#Aboveground: data from 2008
+#Belowground: data from 2011
+#lichens and mosses only have data for 2009 -> (64sp of lichens and 55 of mosses) they will be aggregated with plants (autotrophs)
+#Bats: data from 2009
+
+#remove data not in focus years (select data from 2008, 2009, 2011, NA)
+grl <- grl[Year %in% c("2008","2009","2011",NA)] # include NA because bacteria have NA
+
+#use only "bacteria" dataset (remove bacteriaDNA)
+grl <- grl[!Group_broad %in% "Bacteria.DNA"]
+
+#remove plants 2009 and birds 2009,2011
+grl <- grl[!(Group_broad %in% "Plant" & Year %in% c(2009,2011))]
+grl <- grl[!(Group_broad %in% "Birds" & Year %in% c(2009,2011))]
+
+#see who is missing trophic info
+unique(grl[is.na(Trophic_level)]$Group_broad) #myriapoda and soilfungi
+unique(grl[Group_broad=="SoilFungi"]$Trophic_level) # there are some soilfungi with information, take out the NA's
+unique(grl[Group_broad=="Myriapoda"]$Trophic_level) # same situation with Myriapoda. I can keep some
+grl <- grl[!is.na(Trophic_level)] # remove species with no trophic level info.
+unique(grl[,.(Group_broad,Year)])
+unique(grl[,.(Group_broad, Trophic_level, Year)]) # trophic leves there for all groups
+
+#transform into presence/absence
+if(typeofbeta == "presence_absence"){
+  grl[value>0,value:=1] # all values larger than 0 are converted into 1
+  grl[value==0,value:=0]
+  grl<-unique(grl)      # i keep that to prevent doubles
+  # all(grl == unique(grl), na.rm=T) # it seems that grl == unique(grl) ; I dont need grl <- unique(grl)
+}
+
+#any NA2s in value? NO, so all groups only have the plot where they were collected
+sum(is.na(grl$value))
+
+#here remove any unwanted trophic level, for example
+grl <- grl[!Trophic_level %in% c("pollinator","omnivore")] 
+# length(unique(grl$Species)) # now I have 4734 species
+# length(unique(grl[,Trophic_level]))   # now I have 14 trophic levels
+
+#for each taxonomic group get the list of plots (I use Group.broad because this is the level
+#at which species were collected)
+
+plots <- list()
+for (i in unique(grl$Group_broad)){
+  plots[[i]] <- unique(grl[Group_broad==i]$Plot)
+}
+
+common.plots <- Reduce(intersect,plots) #134 plots!
+# length(unique(plots$AMF)) # plots$AMF contains all 150 plots
+# save the set of plots to exclude.
+uncommon.plots <- plots$AMF[!plots$AMF %in% common.plots]
+
+#now dcast everybody using Trophic_levels and subset according to common plots
+trnames <- unique(grl$Trophic_level)
+
+for(i in trnames){
+  temp <- grl[Trophic_level==i]
+  # # change the format of my data and only keep the information needed to calculate beta diversity
+  # newdata <- dcast.data.table(temp, Plot ~ Species)
+  # newdata <- as.data.frame(newdata[Plot %in% common.plots]) #if you want it to be a dataframe
+  # rownames(newdata) <- newdata[,"Plot"]
+  # store the new dataset with the same name as before
+  newdata <- temp
+  assign(i, newdata)
+  print(paste(i,sum(is.na(newdata)))) #to see if there are NA's
+}
+rm(temp) ; gc()
+
+# there are two measures for species Urocystis_agropyri (not for all plots). If there are 2 measures, they are different,
+# so one of the measures is always 1. (I removed all doubles before!) I always take 1 if both variants occur.
+# must also work for abundance data!
+
+plant.pathogen <- as.data.table(plant.pathogen)
+plant.pathogen[, DataID:=NULL] # take out DataID because some differ in DataID only.
+plant.pathogen = unique(plant.pathogen)
+new_uro <- plant.pathogen[Species== "Urocystis_agropyri",][order(Plot,value,decreasing=T)]
+
+duprow <- duplicated(new_uro, by="Plot") # the duplicated rows are always the second ones.
+#                                          here: the ones containing 0 (as they are sorted).
+new_uro <- new_uro[! duprow,] # the new dataset for urocystis_agropyri
+plant.pathogen <- plant.pathogen[Species!= "Urocystis_agropyri",]
+plant.pathogen <- rbind(plant.pathogen, new_uro)
+
+rm(new_uro) ; rm(duprow) ; gc()
+
+#########################
+# 2. PREPARE FOR BETAPART
+#########################
+# change the format of my data and only keep the information needed to calculate beta diversity
+# betapart requires a specific format: data.frame in which rownames are sites and columnnamess are species.
+# therefore, first I need to get my dataset into the right format:
+for(i in trnames){
+  temp <- get(i)
+  newdata <- dcast.data.table(temp, Plot ~ Species)
+  newdata <- as.data.frame(newdata[Plot %in% common.plots]) #if you want it to be a dataframe
+  rownames(newdata) <- newdata[,"Plot"]
+  newdata <- newdata[ , !(names(newdata) == "Plot")]
+  # store the new dataset with the same name as before
+  assign(i, newdata)
+}
+
+
+###################
+# Handle NA VALUES:
+# 
+#herbivore is the only group with NAs -> why?
+unique(grl[Trophic_level=="herbivore"]$Group_broad)
+herbivore[1:10,colSums(is.na(herbivore))>0]
+
+#it's just two species, we can remove them and we should be good!
+herbivore <- herbivore[colSums(is.na(herbivore))==0]
+sum(is.na(herbivore))
+# now I can remove grl
+rm(grl) ; gc()
+
+
+# CREATION OF plot_NAset vector which is stored now
+# betapart can't handle NA values, I need to take out plots which contain NA values in any species
+# 1. Check how many and which plots contain NA values
+
+plot_NAset <- vector()
+# na_vals_per_level <- list()
+for(i in trnames){
+  data <- get(i)
+  navals <- apply(data, 1, function(r) any(is.na(r)))
+  plot_NAset <- append(plot_NAset, rownames(data)[navals])
+  # # if wanted, the list na_vals_per_level can be made as well, where you see which plot misses in which trophic level
+  # name <- paste(i, 'na_plots')
+  # na_vals_per_level[[name]] <- unique(rownames(data)[navals])
+}
+plot_NAset <- unique(plot_NAset) # I lose 4 more plots from my data.
+length(plot_NAset)
+rm(navals); rm(data) ; rm(i) ; gc()
+# rm(name)
+
+# merge plot_NAset with uncommon.plots to have the whole set of plots to exclude.
+plot_NAset <- c(plot_NAset, uncommon.plots) # I only exclude 20 plots now
+# take out plot_NAset from common plots
+common.plots <- common.plots[!common.plots %in% plot_NAset]
+# table(substr(common.plots,0,1)) # there are 39 plots from AEG, 44 plots from HEG and 47 plots from SEG
+write(plot_NAset,file="plot_NAset.txt") # wrote plot_NAset to a file so I can easily access it without running this script.
+
+# delete all rows which contain plots occurring in plot_NAset
+for(i in trnames){
+  data <- get(i)
+  newdata <- data[!rownames(data) %in% plot_NAset ,]
+  assign(i,newdata)
+}
+rm(data) ; rm(i) ; rm(newdata)
+
+# # How many Species are there in one trophic level?
+# for(i in unique(grl[,Trophic_level])){
+#   len <- length(unique(grl[Trophic_level == i, Species]))
+#   print(paste(i, " : " , len))
+# }
+# rm(len) ; rm(i)
+
+
+######################################
+# 3. RUN BETAPART presence - absence #
+######################################
+# before running: check if the whole 4. is commented! (not running)
+
+# As in some datasets, there are many 0 variables, some plots have NaN (in omnivore, many plots)
+# NaN occur if there are no occurrences of any species in both plots. Therefore, I will replace NaN values with 0, using 
+# this function in the for loop
+remove_nan <- function(x){
+  x[is.nan(x)] <- 0
+  return(x)
+}
+
+if(typeofbeta == "presence_absence"){
+  beta_pa <- vector() # either beta_pa or beta_abund
+  for(i in trnames){
+    set <- get(i)
+    name <- paste('beta_pa',i,sep='_') # beta_pa stands for "presence-absence" ; beta_abund for "abundance"
+    result <- beta.pair(set, index.family="sorensen")
+    result <- lapply(result,as.matrix)
+    result <- lapply(result, function(x) cbind("Plot" = seq(1,130,by=1),x))
+    result <- lapply(result, function(x) remove_nan(x))
+    assign(name, result)
+    beta_pa <- append(beta_pa , name)
+  }
+  rm(set) ; rm(name) ; rm(result) ; rm(i)
+}
+
+######################################
+# 4. RUN BETAPART abundance          #
+######################################
+# to run this part, change the variable typeofbeta to "abundance"
+
+# As in some datasets, there are many 0 variables, some plots have NaN (in omnivore, many plots)
+# NaN occur if there are no occurrences of any species in both plots. Therefore, I will replace NaN values with 0, using
+# the function made under presence absence.
+if(typeofbeta == "abundance"){
+  beta_abund <- vector()
+  for(i in trnames){
+    set <- get(i)
+    name <- paste('beta_abund',i,sep='_') # beta_pa stands for "presence-absence" ; beta_abund for "abundance"
+    result <- beta.pair.abund(set, index.family = "bray")
+    result <- lapply(result,as.matrix)
+    result <- lapply(result, function(x) cbind("Plot" = seq(1,130,by=1),x))
+    result <- lapply(result, function(x) remove_nan(x))
+    assign(name, result)
+    beta_abund <- append(beta_abund , name)
+  }
+  rm(set) ; rm(name) ; rm(result) ; rm(i)
+}
+
+######################################
+# 5. CLEANING THE RESULTS            #
+######################################
+# remove original data
+rm(autotroph) ; rm(belowground.herbivore) ; rm(belowground.predator) ; rm(decomposer) ; rm(herbivore) ; rm(microbe.decomposer)
+rm(plant.pathogen); rm(protist) ; rm(secondary.consumer) ; rm(soilfungi.decomposer) ; rm(soilfungi.pathogen)
+rm(symbiont) ; rm(tertiary.consumer) ; rm(vert.herb) ; rm(plots) ; rm(uncommon.plots)
+# remove unwanted vector
+rm(plot_NAset) ;  rm(trnames) ; rm(typeofbeta)
+gc()
+```
+
