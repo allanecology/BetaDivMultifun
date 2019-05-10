@@ -1,0 +1,56 @@
+---
+title: "exploring diversity dataset"
+author: "Noelle Schenk"
+date: "May 8, 2019"
+output: html_document
+---
+Depends on spdiv which is loaded in `calc_betadiversities.Rmd`
+
+### Exploring dataset
+```{r}
+trlevels <- sort(unique(spdiv$Trophic_level))
+overview <- matrix(NA, 1, 2, dimnames = list(c(), c("Trophic_level", "years")))
+for(t in trlevels){
+  y <- unique(spdiv[Trophic_level == t, Year])
+  del <- cbind("Trophic_level" = rep(t, length(y)), "years" = y)
+  overview <- rbind(overview, del)
+}
+overview <- overview[-1,]
+overview <- data.table::data.table(overview)
+overview[ years == "2011_2012", years := "2011.5"]
+overview[years == "2014_2015", years := "2014.5"]
+overview[, years := as.numeric(years)]
+```
+Years
+```{r}
+library(cowplot)
+ggplot(overview, aes(years, Trophic_level)) +
+        geom_point() +
+  theme(axis.text = element_text(angle = 45, hjust = 1, size=10))
+```
+
+```{r}
+unique(spdiv[Trophic_level == "ant.omnivore", .(DataID, Year)])
+```
+
+Number of species
+```{r}
+trlevels <- sort(unique(spdiv$Trophic_level))
+overview <- matrix(NA, 1, 2, dimnames = list(c(), c("Trophic_level", "Species")))
+for(t in trlevels){
+  y <- length(unique(spdiv[Trophic_level == t, Species]))
+  del <- cbind("Trophic_level" = t, "Species" = y)
+  overview <- rbind(overview, del)
+}
+overview <- overview[-1,]
+overview <- data.table::data.table(overview)
+```
+
+
+# Defining years
+Are the diversitites among years correlated? Depends on calc_betadiversities.Rmd after loading and cleaning dataset.
+```{r}
+
+```
+
+
