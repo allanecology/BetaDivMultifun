@@ -6,3 +6,4 @@ output: html_document
 ---
 
 Based on the species information, a selection of the included plots is done.
+is done now in calc_betadiversities.Rmd

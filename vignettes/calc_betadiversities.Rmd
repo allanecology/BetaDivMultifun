@@ -57,93 +57,112 @@ From cleaning, getting numbers :
 # delete Plot_bexis (old plot names)
 spdiv[, Plot_bexis := NULL]
 # spdiv[, c("Dataversion", "DataID") := NULL]
-spinfo <- unique(spinfo) # fix mini-bug
 spdiv <- merge(spdiv, spinfo, by = "Species", all.x=T)
 # now I can remove the original datasets, so I save cpu:
 rm(spinfo); gc()
 ```
 
 ## Select trophic levels
-Group trophic levels as following
+Group to 18 trophic levels as needed for analysis. (see also `info_diversity.ods`)
 ```{r}
-bdm_trlevels <- c("autotroph", "bacteria.RNA", "belowground.herbivore", "decomposer", "herbivore", "omnivore", "plant.pathogen", "pollinator", "protist.bacterivore", "protist.eukaryvore", "protist.omnivore", "protist.plant.parasite", "secondary.consumer", "soilfungi.decomposer", "soilfungi.pathotroph", "soilfungi.plant.pathogen", "soilfungi.symbiont", "tertiary.consumer")
-# group the trophic levels which consist of multiple in spinfo
-herbivore <- c("herbivore", "herbivore.snail")
-omnivore <- c("ant.omnivore", "omnivore", "omnivore.snail")
-protist.bacterivore <- c("protist.bacterivore", "protist.mainly.bacterivore")
+# take out trophic levels which are not used in analysis
+spdiv <- spdiv[!Trophic_level %in% c("detritivore", "protist.unknown", "soilfungi.other", "vert.herb", "protist.parasite.nonplant")]
+# merge the trophic levels which are merged in analysis
+spdiv[Trophic_level == "herbivore.snail", Trophic_level := "herbivore"]
+spdiv[Trophic_level == "ant.omnivore", Trophic_level := "omnivore"]
+spdiv[Trophic_level == "omnivore.snail", Trophic_level := "omnivore"]
+spdiv[Trophic_level == "protist.mainly.bacterivore", Trophic_level := "protist.bacterivore"]
+# unique(spdiv$Trophic_level)
 ```
-18 trophic levels, 3 of those not sure yet (need to be tested)
-TODO : maybe take out the 3 unused levels? (belowground herbi and predator and soilfungi pathogen)
+show years
+```{r}
+unique(spdiv[, .(Trophic_level, Year)])
+```
 
 ```{r}
+length(unique(spdiv$Species)) # 309734 species in the dataset (incl. OTU)
+```
+Get overview of amount of species per trophic level
+```{r, eval=F}
+for(t in unique(spdiv$Trophic_level)){
+  print(c(t, length(unique(spdiv[Trophic_level == t, Species]))))
+}
+```
+
+## Select Plots
+Select the plots without missing information and store. 
+```{r}
+plots <- list()
+for (i in unique(spdiv$Trophic_level)){
+  plots[[i]] <- unique(spdiv[Trophic_level==i]$Plot)
+}
+common.plots <- Reduce(intersect,plots) #137 plots (3 more than last time)
+saveRDS(common.plots, file = "plotNAset.rds")
+# for each trophic level, checked it number of plots would increase (where are the missing plots coming from?)
+# length(Reduce(intersect, plots[-5])) # 144 without decomposers
+# length(Reduce(intersect, plots[-15])) # 139 without bacteria.RNA
+# length(Reduce(intersect, plots[-5][-14])) # 146 without both decomposers and bacteria.RNA
+```
+137 plots contain no missing information. If decomposers would be taken out, 144 plots would be available. If bacteria.RNA would be taken out, 139 plots would be available (146 if both taken out).
+
+Inspect what happens with decomposers (below code). They are missing because they were not measured at 11 plots, there is no missing entry in the dataset. Metadata says that 145 EPs were measured.
+```{r, eval=F}
+dec <- spdiv[Trophic_level == "decomposer"]
+length(unique(dec$Plot))
+#TODO why?
+```
+Get the common plot names overview
+```{r, eval=F}
+paste("AEG :", length(grep("A", common.plots)), "   HEG :", length(grep("H", common.plots)), "    SEG :", length(grep("S", common.plots)), sep = "")
+```
+There are 42 plots from AEG, 47 from HEG and 48 from SEG.
 
 
-dcast(DT.m1, family_id + age_mother ~ child, value.var = "dob")
+## Check if diversity across years is correlated
+Create new column with trophic level and year
+```{r}
+spdiv[, trlevel_year := paste(Trophic_level, Year, sep = "")]
+```
+Correlation plot of all trophic levels and years? Or better betadiversity among years?
+```{r}
+# m <- cor(spdiv[, .(Species, value, trlevel_year)], use = "pariwise.complete.obs")
+# 
+# M <- cor(small_grlfuns[, !colnames(grlfuns) %in% c("Explo","Plotn", "Plot"), with=F], use="pairwise.complete.obs")
+# corrplot::corrplot(M,type="lower",addCoef.col = "black",method="color",diag=F, tl.srt=1, tl.col="black", mar=c(1,0,1,0), number.cex=0.6)
+
+# testing with 1 trophic level, 2 years
+test <- spdiv[Trophic_level == "tertiary.consumer", .(Species, value, trlevel_year, Plot)]
+tests <- test[trlevel_year == "tertiary.consumer2009"]
+d <- data.table::dcast.data.table(tests, Plot ~ Species)
+
+testt <- test[trlevel_year == "tertiary.consumer2010"]
+e <- data.table::dcast.data.table(testt, Plot ~ Species)
+e <- as.data.frame(e)
+rownames(e) <- e$Plot
+e <- e[, -1]
+betapart::beta.pair(e, index.family="sorensen")
 ```
 
 
+### abundance
 
-
-
-
-
+### presence-absence
+transform into presence- absence if required
+```{r}
+if(typeofbeta == "presenceabsence"){
+  spdiv[value > 0, value := 1]
+}
+# no mising values there!
+# sum(is.na(spdiv$value))
+```
 
 
 below : the old script I wrote in 2017
 ```{r}
-
-
-#######################
-# get an overview of the years I have
-unique(grl[,.(Group_broad, Trophic_level, Year , DataID)])
-#Aboveground: data from 2008
-#Belowground: data from 2011
-#lichens and mosses only have data for 2009 -> (64sp of lichens and 55 of mosses) they will be aggregated with plants (autotrophs)
-#Bats: data from 2009
-
-#remove data not in focus years (select data from 2008, 2009, 2011, NA)
-grl <- grl[Year %in% c("2008","2009","2011",NA)] # include NA because bacteria have NA
-
-#use only "bacteria" dataset (remove bacteriaDNA)
-grl <- grl[!Group_broad %in% "Bacteria.DNA"]
-
-#remove plants 2009 and birds 2009,2011
-grl <- grl[!(Group_broad %in% "Plant" & Year %in% c(2009,2011))]
-grl <- grl[!(Group_broad %in% "Birds" & Year %in% c(2009,2011))]
-
-#see who is missing trophic info
-unique(grl[is.na(Trophic_level)]$Group_broad) #myriapoda and soilfungi
-unique(grl[Group_broad=="SoilFungi"]$Trophic_level) # there are some soilfungi with information, take out the NA's
-unique(grl[Group_broad=="Myriapoda"]$Trophic_level) # same situation with Myriapoda. I can keep some
-grl <- grl[!is.na(Trophic_level)] # remove species with no trophic level info.
-unique(grl[,.(Group_broad,Year)])
-unique(grl[,.(Group_broad, Trophic_level, Year)]) # trophic leves there for all groups
-
-#transform into presence/absence
-if(typeofbeta == "presence_absence"){
-  grl[value>0,value:=1] # all values larger than 0 are converted into 1
-  grl[value==0,value:=0]
-  grl<-unique(grl)      # i keep that to prevent doubles
-  # all(grl == unique(grl), na.rm=T) # it seems that grl == unique(grl) ; I dont need grl <- unique(grl)
-}
-
-#any NA2s in value? NO, so all groups only have the plot where they were collected
-sum(is.na(grl$value))
-
-#here remove any unwanted trophic level, for example
-grl <- grl[!Trophic_level %in% c("pollinator","omnivore")] 
-# length(unique(grl$Species)) # now I have 4734 species
-# length(unique(grl[,Trophic_level]))   # now I have 14 trophic levels
-
 #for each taxonomic group get the list of plots (I use Group.broad because this is the level
 #at which species were collected)
 
-plots <- list()
-for (i in unique(grl$Group_broad)){
-  plots[[i]] <- unique(grl[Group_broad==i]$Plot)
-}
 
-common.plots <- Reduce(intersect,plots) #134 plots!
 # length(unique(plots$AMF)) # plots$AMF contains all 150 plots
 # save the set of plots to exclude.
 uncommon.plots <- plots$AMF[!plots$AMF %in% common.plots]
