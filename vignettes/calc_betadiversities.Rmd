@@ -117,6 +117,11 @@ paste("AEG :", length(grep("A", common.plots)), "   HEG :", length(grep("H", com
 ```
 There are 42 plots from AEG, 47 from HEG and 48 from SEG.
 
+Only keep the selected plots
+```{r}
+spdiv <- spdiv[Plot %in% common.plots,]
+```
+
 
 ## Check if diversity across years is correlated
 Create new column with trophic level and year
@@ -131,16 +136,54 @@ Correlation plot of all trophic levels and years? Or better betadiversity among 
 # corrplot::corrplot(M,type="lower",addCoef.col = "black",method="color",diag=F, tl.srt=1, tl.col="black", mar=c(1,0,1,0), number.cex=0.6)
 
 # testing with 1 trophic level, 2 years
-test <- spdiv[Trophic_level == "tertiary.consumer", .(Species, value, trlevel_year, Plot)]
-tests <- test[trlevel_year == "tertiary.consumer2009"]
-d <- data.table::dcast.data.table(tests, Plot ~ Species)
+# for presence absence
+for(trlevel in c("autotroph", "secondary.consumer", "tertiary.consumer")){
+  pdf(paste("corr_diversity_across_years_", trlevel, ".pdf", sep=""), paper = "a4r")
+  par(mfrow=c(12,12))
+  test <- spdiv[Trophic_level == trlevel, .(Species, value, trlevel_year, Plot, Year)]
+  for(p in unique(test$Plot)){
+    a <- data.table::dcast.data.table(test[Plot == p], Year ~ Species, fill = 0)
+    a[is.na(a)] <- 0
+    a <- t(a)
+    colnames(a) <- a[1,]
+    a <- a[-1,]
+    a <- apply(a, 2, as.numeric)
+    # corrplot::corrplot(cor(a), type="lower", diag = F)
+    a[a != 0] <- 1
+    if(sum(is.na(cor(a))) >= 1) next
+    corrplot::corrplot(cor(a), type="lower", diag = T, method = "square", tl.col = "black", order = "alphabet", tl.cex = 0.7, main = p)
+  }
+  dev.off()
+}
+# note : not possible OTU, because it can't be compared across years. The OTU identities always change.
+# note : omnivore, herbivores different years are different species --> no overlap
 
-testt <- test[trlevel_year == "tertiary.consumer2010"]
-e <- data.table::dcast.data.table(testt, Plot ~ Species)
-e <- as.data.frame(e)
-rownames(e) <- e$Plot
-e <- e[, -1]
-betapart::beta.pair(e, index.family="sorensen")
+
+# 
+# tests <- test[trlevel_year == "tertiary.consumer2009"]
+# d <- data.table::dcast.data.table(tests, Plot ~ Species)
+# 
+# testt <- test[trlevel_year == "tertiary.consumer2010"]
+# e <- data.table::dcast.data.table(testt, Plot ~ Species)
+# e <- as.data.frame(e)
+# rownames(e) <- e$Plot
+# e <- e[, -1]
+# betapart::beta.pair(e, index.family="sorensen")
+# 
+# a <- rbind(tests, testt)
+# a[, plotyear := paste(trlevel_year, Plot)]
+# # unique(a$plotyear)[1]
+# b <- data.table::dcast.data.table(a[plotyear == unique(a$plotyear[1])], Year ~ Species)
+# b[is.na(b)] <- 0
+# beta <- betapart::beta.pair(b[,-1], index.family = "sorensen")
+# 
+# 
+# b <- data.table::dcast.data.table(a, plotyear ~ Species)
+# 
+# beta <- betapart::beta.pair(b[,-1], index.family = "sorensen")
+# 
+# # 1 Plot, many years
+# m <- cor(test[, .(Species, value, Plot)])
 ```
 
 
