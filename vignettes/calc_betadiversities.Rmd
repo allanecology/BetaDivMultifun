@@ -89,6 +89,112 @@ for(t in unique(spdiv$Trophic_level)){
 }
 ```
 
+
+
+## Check if diversity across years is correlated
+Create new column with trophic level and year
+```{r, eval=F}
+spdiv[, trlevel_year := paste(Trophic_level, Year, sep = "")]
+```
+Correlation plot of all trophic levels and years? Or better betadiversity among years?
+```{r, eval=F}
+# m <- cor(spdiv[, .(Species, value, trlevel_year)], use = "pariwise.complete.obs")
+# 
+# M <- cor(small_grlfuns[, !colnames(grlfuns) %in% c("Explo","Plotn", "Plot"), with=F], use="pairwise.complete.obs")
+# corrplot::corrplot(M,type="lower",addCoef.col = "black",method="color",diag=F, tl.srt=1, tl.col="black", mar=c(1,0,1,0), number.cex=0.6)
+
+# testing with 1 trophic level, 2 years
+# for presence absence
+for(trlevel in c("autotroph", "secondary.consumer", "tertiary.consumer")){
+  pdf(paste("corr_diversity_across_years_", trlevel, ".pdf", sep=""), paper = "a4r")
+  par(mfrow=c(12,12))
+  test <- spdiv[Trophic_level == trlevel, .(Species, value, trlevel_year, Plot, Year)]
+  for(p in unique(test$Plot)){
+    a <- data.table::dcast.data.table(test[Plot == p], Year ~ Species, fill = 0)
+    a[is.na(a)] <- 0
+    a <- t(a)
+    colnames(a) <- a[1,]
+    a <- a[-1,]
+    a <- apply(a, 2, as.numeric)
+    # corrplot::corrplot(cor(a), type="lower", diag = F)
+    a[a != 0] <- 1
+    if(sum(is.na(cor(a))) >= 1) next
+    corrplot::corrplot(cor(a), type="lower", diag = T, method = "square", tl.col = "black", order = "alphabet", tl.cex = 0.7, main = p)
+  }
+  dev.off()
+}
+# note : not possible OTU, because it can't be compared across years. The OTU identities always change.
+# note : omnivore, herbivores different years are different species --> no overlap
+
+# tertiary consumers : special case. take the 67 species measured in 2008, 2011 and 2012 and take the 11 suppl. species out of years 2009 and 2010.
+tert <- spdiv[Trophic_level == "tertiary.consumer", .(Species, value, trlevel_year, Plot, Year)]
+# find the 11 species which are only present in 2009 and 2010
+unique(tert[Year == "2009", Species])[which(!unique(tert[Year == "2009", Species]) %in% unique(tert[Year == "2008", Species]))]
+```
+
+# Combine years
+
+## autotrophs
+Years 2008 to 2016.
+Lichens and Bryophytes only 2009 (119 species, 137 plots)
+
+year   |  no. species | no. Plots |
+-------| ------------ | --------- |
+2008   |   344        |  147      |
+2009   |   463        |  150      |
+2009 l |   119        |  150      |
+2009 p |   344        |  150      |
+2010   |   344        |  150      |
+2011   |   344        |  150      |
+2012   |   344        |  149      |
+2013   |   344        |  149      |
+2014   |   344        |  148      |
+2015   |   344        |  150      |
+2016   |   344        |  150      |
+
+
+```{r}
+auto <- spdiv[Trophic_level == "autotroph"]
+
+# how many species and how many plots were measured in the different years?
+length(unique(auto[Year == "2008", Plot]))
+# get vector with lichen species to examine lichens separately
+lichenspecies <- setdiff(unique(auto[Year == "2009", Species]), unique(auto[Year == "2008", Species]))
+    # examine lichens and plants separately - same number of plots and expected number of species?
+length(unique(auto[!Species %in% lichenspecies, Species]))
+length(unique(auto[Species %in% lichenspecies, Plot]))
+```
+*Plots identities*
+
+- 2012 dataset contains plot SEG22, which is not present in 2012
+    - 2013 dataset contains plot AEG02, which is not present in 2013
+--> need to plot that, it's a mess...
+```{r}
+# same plots in the 137 plots in all years?
+test <- unique(auto[, .(Year, Plot)])
+test2 <- data.table::dcast(test, Plot ~Year)
+vis_miss(test2)
+
+# library(cowplot)
+# ggplot(test, aes(Plot, Year)) +
+#         geom_point() +
+#   theme(axis.text = element_text(angle = 45, hjust = 1, size=10))
+# 
+# auto_overview <- data.table::data.table()
+# auto_overview[, original_plots := unique(auto[Year == "2016", Plot])]
+# auto_overview[, plots2016 := unique(auto[Year == "2016", Plot])]
+# auto_overview[, plots2015 := unique(auto[Year == "2015", Plot])]
+# auto_overview[, plots2014 := unique(auto[Year == "2014", Plot])]
+# 
+# setdiff(unique(auto[Year == "2013", Plot]), unique(auto[Year == "2014", Plot]))
+
+```
+
+
+
+
+
+
 ## Select Plots
 Select the plots without missing information and store. 
 ```{r}
@@ -123,68 +229,7 @@ spdiv <- spdiv[Plot %in% common.plots,]
 ```
 
 
-## Check if diversity across years is correlated
-Create new column with trophic level and year
-```{r}
-spdiv[, trlevel_year := paste(Trophic_level, Year, sep = "")]
-```
-Correlation plot of all trophic levels and years? Or better betadiversity among years?
-```{r}
-# m <- cor(spdiv[, .(Species, value, trlevel_year)], use = "pariwise.complete.obs")
-# 
-# M <- cor(small_grlfuns[, !colnames(grlfuns) %in% c("Explo","Plotn", "Plot"), with=F], use="pairwise.complete.obs")
-# corrplot::corrplot(M,type="lower",addCoef.col = "black",method="color",diag=F, tl.srt=1, tl.col="black", mar=c(1,0,1,0), number.cex=0.6)
 
-# testing with 1 trophic level, 2 years
-# for presence absence
-for(trlevel in c("autotroph", "secondary.consumer", "tertiary.consumer")){
-  pdf(paste("corr_diversity_across_years_", trlevel, ".pdf", sep=""), paper = "a4r")
-  par(mfrow=c(12,12))
-  test <- spdiv[Trophic_level == trlevel, .(Species, value, trlevel_year, Plot, Year)]
-  for(p in unique(test$Plot)){
-    a <- data.table::dcast.data.table(test[Plot == p], Year ~ Species, fill = 0)
-    a[is.na(a)] <- 0
-    a <- t(a)
-    colnames(a) <- a[1,]
-    a <- a[-1,]
-    a <- apply(a, 2, as.numeric)
-    # corrplot::corrplot(cor(a), type="lower", diag = F)
-    a[a != 0] <- 1
-    if(sum(is.na(cor(a))) >= 1) next
-    corrplot::corrplot(cor(a), type="lower", diag = T, method = "square", tl.col = "black", order = "alphabet", tl.cex = 0.7, main = p)
-  }
-  dev.off()
-}
-# note : not possible OTU, because it can't be compared across years. The OTU identities always change.
-# note : omnivore, herbivores different years are different species --> no overlap
-
-
-# 
-# tests <- test[trlevel_year == "tertiary.consumer2009"]
-# d <- data.table::dcast.data.table(tests, Plot ~ Species)
-# 
-# testt <- test[trlevel_year == "tertiary.consumer2010"]
-# e <- data.table::dcast.data.table(testt, Plot ~ Species)
-# e <- as.data.frame(e)
-# rownames(e) <- e$Plot
-# e <- e[, -1]
-# betapart::beta.pair(e, index.family="sorensen")
-# 
-# a <- rbind(tests, testt)
-# a[, plotyear := paste(trlevel_year, Plot)]
-# # unique(a$plotyear)[1]
-# b <- data.table::dcast.data.table(a[plotyear == unique(a$plotyear[1])], Year ~ Species)
-# b[is.na(b)] <- 0
-# beta <- betapart::beta.pair(b[,-1], index.family = "sorensen")
-# 
-# 
-# b <- data.table::dcast.data.table(a, plotyear ~ Species)
-# 
-# beta <- betapart::beta.pair(b[,-1], index.family = "sorensen")
-# 
-# # 1 Plot, many years
-# m <- cor(test[, .(Species, value, Plot)])
-```
 
 
 ### abundance
