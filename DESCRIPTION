@@ -33,5 +33,6 @@ Imports:
     missForest,
     corrplot,
     naniar,
-    igraph
+    igraph,
+    VennDiagram
 RoxygenNote: 6.1.0.9000
