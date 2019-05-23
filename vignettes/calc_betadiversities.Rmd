@@ -252,7 +252,6 @@ rm(testplotpresence)
 ```
 Snails were only measured in 134 plots. They contain 39 species. Insects were measured in all plots, they contain 401 species.
 
-TODO : combine for the moment, but keep in mind that snails could be taken out as well to have more plots --> keep both datasets
 ```{r}
 length(unique(herbivore[Year == "2008", Species]))
 length(intersect(herbivore[Year == "2008", Plot], herbivore[Year == "2017", Plot]))
@@ -265,7 +264,6 @@ length(intersect(herbivore[Year == "2008", Plot], herbivore[Year == "2017", Plot
 | no Species |   401    |   39    |  440   |
 
 Too many missing plots in snails dataset. Take insects dataset only.
-
 ```{r}
 herbivore <- herbivore[Year == "2008", .(Species, Plot, value)]
 # nrow(herbivore) == 139 * 401 # 401 species in 139 plots present
@@ -396,8 +394,10 @@ length(setdiff(unique(bacteriaRNA[Year == "2014", Species]), unique(bacteriaRNA[
 # grep("01ece679a6294aadf97b931ce39a539a", bacteriaRNA$Species)
 bacteriaRNA[grep("01ece679a6294aadf97b931ce39a539a", bacteriaRNA$Species), Year]
 ```
+The OTUs can be compared across the years. However, we will only work with the 2011 dataset in order to be more consistent with the years.
 Replace the prefix by bac_ instead of bac11_ and bac14_
-```{r}
+```{r, eval=F}
+# In case the years would be combined
 bacteriaRNA[grep("bac11_", Species), Species := gsub("bac11_", "bac14_", Species)]
 ```
 
@@ -419,10 +419,16 @@ draw.pairwise.venn(area1 = 34435 + 105256, area2 = 35254 + 105256, cross.area = 
 ```
 Select 2011 dataset.
 ```{r}
-bacteriaRNA <- bacteriaRNA[Year == "2011"]
-nrow(bacteriaRNA) == 148 * 140510
-#TODO HERE : why is this not the same number as expected??
-# are there some plot-species combinations not present in the dataset?
+bacteriaRNA <- bacteriaRNA[Year == "2011", .(Species, Plot, value)]
+# The bacteria RNA dataset had been reduced: all species-plot combinations with 0 were removed.
+# reconstruct them (code from Caterina)
+bacteriaRNA <- setDT(bacteriaRNA)[CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
+bacteriaRNA[is.na(value), value := 0 ]
+# add NA values for the two missing plots
+bac_missing <- rbind(data.table::data.table(Species = unique(bacteriaRNA[Plot == "AEG21", Species]), Plot = "AEG33", value = NA),
+                     data.table::data.table(Species = unique(bacteriaRNA[Plot == "AEG21", Species]), Plot = "AEG34", value = NA))
+bacteriaRNA <- rbind(bacteriaRNA, bac_missing)
+nrow(bacteriaRNA) == 150 * 140510
 ```
 
 
@@ -437,21 +443,13 @@ rm(testplotpresence)
 Only 1 plot missing, in 2011
 
 Are the OTU the same across years?
-Maybe the appendix protist24466 and protist24426 are causing the problem?
-```{r}
-#TODO : remove some rows when new dataset is there.
-protist_bacterivore[grep("_protist24466", Species), Species := gsub("_protist24466", "", Species)]
-protist_bacterivore[grep("_protist18206", Species), Species := gsub("_protist18206", "", Species)]
-protist_bacterivore[grep("_protist24426", Species), Species := gsub("_protist24426", "", Species)]
-protist_bacterivore[grep("_protist18166", Species), Species := gsub("_protist18166", "", Species)]
-protist_bacterivore[grep("_protist18187", Species), Species := gsub("_protist18187", "", Species)]
-protist_bacterivore[grep("_protist18226", Species), Species := gsub("_protist18226", "", Species)]
-protist_bacterivore[grep("_protist18207", Species), Species := gsub("_protist18207", "", Species)]
-protist_bacterivore[grep("_protist18208", Species), Species := gsub("_protist18208", "", Species)]
+Datasets 2011 and 2017 are comparable with each others, but not with dataset 2011_2012. The name appendices for the latter need to be preserved, the other prefixes can be removed.
+```{r, eval=F}
+protist_bacterivore[grep("_protist24426", Species), Species := gsub("_protist24426", "", Species)] # remove appendix from 2011
+protist_bacterivore[grep("_protist24466", Species), Species := gsub("_protist24466", "", Species)] # remove appendix from 2017
 
 length(setdiff(unique(protist_bacterivore[Year == "2011", Species]), unique(protist_bacterivore[Year == "2011_2012", Species])))
 length(intersect(unique(protist_bacterivore[Year == "2017", Species]), unique(protist_bacterivore[Year == "2011_2012", Species])))
-
 # length(unique(protist_bacterivore[Year == "2011", Species]))
 # length(unique(protist_bacterivore[Year == "2011_2012", Species]))
 ```
@@ -462,6 +460,19 @@ length(intersect(unique(protist_bacterivore[Year == "2017", Species]), unique(pr
 | no OTUs    |   856   |   233     |   863  | 833+23+30 |       0        |
 
 No overlap between 2011 and 2011_2012 and 2017 and 2011_2012. 
+
+For BetaDivMultifun, only year 2011 is chosen : 
+```{r}
+protist_bacterivore <- protist_bacterivore[Year == "2011"]
+nrow(protist_bacterivore) == 149 * 856
+#TODO add the missing plot rows
+
+# HERE! find the missing plot and maybe add it again. (23.5.19)
+
+# pro_mis <- data.table::data.table(Species = unique(protist_bacterivore[Plot == "AEG21", Species]), Plot = "AEG33", value = NA)
+```
+
+
 
 ## protist.eukaryvore
 ```{r}
