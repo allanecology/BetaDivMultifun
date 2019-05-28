@@ -7,9 +7,12 @@ output: html_document
 *requires* : spdiv, spinfo (spinfo is the file containing information about all species, spdiv is the collected data.)
 ```{r}
 require(naniar)
+require(ggplot2)
+require(grid)
+require(VennDiagram)
 ```
 
-# Calculate beta diversities
+# Load and merge dataset
 here I prepare the raw diversity dataset, prepare it for betapart and calculate beta diversities (abundance and presence-absence based).
 Note: the beginning of the script is almost completely from Caterina until splitting into trophic levels (Thank you!)
 ```{r}
@@ -71,7 +74,8 @@ spdiv[value != 0, value := 1]
 ```
 
 
-## Select trophic levels
+
+# Select trophic levels
 Group to 18 trophic levels as needed for analysis. (see also `info_diversity.ods`)
 ```{r}
 # take out trophic levels which are not used in analysis
@@ -97,10 +101,14 @@ for(t in unique(spdiv$Trophic_level)){
   print(c(t, length(unique(spdiv[Trophic_level == t, Species]))))
 }
 ```
+Store trophic levels in vector
+```{r}
+trlevels <- sort(unique(spdiv$Trophic_level))
+```
 
 
 
-## Check if diversity across years is correlated
+# Check if diversity across years is correlated
 Create new column with trophic level and year
 ```{r, eval=F}
 spdiv[, trlevel_year := paste(Trophic_level, Year, sep = "")]
@@ -140,6 +148,8 @@ tert <- spdiv[Trophic_level == "tertiary.consumer", .(Species, value, trlevel_ye
 # find the 11 species which are only present in 2009 and 2010
 unique(tert[Year == "2009", Species])[which(!unique(tert[Year == "2009", Species]) %in% unique(tert[Year == "2008", Species]))]
 ```
+
+
 
 # Combine years
 
@@ -202,7 +212,7 @@ plants[value != 0, value := 1]
 
 # add the lichens dataset to the plants dataset
 autotroph <- rbind(plants, lichens[, .(Species, Plot, value)])
-# nrow(autotroph) == 150 * 344 + 150 * 119 # TRUE : there are 119 lichen and 344 plant species in all 150 plots.
+nrow(autotroph) == 150 * 344 + 150 * 119 # TRUE : there are 119 lichen and 344 plant species in all 150 plots.
 ```
 
 ```{r}
@@ -250,7 +260,7 @@ testplotpresence <- unique(herbivore[, .(Year, Plot)])
 vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
 ```
-Snails were only measured in 134 plots. They contain 39 species. Insects were measured in all plots, they contain 401 species.
+Snails were only measured in 134 plots. They contain 39 species. Insects were measured in 139 plots, they contain 401 species.
 
 ```{r}
 length(unique(herbivore[Year == "2008", Species]))
@@ -266,7 +276,7 @@ length(intersect(herbivore[Year == "2008", Plot], herbivore[Year == "2017", Plot
 Too many missing plots in snails dataset. Take insects dataset only.
 ```{r}
 herbivore <- herbivore[Year == "2008", .(Species, Plot, value)]
-# nrow(herbivore) == 139 * 401 # 401 species in 139 plots present
+nrow(herbivore) == 139 * 401 # 401 species in 139 plots present
 ```
 
 
@@ -296,6 +306,7 @@ Only took the arthropod dataset, as snails and ants have too many missing plots.
 omnivore <- omnivore[Year == "2008", .(Species, Plot, value)]
 # omnivore_ant <- omnivore[Year == "2014_2015", .(Species, Plot, value)]
 # omnivore_snail <- omnivore[Year == "2017", .(Species, Plot, value)]
+nrow(omnivore) == 139 * 14 # expected number of rows present
 ```
 
 
@@ -316,8 +327,7 @@ no Species | 170   |   4  |
 
 Species set does not overlap.
 
-* possibly, set from 2011 was not complete neither? But if the same error as in all insect datasets --> selecting plots from 2008 will solve the issue.
-TODO : wait for new dataset and check wheter the 2011 data needs to be checked for missing plots or not.
+* **Note** : possibly, set from 2011 was not complete neither? But if the same error as in all insect datasets --> selecting plots from 2008 will solve the issue. In case 2011 Data is used, check this!
 ```{r}
 # length(unique(secondary_consumer[Year == "2008", Species]))
 any(unique(secondary_consumer[Year == "2008", Species]) %in% unique(secondary_consumer[Year == "2011", Species]))
@@ -325,8 +335,8 @@ any(unique(secondary_consumer[Year == "2008", Species]) %in% unique(secondary_co
 
 Select the Plot set from 2008 and merge the datasets together.
 ```{r}
-secondary_consumer <- secondary_consumer[Plot %in% unique(unique(secondary_consumer[Year == "2008", Plot]))]
-# nrow(secondary_consumer) == 4 * 139 + 170 * 139 # expected number of rows present
+secondary_consumer <- secondary_consumer[Plot %in% unique(unique(secondary_consumer[Year == "2008", Plot])), .(Species, Plot, value)]
+nrow(secondary_consumer) == 4 * 139 + 170 * 139 # expected number of rows present
 ```
 
 
@@ -373,6 +383,11 @@ nrow(bats) == 11 * 150 # expected number of rows present (11 species in 150 plot
 
 # combine the bird and bat dataset
 tertiary_consumer <- rbind(birds, bats)
+
+nrow(tertiary_consumer) == 150 * (11 + 67)
+```
+```{r}
+rm(bats); rm(birds); rm(batspecies)
 ```
 
 
@@ -407,7 +422,7 @@ bacteriaRNA[grep("bac11_", Species), Species := gsub("bac11_", "bac14_", Species
 | no OTUs    |  140510 |  139691   |
 
 ```{r, eval=F}
-length(unique(bacteriaRNA[Year == "2014", Species]))
+length(unique(bacteriaRNA[Year == "2014", Species])) # 139691
 length(setdiff(unique(bacteriaRNA[Year == "2011", Species]), unique(bacteriaRNA[Year == "2014", Species]))) # 34435 # 35254
 length(intersect(unique(bacteriaRNA[Year == "2011", Species]), unique(bacteriaRNA[Year == "2014", Species]))) # 105256
 ```
@@ -415,20 +430,19 @@ length(intersect(unique(bacteriaRNA[Year == "2011", Species]), unique(bacteriaRN
 2011 : 35254 OTUs unique to 2011, 105256 overlapping of total 140510. ~ 1/4 to 3/4
 ```{r}
 grid.newpage()
-draw.pairwise.venn(area1 = 34435 + 105256, area2 = 35254 + 105256, cross.area = 105256, category = c("2011 OTU", "2014 OTU"))
+VennDiagram::draw.pairwise.venn(area1 = 34435 + 105256, area2 = 35254 + 105256, cross.area = 105256, category = c("2011 OTU", "2014 OTU"))
 ```
 Select 2011 dataset.
 ```{r}
 bacteriaRNA <- bacteriaRNA[Year == "2011", .(Species, Plot, value)]
 # The bacteria RNA dataset had been reduced: all species-plot combinations with 0 were removed.
 # reconstruct them (code from Caterina)
-bacteriaRNA <- setDT(bacteriaRNA)[CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
+bacteriaRNA <- data.table::setDT(bacteriaRNA)[data.table::CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
 bacteriaRNA[is.na(value), value := 0 ]
-# add NA values for the two missing plots
-bac_missing <- rbind(data.table::data.table(Species = unique(bacteriaRNA[Plot == "AEG21", Species]), Plot = "AEG33", value = NA),
-                     data.table::data.table(Species = unique(bacteriaRNA[Plot == "AEG21", Species]), Plot = "AEG34", value = NA))
-bacteriaRNA <- rbind(bacteriaRNA, bac_missing)
-nrow(bacteriaRNA) == 150 * 140510
+# # add NA values for the two missing plots
+# bac_missing <- rbind(data.table::data.table(Species = unique(bacteriaRNA[Plot == "AEG21", Species]), Plot = "AEG33", value = NA),
+#                      data.table::data.table(Species = unique(bacteriaRNA[Plot == "AEG21", Species]), Plot = "AEG34", value = NA))
+nrow(bacteriaRNA) == 148 * 140510 # expected number of plots present
 ```
 
 
@@ -463,13 +477,8 @@ No overlap between 2011 and 2011_2012 and 2017 and 2011_2012.
 
 For BetaDivMultifun, only year 2011 is chosen : 
 ```{r}
-protist_bacterivore <- protist_bacterivore[Year == "2011"]
-nrow(protist_bacterivore) == 149 * 856
-#TODO add the missing plot rows
-
-# HERE! find the missing plot and maybe add it again. (23.5.19)
-
-# pro_mis <- data.table::data.table(Species = unique(protist_bacterivore[Plot == "AEG21", Species]), Plot = "AEG33", value = NA)
+protist_bacterivore <- protist_bacterivore[Year == "2011", .(Species, Plot, value)]
+nrow(protist_bacterivore) == 149 * 856 # TRUE : The expected number of rows is present.
 ```
 
 
@@ -483,9 +492,8 @@ rm(testplotpresence)
 ```
 Only 1 plot missing, in 2011.
 
-Renaming of OTUs necessary
-```{r}
-#TODO : remove those lines once new dataset is there
+```{r, eval=F}
+# code for OTU renaming, in case they would like to be combined.
 protist_eukaryvore[grep("_protist24426", Species), Species := gsub("_protist24426", "", Species)] # clean 2011
 protist_eukaryvore[grep("_protist24466", Species), Species := gsub("_protist24466", "", Species)] # clean 2017
 ```
@@ -501,6 +509,12 @@ length(unique(protist_eukaryvore[Year == "2011", Plot]))
 | no Plots |   149    |  150   |    149   |
 | no OTUs  |   211    |  210   | 204+7+6  |
 
+For BetaDivMultifun, only year 2011 is chosen : 
+```{r}
+protist_eukaryvore <- protist_eukaryvore[Year == "2011", .(Species, Plot, value)]
+nrow(protist_eukaryvore) == 149 * 211 # TRUE : The expected number of rows is present.
+```
+
 
 ## protist.omnivore
 
@@ -512,8 +526,8 @@ rm(testplotpresence)
 ```
 Only 1 plot missing, in 2011.
 
-Renaming of OTUs necessary
-```{r}
+```{r, eval=F}
+# code for enaming of OTUs in case years would be combined.
 protist_omnivore[grep("_protist24426", Species), Species := gsub("_protist24426", "", Species)] # clean 2011
 protist_omnivore[grep("_protist24466", Species), Species := gsub("_protist24466", "", Species)] # clean 2017
 ```
@@ -529,6 +543,12 @@ length(unique(protist_omnivore[Year == "2017", Species]))
 | no Plots |   149    |  150   |    149   |
 | no OTUs  |   440    |  434   | 430+10+4 |
 
+Only Year 2011 is chosen.
+```{r}
+protist_omnivore <- protist_omnivore[Year == "2011", .(Species, Year, value)]
+nrow(protist_omnivore) == 149 * 440 # expected number of rows is present
+```
+
 
 
 ## protist.plant.parasite
@@ -541,8 +561,8 @@ rm(testplotpresence)
 ```
 Only 1 plot missing, in 2011.
 
-Renaming of OTUs necessary
-```{r}
+```{r, eval=F}
+# Code for OTU renaming, in case years would be combined.
 protist_plantparasite[grep("_protist24426", Species), Species := gsub("_protist24426", "", Species)] # clean 2011
 protist_plantparasite[grep("_protist24466", Species), Species := gsub("_protist24466", "", Species)] # clean 2017
 ```
@@ -558,8 +578,11 @@ length(unique(protist_plantparasite[Year == "2017", Plot]))
 | no Plots |   149    |  150   |    149   |
 | no OTUs  |   96     |   95   |  95+1+0  |
 
-
-Probably skipping the OTU which is only present in 2011 and work with the 95 overlapping ones.
+Only 2011 is chosen
+```{r}
+protist_plantparasite <- protist_plantparasite[Year == "2011", .(Species, Plot, value)]
+nrow(protist_plantparasite) == 149 * 96
+```
 
 
 ## soilfungi.decomposer
@@ -570,8 +593,8 @@ testplotpresence <- unique(soilfungi_decomposer[, .(Year, Plot)])
 vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
 ```
-Check if OTU need renaming
-```{r}
+Check if OTU need renaming and check overlap of OTUs
+```{r, eval=F}
 length(unique(soilfungi_decomposer[Year == "2017", Species]))
 length(setdiff(unique(soilfungi_decomposer[Year == "2017", Species]), unique(soilfungi_decomposer[Year == "2014", Species])))
 
@@ -583,6 +606,16 @@ length(intersect(intersect(unique(soilfungi_decomposer[Year == "2011", Species])
 | no Plots |  150   |  150   |  150   |       150        |       150      |      150       |      150        |
 | no OTUs  | 12342  | 10772  | 10971  | 9403+2939+1369   | 9368+2974+1603 | 8391+2381+2580 | 7420+(see left) |
 
+Only year 2011 is chosen
+```{r}
+soilfungi_decomposer <- soilfungi_decomposer[Year == "2011", .(Species, Plot, value)]
+# adding the missing plot - species combinations . all species-plot combinations with 0 had been removed to store memory
+# reconstruct them (code from Caterina)
+soilfungi_decomposer <- data.table::setDT(soilfungi_decomposer)[data.table::CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
+soilfungi_decomposer[is.na(value), value := 0 ]
+nrow(soilfungi_decomposer) == 150 * 12342 # TRUE : now, all expected rows are present
+```
+
 
 ## soilfungi.pathotroph
 
@@ -593,10 +626,11 @@ vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
 ```
 No missing plots
-```{r}
+```{r, eval=F}
+# code to fill table below
 length(unique(soilfungi_pathotroph[Year == "2017", Species]))
-
 length(setdiff(unique(soilfungi_pathotroph[Year == "2017", Species]), unique(soilfungi_pathotroph[Year == "2011", Species])))
+
 length(intersect(intersect(unique(soilfungi_pathotroph[Year == "2011", Species]), unique(soilfungi_pathotroph[Year == "2017", Species])), unique(soilfungi_pathotroph[Year == "2014", Species])))
 ```
 |  Year    |  2011  |  2014  |  2017  |      11 14       |     11 17      |      14 17     | all
@@ -604,9 +638,17 @@ length(intersect(intersect(unique(soilfungi_pathotroph[Year == "2011", Species])
 | no Plots |  150   |  150   |  150   |       150        |       150      |      150       |      150        |
 | no OTUs  |  4097  |  6313  |  2924  | 2852+1245+3461   | 2852+1245+304  | 2134+4179+790 | 1934+(see left) |
 
+Only 2011 data is used here.
+```{r}
+soilfungi_pathotroph <- soilfungi_pathotroph[Year == "2011", .(Species, Plot, value)]
+# all plot-species combinations with 0 had been removed to save memory. They are added back now. (code from Caterina)
+soilfungi_pathotroph <- data.table::setDT(soilfungi_pathotroph)[data.table::CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
+soilfungi_pathotroph[is.na(value), value := 0 ]
+nrow(soilfungi_pathotroph) == 150 * 4097 # TRUE : all expected rows present
+```
+
 
 ## soilfungi.symbiont
-
 
 ```{r}
 soilfungi_symbiont <- spdiv[Trophic_level == "soilfungi.symbiont"]
@@ -615,7 +657,7 @@ vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
 ```
 No missing plots
-```{r}
+```{r, eval=F}
 length(unique(soilfungi_symbiont[Year == "2017", Species]))
 
 length(setdiff(unique(soilfungi_symbiont[Year == "2017", Species]), unique(soilfungi_symbiont[Year == "2014", Species])))
@@ -627,12 +669,146 @@ length(intersect(intersect(unique(soilfungi_symbiont[Year == "2011", Species]), 
 | no Plots |  150   |  150   |  150   |       150        |       150      |      150       |      150        |
 | no OTUs  |  1416  |  1478  |  1445  |   1093+323+385   |  1057+359+388  | 1080+398+365   |  914+(see left) |
 
+Only 2011 is chosen.
+```{r}
+soilfungi_symbiont <- soilfungi_symbiont[Year == "2011", .(Species, Plot, value)]
+# adding back missing plot-species combinations (code from Caterina)
+soilfungi_symbiont <- data.table::setDT(soilfungi_symbiont)[data.table::CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
+soilfungi_symbiont[is.na(value), value := 0 ]
+nrow(soilfungi_symbiont) == 150 * 1416 # all expected combinations present
+```
+
+
+# check and select trophic levels with only one year
+
+## belowground herbivore
+
+```{r}
+belowground_herbivore <- spdiv[Trophic_level == "belowground.herbivore", .(Species, Plot, value)]
+# testplotpresence <- unique(belowground_herbivore[, .(Year, Plot)])
+# vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
+# rm(testplotpresence)
+nrow(belowground_herbivore) == 150 * 11 # expected number of rows present
+```
+All plots are present, only one year (simple situation - no plot is shown).
+```{r, eval=F}
+hist(belowground_herbivore$value, main="Presence of belowground herbivores, 11 species", sub="The plot indicates that most species - Plot combinations are not present. This is a first indicator for relatively high (acceptable high) beta-diversity.", xlab = "")
+```
+```{r}
+bh_overv <- aggregate(value ~ Plot, belowground_herbivore, sum)
+barplot(height = bh_overv$value)
+abline(h = mean(bh_overv$value), col = "red")
+abline(h = median(bh_overv$value), col = "green")
+```
+Most plots contain 3 species. 5 Plots do not contain ANY species! Need to be removed from the dataset.
+```{r}
+#TODO : exclude plots with zero species until we find a solution. 
+# Problem : betadiversity can't be calculated on plots without species.
+zeroplots <- bh_overv$Plot[which(bh_overv$value == 0)]
+belowground_herbivore <- belowground_herbivore[!Plot %in% zeroplots]
+```
+
+Calculate betadiversity to check wether plots differ in their species composition / turnover.
+```{r}
+beta_belowground_herbivore <- prepare_for_betapair(belowground_herbivore)
+beta_belowground_herbivore <- beta.pair(beta_belowground_herbivore, index.family = "sorensen")
+
+corrplot::corrplot(as.matrix(beta_belowground_herbivore$beta.sor),type="lower", method="color", diag=F, mar=c(1,0,1,0), number.cex=0.4, tl.srt = 45, tl.col = "black", tl.cex = 0.5)
+
+corrplot::corrplot(as.matrix(beta_belowground_herbivore$beta.sim),type="lower", method="color", diag=F, mar=c(1,0,1,0), number.cex=0.4, tl.srt = 45, tl.col = "black", tl.cex = 0.5)
+
+corrplot::corrplot(as.matrix(beta_belowground_herbivore$beta.sne),type="lower", method="color", diag=F, mar=c(1,0,1,0), number.cex=0.4, tl.srt = 45, tl.col = "black", tl.cex = 0.5)
+```
+There is definitely some betadiversity among the plots.
+
+
+## belowground predator
+
+```{r}
+belowground_predator <- spdiv[Trophic_level == "belowground.predator"]
+nrow(belowground_predator) == 17 * 150 # expected number of plots present
+```
+```{r}
+bp_overv <- aggregate(value ~ Plot, belowground_predator, sum)
+barplot(height = bp_overv$value)
+abline(h = mean(bp_overv$value), col = "red")
+abline(h = median(bp_overv$value), col = "green")
+```
+There is 1 plot in belowground predators which does not contain any species.
+```{r}
+#TODO : find out how to handle plots without species
+zeroplots <- bp_overv$Plot[which(bp_overv$value == 0)]
+belowground_predator <- belowground_predator[!Plot %in% zeroplots]
+```
+calc betadiversity and plot
+```{r}
+beta_belowground_predator <- prepare_for_betapair(belowground_predator)
+beta_belowground_predator <- beta.pair(beta_belowground_predator, index.family = "sorensen")
+
+corrplot::corrplot(as.matrix(beta_belowground_predator$beta.sor),type="lower", method="color", diag=F, mar=c(1,0,1,0), number.cex=0.4, tl.srt = 45, tl.col = "black", tl.cex = 0.5)
+
+corrplot::corrplot(as.matrix(beta_belowground_predator$beta.sim),type="lower", method="color", diag=F, mar=c(1,0,1,0), number.cex=0.4, tl.srt = 45, tl.col = "black", tl.cex = 0.5)
+
+corrplot::corrplot(as.matrix(beta_belowground_predator$beta.sne),type="lower", method="color", diag=F, mar=c(1,0,1,0), number.cex=0.4, tl.srt = 45, tl.col = "black", tl.cex = 0.5)
+```
+
+
+## decomposer
+```{r}
+decomposer <- spdiv[Trophic_level == "decomposer", .(Species, Plot, value)]
+# testplotpresence <- unique(decomposer[, .(Year, Plot)])
+# vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
+# rm(testplotpresence)
+bp_overv <- aggregate(value ~ Plot, decomposer, sum)
+barplot(height = bp_overv$value)
+abline(h = mean(bp_overv$value), col = "red")
+abline(h = median(bp_overv$value), col = "green")
+
+#TODO HERE! There are so many plots without decomposers - no idea if it still worth it...
+length(unique(decomposer$Species)) # even though 40 species, there are so few present.
+```
+
+
+## plant pathogen
+```{r}
+plant_pathogen <- spdiv[Trophic_level == "plant_pathogen"]
+```
+
+
+## pollinator
+```{r}
+pollinator <- spdiv[Trophic_level == "pollinator"]
+```
+
 
 
 <!-------------------------------------------------------------------------------------------------------------------------------->
 
-## Select Plots
+
+
+# Select Plots
+Find subset of plots without missing diversity data and store.
+
+1. control : check for missing diversity data in the plots
+```{r}
+
+```
+
+
+
+
+
 Select the plots without missing information and store. 
+
+
+
+
+
+
+
+
+
+
 ```{r}
 plots <- list()
 for (i in unique(spdiv$Trophic_level)){
