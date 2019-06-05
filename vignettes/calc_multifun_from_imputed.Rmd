@@ -33,25 +33,20 @@ imputed_grlfuns[, "soilNflxs" := multidiv(nce, sc="sd", cent=TRUE)[,1]]
 rm(nce)
 ```
 
-## P_loss_comb
-combination of PRI and P_loss.
 
-mean of P_loss 2011 and 2015.
-```{r}
-plc <- imputed_grlfuns[, c("P_loss2011", "P_loss2015", "PRI")]
-# take mean of P_loss 2011 and 2015
-plc[, "P_loss" := apply(plc[,c("P_loss2011", "P_loss2015")],1, mean)]
-plc[, c("P_loss2011", "P_loss2015") := NULL]
-imputed_grlfuns[, "P_loss_comb" := multidiv(plc, sc="sd", cent=TRUE)[,1]]; rm(plc)
-```
-
-
-
+# Select functions
+selecting the functions which are used in analysis.
 ```{r}
 # select variables which are included in betadiv multifun analysis
 usedforBetadivMultifun <- usedforBetadivMultifun[!usedforBetadivMultifun == "Plot"]
 imputed_grlfuns <- imputed_grlfuns[, ..usedforBetadivMultifun]
+#TODO
 ```
+
+
+
+
+
 
 
 # Correlations
