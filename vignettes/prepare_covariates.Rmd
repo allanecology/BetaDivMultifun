@@ -7,11 +7,6 @@ output: html_document
 
 Here, covariates are prepared. At the moment : only soil. Will add plot isolation & Co
 
-```{r}
-#TODO : add Region to the soil pca?
-```
-
-
 # Soil
 ## Cleaning soil covariates
 ```{r}

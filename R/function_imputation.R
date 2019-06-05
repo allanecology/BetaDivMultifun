@@ -38,7 +38,7 @@ perform_missforest_imputations <- function(dataset, numcols, im=1){
     print(i)
     current <- missForest::missForest(dataset, variablewise = T)
     imperr[[i]] <- data.table::data.table("columns" = colnames(dataset), "errors" =current$OOBerror)
-    current <- as.data.table(current$ximp)
+    current <- data.table::data.table(current$ximp)
     # re-transform the numeric variables
     current[, (numcols) := lapply(.SD, function(x) (exp(x)-1)), .SDcols = numcols]
     # re-transform the negative values
