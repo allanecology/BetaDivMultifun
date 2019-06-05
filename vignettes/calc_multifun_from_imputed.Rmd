@@ -1,0 +1,159 @@
+---
+title: "mini-multifunctionalities from imputed functions"
+author: "Noelle Schenk"
+date: "June 5, 2019"
+output: html_document
+---
+
+# Calculate mini-multifunctionalities
+The mini-multifunctionalities are calculated from the imputed values.
+
+## soilCflxs
+Enzymes related to soil C. All measured in the year 2011.
+```{r}
+sce <- imputed_grlfuns[, c("beta_Glucosidase", "N_Acetyl_beta_Glucosaminidase", "Xylosidase")]
+# take z-scores of the functions
+imputed_grlfuns[, "soilCflxs" := multidiv(sce, sc="sd", cent=TRUE)[,1]]
+rm(sce)
+```
+
+## soilNflxs
+Enzymes related to soil N. A measure of soil N cycling with enzyme activities and functional gene abundances
+
+amoA_AOB and A are from both 2011 and 2016, took the mean of both years.
+```{r}
+nce <- imputed_grlfuns[,c("Urease", "DEA","Potential.nitrification2011", "Potential.nitrification2014","nifH","amoA_AOB.2011","amoA_AOA.2011", "amoA_AOB.2016", "amoA_AOA.2016", "nxrA_NS", "16S_NB")]
+# take mean of multi-year-measurements
+nce[, "amoA_AOB" := apply(nce[,c("amoA_AOB.2011", "amoA_AOB.2016")],1, mean)]
+nce[, "amoA_AOA" := apply(nce[,c("amoA_AOA.2011", "amoA_AOA.2016")],1, mean)]
+nce[, "Potential.nitrification" := apply(nce[, c("Potential.nitrification2014", "Potential.nitrification2011")], 1, mean)]
+nce[, c("amoA_AOB.2011", "amoA_AOB.2016", "amoA_AOA.2011", "amoA_AOA.2016", "Potential.nitrification2014", "Potential.nitrification2011") := NULL]
+
+imputed_grlfuns[, "soilNflxs" := multidiv(nce, sc="sd", cent=TRUE)[,1]]
+rm(nce)
+```
+
+## P_loss_comb
+combination of PRI and P_loss.
+
+mean of P_loss 2011 and 2015.
+```{r}
+plc <- imputed_grlfuns[, c("P_loss2011", "P_loss2015", "PRI")]
+# take mean of P_loss 2011 and 2015
+plc[, "P_loss" := apply(plc[,c("P_loss2011", "P_loss2015")],1, mean)]
+plc[, c("P_loss2011", "P_loss2015") := NULL]
+imputed_grlfuns[, "P_loss_comb" := multidiv(plc, sc="sd", cent=TRUE)[,1]]; rm(plc)
+```
+
+
+
+```{r}
+# select variables which are included in betadiv multifun analysis
+usedforBetadivMultifun <- usedforBetadivMultifun[!usedforBetadivMultifun == "Plot"]
+imputed_grlfuns <- imputed_grlfuns[, ..usedforBetadivMultifun]
+```
+
+
+# Correlations
+Of the non-factor columns only
+```{r}
+# the dataset is complete now, use "complete.obs" for the cor() function now
+M <- cor(imputed_grlfuns[, !colnames(imputed_grlfuns) %in% "Plotn", with=F], use="complete.obs")
+
+# imputed_grlfun_corrplot1
+corrplot::corrplot(M,type="lower",addCoef.col = "black",method="color",diag=F, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.6)
+
+# imputed_grlfun_corrplot2
+corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F)
+
+# only show high correlations
+tres <- 0.7
+M[which(M < tres & M > -tres)] <- 0
+corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F)
+```
+- PRI and NRI: constructed partly with same data
+- PRI and P_loss_comb : the latter contains the first
+
+- Groundwater recharche and soil depth: ? the deeper the soil, the less groundwater recharche? soil depth defines the soil type. 
+
+- SoilOrganicC and Soil.C.stock : 
+
+old stuff
+```{r}
+
+
+####################
+# 5. IMPUTATION
+# Impute
+imputeall<-missForest(befun[,-1])
+imp_error <- imputeall$OOBerror
+
+#extract imputed data and retransform everything
+impdat <- data.table(Plot0=befun$Plot, exp(imputeall$ximp[,-35])-1, Exploratory=imputeall$ximp[,35])
+impdat$pathogen.infection <- impdat$pathogen.infection-abs(minpath)
+impdat$forage.quality <- impdat$forage.quality-abs(minfor)
+
+# exclude all columns that are not functions : see script "calculate_multifunctionality_dissimilarity_DEMO.r
+
+#################
+# 6. CLEANING
+#################
+# deleting all stored variables which I will not use any more in the analysis.
+rm(befun) ; rm(M) ; rm(imputeall)  ; rm(funs) ; rm(minpath) ; rm(minfor)
+
+
+
+# ##########################################
+# # 7. DIFFERENT WAY OF ERROR ESTIMATION
+# # Check if missForest is doing a good job
+# # read functions table
+# # befun is the table I use.
+# 
+# # calculate  % of missing data in each function (i.e. column)
+# NA_per_column <- apply(befun,2,function(c) sum(is.na(c))/length(c))
+# # remove NA's from the table (rows) - so you have a dataset with no NAs
+# 
+# navals <- apply(befun, 1, function(r) any(is.na(r)))
+# noNA_befun <- befun[!navals,] ; rm(navals)
+# original_noNA_befun <- noNA_befun
+# 
+# # randomly remove the same % in each column (as we had in the real dataset)
+# settoNA <- round(NA_per_column*nrow(noNA_befun)) ; rm(NA_per_column) # the amount of values to set to NA
+# whichrowsNA <- list()
+# for(i in 1:length(settoNA)){
+#   rows <- sample(1:nrow(noNA_befun), settoNA[[i]], replace=F) # get random rows to set to NA
+#   noNA_befun[rows,i] <- NA
+#   # save which rows were set to NA where
+#   whichrowsNA[[i]] <- rows
+# }
+# rm(i) ; rm(rows) ; rm(settoNA)
+# 
+# # impute with missForest
+# imputeall<-missForest(noNA_befun[,-1])
+# imputeall$OOBerror # 12% of estimated error
+# 
+# check_imp <- as.data.frame(imputeall$ximp)
+# 
+# # compare imputed with real data (calculate NRMSE=normalized root mean square error value)
+# nrmse(imputeall$ximp, noNA_befun[,-1], original_noNA_befun[,-1])
+#
+# rm(noNA_befun)
+# ##########
+# # visualization
+# original_noNA_befun <- as.data.frame(original_noNA_befun)
+# imp_no <- c(check_imp[whichrowsNA[[22]],22],check_imp[whichrowsNA[[18]],18], check_imp[whichrowsNA[[17]],17],
+#             check_imp[whichrowsNA[[16]],16] , check_imp[whichrowsNA[[19]],19])
+# rm(check_imp)
+# true_no <- c(original_noNA_befun[whichrowsNA[[22]],22],original_noNA_befun[whichrowsNA[[18]],18],original_noNA_befun[whichrowsNA[[17]],17],
+#              original_noNA_befun[whichrowsNA[[16]],16], original_noNA_befun[whichrowsNA[[19]],19])
+# rm(original_noNA_befun) ; rm(whichrowsNA)
+# imp_true_no <- cbind(imp_no,true_no, c(rep(22,11),rep(18,8),rep(17,8),rep(16,6), rep(19,7))) ; rm(imp_no) ; rm(true_no)
+# plot(imp_true_no[,1],imp_true_no[,2] ,main="imputed versus true", col=imp_true_no[,3],pch=19,
+#      xlab="imputed", ylab="true")
+# rm(imp_true_no)
+# abline(a=0, b=1,col="grey")
+# # without standardization, there is a clustering (because of the different range the values are in)
+# # with standardization, the clusters disappear.
+
+```
+
