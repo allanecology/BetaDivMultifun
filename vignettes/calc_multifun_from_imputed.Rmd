@@ -4,6 +4,7 @@ author: "Noelle Schenk"
 date: "June 5, 2019"
 output: html_document
 ---
+This scripts calculates the multifunctionalities from the imputed functions dataset and 
 
 # Calculate mini-multifunctionalities
 The mini-multifunctionalities are calculated from the imputed values.
@@ -40,16 +41,10 @@ selecting the functions which are used in analysis.
 # select variables which are included in betadiv multifun analysis
 usedforBetadivMultifun <- usedforBetadivMultifun[!usedforBetadivMultifun == "Plot"]
 imputed_grlfuns <- imputed_grlfuns[, ..usedforBetadivMultifun]
-#TODO
 ```
 
 
-
-
-
-
-
-# Correlations
+# Check Correlations
 Of the non-factor columns only
 ```{r}
 # the dataset is complete now, use "complete.obs" for the cor() function now
@@ -66,89 +61,5 @@ tres <- 0.7
 M[which(M < tres & M > -tres)] <- 0
 corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F)
 ```
-- PRI and NRI: constructed partly with same data
-- PRI and P_loss_comb : the latter contains the first
-
-- Groundwater recharche and soil depth: ? the deeper the soil, the less groundwater recharche? soil depth defines the soil type. 
-
-- SoilOrganicC and Soil.C.stock : 
-
-old stuff
-```{r}
-
-
-####################
-# 5. IMPUTATION
-# Impute
-imputeall<-missForest(befun[,-1])
-imp_error <- imputeall$OOBerror
-
-#extract imputed data and retransform everything
-impdat <- data.table(Plot0=befun$Plot, exp(imputeall$ximp[,-35])-1, Exploratory=imputeall$ximp[,35])
-impdat$pathogen.infection <- impdat$pathogen.infection-abs(minpath)
-impdat$forage.quality <- impdat$forage.quality-abs(minfor)
-
-# exclude all columns that are not functions : see script "calculate_multifunctionality_dissimilarity_DEMO.r
-
-#################
-# 6. CLEANING
-#################
-# deleting all stored variables which I will not use any more in the analysis.
-rm(befun) ; rm(M) ; rm(imputeall)  ; rm(funs) ; rm(minpath) ; rm(minfor)
-
-
-
-# ##########################################
-# # 7. DIFFERENT WAY OF ERROR ESTIMATION
-# # Check if missForest is doing a good job
-# # read functions table
-# # befun is the table I use.
-# 
-# # calculate  % of missing data in each function (i.e. column)
-# NA_per_column <- apply(befun,2,function(c) sum(is.na(c))/length(c))
-# # remove NA's from the table (rows) - so you have a dataset with no NAs
-# 
-# navals <- apply(befun, 1, function(r) any(is.na(r)))
-# noNA_befun <- befun[!navals,] ; rm(navals)
-# original_noNA_befun <- noNA_befun
-# 
-# # randomly remove the same % in each column (as we had in the real dataset)
-# settoNA <- round(NA_per_column*nrow(noNA_befun)) ; rm(NA_per_column) # the amount of values to set to NA
-# whichrowsNA <- list()
-# for(i in 1:length(settoNA)){
-#   rows <- sample(1:nrow(noNA_befun), settoNA[[i]], replace=F) # get random rows to set to NA
-#   noNA_befun[rows,i] <- NA
-#   # save which rows were set to NA where
-#   whichrowsNA[[i]] <- rows
-# }
-# rm(i) ; rm(rows) ; rm(settoNA)
-# 
-# # impute with missForest
-# imputeall<-missForest(noNA_befun[,-1])
-# imputeall$OOBerror # 12% of estimated error
-# 
-# check_imp <- as.data.frame(imputeall$ximp)
-# 
-# # compare imputed with real data (calculate NRMSE=normalized root mean square error value)
-# nrmse(imputeall$ximp, noNA_befun[,-1], original_noNA_befun[,-1])
-#
-# rm(noNA_befun)
-# ##########
-# # visualization
-# original_noNA_befun <- as.data.frame(original_noNA_befun)
-# imp_no <- c(check_imp[whichrowsNA[[22]],22],check_imp[whichrowsNA[[18]],18], check_imp[whichrowsNA[[17]],17],
-#             check_imp[whichrowsNA[[16]],16] , check_imp[whichrowsNA[[19]],19])
-# rm(check_imp)
-# true_no <- c(original_noNA_befun[whichrowsNA[[22]],22],original_noNA_befun[whichrowsNA[[18]],18],original_noNA_befun[whichrowsNA[[17]],17],
-#              original_noNA_befun[whichrowsNA[[16]],16], original_noNA_befun[whichrowsNA[[19]],19])
-# rm(original_noNA_befun) ; rm(whichrowsNA)
-# imp_true_no <- cbind(imp_no,true_no, c(rep(22,11),rep(18,8),rep(17,8),rep(16,6), rep(19,7))) ; rm(imp_no) ; rm(true_no)
-# plot(imp_true_no[,1],imp_true_no[,2] ,main="imputed versus true", col=imp_true_no[,3],pch=19,
-#      xlab="imputed", ylab="true")
-# rm(imp_true_no)
-# abline(a=0, b=1,col="grey")
-# # without standardization, there is a clustering (because of the different range the values are in)
-# # with standardization, the clusters disappear.
-
-```
+- Groundwater recharche and soil depth: the deeper the soil, the less groundwater recharche? soil depth defines the soil type. (?)
 
