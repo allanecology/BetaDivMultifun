@@ -876,6 +876,8 @@ for(t in trlevels){
   tr <- tr[Plot %in% common.plots, ]
   assign(t, tr)
 }
+# take out HEG31
+#TODO : add HEG31 to plotNAset stuff
 ```
 
 

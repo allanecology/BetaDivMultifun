@@ -147,6 +147,11 @@ With betadiversity : `beta_glsoil`.
 *note* beta.pair.abund can not handle negative abundance values. Therefore, data needs to be centered around 0 instead of centered around 0. However, max is `r max(pca_from_glsoil)` and min is `r min(pca_from_glsoil)`. Would need an "abundance" value which makes sense.
 
 ```{r}
+# welect plot set? #NEW!
+# select from matrix
+pca_from_glsoil <- pca_from_glsoil[which(rownames(pca_from_glsoil) %in% plotNAset), ]
+pca_from_glsoil <- pca_from_glsoil[which(rownames(pca_from_glsoil) != "HEG31"), ]
+
 # compute dissimilarities for all principal components I got (10) (euclidian distance)
 edis_glsoil <- vegan::vegdist(pca_from_glsoil, method = "euclid")
 
@@ -159,7 +164,7 @@ edis_glsoil <- vegan::vegdist(pca_from_glsoil, method = "euclid")
 # prepare for gdm (the desired format)
 edis_glsoil <- as.matrix(edis_glsoil)
 # save as RDS
-saveRDS(edis_glsoil, file="../data/original/soil_covariate.RDS")
+# saveRDS(edis_glsoil, file="soil_covariate.RDS")
 
 # select Plots for the analysis
 # edis_glsoil <- cbind("Plot" = seq(1,130), edis_glsoil)

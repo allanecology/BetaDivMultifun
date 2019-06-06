@@ -4,7 +4,11 @@ author: "Noelle Schenk"
 date: "June 5, 2019"
 output: html_document
 ---
-This scripts calculates the multifunctionalities from the imputed functions dataset and 
+This script :
+- calculates the multifunctionalities from the imputed functions dataset
+- select functions for the analysis
+- calculate functional dissimilarity
+
 
 # Calculate mini-multifunctionalities
 The mini-multifunctionalities are calculated from the imputed values.
@@ -41,6 +45,8 @@ selecting the functions which are used in analysis.
 # select variables which are included in betadiv multifun analysis
 usedforBetadivMultifun <- usedforBetadivMultifun[!usedforBetadivMultifun == "Plot"]
 imputed_grlfuns <- imputed_grlfuns[, ..usedforBetadivMultifun]
+#TODO : save functions
+# saveRDS(imputed_grlfuns, "imputed_grlfuns.rds")
 ```
 
 
@@ -63,3 +69,116 @@ corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F)
 ```
 - Groundwater recharche and soil depth: the deeper the soil, the less groundwater recharche? soil depth defines the soil type. (?)
 
+# Dissimilarity of function
+
+TODO HERE : how to do that?
+
+```{r}
+require(reshape2)   # Note : require works as library, only if it doesn't work, it outputs a warning and not an error.
+require(data.table) #        that's better in functions. (library throws an error)
+require(betapart)
+require(vegan)
+
+
+fungrl <- data.table::copy(imputed_grlfuns)
+######################
+# 2. STANDARDIZATION
+# ####################
+mysubset <- names(fungrl)[!names(fungrl) %in% "Plotn"]
+
+#function to standardize a vector in the same way as described in Solivieres 2016
+stand_fun <- function(x){
+  return((x - (min(x,na.rm=T)))/(max(x,na.rm=T)-min(x,na.rm=T)))
+}
+
+fungrl[, (mysubset) := lapply(.SD, stand_fun),.SDcols=mysubset]
+
+# REVERSING 2 columns
+# already done, for p_potential loss and N potential loss
+
+############################
+# 3. PCA and euclidian dist
+############################
+include <- colnames(fungrl)[!colnames(fungrl) %in% "Plotn"]
+pc_fungrl <- fungrl[, ..include]
+pc_fungrl <- as.data.frame(pc_fungrl)
+rownames(pc_fungrl) <- fungrl$Plotn
+
+# run the pca
+pca_fungrl <- prcomp(pc_fungrl, scale=T)
+plot(pca_fungrl)
+biplot(pca_fungrl)
+pc_fungrl <- scores(pca_fungrl, display="sites")
+rownames(pc_fungrl) <- fungrl$Plotn
+
+# compute DISSIMILARITY MATRICES
+# compute dissimilarities for all principal components I got (10) (euclidian distance)
+edis_fungrl <- vegdist(pc_fungrl, method= "euclid")
+
+# the rows and columns are perfectly ordered, so I can use numbers from 1 to 130 as plot IDs.
+# rownames(edis_fungrl) != sort(rownames(edis_fungrl))
+edis_fungrl <- as.matrix(edis_fungrl)
+edis_fungrl <- cbind("Plot" = seq(1,127,by=1),edis_fungrl) # NEW taken out and replaced by next column
+# edis_fungrl <- cbind("Plot" = rownames(edis_fungrl), edis_fungrl)
+
+#########################################
+# 4. CALC P-A and sorensen DISSIMILARITY
+#########################################
+# percentage of measured functions that exceed a given treshold of their maximum observed level across all study sites.
+# maximum observed level: average of the top five sites.
+fungrl_pa <- as.data.table(fungrl)
+
+# # # Option 1: only one treshold, but plot
+# treshold <- 0.5
+# # tresholds used in Solivieres paper :  0.25,0.5,0.75,0.9
+# # to illustrate (outcomment if plot not wanted)
+# # barplot(x, las = 2)
+# x <- fungrl_pa[,get(colnames(fungrl_pa)[8])]
+# names(x) <- seq(1,127)
+# barplot(x, main=colnames(fungrl_pa)[8], xlab="Plots")
+# upper <- mean(sort(fungrl_pa[,get(colnames(fungrl_pa)[8])],decreasing = T, na.last=T)[1:5])
+# abline(a=upper,b=0,col="darkgreen") ; abline(a=upper*treshold, b=0, col="red")
+# # calc_presenceabsence(x)
+# calc_presenceabsence <- function(x,treshold){
+#   # x is a vector
+#   max_obs <- mean(sort(x,decreasing = T, na.last=T)[1:5])
+#   new_vector <- x>(max_obs*treshold)
+#   return(new_vector)
+# }
+# 
+# fungrl_pa[, (mysubset) := lapply(.SD, function(c) calc_presenceabsence(c, treshold=treshold)),.SDcols=mysubset]
+# fungrl_pa[,(mysubset):= (.SD * 1), .SDcols=mysubset]
+# rownames(fungrl_pa) <- fungrl$Plotn
+
+# option 2 : for loop, exclude column plot and don't change in-place
+#  the for loop outputs beta diversities as a list of 3 for each given treshold value.
+# tresholds <- c(0.25,0.5,0.75,0.9) # NEW make trehsholds vector of only one treshold
+tresholds <- c(0.5)
+for(i in tresholds){
+  name <- paste("multifun_pa",i,sep='_')
+  res <- apply(fungrl_pa[,!("Plotn")],2,function(c) calc_presenceabsence(c,treshold=i))
+  res <- res * 1 ; rownames(res) <- fungrl$Plotn
+  res <- beta.pair(res, index.family="sorensen")
+  res <- lapply(res,as.matrix)
+  res <- lapply(res, function(x) cbind("Plot" = seq(1,127,by=1),x))
+  assign(name,res)
+   # multifun berechnen mit untenstehendem code und dem namen zuweisen.
+}
+rm(name) ; rm(res) ; rm(i)
+# for the moment, only include beta.sor (both values together)
+# multifun_pa_0.25 <- multifun_pa_0.25$beta.sor
+multifun_pa_0.5 <- multifun_pa_0.5$beta.sor
+# multifun_pa_0.75 <- multifun_pa_0.75$beta.sor
+# multifun_pa_0.9 <- multifun_pa_0.9$beta.sor
+
+#########################################
+# 5. CLEAN OUT
+#########################################
+rm(fungrl) ; rm(fungrl_pa) ; rm(pc_fungrl) ; rm(mysubset) ;  rm(pca_fungrl) ; rm(plot_NAset) ; rm(tresholds)
+rm(names_fun) ; rm(impdat)
+# if the large dataset is used
+
+# if the small dataset is used
+# rm(plot_NAset_small) ; rm(navals) ; rm(exclude)
+
+```
