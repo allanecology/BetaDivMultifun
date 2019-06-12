@@ -2,7 +2,7 @@
 #'
 #' This function normalises a vector to be between 0 and 1. The minimum
 #' is substracted from a sample and the result is divided by the range
-#' of the vector.
+#' of the vector. As used in Soliveres 2016.
 #' NA values are ignored.
 #' \deqn{ \frac{ x - min(x) }{ max(x) - min(x) } = \frac{x - min(x)}{range(x)}}{(x - min(x) / (max(x) - min(x)) )}
 

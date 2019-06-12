@@ -27,6 +27,7 @@ Enzymes related to soil N. A measure of soil N cycling with enzyme activities an
 
 amoA_AOB and A are from both 2011 and 2016, took the mean of both years.
 ```{r}
+#TODO : take out some clusters? (Pete's suggestion at meeting)
 nce <- imputed_grlfuns[,c("Urease", "DEA","Potential.nitrification2011", "Potential.nitrification2014","nifH","amoA_AOB.2011","amoA_AOA.2011", "amoA_AOB.2016", "amoA_AOA.2016", "nxrA_NS", "16S_NB")]
 # take mean of multi-year-measurements
 nce[, "amoA_AOB" := apply(nce[,c("amoA_AOB.2011", "amoA_AOB.2016")],1, mean)]
@@ -65,12 +66,67 @@ corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F)
 # only show high correlations
 tres <- 0.7
 M[which(M < tres & M > -tres)] <- 0
-corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F)
+corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F, main = "B")
 ```
-- Groundwater recharche and soil depth: the deeper the soil, the less groundwater recharche? soil depth defines the soil type. (?)
 
 
 # Dissimilarity of function
+
+2 ways of dissimilarity calculation : 
+- *EFturnover* and *EFnestedness* : calculate presence-absence of functions by 0.5 treshold, and then calculate betadiversity turnover and nestedness components of them.
+- *EFdistance* : calculate PCA, identify most important axis, take euclidean distance of them to get a single value for each plot. 
+    - open question : weighting of the PCA axis. Weighting by var explained gives the correlated functions too much weight. Equal weighting? Is chosen until better option is available.
+
+
+## EFdistance calculation
+```{r}
+# imputed_grlfuns is renamed because of old code
+#TODO : rename all fungrl with imputed grlfuns in new code
+
+fungrl <- data.table::copy(imputed_grlfuns)
+
+# STANDARDISATION
+include <- names(fungrl)[!names(fungrl) %in% "Plotn"]
+fungrl[, (include) := lapply(.SD, scale01),.SDcols=mysubset]
+
+# PCA
+pc_fungrl <- fungrl[, ..include]
+pc_fungrl <- as.data.frame(pc_fungrl)
+rownames(pc_fungrl) <- fungrl$Plotn
+   # already scaled above
+pca_fungrl <- stats::prcomp(pc_fungrl, scale=F) 
+   # plot pca
+plot(pca_fungrl)
+biplot(pca_fungrl)
+plot(ecdf(pca_fungrl$sdev))
+```
+**axis selection** : 
+- first axis for sure
+- 2nd to 4th : explain around 35%
+- 5th to 7th : explain around 55%
+- 8th to 10th : explain around 80%
+There are groups of three axis which have about the same amount of variance explained. 
+```{r}
+
+#TODO : HERE! chose the PCA axis to include and the weighting we will apply to it (equal?)
+
+
+# 
+# pc_fungrl <- vegan::scores(pca_fungrl, display="sites")
+# rownames(pc_fungrl) <- fungrl$Plotn
+
+
+# saveRDS(..., "EFdistance.rds")
+```
+
+
+
+
+
+
+## EFturnover and EFnestedness
+
+
 
 TODO HERE : how to do that?
 
@@ -81,29 +137,7 @@ require(betapart)
 require(vegan)
 
 
-fungrl <- data.table::copy(imputed_grlfuns)
-######################
-# 2. STANDARDIZATION
-# ####################
-mysubset <- names(fungrl)[!names(fungrl) %in% "Plotn"]
 
-#function to standardize a vector in the same way as described in Solivieres 2016
-stand_fun <- function(x){
-  return((x - (min(x,na.rm=T)))/(max(x,na.rm=T)-min(x,na.rm=T)))
-}
-
-fungrl[, (mysubset) := lapply(.SD, stand_fun),.SDcols=mysubset]
-
-# REVERSING 2 columns
-# already done, for p_potential loss and N potential loss
-
-############################
-# 3. PCA and euclidian dist
-############################
-include <- colnames(fungrl)[!colnames(fungrl) %in% "Plotn"]
-pc_fungrl <- fungrl[, ..include]
-pc_fungrl <- as.data.frame(pc_fungrl)
-rownames(pc_fungrl) <- fungrl$Plotn
 
 # run the pca
 pca_fungrl <- prcomp(pc_fungrl, scale=T)
