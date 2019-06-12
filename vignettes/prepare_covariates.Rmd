@@ -39,6 +39,7 @@ rm(main_glsoil) ; rm(names_gl) ; rm(small_glsoil)
 glsoil[, c("PlotID", "Exploratory", "Plot") := NULL]
 ```
 
+
 ## Plot selection
 ```{r, eval=F}
 #TODO : 
