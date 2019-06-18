@@ -1,23 +1,30 @@
 ---
-title: "Functions Processing for BetaDivMultifun"
+title: "Functions imputation"
 output:
   pdf_document: default
   html_notebook: default
 ---
-In this script : gapfilling
 
-TODO : proofreading, cleaning, ...
+This script : 
+- loads soil data
+- uses raw functions from the synthesis dataset (loaded with `analysis_nonpublic.R`)
+- performs gapfilling
+- saves the gapfilled dataset
 
 # Data
 The dataset used for gap filling is larger than the dataset used for the analysis. More variables enhance the performance of gapfilling.
-```{r}
+```{r, eval=F}
 #USER : insert path to grassland function file and read in as grlfuns (uncomment line below)
 # raw_grlfuns <- data.table::fread("<pathto_grl_functions.csv>", header=T)
-#TODO add bexis link?
+source("analysis_nonpublic.R")
+source("clean_and_load_soil_covariates.Rmd")
 ```
 Grassland functions data used for gapfilling is stored in `raw_grlfuns`, selected variables according to info data. `raw_grlfuns` is loaded by `analysis_nonpublic.R`.
 
-It also relies on a soil information dataset, which is prepared by `prepare_covariates.Rmd`.
+It also relies on a soil information dataset, which is prepared by `clean_and_load_soil_covariates.Rmd`.
+
+Requires the plot set defined by diversity dataset with the set of included plots for analysis.
+
 
 # Gap filling
 A Gap-filling of the functions dataset is performed, because many values are missing (NA). To enhance the predictions of the gapfilling, soil data is included. This introduces a bias, but reduces the imputation error. 
@@ -28,14 +35,14 @@ Two variables are produced, impdat which contains the gapfilled dataset which wi
 Soil predictor data and Region is included to improve Gap filling. uncomment if not wanted!
 ```{r}
 #USER : uncomment this block if soil information should not be included.
-remove <- unique(glsoil_unscaled$Soil.type)
-glsoil_unscaled[, (remove) := NULL]
-glsoil_unscaled[, Soil.type := as.factor(Soil.type)] # soil type as factor
+remove <- unique(glsoil$Soil.type)
+glsoil[, (remove) := NULL]
+glsoil[, Soil.type := as.factor(Soil.type)] # soil type as factor
 rm(remove)
 ```
 
 ```{r}
-befun <- merge(raw_grlfuns, glsoil_unscaled, by="Plotn")
+befun <- merge(raw_grlfuns, glsoil, by="Plotn")
 befun[, Explo := as.factor(Explo)] # Region as a factor
 ```
 
@@ -173,7 +180,6 @@ The imputation is repeated 50 times, and the mean of the imputed values is taken
 impvals <- list()
 imperr <- list()
 # based on one-time imputation, take out : "amoA_AOA.2016" ,"amoA_AOB.2016",  "nxrA_NS", "16S_NB"
-#TODO : change back to plot and plotn only.
 numcols <- numcols[which(!numcols %in% c("Plotn", "Plot"))]
 dataset <- befun[, !colnames(befun) %in% c("Plotn", "Plot"), with=F]
 
@@ -181,7 +187,7 @@ for(i in 1:50){
   print(i)
   current <- missForest::missForest(dataset, variablewise = T)
   imperr[[i]] <- data.table::data.table("columns" = colnames(dataset), "errors" =current$OOBerror)
-  current <- as.data.table(current$ximp)
+  current <- data.table::as.data.table(current$ximp)
   # re-transform the numeric variables
   current[, (numcols) := lapply(.SD, function(x) (exp(x)-1)), .SDcols = numcols]
   # re-transform the negative values
@@ -207,15 +213,21 @@ imperr <- do.call(rbind, imperr)
 mimperr <- data.table::as.data.table(aggregate(errors ~ columns, imperr, mean))
 mean(mimperr[,errors])
 
-barplot(height=mimperr[,errors], names.arg = mimperr[, columns])
+# barplot(height=mimperr[,errors], names.arg = mimperr[, columns])
 library(cowplot)
 p<-ggplot2::ggplot(data=mimperr, ggplot2::aes(x=columns, y=errors)) +
   ggplot2::geom_bar(stat="identity") +
-  theme(axis.text.x=element_text(color = "black", size=5, angle=30, vjust=.8, hjust=0.8)) +
+  theme(axis.text.x=element_text(color = "black", size=6, angle=30, vjust=.8, hjust=0.8)) +
   geom_hline(yintercept=0.25, linetype="dashed", color = "gray")
-p
+cowplot::plot_grid(naniar::vis_miss(dataset, sort_miss = T), p, nrow = 2)
 ```
 The imputation error range is extremely small. The possible range is between 0 and 1, however here the range is between 0.143 and 0.151.
+```{r, eval=F}
+pdf("imputation_errors.pdf", paper = "a4")
+cowplot::plot_grid(naniar::vis_miss(dataset, sort_miss = T), p, nrow = 2)
+dev.off()
+```
+
 
 Get together imputed dataset from 50 imputations.
 ```{r}
@@ -250,8 +262,8 @@ dev.off()
 
 Take out soil variables again and store imputed grassland function dataset.
 ```{r}
-# take out colnames of glsoil_unscaled, except "Plotn"
-Y[, (colnames(glsoil_unscaled)[!colnames(glsoil_unscaled) %in% c("Plotn", "Soil.type")]) := NULL]
+# take out colnames of glsoil, except "Plotn"
+Y[, (colnames(glsoil)[!colnames(glsoil) %in% c("Plotn", "Soil.type")]) := NULL]
 saveRDS(Y, file="imputed_function_values.rds")
 # clean a bit
 imputed_grlfuns <- data.table::copy(Y)
