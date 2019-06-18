@@ -4,6 +4,7 @@ author: "Noelle Schenk"
 date: "April 25, 2019"
 output: html_document
 ---
+not used for analysis.
 
 *note*: 
 This file requires the functions dataset `raw_functions` which is constructed in the previous scripts `1read_raw_dataset.Rmd` and `2calc_raw_dataset.Rmd`. Here, it is named `raw_grlfuns`.

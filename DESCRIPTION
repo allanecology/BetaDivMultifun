@@ -34,5 +34,7 @@ Imports:
     corrplot,
     naniar,
     igraph,
-    VennDiagram
+    VennDiagram,
+    grid,
+    visdat
 RoxygenNote: 6.1.0.9000

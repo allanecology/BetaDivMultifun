@@ -4,6 +4,10 @@ author: "Noelle Schenk"
 date: "May 8, 2019"
 output: html_document
 ---
+```{r}
+#TODO : maybe delete this script?
+```
+
 Depends on spdiv which is loaded in `calc_betadiversities.Rmd`
 
 ### Exploring dataset
@@ -44,13 +48,6 @@ for(t in trlevels){
 }
 overview <- overview[-1,]
 overview <- data.table::data.table(overview)
-```
-
-
-# Defining years
-Are the diversitites among years correlated? Depends on calc_betadiversities.Rmd after loading and cleaning dataset.
-```{r}
-
 ```
 
 
