@@ -4,6 +4,8 @@ author: "Noelle Schenk"
 date: "June 18, 2019"
 output: html_document
 ---
+requires `analysis_nonpublic.R` to load soil covariates and raw functions for plot IDs
+
 # Clean and load soil covariates
 This scripts loads and cleans soil covariates (also selects the plots for analysis). The output is then used (by other scripts) for 
 - gapfilling of functions
@@ -19,8 +21,10 @@ This scripts loads and cleans soil covariates (also selects the plots for analys
 small_glsoil <- small_glsoil[, c("Plot", "Soil.type", "TWI")]
 # take out empty row at the end
 small_glsoil <- small_glsoil[Plot != "",]
-# names_gl <- fread("../data/20826_plotNames.txt") # read a file where the different plotnames are documented
 ```
+
+
+
 
 clean and merge covariate dataset
 ```{r}
@@ -46,8 +50,7 @@ glsoil[, c("PlotID", "Exploratory", "Plot") := NULL]
 ## Plot selection
 ```{r}
 # take out the plots that I exclude from analysis
-glsoil <- glsoil[!Plot %in% plot_NAset ,]
-rm(plot_NAset)
+glsoil <- glsoil[!Plotn %in% plotNAset ,]
 ```
 
 ## Create binary data from Soil.type
@@ -71,6 +74,7 @@ stype[, Fahlerde := ifelse(Soil.type == "Fahlerde", 1, 0)]
 stype[, Soil.type := NULL]
 # merge to glsoil
 glsoil <- merge(glsoil, stype, by="Plotn", all=T)
+rm(stype)
 ```
 
 `glsoil` is used for functions imputation.
