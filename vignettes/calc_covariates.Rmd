@@ -6,22 +6,32 @@ output: html_document
 ---
 
 - PCA of soils
+- prepare covariates for analysis 
+
+Depends on `clean_and_load_soil_covariates.Rmd` and `analysis_nonpublic.R`.
+
+# Soil
+```{r}
+soilbackup <- data.table::copy(glsoil)
+```
+
 
 ## Normalisation
 scale the columns which are neither binary nor factors. Scaled by centering around 0 (substracting the mean) and dividing by standard deviation.
 ```{r}
+# take out soil type as this is converted to dummy variables
+glsoil[, Soil.type := NULL]
 # create scaling vector T/F of which columns to scale in pcr
 scalecols <- c("Clay", "Fine.Silt", "Medium.Silt", "Coarse.Silt", "Fine.Sand", "Medium.Sand", "Coarse.Sand", "pH", "Soil.depth", "TWI")
 glsoil[, (scalecols) := lapply(.SD, function(x) scale(x, center = T)), .SDcols = scalecols]
 ```
-
 
 Could be done within PCA computation with parameter `scale = TRUE`.
 ```{r}
 mysubset <- names(glsoil)[!names(glsoil) %in% c("Plotn", "Soil.type")]
 ```
 *note* : The binary categoric columns are not affected by this.
-```{r}
+```{r, eval=F}
 plot(glsoil$Rendzina)
 points(glsoil$Braunerde)
 points(glsoil$Pelosol)
@@ -37,7 +47,7 @@ points(glsoil$Fahlerde)
 ## soil PCA
 ```{r}
 # Plot information is taken as rownames of a data.frame (instead of data.table).
-pc_glsoil <- as.data.frame(glsoil[,-1])
+pc_glsoil <- as.data.frame(glsoil[, !"Plotn", with=FALSE])
 rownames(pc_glsoil) <- glsoil$Plotn
 rm(glsoil)
 
@@ -47,7 +57,7 @@ plot(pca_from_glsoil)
 ```
 The first 4 axis would make sense if the dimensionality would need to be reduced a lot. 
 
-However, here it is not that much about reducing dimensionality, but taking out unnecessary variables. Therefore, Taking PC1 to 17 is suitable, as PC18 and 19 do not add any more information.
+However, here it is not that much about reducing dimensionality, but taking out unnecessary variables. Therefore, Taking PC1 to 14 is suitable, as PC 15 to 19 do not add any more information.
 ```{r}
 # first 4 axis would make sense
 summary(pca_from_glsoil)
@@ -68,27 +78,27 @@ ggplot2::autoplot(pca_from_glsoil, x=3, y=4, data=pc_glsoil, colour="pH")
 ```
 
 ### Component selection
-Components 1 to 17 (as argued above).
+Components 1 to 14 (as argued above).
 ```{r}
-pca_from_glsoil <- pca_from_glsoil$x[, 1:17]
+pca_from_glsoil <- pca_from_glsoil$x[, 1:14]
 ```
 
 ## Computation of Dissimilarity Matrices
 With euclidian distance : `edis_glsoil`
-With betadiversity : `beta_glsoil`.
 
+note : betadiversity is not calculated, but in case : 
+With betadiversity : `beta_glsoil`.
 *note* beta.pair.abund can not handle negative abundance values. Therefore, data needs to be centered around 0 instead of centered around 0. However, max is `r max(pca_from_glsoil)` and min is `r min(pca_from_glsoil)`. Would need an "abundance" value which makes sense.
 
 ```{r}
-# welect plot set? #NEW!
-# select from matrix
+# select plot set from matrix
 pca_from_glsoil <- pca_from_glsoil[which(rownames(pca_from_glsoil) %in% plotNAset), ]
 pca_from_glsoil <- pca_from_glsoil[which(rownames(pca_from_glsoil) != "HEG31"), ]
 
-# compute dissimilarities for all principal components I got (10) (euclidian distance)
+# compute dissimilarities for the first 14 principal components (euclidian distance)
 edis_glsoil <- vegan::vegdist(pca_from_glsoil, method = "euclid")
 
-#TODO : if I want to calc beta, I need to find good solution for handling negative values.
+# # In case I would want to calc beta, I would need to find good solution for handling negative values. Don't think so
 # beta_glsoil <- betapart::beta.pair.abund(pca_from_glsoil)
 ```
 
@@ -96,18 +106,30 @@ edis_glsoil <- vegan::vegdist(pca_from_glsoil, method = "euclid")
 ```{r}
 # prepare for gdm (the desired format)
 edis_glsoil <- as.matrix(edis_glsoil)
+
+#TODO : save here or later? or add to "predictors" as last time?
 # save as RDS
 # saveRDS(edis_glsoil, file="soil_covariate.RDS")
 
-# select Plots for the analysis
-# edis_glsoil <- cbind("Plot" = seq(1,130), edis_glsoil)
-
-# CLEANING away all I don't need to run gdm
-rm(pca_from_glsoil); rm(pc_glsoil) ; rm(mysubset); rm(stype)
-# glsoil_unscaled is used for gap-filling and therefore not deleted here.
+#TODO cleaning
 ```
 
-
 # Plot isolation
+```{r}
+plt.sur <- unique(plt.sur) #for some areas each row has two values
+plt.sur <- plt.sur[,c("EP_PLOTID","G500")]
+data.table::setnames(plt.sur, "EP_PLOTID", "Plot")
+plt.sur <- merge(plt.sur, usefulplotids, by="Plot")
+plt.sur[, PLAND_G_500 := 100 - (G500 *100)] # change so more isolated plots have higher values
+plt.sur[, G500 := NULL] ; plt.sur[, Plot := NULL] # remove unused columns
+# select plot set
+plt.sur <- plt.sur[Plotn %in% plotNAset,]
+plt.sur <- as.data.frame(plt.sur)# convert to datatable for analysis
+rownames(plt.sur) <- plt.sur[["Plotn"]]
+plt.sur <- plt.sur["PLAND_G_500"]
 
-#TODO add more covariates
+# in old code, plt.sur is now as column in a variable called "predictors for GDM preparation"
+```
+
+# geographic distance
+
