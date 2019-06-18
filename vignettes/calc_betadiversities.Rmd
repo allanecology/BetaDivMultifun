@@ -5,7 +5,8 @@ date: "May 7, 2019"
 output: html_document
 ---
 *requires* : spdiv, spinfo (spinfo is the file containing information about all species, spdiv is the collected data.)
-```{r}
+```{r, eval=T}
+#TODO : if script is still working, remove those - are included in DESCRIPTION file of the package
 require(naniar)
 require(ggplot2)
 require(grid)
