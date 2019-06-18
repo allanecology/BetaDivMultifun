@@ -1,0 +1,30 @@
+---
+title: "calc_LUI"
+author: "Noelle Schenk"
+date: "June 18, 2019"
+output: html_document
+---
+Depends on `analysis_nonpublic.R` to load the raw dataset, the selected plots, ... ?
+```{r}
+rawlui
+```
+
+
+Caterina's code to combine the years
+```{r}
+lui5y[,MeanF:=mean(TotalFertilization,na.rm = T)]
+lui5y[,MeanM:=mean(TotalMowing,na.rm = T)]
+lui5y[,MeanG:=mean(TotalGrazing,na.rm = T)]
+
+lui5y[,LUI:=sqrt((mean(TotalFertilization,na.rm = T)/MeanF)+
+                 (mean(TotalMowing,na.rm=T)/MeanM)+
+                 (mean(TotalGrazing,na.rm=T)/MeanG)),by=EP_PlotID]
+
+lui5y[,Fstd:=mean(TotalFertilization,na.rm = T)/MeanF,by=EP_PlotID]
+lui5y[,Mstd:=mean(TotalMowing,na.rm = T)/MeanM,by=EP_PlotID]
+lui5y[,Gstd:=mean(TotalGrazing,na.rm = T)/MeanG,by=EP_PlotID]
+
+lui5y <- lui5y[,.(EP_PlotID,Fstd,Mstd,Gstd,LUI)]
+lui5y <- unique(lui5y)
+```
+
