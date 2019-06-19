@@ -168,15 +168,18 @@ TODO : do I really need to scale?
 
 Demo with plot:
 ```{r}
-# old code below
-
 # percentage of measured functions that exceed a given treshold of their maximum observed level across all study sites.
 # maximum observed level: average of the top five sites.
-treshold <- 0.5
+threshold <- 0.5
 # tresholds used in Solivieres paper :  0.25,0.5,0.75,0.9
+fungrl_pa <- imputed_grlfuns
+
+# old code below
+
+
 # to illustrate (outcomment if plot not wanted)
 # barplot(x, las = 2)
-x <- fungrl_pa[,get(colnames(fungrl_pa)[8])]
+x <- fungrl_pa[, "Root.biomass"]
 names(x) <- seq(1,130)
 barplot(x, main=colnames(fungrl_pa)[8], xlab="Plots")
 upper <- mean(sort(fungrl_pa[,get(colnames(fungrl_pa)[8])],decreasing = T, na.last=T)[1:5])
