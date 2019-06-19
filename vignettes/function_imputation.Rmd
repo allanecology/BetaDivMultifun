@@ -74,6 +74,13 @@ If the missing plot from 16S, amoA_AOA.2016 & Co is taken out, 5 more functions 
 # The missing plot is "HEG31"
 befun <- befun[Plotn != "HEG31"]
 ```
+update the helper vector `plotNAset.rds` and take out the plot "HEG31"
+```{r, eval=F}
+# readRDS("plotNAset.rds")
+plotNAset <- plotNAset[-which(plotNAset == "HEG31")]
+saveRDS(plotNAset, "plotNAset.rds")
+```
+
 
 
 ## Check Correlations
