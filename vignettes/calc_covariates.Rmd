@@ -12,7 +12,8 @@ Depends on `clean_and_load_soil_covariates.Rmd` and `analysis_nonpublic.R`.
 
 # Soil
 ```{r}
-soilbackup <- data.table::copy(glsoil)
+# copy to keep glsoil variable
+soilcov <- data.table::copy(glsoil)
 ```
 
 
@@ -20,36 +21,36 @@ soilbackup <- data.table::copy(glsoil)
 scale the columns which are neither binary nor factors. Scaled by centering around 0 (substracting the mean) and dividing by standard deviation.
 ```{r}
 # take out soil type as this is converted to dummy variables
-glsoil[, Soil.type := NULL]
+soilcov[, Soil.type := NULL]
 # create scaling vector T/F of which columns to scale in pcr
 scalecols <- c("Clay", "Fine.Silt", "Medium.Silt", "Coarse.Silt", "Fine.Sand", "Medium.Sand", "Coarse.Sand", "pH", "Soil.depth", "TWI")
-glsoil[, (scalecols) := lapply(.SD, function(x) scale(x, center = T)), .SDcols = scalecols]
+soilcov[, (scalecols) := lapply(.SD, function(x) scale(x, center = T)), .SDcols = scalecols]
 ```
 
 Could be done within PCA computation with parameter `scale = TRUE`.
 ```{r}
-mysubset <- names(glsoil)[!names(glsoil) %in% c("Plotn", "Soil.type")]
+mysubset <- names(soilcov)[!names(soilcov) %in% c("Plotn", "Soil.type")]
 ```
 *note* : The binary categoric columns are not affected by this.
 ```{r, eval=F}
-plot(glsoil$Rendzina)
-points(glsoil$Braunerde)
-points(glsoil$Pelosol)
-points(glsoil$Pseudogley)
-points(glsoil$Erdniedermoor)
-points(glsoil$Gley)
-points(glsoil$Mulmniedermoor)
-points(glsoil$Parabraunerde)
-points(glsoil$Fahlerde)
+plot(soilcov$Rendzina)
+points(soilcov$Braunerde)
+points(soilcov$Pelosol)
+points(soilcov$Pseudogley)
+points(soilcov$Erdniedermoor)
+points(soilcov$Gley)
+points(soilcov$Mulmniedermoor)
+points(soilcov$Parabraunerde)
+points(soilcov$Fahlerde)
 ```
 
 
 ## soil PCA
 ```{r}
 # Plot information is taken as rownames of a data.frame (instead of data.table).
-pc_glsoil <- as.data.frame(glsoil[, !"Plotn", with=FALSE])
-rownames(pc_glsoil) <- glsoil$Plotn
-rm(glsoil)
+pc_glsoil <- as.data.frame(soilcov[, !"Plotn", with=FALSE])
+rownames(pc_glsoil) <- soilcov$Plotn
+rm(soilcov)
 
 # run the pca
 pca_from_glsoil <- prcomp(pc_glsoil[, !(names(pc_glsoil) %in% "Soil.type")], scale = F)
@@ -92,26 +93,24 @@ With betadiversity : `beta_glsoil`.
 
 ```{r}
 # select plot set from matrix
+pca_from_glsoil <- data.frame(pca_from_glsoil)
 pca_from_glsoil <- pca_from_glsoil[which(rownames(pca_from_glsoil) %in% plotNAset), ]
-pca_from_glsoil <- pca_from_glsoil[which(rownames(pca_from_glsoil) != "HEG31"), ]
+# pca_from_glsoil <- pca_from_glsoil[which(rownames(pca_from_glsoil) != "HEG31"), ] # not needed if plotNA set is in the first version. only run this line in case this is the first time you are running that script.
 
 # compute dissimilarities for the first 14 principal components (euclidian distance)
 edis_glsoil <- vegan::vegdist(pca_from_glsoil, method = "euclid")
 
 # # In case I would want to calc beta, I would need to find good solution for handling negative values. Don't think so
 # beta_glsoil <- betapart::beta.pair.abund(pca_from_glsoil)
+rm(pc_glsoil); rm(pca_from_glsoil)
 ```
 
 ## Cleaning for GDM
 ```{r}
 # prepare for gdm (the desired format)
 edis_glsoil <- as.matrix(edis_glsoil)
-
-#TODO : save here or later? or add to "predictors" as last time?
-# save as RDS
-# saveRDS(edis_glsoil, file="soil_covariate.RDS")
-
-#TODO cleaning
+# store soil dissimilarity matrix separately, as storing diss object in a list as rds is not possible
+saveRDS(edis_glsoil, "predictors_soil.rds")
 ```
 
 # Plot isolation
@@ -127,9 +126,39 @@ plt.sur <- plt.sur[Plotn %in% plotNAset,]
 plt.sur <- as.data.frame(plt.sur)# convert to datatable for analysis
 rownames(plt.sur) <- plt.sur[["Plotn"]]
 plt.sur <- plt.sur["PLAND_G_500"]
-
+colnames(plt.sur) <- "plot_isolation"
 # in old code, plt.sur is now as column in a variable called "predictors for GDM preparation"
 ```
 
 # geographic distance
+```{r}
+plot.names <- names_gl[Landuse == "G", .(EP_PlotID, PlotID)]
+data.table::setnames(plot.names, old = "EP_PlotID", new = "Plot")
+plot.names <- merge(plot.names, usefulplotids, by = "Plot", all = T)
 
+geodist <- geodist[Landuse == "G", .(Plot_ID, Longitude_Dec_Plotcenter, Latitude_Dec_Plotcenter)]
+data.table::setnames(geodist, "Plot_ID", "PlotID")
+geodist <- merge(geodist, plot.names, by = "PlotID")
+geodist[, c("PlotID", "Plot") := NULL]
+# remove two duplicated rows
+# geodist[which(duplicated(geodist$Plotn)), ]
+# geodist[Plotn %in% c("AEG29", "AEG10"), ] # there is only very little difference - remove one of them
+geodist <- geodist <- geodist[!which(duplicated(geodist$Plotn)),]
+# select plot set
+geodist <- geodist[Plotn %in% plotNAset]
+data.table::setkey(geodist,Plotn)
+geodist <- data.frame(geodist)
+rownames(geodist) <- geodist$Plotn
+geodist <- geodist[, c("Longitude_Dec_Plotcenter", "Latitude_Dec_Plotcenter")]
+rm(plot.names)
+```
+
+# combine to predictors
+combine covariates to a predictor dataset
+```{r, eval=F}
+predictors <- merge(plt.sur, geodist, by = "row.names")
+
+saveRDS(predictors, file = "predictors.rds")
+
+rm(edis_glsoil); rm(plt.sur); rm(geodist)
+```

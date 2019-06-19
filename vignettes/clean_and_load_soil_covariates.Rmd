@@ -28,29 +28,30 @@ small_glsoil <- small_glsoil[Plot != "",]
 
 clean and merge covariate dataset
 ```{r}
-names_gl <- names_gl[Landuse == "G",.(EP_PlotID,PlotID)]
-data.table::setnames(names_gl, old="EP_PlotID", new="Plot")
+plot.names <- names_gl[Landuse == "G",.(EP_PlotID,PlotID)]
+data.table::setnames(plot.names, old="EP_PlotID", new="Plot")
 # add useful plot IDs
-names_gl <- merge(names_gl, raw_grlfuns[, c("Plot", "Plotn")], by="Plot", all=T)
-# merge main_glsoil with names_gl to get the wanted names
+plot.names <- merge(plot.names, raw_grlfuns[, c("Plot", "Plotn")], by="Plot", all=T)
+# merge main_glsoil with plot.names to get the wanted names
 data.table::setnames(main_glsoil, "plotid","PlotID")
-main_glsoil <- merge(main_glsoil, names_gl, by="PlotID", all=T)
-main_glsoil[Plotn %in% c("AEG29", "AEG10"),] # there are two duplicated rows without data
+main_glsoil <- merge(main_glsoil, plot.names, by="PlotID", all=T)
+# main_glsoil[Plotn %in% c("AEG29", "AEG10"),] # there are two duplicated rows without data
 main_glsoil <- main_glsoil[!PlotID %in% c("A32886", "A8338"),]
 
 # merge the 2 datasets
 data.table::setnames(small_glsoil, "Plot", "Plotn")
 glsoil <- merge(main_glsoil, small_glsoil, by="Plotn", all=T)
-rm(main_glsoil) ; rm(names_gl) ; rm(small_glsoil)
+rm(main_glsoil) ; rm(plot.names) ; rm(small_glsoil)
 
 # remove unwanted columns
 glsoil[, c("PlotID", "Exploratory", "Plot") := NULL]
 ```
 
 ## Plot selection
-```{r}
+plots could be selected here, but it is better to exclude them in the subsequent scripts, because the imputation script is based on a version of glsoil including "HEG31", but the covariate calculation script is not.
+```{r, eval=F}
 # take out the plots that I exclude from analysis
-glsoil <- glsoil[!Plotn %in% plotNAset ,]
+glsoil <- glsoil[Plotn %in% plotNAset ,]
 ```
 
 ## Create binary data from Soil.type
