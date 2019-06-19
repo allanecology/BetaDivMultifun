@@ -29,7 +29,6 @@ Enzymes related to soil N. A measure of soil N cycling with enzyme activities an
 
 amoA_AOB and A are from both 2011 and 2016, took the mean of both years.
 ```{r}
-#TODO : take out some clusters? (Pete's suggestion at meeting)
 nce <- imputed_grlfuns[,c("Plotn", "Urease", "DEA","Potential.nitrification2011", "Potential.nitrification2014","nifH","amoA_AOB.2011","amoA_AOA.2011", "amoA_AOB.2016", "amoA_AOA.2016", "nxrA_NS", "16S_NB")]
 # take mean of multi-year-measurements
 nce[, "amoA_AOB" := apply(nce[,c("amoA_AOB.2011", "amoA_AOB.2016")],1, mean)]
@@ -42,6 +41,7 @@ There are two steps of soilNflxs
 M <- Hmisc::rcorr(as.matrix(nce[, !"Plotn", with=F]), type = "spearman")
 mr <- M$r
 mp <- M$P
+mp[mp > 0.05] <- 0 # remove nonsignificant at 5% level
 # library("PerformanceAnalytics")
 # chart.Correlation(nce[, !"Plotn", with=F], histogram=T, pch=19)
 corrplot::corrplot(mr,type="lower",addCoef.col = "black",method="color",diag=F, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.6, order = "hclust")
@@ -64,6 +64,25 @@ imputed_grlfuns[, "soilAmmoniaflxs" := multidiv(nce_a[, !"Plotn", with=F], sc="s
 imputed_grlfuns[, "soilNitrateflxs" := multidiv(nce_n[, !"Plotn", with=F], sc="sd", cent=T)[,1]]
 
 rm(nce_n); rm(nce_a); rm(nce); rm(M); rm(mr); rm(mp)
+imputed_grlfuns[,c("Urease", "DEA","Potential.nitrification2011", "Potential.nitrification2014","nifH","amoA_AOB.2011","amoA_AOA.2011", "amoA_AOB.2016", "amoA_AOA.2016", "nxrA_NS", "16S_NB") := NULL]
+```
+
+# P_loss_comb
+```{r}
+# plc <- imputed_grlfuns[, c("P_loss2011", "P_leaching_risk2015", "PRI", "PRI.2011")]
+#TODO : HERE : need to impute PRI.2011 to use it for P_loss_comb!
+plc <- imputed_grlfuns[, c("P_loss2011", "P_leaching_risk2015", "PRI")]
+# take mean of P_loss 2011 and leaching risk 2015
+plc[, "P_loss" := apply(plc[,c("P_loss2011", "P_leaching_risk2015")],1, mean)]
+plc[, c("P_loss2011", "P_leaching_risk2015") := NULL]
+# take mean of PRI
+# ...
+
+imputed_grlfuns[, "P_loss_comb" := multidiv(plc, sc="sd", cent=TRUE)[,1]]
+
+rm(plc)
+imputed_grlfuns[, c("P_loss2011", "P_leaching_risk2015", "PRI") := NULL]
+# imputed_grlfuns[, c("P_loss2011", "P_leaching_risk2015", "PRI", "PRI.2011") := NULL]
 ```
 
 
@@ -72,13 +91,13 @@ selecting the functions which are used in analysis.
 ```{r}
 # select variables which are included in betadiv multifun analysis
 usedforBetadivMultifun <- usedforBetadivMultifun[!usedforBetadivMultifun == "Plot"]
+#TODO : will take out once the soilNflxs "daughters" are official
+usedforBetadivMultifun <- c(usedforBetadivMultifun[- which(usedforBetadivMultifun == "soilNflxs")], "soilAmmoniaflxs", "soilNitrateflxs")
+
 imputed_grlfuns <- imputed_grlfuns[, ..usedforBetadivMultifun]
-#TODO : save functions
+#TODO : save functions?
 # saveRDS(imputed_grlfuns, "imputed_grlfuns.rds")
 ```
-
-# select years
-
 
 # Check Correlations
 Of the non-factor columns only
@@ -108,52 +127,95 @@ corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F, main 
 
 
 ## EFdistance calculation
+
+From PCA of all functions, take most important axes and calculate euclidian distance of them (using equal weights). Note : not weighed by amount of variance explained or similar, because soil axis should not get too much weight. 
+
+We expect that one of the important axis - possibly the first to represent soil. As we have many soil functions compared to aboveground functions, soil would otherwise get too much importance.
 ```{r}
-# imputed_grlfuns is renamed because of old code
-#TODO : rename all fungrl with imputed grlfuns in new code
-
-fungrl <- data.table::copy(imputed_grlfuns)
-
 # STANDARDISATION
-include <- names(fungrl)[!names(fungrl) %in% "Plotn"]
-fungrl[, (include) := lapply(.SD, scale01),.SDcols=mysubset]
+include <- names(imputed_grlfuns)[!names(imputed_grlfuns) %in% "Plotn"]
+imputed_grlfuns[, (include) := lapply(.SD, scale01),.SDcols=include]
 
 # PCA
-pc_fungrl <- fungrl[, ..include]
-pc_fungrl <- as.data.frame(pc_fungrl)
-rownames(pc_fungrl) <- fungrl$Plotn
-   # already scaled above
-pca_fungrl <- stats::prcomp(pc_fungrl, scale=F) 
-   # plot pca
-plot(pca_fungrl)
-biplot(pca_fungrl)
-plot(ecdf(pca_fungrl$sdev))
+pc_grlfuns <- imputed_grlfuns[, ..include]
+pc_grlfuns <- as.data.frame(pc_grlfuns)
+rownames(pc_grlfuns) <- imputed_grlfuns$Plotn
+
+pca_grlfuns <- stats::prcomp(pc_grlfuns, scale=F) 
+
+plot(pca_grlfuns)
+biplot(pca_grlfuns)
+plot(ecdf(pca_grlfuns$sdev))
 ```
 **axis selection** : 
-- first axis for sure
-- 2nd to 4th : explain around 35%
-- 5th to 7th : explain around 55%
-- 8th to 10th : explain around 80%
+first 5 axis explain 70 % of variance
+
 There are groups of three axis which have about the same amount of variance explained. 
 ```{r}
+pca_grlfuns <- pca_grlfuns$x[, 1:5]
+# euclidean distance
+EFdistance <- vegan::vegdist(pca_grlfuns, method = "euclid")
 
-#TODO : HERE! chose the PCA axis to include and the weighting we will apply to it (equal?)
+saveRDS(EFdistance, "EFdistance.rds")
 
-
-# 
-# pc_fungrl <- vegan::scores(pca_fungrl, display="sites")
-# rownames(pc_fungrl) <- fungrl$Plotn
-
-
-# saveRDS(..., "EFdistance.rds")
+rm(pca_grlfuns); rm(pc_grlfuns)
 ```
-
-
-
-
 
 
 ## EFturnover and EFnestedness
+Based on a 50% treshold, classify for each function and each plot presence or absence of the given function. Based on the scaled functions.
+TODO : do I really need to scale?
+
+Demo with plot:
+```{r}
+# old code below
+
+# percentage of measured functions that exceed a given treshold of their maximum observed level across all study sites.
+# maximum observed level: average of the top five sites.
+treshold <- 0.5
+# tresholds used in Solivieres paper :  0.25,0.5,0.75,0.9
+# to illustrate (outcomment if plot not wanted)
+# barplot(x, las = 2)
+x <- fungrl_pa[,get(colnames(fungrl_pa)[8])]
+names(x) <- seq(1,130)
+barplot(x, main=colnames(fungrl_pa)[8], xlab="Plots")
+upper <- mean(sort(fungrl_pa[,get(colnames(fungrl_pa)[8])],decreasing = T, na.last=T)[1:5])
+abline(a=upper,b=0,col="darkgreen") ; abline(a=upper*treshold, b=0, col="red")
+# calc_presenceabsence(x)
+fungrl_pa[, (mysubset) := lapply(.SD, function(c) calc_presenceabsence(c, treshold=treshold)),.SDcols=mysubset]
+fungrl_pa[,(mysubset):= (.SD * 1), .SDcols=mysubset]
+```
+
+
+```{r}
+
+
+
+
+
+# old code below
+
+
+# option 2 : for loop, exclude column plot and don't change in-place
+#  the for loop outputs beta diversities as a list of 3 for each given treshold value.
+tresholds <- c(0.25,0.5,0.75,0.9)
+for(i in tresholds){
+  name <- paste("multifun_pa",i,sep='_')
+  res <- apply(fungrl_pa[,!("Plot0")],2,function(c) calc_presenceabsence(c,treshold=i))
+  res <- res * 1 ; rownames(res) <- fungrl[["Plot0"]]
+  res <- beta.pair(res, index.family="sorensen")
+  res <- lapply(res,as.matrix)
+  res <- lapply(res, function(x) cbind("Plot" = seq(1,130,by=1),x))
+  assign(name,res)
+   # multifun berechnen mit untenstehendem code und dem namen zuweisen.
+}
+rm(name) ; rm(res) ; rm(i)
+# for the moment, only include beta.sor (both values together)
+multifun_pa_0.25 <- multifun_pa_0.25$beta.sor
+multifun_pa_0.5 <- multifun_pa_0.5$beta.sor
+multifun_pa_0.75 <- multifun_pa_0.75$beta.sor
+multifun_pa_0.9 <- multifun_pa_0.9$beta.sor
+```
 
 
 
