@@ -36,5 +36,6 @@ Imports:
     igraph,
     VennDiagram,
     grid,
-    visdat
+    visdat,
+    Hmisc
 RoxygenNote: 6.1.0.9000
