@@ -2,7 +2,7 @@
 #'
 #' Converts a continuous numeric vector into a presence-
 #' absence vector.
-#' Two methods can be chosen from : "max5" and "quantile".
+#' Two methods can be chosen from : "max5" (Soliveres, 2016) and "quantile".
 #' The first calculates the mean of the top five values. From that new maximum, 
 #' the threshold percentage is taken, e.g. if threshold = 0.5, half of
 #' the newly calculated maximum serves as threshold. All values higher than
