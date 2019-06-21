@@ -162,10 +162,12 @@ There are groups of three axis which have about the same amount of variance expl
 ```{r}
 pca_grlfuns <- pca_grlfuns$x[, 1:5]
 # euclidean distance
-EFdistance <- vegan::vegdist(pca_grlfuns, method = "euclid")
-
-saveRDS(EFdistance, "EFdistance.rds")
-
+EFmaster <- vegan::vegdist(pca_grlfuns, method = "euclid")
+EFmaster <- as.matrix(EFmaster)
+EFmaster[!lower.tri(EFmaster)] <- NA
+EFmaster <- reshape2::melt(EFmaster, value.name = "EFdistance")
+EFmaster <- EFmaster[!is.na(EFmaster[, 3]),]
+# saveRDS(EFdistance, "EFdistance.rds")
 rm(pca_grlfuns); rm(pc_grlfuns)
 ```
 
@@ -217,15 +219,28 @@ pa_grlfuns[, (include) := (.SD * 1), .SDcols = include]
 # CALC BETADIVERSITY
 pa_grlfuns <- data.frame(pa_grlfuns[, !"Plotn", with=F], row.names = pa_grlfuns$Plotn)
 pa_grlfuns <- betapart::beta.pair(pa_grlfuns, index.family = "sorensen")
-EFturnover <- pa_grlfuns$beta.sim
-EFnestedness <- pa_grlfuns$beta.sne
 
-saveRDS(EFturnover, "EFturnover.rds")
-saveRDS(EFnestedness, "EFnestedness.rds")
+EFturnover <- pa_grlfuns$beta.sim
+t <- as.matrix(EFturnover)
+t[!lower.tri(t)] <- NA
+t <- reshape2::melt(t, value.name = "EFturnover")
+t <- t[!is.na(t[, 3]), ]
+EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
+
+EFnestedness <- pa_grlfuns$beta.sne
+t <- as.matrix(EFnestedness)
+t[!lower.tri(t)] <- NA
+t <- reshape2::melt(t, value.name = "EFnestedness")
+t <- t[!is.na(t[, 3]), ]
+EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
+
+# saveRDS(EFturnover, "EFturnover.rds")
+# saveRDS(EFnestedness, "EFnestedness.rds")
+saveRDS(EFmaster, "EFmaster.rds")
 ```
 
 With quantile method
-```{r}
+```{r, eval=F}
 include <- names(nimputed_grlfuns)[!names(imputed_grlfuns) %in% "Plotn"]
 paq_grlfuns <- data.table::copy(nimputed_grlfuns) # dataset for quantile functions
 
