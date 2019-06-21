@@ -877,8 +877,8 @@ for(t in trlevels){
   tr <- tr[Plot %in% common.plots, ]
   assign(t, tr)
 }
-# take out HEG31
-#TODO : add HEG31 to plotNAset stuff
+# take out HEG31, is automatic as soon as the gapfilling is run. 
+# that means that this betadiversity script needs to be run twice, once before and once after the gapfilling
 ```
 
 
@@ -888,20 +888,45 @@ for(t in trlevels){
   tr <- get(t)
   b.tr <- prepare_for_betapair(tr)
   b.tr <- betapart::beta.pair(b.tr, index.family = "sorensen")
-  assign(t, b.tr)
+  trsimname <- paste(t, ".beta.sim", sep = "")
+  trnesname <- paste(t, ".beta.sne", sep = "")
+  assign(trsimname, b.tr$beta.sim)
+  assign(trnesname, b.tr$beta.sne)
 }
+rm(t); rm(tr); rm(b.tr); rm(trsimname); rm(trnesname)
+
+# prepare for formatesitepair
+# convert to long format
+trlevels_components <- c(paste(trlevels, ".beta.sim", sep=""), paste(trlevels, ".beta.sne", sep=""))
+# create super-dataframe to store all betadiversities
+t <- trlevels_components[1] ; tr <- get(t) ; tr <- as.matrix(tr) ; tr[!lower.tri(tr)] <- NA
+tr <- reshape2::melt(tr, value.name = t)
+masterbeta <- tr[!is.na(tr[, 3]),]
+
+for(t in trlevels_components[-1]){
+  tr <- get(t)
+  tr <- as.matrix(tr)
+  tr[!lower.tri(tr)] <- NA
+  tr <- reshape2::melt(tr, value.name = t)
+  tr <- tr[!is.na(tr[, 3]),]
+  masterbeta <- merge(masterbeta, tr, by = c("Var1", "Var2"))
+}
+rm(tr); rm(t)
 ```
 save betadiversity datasets
 ```{r}
-for(t in trlevels){
-  tr <- get(t)
-  saveRDS(tr, file = paste(t, "betadiversity.rds", sep="_"))
-}
+# for(t in trlevels){
+#   tr <- get(t)
+#   saveRDS(tr, file = paste(t, "betadiversity.rds", sep="_"))
+# }
 saveRDS(trlevels, "trlevels_vector.rds")
+saveRDS(masterbeta, "master_beta.rds")
 ```
 
 
 # Cleaning
 ```{r}
 rm(spdiv); rm(test); rm(tr); rm(t); rm(redplotset); rm(plots); rm(b.tr)
+rm(list = trlevels)
+rm(list = trlevels_components)
 ```
