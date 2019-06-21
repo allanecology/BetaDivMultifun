@@ -5,26 +5,57 @@ date: "June 18, 2019"
 output: html_document
 ---
 Depends on `analysis_nonpublic.R` to load the raw dataset, the selected plots, ... ?
+
+# Combining LUI over 11 years
+Years 2006 to 2016. We have information until 2017, but the range of functions is until 2016.
+
+code by Caterina
 ```{r}
-rawlui
+luiy <- data.table::copy(rawlui)
+luiy <- luiy[Year != "2017", ]
+
+# calculate the global means
+luiy[,MeanF:=mean(TotalFertilization,na.rm = T)]
+luiy[,MeanM:=mean(TotalMowing,na.rm = T)]
+luiy[,MeanG:=mean(TotalGrazing,na.rm = T)]
+
+# calculate the LUI and its components for each year and each plot, using the global mean
+luiy[ , LUI := sqrt((TotalFertilization/MeanF) + (TotalMowing/MeanM) +(TotalGrazing / MeanG)), by=EP_PlotID]
+luiy[ ,Fstd := TotalFertilization / MeanF, by = EP_PlotID]
+luiy[ ,Mstd := TotalMowing / MeanM, by = EP_PlotID]
+luiy[ ,Gstd := TotalGrazing / MeanG , by = EP_PlotID]
+
+# calculate DELTA LUI and DELTA COMPONENTS
+#TODO : standardise?
+luiy[ , deltaLUI := sd(LUI), by = EP_PlotID]
+luiy[ , deltaFstd := sd(Fstd), by = EP_PlotID]
+luiy[ , deltaMstd := sd(Mstd), by = EP_PlotID]
+luiy[ , deltaGstd := sd(Gstd), by = EP_PlotID]
+
+# clean and format
+luiy <- luiy[,.(EP_PlotID,LUI, Gstd, Mstd, Fstd, deltaLUI, deltaGstd, deltaMstd, deltaFstd)]
+data.table::setnames(luiy, old = "EP_PlotID", new = "Plot")
+luiy <- merge(luiy, usefulplotids, by = "Plot")
+luiy[, Plot := NULL]
+
+# calculate the means over 12 years
+lui <- aggregate(LUI~Plotn, luiy, mean)
+lui <- merge(lui, aggregate(Gstd~Plotn, luiy, mean), by = "Plotn")
+lui <- merge(lui, aggregate(Mstd ~ Plotn, luiy, mean), by = "Plotn")
+lui <- merge(lui, aggregate(Fstd ~ Plotn, luiy, mean), by = "Plotn")
+lui <- merge(lui, aggregate(deltaLUI ~ Plotn, luiy, mean), by = "Plotn")
+lui <- merge(lui, aggregate(deltaGstd ~ Plotn, luiy, mean), by = "Plotn")
+lui <- merge(lui, aggregate(deltaMstd ~ Plotn, luiy, mean), by = "Plotn")
+lui <- merge(lui, aggregate(deltaFstd ~ Plotn, luiy, mean), by = "Plotn")
 ```
 
-
-Caterina's code to combine the years
+Select set of plots
 ```{r}
-lui5y[,MeanF:=mean(TotalFertilization,na.rm = T)]
-lui5y[,MeanM:=mean(TotalMowing,na.rm = T)]
-lui5y[,MeanG:=mean(TotalGrazing,na.rm = T)]
+lui <- lui[which(lui$Plotn %in% plotNAset),]
+```
 
-lui5y[,LUI:=sqrt((mean(TotalFertilization,na.rm = T)/MeanF)+
-                 (mean(TotalMowing,na.rm=T)/MeanM)+
-                 (mean(TotalGrazing,na.rm=T)/MeanG)),by=EP_PlotID]
-
-lui5y[,Fstd:=mean(TotalFertilization,na.rm = T)/MeanF,by=EP_PlotID]
-lui5y[,Mstd:=mean(TotalMowing,na.rm = T)/MeanM,by=EP_PlotID]
-lui5y[,Gstd:=mean(TotalGrazing,na.rm = T)/MeanG,by=EP_PlotID]
-
-lui5y <- lui5y[,.(EP_PlotID,Fstd,Mstd,Gstd,LUI)]
-lui5y <- unique(lui5y)
+Save for analysis
+```{r}
+saveRDS(lui, "LUI.rds")
 ```
 
