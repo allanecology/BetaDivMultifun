@@ -109,6 +109,7 @@ rm(pc_glsoil); rm(pca_from_glsoil)
 ```{r}
 # prepare for gdm (the desired format)
 edis_glsoil <- as.matrix(edis_glsoil)
+edis_glsoil <- cbind(row.names(edis_glsoil), edis_glsoil)
 # store soil dissimilarity matrix separately, as storing diss object in a list as rds is not possible
 saveRDS(edis_glsoil, "predictors_soil.rds")
 ```
