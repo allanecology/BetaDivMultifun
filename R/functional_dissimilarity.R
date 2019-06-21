@@ -1,13 +1,26 @@
 #' Calculate Presence-Absence from continuous
 #'
-#' based on treshold
-#' chose between 50% Quantile OR 50% of maximum 5 values
-#' TODO :add more explanation
-#' maximum_observed_level = average of top 5 sites
-#' calculate the multifunctionality of a (standardized) vector
-
-#' @param x input data.table
+#' Converts a continuous numeric vector into a presence-
+#' absence vector.
+#' Two methods can be chosen from : "max5" and "quantile".
+#' The first calculates the mean of the top five values. From that new maximum, 
+#' the threshold percentage is taken, e.g. if threshold = 0.5, half of
+#' the newly calculated maximum serves as threshold. All values higher than
+#' that new threshold are considered to be present (1) and all values
+#' below are considered to be absent (0). Limitation : is influenced by outliers, 
+#' however for the use of multifunctionality, this makes sense, because it is 
+#' possible that a given function is only present at high levels in very few
+#' plots, while all other plots show low levels.
+#' The "quantile" method takes the threshold-quantile, e.g. the 
+#' 50% quantile if the threshold = 0.5. All values above are considered to 
+#' be present, all below are considered to be absent. Limitation: will 
+#' always classify the same amount of values to be present than to be 
+#' absent - inherent to quantile function.
+#'
+#' @param x input vector
 #' @param threshold the threshold for calculation, between 0 and 1, e.g. 0.5
+#' @type is either "max5" or "quantile". "max5" calculates the mean of the
+#' maximum 5 values, whereas "quantile" calculates the threshold - quantile.
 #' @return a vector of scaled values to be between 0 and 1.
 #' 
 #' @examples
@@ -17,8 +30,14 @@
 #' @export
 calc_presenceabsence <- function(x, threshold = 0.5, type = "max5"){
   # x is a vector
-  max_obs <- mean(sort(x,decreasing = T, na.last=T)[1:5])
-  new_vector <- x>(max_obs*threshold)
+  if(type == "max5"){
+    upper <- mean(sort(x,decreasing = T, na.last=T)[1:5])
+  } else if(type == "quantile"){
+    upper <- quantile(x, probs = threshold)
+  } else {
+    print("Error : type must be either 'max5' or 'quantile'.")
+  }
+  new_vector <- x>(upper*threshold)
   return(new_vector)
 }
 
