@@ -1,0 +1,295 @@
+---
+title: "run GDM"
+author: "Noelle Schenk"
+date: "June 21, 2019"
+output: html_document
+---
+# Run GDM
+First trial to run GDM... juppiiii
+
+note : packages used : gdm, car, geosphere, viridis and colrobrewer
+
+# Grouping variables
+Requirements to meet : 
+- dist matrices : the first column needs to be "Plotn" (matrix will not be square any more)
+```{r}
+# cleaning 
+#TODO : move to scripts
+colnames(predictors)[1] <- "Plotn"
+
+# predictors_soil <- cbind(row.names(predictors_soil), predictors_soil)
+```
+
+
+```{r}
+forpredData <- merge(predictors, LUI[, c("Plotn", "LUI", "deltaLUI")], by = "Plotn")
+masterbeta
+fordistpreds <- list(autotroph$beta.sim, autotroph$beta.sne)
+```
+
+
+```{r}
+test <- gdm::formatsitepair(bioData = EFdistance, bioFormat = 3, 
+                    siteColumn = "Plotn", 
+                    distPreds = fordistpreds, 
+                    predData = forpredData,
+                    XColumn = "Longitude_Dec_Plotcenter", YColumn = "Latitude_Dec_Plotcenter")
+```
+
+
+## Grouping matrices into list
+
+Grouping all matrices into a common list.
+```{r}
+names_of_matrices <- c()
+matrices_for_formatsitepair <- list()
+
+# FUNCTIONS
+names_of_matrices <- c("functions", names_of_matrices)
+matrices_for_formatsitepair <- c(list(functions = "EFdistance"), matrices_for_formatsitepair)
+# matrices_for_formatsitepair <- c(list(functions = "EFnestedness"), matrices_for_formatsitepair)
+# matrices_for_formatsitepair <- c(list(functions = "EFturnover"), matrices_for_formatsitepair)
+
+# BETADIVERSITY
+names_betas <- c(paste(trlevels, "$beta.sim", sep = ""), paste(trlevels, "$beta.sne", sep = ""))
+names_of_matrices <- c(names_of_matrices, names_betas)
+matrices_for_formatsitepair <- c(list(betas = names_betas), matrices_for_formatsitepair)
+
+# COVARIATES
+
+
+
+names_of_matrices <- c("edis_glsoil", "predictors", "functions")
+#TODO : HERE : please enter the name of function measure to include : EFdistance, EFnestedness or EFturnover
+matrices_for_formatsitepair <- list(soil="edis_glsoil", predictors="predictors", functions = "EFdistance")
+# matrices_for_formatsitepair <- list(soil="edis_glsoil", predictors="predictors", functions = "EFnestedness")
+# matrices_for_formatsitepair <- list(soil="edis_glsoil", predictors="predictors", functions = "EFturnover")
+
+
+
+```
+
+
+```{r}
+#############################
+#  CALCULATING/ EXTRACTING DISTANCES
+#  and merge them together
+#
+# melt all matrices in matrices_for_formatsitepair and then use it to check correlations.
+# take out the predictors, I don't know yet what to do with them
+names_of_matrices <- names_of_matrices[-which("predictors" == names_of_matrices)]
+
+meltset <- get(names_of_matrices[1])
+meltset <- as.matrix(meltset[,-1])
+# only include lower half
+meltset[!lower.tri(meltset)] <- NA
+meltset <- melt(meltset, value.name = names_of_matrices[1])
+meltset <- meltset[!is.na(meltset[,3]),]
+
+for(i in names_of_matrices[-1]){
+  if(grepl("\\$" ,i)){
+    split_i <- strsplit(i,split="\\$")
+    data <- get(as.character(split_i[[1]][2]),get(split_i[[1]][1]))
+  } else{
+    data <- get(i)
+  }
+  data <- data[,-1]
+  data[!lower.tri(data)] <- NA
+  data <- melt(data, value.name=i)
+  data <- data[!is.na(data[,3]),]
+  meltset <- merge(meltset,data,by=c("Var1","Var2"))
+}
+
+# I calculate euclidean distance for each predictor and add to meltset
+predictors_distance <- as.data.frame(predictors[,-1])
+rownames(predictors_distance) <- rownames(edis_glsoil)
+# take out longitude and latitude
+drops <- c("Longitude_Dec_Plotcenter","Latitude_Dec_Plotcenter")
+predictors_distance <- predictors_distance[ , !(names(predictors_distance) %in% drops)]
+
+for(i in colnames(predictors_distance)){
+  data <- as.matrix(vegdist(predictors_distance[,i, drop=FALSE], method = "euclid"))
+  data[!lower.tri(data)] <- NA
+  data <- melt(data, value.name=i)
+  data <- data[!is.na(data[,3]),]
+  meltset <- merge(meltset, data,value.name=i)
+}
+
+# calculate geographic distance
+geo_coord <- predictors[ , (colnames(predictors) %in% drops),drop=F]
+rownames(geo_coord) <- rownames(edis_glsoil)
+
+meltset[,"geo_dist"] <- NA
+for(i in 1:length(rownames(meltset))){
+  new <- distGeo(geo_coord[meltset[i,1],], geo_coord[meltset[i,2],])
+  meltset[i,"geo_dist"] <- new
+}
+
+# standardization of all columns which were calculated with euclidean distance so they are between 0 and 1.
+meltset[,-c(1:2)] <- apply(meltset[,-c(1:2)],2,function(x) stand_fun(x))
+
+
+#####################
+# CHECK CORRELATION
+#
+# here, I check correlation and variance inflation to know if I need to exclude some predictors.
+# check correlations
+m <- cor.test(meltset[,3],meltset[,4])$estimate
+m_all <- cor(meltset[,-c(1:2)],use="pairwise.complete.obs")
+
+# corrplot(m_all,type="lower",addCoef.col = "black",method="color",diag=F,tl.srt=50, tl.col="black", mar=c(0,0,0,0))
+# corrplot(m_all, type = "lower", order = "hclust", tl.col = "black", tl.srt = 45)
+# corrplot(m_all, type = "upper")
+dev.off()
+pdf('../results_fourpanel/corr_test.pdf',paper='a4r')
+corrplot(m_all,type="lower",addCoef.col = "black",method="color",diag=F,tl.srt=50, tl.col="black", mar=c(0,0,0,0),tl.cex=0.4,
+         number.cex=0.35)
+dev.off()
+if(typeofbeta == "both"){
+  pdf('../corr_test.pdf',paper='a4r')
+  corrplot(m_all,type="lower",addCoef.col = "black",method="color",diag=F,tl.srt=50, tl.col="black", mar=c(0,0,0,0),tl.cex=0.4,
+           number.cex=0.2)
+  dev.off()
+}
+
+# variance inflation
+# prepare the model for variance inflation
+remove <- c("Var1", "Var2", funs)
+colnames(meltset) <- gsub("\\$","_",colnames(meltset))
+b <- paste(colnames(meltset)[! colnames(meltset) %in% remove],collapse=" + ")
+mod <- paste(funs," ~ ",sep="")
+mod <- paste(mod,b,sep = "")
+m1 <- lm(formula = formula(mod), data=meltset)
+# run variance inflation
+vif_output <- vif(m1)
+# check which matrices have a value larger than five (so I may exclude them)
+vif_output[vif_output > 5]
+
+
+#############################
+#  PREPARE GDM DATA TABLE as it's required by GDM
+#
+# to run GDM, i need to prepare a well-defined table. below are the names of the columns I will prepare and their content
+# distance : funs (vector holding name of functions dataset), the distance between functions
+# weights : a column containing only 1 (as I weight all comparisons the same)
+# s1.xCoord, s1.yCoord, s2.xCoord, s2.yCoord : 4 columns which will be ignored as I will set geo=F. (but must be given anyway!)
+# s1.pred1, ..., s1.predn : here I fill in my predictor columns, (all have s1. at the beginning)
+# s2.pred1, ..., s2.predn : here I fill in columns of zero to imitate I would not have given distance but two values.
+
+# meltset is easier to rearrange if it's a data.table
+meltset <- as.data.table(meltset)
+# I will not use any more the first two columns with Var1 and Var2 containing the plot information
+plotorder <- meltset[,.(Var1, Var2)]
+meltset[,c("Var1","Var2") := NULL]
+# rearrange columns order, so funs (distance) is the first one
+colorder <- funs ; colorder1 <- colnames(meltset)[!colnames(meltset) %in% colorder]
+colorder <- c(colorder , colorder1)
+setcolorder(meltset, colorder)
+
+# define the new colnames
+names(meltset)[names(meltset) %in% funs] = "distance"
+# all predictors are having s1. at the beginning
+newnames <- colnames(meltset)[2:length(colnames(meltset))]
+newnames <- paste("s1.",newnames,sep="")
+names(meltset)[names(meltset) %in% colnames(meltset)[2:length(colnames(meltset))]] = newnames
+
+# add new columns at the right positions
+newcols <- c("weights","s1.xCoord", "s1.yCoord", "s2.xCoord", "s2.yCoord")
+for(i in 1:length(newcols)){
+  meltset[, newcols[i] := rep(0,nrow(meltset))]
+}
+meltset[,weights:=1] # weights are always 1
+# order them into right position
+colorder <- c("distance",newcols,newnames)
+setcolorder(meltset, colorder)
+
+# add empty s2. columns at the end
+newcols <- gsub("1","2",newnames)
+for(i in 1:length(newcols)){
+  meltset[, newcols[i] := rep(0,nrow(meltset))]
+}
+
+# gdm wants meltset to be a data.frame
+meltset <- as.data.frame(meltset)
+
+# I need to give rownames being plot pairs
+plot_numbers <- as.data.frame(cbind("Var1" = rownames(edis_glsoil),"Plotn" = seq(1:130)))
+dtnew <- merge(plotorder,plot_numbers,by="Var1")
+names(plot_numbers)[names(plot_numbers) == "Var1"] = "Var2"
+dtnew <- merge(dtnew,plot_numbers,by="Var2")
+rownames(meltset) <- paste(dtnew[,Plotn.x],dtnew[,Plotn.y],sep=".")
+
+
+#############################
+#  RUNNING GDM
+#
+gdm_actual <- gdm(meltset, geo=F, splines=NULL, knots=NULL)
+# gdmtest <- gdm(gdm_actual, geo=TRUE, splines=NULL, knots=NULL)
+capture.output(summary(gdm_actual),file="../output.txt")
+# plot(gdm_actual)
+
+
+#############################
+#  PLOTTING I - SPLINES
+#
+vars_in_model <- c(funs,typeofbeta,which_beta_detail)
+# to plot each spline in a separate plot
+# plot(gdm_actual, plot.layout = c(3, 2), plot.color = "grey",main="GDM",sub= paste(vars_in_model, collapse=', '))
+
+# extract splines
+exSplines <- isplineExtract(gdm_actual)
+if(typeofbeta == "abundance"){exSplines_abund <- exSplines}
+if(typeofbeta == "presence_absence"){exSplines_pa <- exSplines}
+
+# produce a "normal" plot ---------
+groesse <- 0.5 # size of text in plot
+pdf('../test.pdf',paper='a4r')
+par(xpd = T, mar = par()$mar + c(0,0,0,6))
+plot(exSplines[[1]][,1], exSplines[[2]][,1], type="l",
+     lwd=2, xlab="jtest", ylab="Partial Ecological Distance",ylim=c(0,0.65),main="GDM",sub= paste(vars_in_model, collapse=', '),
+     cex=groesse, cex.axis= groesse, cex.lab= groesse, cex.sub=groesse*1.5)
+for(i in 1:ncol(exSplines[[1]])){
+  lines(exSplines[[1]][,i], exSplines[[2]][,i], col=colr[i],lwd=2,lty=ltyp[i])
+}
+legend(1.05,0.675,legend_names, lty=ltyp,lwd=c(1.5,1.5),col=colr[1:ncol(exSplines[[1]])],cex = 0.5) 
+par(mar=c(5, 4, 4, 2) + 0.1)
+dev.off()
+
+#############################
+#  ESTIMATING P - VALUES
+#
+# takes too long on my computer yet. but I can change, so it doesn't do aic and only looks at the full model - much faster! todo
+varimp_output <- gdm.varImp(meltset, geo=F, parallel=T, nPerm =1) #, fullModelOnly=T)
+
+#############################
+#  SAVE PRODUCED DATA
+#
+# save current gdm_actual so I can get back to it
+namegdm <- paste(funs, typeofbeta, paste(which_beta_detail, collapse="_"), sep="_")
+assign(namegdm, gdm_actual)
+namegdm <- paste(namegdm, "VARIMP_OUTPUT", sep="_")
+assign(namegdm, varimp_output)
+rm(namegdm)
+
+#############################
+#  Plotting P - VALUES
+#
+legend_names <- gsub("_abund_","_ab_", legend_names)
+pvals <- mod1_pvals[[3]][,1]
+legend_names[which(as.vector(pvals)== 0)] <- paste(legend_names[which(as.vector(pvals)== 0)],'*')
+
+groesse <- 0.5 # size of text in plot
+pdf('../test.pdf',paper='a4r')
+par(xpd = T, mar = par()$mar + c(0,0,0,6))
+plot(exSplines[[1]][,1], exSplines[[2]][,1], type="l",
+     lwd=2, xlab="predictors", ylab="Partial Ecological Distance",ylim=c(0,0.65),main="GDM",
+     sub= "subtitle",
+     cex=groesse, cex.axis= groesse, cex.lab= groesse, cex.sub=groesse*1.5)
+for(i in 1:ncol(exSplines[[1]])){
+  lines(exSplines[[1]][,i], exSplines[[2]][,i], col=colr[i],lwd=2,lty=ltyp[i])
+}
+legend(1.05,0.675,legend_names, lty=ltyp,lwd=c(1.5,1.5),col=colr[1:ncol(exSplines[[1]])],cex = 0.5) 
+par(mar=c(5, 4, 4, 2) + 0.1)
+dev.off()
+```
+
