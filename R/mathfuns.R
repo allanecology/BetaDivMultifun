@@ -15,6 +15,8 @@
 #' par(mfrow=c(1,2)) # plot both example data and normalized data
 #' plot(x)
 #' plot(normalized) # the shape is not affected, only the range changed
+#' # with data.table:
+#' datatable[, (mysubset) := lapply(.SD, function(cols) calc_presenceabsence(cols, treshold=treshold, type = "max5")),.SDcols=mysubset]
 #' 
 #' @export
 scale01 <- function(x){

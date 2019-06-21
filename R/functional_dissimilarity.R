@@ -1,4 +1,4 @@
-#' Calculate Presence-Absence from continuous
+#' Convert To Presence-Absence
 #'
 #' Converts a continuous numeric vector into a presence-
 #' absence vector.
