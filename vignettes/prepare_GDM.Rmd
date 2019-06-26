@@ -9,16 +9,12 @@ First trial to run GDM... juppiiii
 
 note : packages used : gdm, car, geosphere, viridis and colrobrewer
 
-# Grouping variables
-Requirements to meet : 
-- dist matrices : the first column needs to be "Plotn" (matrix will not be square any more)
+Group dissimilarity matrices (long format):
+combine functions, betadiversity and predictors
 ```{r}
-# cleaning 
-#TODO : move to scripts
-colnames(predictors)[1] <- "Plotn"
-
-# predictors_soil <- cbind(row.names(predictors_soil), predictors_soil)
+masterdist <- merge(EFmaster, predictors_soil, by = c("Var1", "Var2"))
 ```
+
 
 
 ```{r}

@@ -110,6 +110,14 @@ rm(pc_glsoil); rm(pca_from_glsoil)
 # prepare for gdm (the desired format)
 edis_glsoil <- as.matrix(edis_glsoil)
 edis_glsoil <- cbind(row.names(edis_glsoil), edis_glsoil)
+
+# bring to long format for GDM and add to edis_glsoil table
+edis_glsoil <- as.matrix(edis_glsoil)
+edis_glsoil[!lower.tri(edis_glsoil)] <- NA
+edis_glsoil <- reshape2::melt(edis_glsoil, value.name = "edis_soil")
+edis_glsoil <- edis_glsoil[!is.na(edis_glsoil[, 3]),]
+nrow(edis_glsoil) == choose(127, 2)
+
 # store soil dissimilarity matrix separately, as storing diss object in a list as rds is not possible
 saveRDS(edis_glsoil, "predictors_soil.rds")
 ```
