@@ -838,13 +838,15 @@ for(t in trlevels){
 There is no more plot with zero species in the dataset.
 
 Select the plots without missing information and store. 
-```{r}
+```{r, eval=F}
 plots <- list()
 for(t in trlevels){
   tr <- get(t)
   plots[[t]] <- unique(tr$Plot)
 }
 common.plots <- Reduce(intersect,plots) #128 plots
+# take out HEG31 because this is taken out in functions
+common.plots <- common.plots[-which(common.plots == "HEG31")]
 saveRDS(common.plots, file = "plotNAset.rds")
 
 redplotset <- c()
@@ -866,6 +868,7 @@ paste("AEG :", length(grep("A", common.plots)), "   HEG :", length(grep("H", com
 | AEG       |    40     |
 | HEG       |    43     |
 | SEG       |    45     |
+
 
 
 
