@@ -6,6 +6,15 @@ output: html_document
 ---
 note : packages used : gdm, car, geosphere, viridis and colrobrewer
 
+# Dependencies
+This script relies on loading the following datasets:
+- EFmaster : dissimilarities of functions
+- masterbeta : dissimilarities of trophic groups
+- LUI : LUI (and components) and delta LUI (and delta components)
+- predictors : values of predictors (plot isolation, geographic position)
+- predictors soil : euclidean distance of soil pca
+
+
 # Cleaning
 maybe this part can be moved to where it should have been done...
 ```{r}
@@ -18,18 +27,25 @@ EFmaster$EFdistance <- new
 
 # Select Variables
 Select Variables for the models
+```{r}
+print("user input required here!")
+# funs is one of : EFdistance, EFturnover, EFnestedness
+#TODO : single functions
+funs <- "EFnestedness"
+# LUI is one of the below
+lui <- c("LUI", "deltaLUI")
+# lui <- c("Gstd", "Mstd", "Fstd", "deltaGstd", "deltaMstd", "deltaFstd")
+```
 
 Ecosystem Functions : either EFdistance, EFturnover or EFnestedness
 ```{r}
-funs <- "EFdistance" # to have a variable containing the currently used Ecosystem function
-EFmaster <- EFmaster[, c("Var1", "Var2", "EFdistance")]
-# EFmaster <- EFmaster[, c("Var1", "Var2", "EFturnover")]
-# EFmaster <- EFmaster[, c("Var1", "Var2", "EFnestedness")]
+include <- c("Var1", "Var2", funs)
+EFmaster <- EFmaster[, include]
 ```
 
 LUI : either LUI and delta LUI or the individual components
 ```{r}
-LUI <- LUI[, c("Plotn", "LUI", "deltaLUI")]
+LUI <- LUI[, c("Plotn", lui)]
 ```
 
 # Prepare for GDM
@@ -69,6 +85,8 @@ for(i in 1:length(rownames(fordistpreds))){
 # apply(fordistpreds, 2, range)
 forstand <- c(foreuclid,"geo_dist")
 fordistpreds[, names(fordistpreds) %in% forstand] <- apply(fordistpreds[, names(fordistpreds) %in% forstand], 2, scale01)
+
+rm(foreuclid); rm(forstand); rm(i)
 ```
 
 # Check Correlation
@@ -79,7 +97,8 @@ corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", d
 Variance inflation
 ```{r}
 # generate model
-mod <- paste("EFdistance ~ " ,paste(colnames(fordistpreds)[!colnames(fordistpreds) %in% c("EFdistance", "Var1", "Var2")], collapse = " + "))
+mod <- paste(funs, " ~ " ,paste(colnames(fordistpreds)[!colnames(fordistpreds) %in% c("EFdistance", "Var1", "Var2")], collapse = " + "))
+
 m1 <- lm(formula = formula(mod), data = fordistpreds)
 vif_output <- car::vif(m1)
 vif_output[vif_output > 5]
@@ -133,87 +152,38 @@ rownames(meltset) <- paste(plotorder$Var1, plotorder$Var2, sep=".")
 ```
 
 # Run GDM
+The model name is automatically generated from `funs` and `lui`.
 ```{r}
-gdm_efdist <- gdm(meltset, geo = F, splines = NULL, knots = NULL)
-capture.output(summary(gdm_efdist), file = "gdm_efdist_output.txt")
+outname <- paste("gdm", funs, lui[1], "output.txt", sep = "_")
+gdm_output <- gdm::gdm(meltset, geo = F, splines = NULL, knots = NULL)
+
+# save input and output
+saveRDS(meltset, file = paste("gdm", funs, lui[1], "input.Rds", sep = "_"))
+capture.output(summary(gdm_output), file = outname)
 ```
 
 # Plot GDM
 ```{r}
-exSplines <- gdm::isplineExtract(gdm_efdist)
+exSplines <- gdm::isplineExtract(gdm_output)
 
 # to plot each spline in a separate plot
-plot(gdm_efdist, plot.layout = c(3, 2), plot.color = "grey",main="GDM",sub= paste(vars_in_model, collapse=', '))
+plot(gdm_output, plot.layout = c(3, 2), plot.color = "grey",main="GDM",sub= paste(vars_in_model, collapse=', '))
 ```
+
 
 # TODO 
 HERE .
-
-- run all models
-- run bootstrapping
 - plot all models
 - solve open TODOS (e.g. variance inflation)
 
-
-```{r}
-
-
-#############################
-#  PLOTTING I - SPLINES
-#
-vars_in_model <- c(funs,typeofbeta,which_beta_detail)
-# to plot each spline in a separate plot
-# plot(gdm_actual, plot.layout = c(3, 2), plot.color = "grey",main="GDM",sub= paste(vars_in_model, collapse=', '))
-
-# produce a "normal" plot ---------
-groesse <- 0.5 # size of text in plot
-pdf('../test.pdf',paper='a4r')
-par(xpd = T, mar = par()$mar + c(0,0,0,6))
-plot(exSplines[[1]][,1], exSplines[[2]][,1], type="l",
-     lwd=2, xlab="jtest", ylab="Partial Ecological Distance",ylim=c(0,0.65),main="GDM",sub= paste(vars_in_model, collapse=', '),
-     cex=groesse, cex.axis= groesse, cex.lab= groesse, cex.sub=groesse*1.5)
-for(i in 1:ncol(exSplines[[1]])){
-  lines(exSplines[[1]][,i], exSplines[[2]][,i], col=colr[i],lwd=2,lty=ltyp[i])
-}
-legend(1.05,0.675,legend_names, lty=ltyp,lwd=c(1.5,1.5),col=colr[1:ncol(exSplines[[1]])],cex = 0.5) 
-par(mar=c(5, 4, 4, 2) + 0.1)
-dev.off()
-
-#############################
-#  ESTIMATING P - VALUES
-#
-# takes too long on my computer yet. but I can change, so it doesn't do aic and only looks at the full model - much faster! todo
-varimp_output <- gdm.varImp(meltset, geo=F, parallel=T, nPerm =1) #, fullModelOnly=T)
-
-#############################
-#  SAVE PRODUCED DATA
-#
-# save current gdm_actual so I can get back to it
-namegdm <- paste(funs, typeofbeta, paste(which_beta_detail, collapse="_"), sep="_")
-assign(namegdm, gdm_actual)
-namegdm <- paste(namegdm, "VARIMP_OUTPUT", sep="_")
-assign(namegdm, varimp_output)
-rm(namegdm)
-
-#############################
-#  Plotting P - VALUES
-#
-legend_names <- gsub("_abund_","_ab_", legend_names)
-pvals <- mod1_pvals[[3]][,1]
-legend_names[which(as.vector(pvals)== 0)] <- paste(legend_names[which(as.vector(pvals)== 0)],'*')
-
-groesse <- 0.5 # size of text in plot
-pdf('../test.pdf',paper='a4r')
-par(xpd = T, mar = par()$mar + c(0,0,0,6))
-plot(exSplines[[1]][,1], exSplines[[2]][,1], type="l",
-     lwd=2, xlab="predictors", ylab="Partial Ecological Distance",ylim=c(0,0.65),main="GDM",
-     sub= "subtitle",
-     cex=groesse, cex.axis= groesse, cex.lab= groesse, cex.sub=groesse*1.5)
-for(i in 1:ncol(exSplines[[1]])){
-  lines(exSplines[[1]][,i], exSplines[[2]][,i], col=colr[i],lwd=2,lty=ltyp[i])
-}
-legend(1.05,0.675,legend_names, lty=ltyp,lwd=c(1.5,1.5),col=colr[1:ncol(exSplines[[1]])],cex = 0.5) 
-par(mar=c(5, 4, 4, 2) + 0.1)
-dev.off()
+# Estimating P values
+takes too lon gon my computer, this is just the R code to run on a supercomputer.
+```{r, eval=F}
+# fullModelOnly = T : test only the full variable set
+# fullModelOnly = F : estimate model significance and variable importance/ significance using matrix permutation, backward elimination
+# parallel = T
+    # cores : number of cores to be registered for parralel processing
+# outFile : name of outfile
+varimp_output <- gdm::gdm.varImp(meltset, geo=F, parallel=T, nPerm =1) #, fullModelOnly=T)
 ```
 

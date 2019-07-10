@@ -37,5 +37,6 @@ Imports:
     VennDiagram,
     grid,
     visdat,
-    Hmisc
+    Hmisc,
+    gdm
 RoxygenNote: 6.1.1
