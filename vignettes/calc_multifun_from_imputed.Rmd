@@ -13,6 +13,10 @@ This script :
 cols <- RColorBrewer::brewer.pal(8,"Dark2")
 ```
 
+Requirements : 
+- imputed_grlfuns : the imputed functions data
+- 
+
 
 # Calculate mini-multifunctionalities
 The mini-multifunctionalities are calculated from the imputed values.
@@ -124,8 +128,17 @@ M[which(M < tres & M > -tres)] <- 0
 corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F, main = "B")
 ```
 
+# Dissimilarity of single functions
+This part of the script prepares the single function dissimilarities for the GDM models. Each function is fitted individually.
 
-# Dissimilarity of function
+Dissimilarity between plots is the euclidean distance - which is just a substraction in the 1D case.
+```{r}
+#TODO calculate dissimilarities for single functions and save as RDS for GDM.
+# see p. 65
+```
+
+
+# Dissimilarity of functions
 
 2 ways of dissimilarity calculation : 
 - *EFturnover* and *EFnestedness* : calculate presence-absence of functions by 0.5 treshold, and then calculate betadiversity turnover and nestedness components of them.
@@ -181,6 +194,7 @@ TODO Without scaling - in old analysis it was scaled ... check if it works witho
 # maximum observed level: average of the top five sites.
 threshold <- 0.5
 # tresholds used in Solivieres paper :  0.25,0.5,0.75,0.9
+#TODO : use more thresholds
 ```
 Plot for visualisation
 ```{r}
