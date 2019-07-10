@@ -29,7 +29,7 @@ gdm_model <- readRDS("gdm_EFdistance_LUI_input.Rds")
 # cores : number of cores to be registered for parralel processing
 # outFile : name of outfile
 
-varimp_output <- gdm::gdm.varImp(gdm_model, geo=F, parallel=T, nPerm =4, cores = 4)
+varimp_output <- gdm::gdm.varImp(gdm_model, geo=F, parallel=T, nPerm =100, cores = 10)
 
 saveRDS(varimp_output, file = "gdm_permutation_out.Rds")
 ```
@@ -38,13 +38,13 @@ saveRDS(varimp_output, file = "gdm_permutation_out.Rds")
 **Rbatch.sh**
 ```{bash}
 #!/bin/sh
-#SBATCH --mail-user=<email address>
+#SBATCH --mail-user=<mail>
 #SBATCH --mail-type=end,fail
 
 #SBATCH --mem-per-cpu=8G
-#SBATCH --time=5:00:00
+#SBATCH --time=12:00:00
 #SBATCH --workdir=.
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=10
 #SBATCH --job-name="GDM"
 
 # change
