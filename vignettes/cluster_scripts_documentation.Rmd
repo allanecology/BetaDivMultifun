@@ -19,19 +19,19 @@ To run parallel, you need to give the number of cores in (1) the slurm script an
 
 **gdm.R**
 ```{r}
-gdm_model <- readRDS("gdm_EFdistance_LUI_input.Rds")
-# gdm_model <- readRDS("gdm_EFturnover_LUI_input.Rds")
+# gdm_model <- readRDS("gdm_EFdistance_LUI_input.Rds")
+gdm_model <- readRDS("gdm_EFturnover_LUI_input.Rds")
 # gdm_model <- readRDS("gdm_EFnestedness_LUI_input.Rds")
 
 # fullModelOnly = T : test only the full variable set
-# fullModelOnly = F : estimate model significance and variable importance/ significance using matrix permutation, backward elimination
+# fullModelOnly = F : estimate model significance and variable importance/ significance using matrix$
 # parallel = T
 # cores : number of cores to be registered for parralel processing
 # outFile : name of outfile
 
 varimp_output <- gdm::gdm.varImp(gdm_model, geo=F, parallel=T, nPerm =100, cores = 10)
 
-saveRDS(varimp_output, file = "gdm_permutation_out.Rds")
+saveRDS(varimp_output, file = "turnover_gdm_permutation_out.Rds")
 ```
 
 
