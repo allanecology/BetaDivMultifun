@@ -1,0 +1,71 @@
+---
+title: "plot GDM"
+author: "Noelle Schenk"
+date: "July 10, 2019"
+output: html_document
+---
+
+
+
+
+
+```{r}
+#############################
+#  PLOTTING I - SPLINES
+#
+vars_in_model <- c(funs,typeofbeta,which_beta_detail)
+# to plot each spline in a separate plot
+# plot(gdm_actual, plot.layout = c(3, 2), plot.color = "grey",main="GDM",sub= paste(vars_in_model, collapse=', '))
+
+# produce a "normal" plot ---------
+groesse <- 0.5 # size of text in plot
+pdf('../test.pdf',paper='a4r')
+par(xpd = T, mar = par()$mar + c(0,0,0,6))
+plot(exSplines[[1]][,1], exSplines[[2]][,1], type="l",
+     lwd=2, xlab="jtest", ylab="Partial Ecological Distance",ylim=c(0,0.65),main="GDM",sub= paste(vars_in_model, collapse=', '),
+     cex=groesse, cex.axis= groesse, cex.lab= groesse, cex.sub=groesse*1.5)
+for(i in 1:ncol(exSplines[[1]])){
+  lines(exSplines[[1]][,i], exSplines[[2]][,i], col=colr[i],lwd=2,lty=ltyp[i])
+}
+legend(1.05,0.675,legend_names, lty=ltyp,lwd=c(1.5,1.5),col=colr[1:ncol(exSplines[[1]])],cex = 0.5) 
+par(mar=c(5, 4, 4, 2) + 0.1)
+dev.off()
+
+#############################
+#  ESTIMATING P - VALUES
+#
+# takes too long on my computer yet. but I can change, so it doesn't do aic and only looks at the full model - much faster! todo
+varimp_output <- gdm.varImp(meltset, geo=F, parallel=T, nPerm =1) #, fullModelOnly=T)
+
+#############################
+#  SAVE PRODUCED DATA
+#
+# save current gdm_actual so I can get back to it
+namegdm <- paste(funs, typeofbeta, paste(which_beta_detail, collapse="_"), sep="_")
+assign(namegdm, gdm_actual)
+namegdm <- paste(namegdm, "VARIMP_OUTPUT", sep="_")
+assign(namegdm, varimp_output)
+rm(namegdm)
+
+#############################
+#  Plotting P - VALUES
+#
+legend_names <- gsub("_abund_","_ab_", legend_names)
+pvals <- mod1_pvals[[3]][,1]
+legend_names[which(as.vector(pvals)== 0)] <- paste(legend_names[which(as.vector(pvals)== 0)],'*')
+
+groesse <- 0.5 # size of text in plot
+pdf('../test.pdf',paper='a4r')
+par(xpd = T, mar = par()$mar + c(0,0,0,6))
+plot(exSplines[[1]][,1], exSplines[[2]][,1], type="l",
+     lwd=2, xlab="predictors", ylab="Partial Ecological Distance",ylim=c(0,0.65),main="GDM",
+     sub= "subtitle",
+     cex=groesse, cex.axis= groesse, cex.lab= groesse, cex.sub=groesse*1.5)
+for(i in 1:ncol(exSplines[[1]])){
+  lines(exSplines[[1]][,i], exSplines[[2]][,i], col=colr[i],lwd=2,lty=ltyp[i])
+}
+legend(1.05,0.675,legend_names, lty=ltyp,lwd=c(1.5,1.5),col=colr[1:ncol(exSplines[[1]])],cex = 0.5) 
+par(mar=c(5, 4, 4, 2) + 0.1)
+dev.off()
+```
+
