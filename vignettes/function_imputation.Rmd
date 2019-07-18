@@ -57,7 +57,8 @@ cleaning out variables with too many missing values
 visdat::vis_miss(befun, sort_miss = T)
 ```
 Values with over 21% missing data are excluded: mAMF hyphae, Parasitoid traps, Aggregation and pathogen infection.
-```{r}
+New : values with too many missings are not taken out any more. Instead, the imputation is done and the variables are taken out in case their imputation error is too high.
+```{r, eval=F}
 #USER : set treshold for missing values
 treshold <- 0.21
 t <- apply(befun, 2, function(x) sum(is.na(x)))
@@ -153,9 +154,7 @@ naloc <- is.na(befun)
 
 ### Imputation test
 Find and evaluate the imputation error of a single iteration and optimise the process for 50x imputation. (The code for the imputation loop is copied, just one imputation done.)
-```{r}
-# based on one-time imputation, take out : "amoA_AOA.2016" ,"amoA_AOB.2016",  "nxrA_NS", "16S_NB"
-#TODO : change back to plot and plotn only.
+```{r, eval = F}
 numcols <- numcols[which(!numcols %in% c("Plotn", "Plot"))]
 dataset <- befun[, !colnames(befun) %in% c("Plotn", "Plot"), with=F]
 
@@ -228,7 +227,12 @@ p<-ggplot2::ggplot(data=mimperr, ggplot2::aes(x=columns, y=errors)) +
   geom_hline(yintercept=0.25, linetype="dashed", color = "gray")
 cowplot::plot_grid(naniar::vis_miss(dataset, sort_miss = T), p, nrow = 2)
 ```
-The imputation error range is extremely small. The possible range is between 0 and 1, however here the range is between 0.143 and 0.151.
+The two variables Total pollinators and Parasitoid traps are removed, because the imputation error is too high and because they rely on diversity data (which is hard / not possible to impute).
+The other variables with imputation errors over 25% are left, because only 1-2 values are missing in those datasets.
+```{r}
+dataset[, c("Total.pollinators", "Parasitoid.traps") := NULL]
+```
+
 ```{r, eval=F}
 pdf("imputation_errors.pdf", paper = "a4")
 cowplot::plot_grid(naniar::vis_miss(dataset, sort_miss = T), p, nrow = 2)

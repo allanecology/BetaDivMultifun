@@ -15,7 +15,6 @@ cols <- RColorBrewer::brewer.pal(8,"Dark2")
 
 Requirements : 
 - imputed_grlfuns : the imputed functions data
-- 
 
 
 # Calculate mini-multifunctionalities
@@ -74,26 +73,25 @@ calculating mini-multifunctionality of both groups
 imputed_grlfuns[, "soilAmmoniaflxs" := multidiv(nce_a[, !"Plotn", with=F], sc="sd", cent=T)[,1]]
 imputed_grlfuns[, "soilNitrateflxs" := multidiv(nce_n[, !"Plotn", with=F], sc="sd", cent=T)[,1]]
 
-rm(nce_n); rm(nce_a); rm(nce); rm(M); rm(mr); rm(mp)
+rm(nce_n); rm(nce_a); rm(nce)
 imputed_grlfuns[,c("Urease", "DEA","Potential.nitrification2011", "Potential.nitrification2014","nifH","amoA_AOB.2011","amoA_AOA.2011", "amoA_AOB.2016", "amoA_AOA.2016", "nxrA_NS", "16S_NB") := NULL]
 ```
 
 # P_loss_comb
 ```{r}
-# plc <- imputed_grlfuns[, c("P_loss2011", "P_leaching_risk2015", "PRI", "PRI.2011")]
-#TODO : HERE : need to impute PRI.2011 to use it for P_loss_comb!
-plc <- imputed_grlfuns[, c("P_loss2011", "P_leaching_risk2015", "PRI")]
+plc <- imputed_grlfuns[, c("P_loss2011", "P_leaching_risk2015", "PRI", "PRI.2011")]
 # take mean of P_loss 2011 and leaching risk 2015
 plc[, "P_loss" := apply(plc[,c("P_loss2011", "P_leaching_risk2015")],1, mean)]
 plc[, c("P_loss2011", "P_leaching_risk2015") := NULL]
 # take mean of PRI
-# ...
+plc[, "PRIc" := apply(plc[, c("PRI", "PRI.2011")], 1, mean)]
+plc[, c("PRI", "PRI.2011") := NULL]
+data.table::setnames(plc, old = "PRIc", new = "PRI")
 
 imputed_grlfuns[, "P_loss_comb" := multidiv(plc, sc="sd", cent=TRUE)[,1]]
 
 rm(plc)
-imputed_grlfuns[, c("P_loss2011", "P_leaching_risk2015", "PRI") := NULL]
-# imputed_grlfuns[, c("P_loss2011", "P_leaching_risk2015", "PRI", "PRI.2011") := NULL]
+imputed_grlfuns[, c("P_loss2011", "P_leaching_risk2015", "PRI", "PRI.2011") := NULL]
 ```
 
 
@@ -102,7 +100,6 @@ selecting the functions which are used in analysis.
 ```{r}
 # select variables which are included in betadiv multifun analysis
 usedforBetadivMultifun <- usedforBetadivMultifun[!usedforBetadivMultifun == "Plot"]
-#TODO : will take out once the soilNflxs "daughters" are official
 usedforBetadivMultifun <- c(usedforBetadivMultifun[- which(usedforBetadivMultifun == "soilNflxs")], "soilAmmoniaflxs", "soilNitrateflxs")
 
 imputed_grlfuns <- imputed_grlfuns[, ..usedforBetadivMultifun]
@@ -135,6 +132,9 @@ Dissimilarity between plots is the euclidean distance - which is just a substrac
 ```{r}
 #TODO calculate dissimilarities for single functions and save as RDS for GDM.
 # see p. 65
+#HERE!
+
+
 ```
 
 
