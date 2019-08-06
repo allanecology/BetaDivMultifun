@@ -8,7 +8,6 @@ requires `analysis_nonpublic.R` to load soil covariates and raw functions for pl
 
 # Clean and load soil covariates
 This scripts loads and cleans soil covariates (also selects the plots for analysis). The output is then used (by other scripts) for 
-- gapfilling of functions
 - preparation for soil covariates for analysis
 
 
@@ -22,9 +21,6 @@ small_glsoil <- small_glsoil[, c("Plot", "Soil.type", "TWI")]
 # take out empty row at the end
 small_glsoil <- small_glsoil[Plot != "",]
 ```
-
-
-
 
 clean and merge covariate dataset
 ```{r}
@@ -48,8 +44,7 @@ glsoil[, c("PlotID", "Exploratory", "Plot") := NULL]
 ```
 
 ## Plot selection
-plots could be selected here, but it is better to exclude them in the subsequent scripts, because the imputation script is based on a version of glsoil including "HEG31", but the covariate calculation script is not.
-```{r, eval=F}
+```{r, eval=T}
 # take out the plots that I exclude from analysis
 glsoil <- glsoil[Plotn %in% plotNAset ,]
 ```
@@ -77,5 +72,3 @@ stype[, Soil.type := NULL]
 glsoil <- merge(glsoil, stype, by="Plotn", all=T)
 rm(stype)
 ```
-
-`glsoil` is used for functions imputation.

@@ -243,10 +243,9 @@ Store imputed grassland function dataset.
 saveRDS(Y, file="imputed_function_values.rds")
 # clean a bit
 imputed_grlfuns <- data.table::copy(Y)
-rm(befun); rm(befunbackup); rm(impvals); rm(corrbefun); rm(dataset); rm(imperr); rm(impvals)
+rm(befun); rm(befunbackup); rm(corrbefun); rm(dataset); rm(imperr); rm(impvals)
 rm(X); rm(Y); rm(p); rm(naloc); rm(mimperr)
-rm(i); rm(colname); rm(mindea); rm(mindung); rm(minno)
-rm(rowlocations); rm(numcols); rm(x); rm(y); rm(tres)
+rm(i); rm(colname); rm(rowlocations); rm(numcols); rm(x); rm(y); rm(tres)
 ```
 
 The multifunctionalities of imputed functions are calculated in another script. Current name "calc_multifun_from_imputed".
