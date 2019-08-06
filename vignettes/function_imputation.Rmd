@@ -6,44 +6,33 @@ output:
 ---
 
 This script : 
-- loads soil data
 - uses raw functions from the synthesis dataset (loaded with `analysis_nonpublic.R`)
 - performs gapfilling
 - saves the gapfilled dataset
 
 # Data
 The dataset used for gap filling is larger than the dataset used for the analysis. More variables enhance the performance of gapfilling.
+
+Note : Only use variables which are not used in the analysis. Otherwise, data can be circular.
 ```{r, eval=F}
 #USER : insert path to grassland function file and read in as grlfuns (uncomment line below)
 # raw_grlfuns <- data.table::fread("<pathto_grl_functions.csv>", header=T)
 source("analysis_nonpublic.R")
-source("clean_and_load_soil_covariates.Rmd")
 ```
 Grassland functions data used for gapfilling is stored in `raw_grlfuns`, selected variables according to info data. `raw_grlfuns` is loaded by `analysis_nonpublic.R`.
 
-It also relies on a soil information dataset, which is prepared by `clean_and_load_soil_covariates.Rmd`.
-
-Requires the plot set defined by diversity dataset with the set of included plots for analysis.
+Requires the plot set defined by diversity dataset with the final set of included plots for analysis. *Note* that this script removes an additional plot from the plot set. However, this does not matter for the performance of this imputation script.
 
 
 # Gap filling
-A Gap-filling of the functions dataset is performed, because many values are missing (NA). To enhance the predictions of the gapfilling, soil data is included. This introduces a bias, but reduces the imputation error. 
+A Gap-filling of the functions dataset is performed, because many values are missing (NA).
 
-Two variables are produced, impdat which contains the gapfilled dataset which will be used in further analysis as well as imp_err, which contains the imputation error automatically estimated by missForest. The imputed dataset is stored as rds file.
+Two variables are produced, `impdat` which contains the gapfilled dataset which will be used in further analysis as well as `imp_err`, which contains the imputation error automatically estimated by `missForest`. The imputed dataset is stored as .rds file.
 
 ## Data preparation
-Soil predictor data and Region is included to improve Gap filling. uncomment if not wanted!
-```{r}
-#USER : uncomment this block if soil information should not be included.
-remove <- unique(glsoil$Soil.type)
-glsoil[, (remove) := NULL]
-glsoil[, Soil.type := as.factor(Soil.type)] # soil type as factor
-rm(remove)
-```
 
 ```{r}
-befun <- merge(raw_grlfuns, glsoil, by="Plotn")
-befun[, Explo := as.factor(Explo)] # Region as a factor
+befun <- raw_grlfuns
 ```
 
 chosing the plot set
@@ -51,13 +40,13 @@ chosing the plot set
 befun <- befun[Plotn %in% plotNAset]
 ```
 
-
 cleaning out variables with too many missing values
 ```{r}
 visdat::vis_miss(befun, sort_miss = T)
 ```
-Values with over 21% missing data are excluded: mAMF hyphae, Parasitoid traps, Aggregation and pathogen infection.
-New : values with too many missings are not taken out any more. Instead, the imputation is done and the variables are taken out in case their imputation error is too high.
+Values with over 21% missing data could be excluded here (mAMF hyphae, Parasitoid traps, Aggregation, PRI.2011 and NaHCO3.Pi).
+
+Here, values with too many missings are not taken out yet. Instead, the imputation is done and the variables are only removed in case their imputation error is too high.
 ```{r, eval=F}
 #USER : set treshold for missing values
 treshold <- 0.21
@@ -67,7 +56,7 @@ befun <- befun[, !colnames(befun) %in% exclude, with=F]
 rm(t); rm(exclude); rm(treshold)
 ```
 
-If the missing plot from 16S, amoA_AOA.2016 & Co is taken out, 5 more functions can be included in the functions set.
+If the missing plot from 16S, amoA_AOA.2016 & Co is taken out, 3 more functions can be included in the functions set.
 ```{r}
 # befun[is.na(`16S_NB`), Plotn]
 # befun[is.na(amoA_AOA.2016), Plotn]
@@ -81,7 +70,6 @@ update the helper vector `plotNAset.rds` and take out the plot "HEG31"
 plotNAset <- plotNAset[-which(plotNAset == "HEG31")]
 saveRDS(plotNAset, "plotNAset.rds")
 ```
-
 
 
 ## Check Correlations
@@ -152,34 +140,6 @@ naloc <- is.na(befun)
 
 ## Imputation
 
-### Imputation test
-Find and evaluate the imputation error of a single iteration and optimise the process for 50x imputation. (The code for the imputation loop is copied, just one imputation done.)
-```{r, eval = F}
-numcols <- numcols[which(!numcols %in% c("Plotn", "Plot"))]
-dataset <- befun[, !colnames(befun) %in% c("Plotn", "Plot"), with=F]
-
-# run one imputation with missforest.
-require(data.table)
-returnobj <- perform_missforest_imputations(dataset = dataset, numcols = numcols, im=1)
-imperr <- returnobj$errors
-impvals <- returnobj$values
-rm(returnobj)
-```
-Visualise imputation results.
-```{r}
-barplot(height=imperr[[1]][,errors], names.arg = imperr[[1]][, columns])
-library(cowplot)
-p<-ggplot2::ggplot(data=imperr[[1]], ggplot2::aes(x=columns, y=errors)) +
-  ggplot2::geom_bar(stat="identity") +
-  theme(axis.text.x=element_text(color = "black", size=5, angle=30, vjust=.8, hjust=0.8)) +
-  geom_hline(yintercept=0.25, linetype="dashed", color = "gray")
-p
-```
-Need to take out Parasitoid traps, Potential nitrification (2011 and 2014) and total pollinators.
-
-
-### Imputation
-
 The imputation is repeated 50 times, and the mean of the imputed values is taken. 
 ```{r imputation, results="hide", eval=F}
 # 50 imputations
@@ -187,7 +147,7 @@ impvals <- list()
 imperr <- list()
 # based on one-time imputation, take out : "amoA_AOA.2016" ,"amoA_AOB.2016",  "nxrA_NS", "16S_NB"
 numcols <- numcols[which(!numcols %in% c("Plotn", "Plot"))]
-dataset <- befun[, !colnames(befun) %in% c("Plotn", "Plot"), with=F]
+dataset <- befun[, !colnames(befun) %in% c("Plotn", "Plot", "Explo"), with=F]
 
 for(i in 1:50){
   print(i)
@@ -271,13 +231,15 @@ for(i in 1:length(numcols)){
 dev.off()
 ```
 
-Take out soil variables again and store imputed grassland function dataset.
+Store imputed grassland function dataset.
 ```{r}
-# take out colnames of glsoil, except "Plotn"
-Y[, (colnames(glsoil)[!colnames(glsoil) %in% c("Plotn", "Soil.type")]) := NULL]
 saveRDS(Y, file="imputed_function_values.rds")
 # clean a bit
 imputed_grlfuns <- data.table::copy(Y)
+rm(befun); rm(befunbackup); rm(impvals); rm(corrbefun); rm(dataset); rm(imperr); rm(impvals)
+rm(X); rm(Y); rm(p); rm(naloc); rm(mimperr)
+rm(i); rm(colname); rm(mindea); rm(mindung); rm(minno)
+rm(rowlocations); rm(numcols); rm(x); rm(y); rm(tres)
 ```
 
 The multifunctionalities of imputed functions are calculated in another script. Current name "calc_multifun_from_imputed".
