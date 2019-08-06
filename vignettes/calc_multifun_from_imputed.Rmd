@@ -65,6 +65,7 @@ these two steps are separated steps. The correlation of AO and NO is based on co
 - ammonium oxidising group : AOA, AOB, urease (because this enzyme hydrolyses urea to ammonia and CO2)
 - nitrate oxidising group : NS, NB, nifH, potential nitrification, DEA
 ```{r}
+imputed_grlfuns[, "soilNflxs" := multidiv(nce[, !"Plotn", with=F], sc = "sd", cent = T)[,1]]
 nce_a <- nce[, .(Plotn, amoA_AOB, amoA_AOA, Urease)]
 nce_n <- nce[, .(Plotn, nxrA_NS, `16S_NB`, nifH, Potential.nitrification, DEA)]
 ```
@@ -79,19 +80,21 @@ imputed_grlfuns[,c("Urease", "DEA","Potential.nitrification2011", "Potential.nit
 
 # P_loss_comb
 ```{r}
-plc <- imputed_grlfuns[, c("P_loss2011", "P_leaching_risk2015", "PRI", "PRI.2011")]
-# take mean of P_loss 2011 and leaching risk 2015
-plc[, "P_loss" := apply(plc[,c("P_loss2011", "P_leaching_risk2015")],1, mean)]
-plc[, c("P_loss2011", "P_leaching_risk2015") := NULL]
-# take mean of PRI
-plc[, "PRIc" := apply(plc[, c("PRI", "PRI.2011")], 1, mean)]
-plc[, c("PRI", "PRI.2011") := NULL]
-data.table::setnames(plc, old = "PRIc", new = "PRI")
+#TODO : P_loss_comb is excluded at the moment, only PRIcomb and P_leaching_risk_comb are used
 
-imputed_grlfuns[, "P_loss_comb" := multidiv(plc, sc="sd", cent=TRUE)[,1]]
-
-rm(plc)
-imputed_grlfuns[, c("P_loss2011", "P_leaching_risk2015", "PRI", "PRI.2011") := NULL]
+# plc <- imputed_grlfuns[, c("P_loss2011", "P_leaching_risk2015", "PRI", "PRI.2011")]
+# # take mean of P_loss 2011 and leaching risk 2015
+# plc[, "P_loss" := apply(plc[,c("P_loss2011", "P_leaching_risk2015")],1, mean)]
+# plc[, c("P_loss2011", "P_leaching_risk2015") := NULL]
+# # take mean of PRI
+# plc[, "PRIc" := apply(plc[, c("PRI", "PRI.2011")], 1, mean)]
+# plc[, c("PRI", "PRI.2011") := NULL]
+# data.table::setnames(plc, old = "PRIc", new = "PRI")
+# 
+# imputed_grlfuns[, "P_loss_comb" := multidiv(plc, sc="sd", cent=TRUE)[,1]]
+# 
+# rm(plc)
+# imputed_grlfuns[, c("P_loss2011", "P_leaching_risk2015", "PRI", "PRI.2011") := NULL]
 ```
 
 
@@ -100,7 +103,9 @@ selecting the functions which are used in analysis.
 ```{r}
 # select variables which are included in betadiv multifun analysis
 usedforBetadivMultifun <- usedforBetadivMultifun[!usedforBetadivMultifun == "Plot"]
-usedforBetadivMultifun <- c(usedforBetadivMultifun[- which(usedforBetadivMultifun == "soilNflxs")], "soilAmmoniaflxs", "soilNitrateflxs")
+#TODO : update
+# usedforBetadivMultifun <- c(usedforBetadivMultifun[- which(usedforBetadivMultifun == "soilNflxs")], "soilAmmoniaflxs", "soilNitrateflxs")
+usedforBetadivMultifun <- c(usedforBetadivMultifun[- which(usedforBetadivMultifun %in% c("PRI", "PRI.2011", "P_leaching_risk2015", "P_loss2011"))], "soilAmmoniaflxs", "soilNitrateflxs")
 
 imputed_grlfuns <- imputed_grlfuns[, ..usedforBetadivMultifun]
 #TODO : save functions?
