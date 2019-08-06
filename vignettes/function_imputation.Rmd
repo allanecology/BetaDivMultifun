@@ -2,7 +2,7 @@
 title: "Functions imputation"
 output:
   pdf_document: default
-  html_notebook: default
+  html_document: default
 ---
 
 This script : 
@@ -141,14 +141,17 @@ naloc <- is.na(befun)
 ## Imputation
 
 The imputation is repeated 50 times, and the mean of the imputed values is taken. 
-```{r imputation, results="hide", eval=F}
+
+```{r}
 # 50 imputations
 impvals <- list()
 imperr <- list()
 # based on one-time imputation, take out : "amoA_AOA.2016" ,"amoA_AOB.2016",  "nxrA_NS", "16S_NB"
 numcols <- numcols[which(!numcols %in% c("Plotn", "Plot"))]
 dataset <- befun[, !colnames(befun) %in% c("Plotn", "Plot", "Explo"), with=F]
+```
 
+```{r imputation, results="hide", eval=F}
 for(i in 1:50){
   print(i)
   current <- missForest::missForest(dataset, variablewise = T)
@@ -169,9 +172,13 @@ rm(current); rm(i); rm(mindea); rm(minno); rm(mindung)
 # USER : may change filename
 saveRDS(impvals, file="raw_imputed_function_values_complete.rds")
 saveRDS(imperr, file = "raw_imputed_function_errors_complete.rds")
-# impvals <- readRDS("raw_imputed_function_values_complete.rds")
-# imperr <- readRDS("raw_imputed_function_errors_complete.rds")
 ```
+
+```{r}
+impvals <- readRDS("raw_imputed_function_values_complete.rds")
+imperr <- readRDS("raw_imputed_function_errors_complete.rds")
+```
+
 
 Check imputation error
 ```{r}
