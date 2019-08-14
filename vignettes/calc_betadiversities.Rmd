@@ -163,6 +163,7 @@ lichens <- autotroph[Species %in% lichenspecies,]
 # sum(length(unique(plants$Species)), length(unique(lichens$Species))) # check if the sum of species is 463 to be sure to have all autotroph species
 
 # calculate the mean of all value (species presence/ absence). If it is not zero, the species was present in at least one year and the value can be set to 1.
+#TODO :HERE check the if a plot is missing - remove year thing. 
 plants <- aggregate(value ~ Species + Plot, plants, function(x) mean(x, na.rm=T))
 plants <- data.table::data.table(plants)
 # nrow(plants) == 344*150 # TRUE : there are 344 species per plot in the new dataset
