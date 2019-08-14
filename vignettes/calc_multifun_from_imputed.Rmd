@@ -39,7 +39,7 @@ based on clustering and biology:
 these two steps are separated steps. The correlation of AO and NO is based on co-occurrence.
 
 - ammonium oxidising group : AOA, AOB, urease (because this enzyme hydrolyses urea to ammonia and CO2)
-- nitrate oxidising group : NS, NB, nifH, DEA
+- nitrate oxidising group : NS, NB, nifH, nitrate.production.availability (inverted DEA)
 - potential nitrification is a separate process
 
 ## soilNitrateflxs
