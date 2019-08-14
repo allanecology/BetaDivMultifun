@@ -117,9 +117,9 @@ negative <- colnames(corrbefun)[which(corrbefun[, lapply(.SD, function(x) min(x,
 ```
 remove negative values - shift whole vector up.
 ```{r}
-# DEA
-mindea <- min(befun$DEA, na.rm=T)
-befun$DEA <- befun$DEA + abs(mindea)
+# nitrate.production.availability (inverted DEA)
+mindea <- min(befun$nitrate.production.availability, na.rm=T)
+befun$nitrate.production.availability <- befun$nitrate.production.availability + abs(mindea)
 # NO3.2014
 minno <- min(befun$NO3.2014, na.rm=T)
 befun$NO3.2014 <- befun$NO3.2014 + abs(minno)
@@ -160,7 +160,7 @@ for(i in 1:50){
   # re-transform the numeric variables
   current[, (numcols) := lapply(.SD, function(x) (exp(x)-1)), .SDcols = numcols]
   # re-transform the negative values
-  current$DEA <- current$DEA - abs(mindea)
+  current$nitrate.production.availability <- current$nitrate.production.availability - abs(mindea)
   current$NO3.2014 <- current$NO3.2014 - abs(minno)
   current$dung.removal <- current$dung.removal - abs(mindung)
   # add back the "Plotn" column which was taken out for imputation
@@ -245,7 +245,7 @@ saveRDS(Y, file="imputed_function_values.rds")
 imputed_grlfuns <- data.table::copy(Y)
 rm(befun); rm(befunbackup); rm(corrbefun); rm(dataset); rm(imperr); rm(impvals)
 rm(X); rm(Y); rm(p); rm(naloc); rm(mimperr)
-rm(i); rm(colname); rm(rowlocations); rm(numcols); rm(x); rm(y); rm(tres)
+rm(numcols); rm(tres)
 ```
 
 The multifunctionalities of imputed functions are calculated in another script. Current name "calc_multifun_from_imputed".
