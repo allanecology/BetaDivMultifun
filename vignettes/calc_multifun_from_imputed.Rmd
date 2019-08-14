@@ -30,31 +30,7 @@ imputed_grlfuns[, c("beta_Glucosidase", "N_Acetyl_beta_Glucosaminidase", "Xylosi
 rm(sce)
 ```
 
-## soilNflxs
-Enzymes related to soil N. A measure of soil N cycling with enzyme activities and functional gene abundances
-
-amoA_AOB and A are from both 2011 and 2016, took the mean of both years.
-```{r}
-nce <- imputed_grlfuns[,c("Plotn", "Urease", "DEA","Potential.nitrification2011", "Potential.nitrification2014","nifH","amoA_AOB.2011","amoA_AOA.2011", "amoA_AOB.2016", "amoA_AOA.2016", "nxrA_NS", "16S_NB")]
-# take mean of multi-year-measurements
-nce[, "amoA_AOB" := apply(nce[,c("amoA_AOB.2011", "amoA_AOB.2016")],1, mean)]
-nce[, "amoA_AOA" := apply(nce[,c("amoA_AOA.2011", "amoA_AOA.2016")],1, mean)]
-nce[, "Potential.nitrification" := apply(nce[, c("Potential.nitrification2014", "Potential.nitrification2011")], 1, mean)]
-nce[, c("amoA_AOB.2011", "amoA_AOB.2016", "amoA_AOA.2011", "amoA_AOA.2016", "Potential.nitrification2014", "Potential.nitrification2011") := NULL]
-```
-There are two steps of soilNflxs
-```{r, eval=T}
-M <- Hmisc::rcorr(as.matrix(nce[, !"Plotn", with=F]), type = "spearman")
-mr <- M$r
-mp <- M$P
-mp[mp > 0.05] <- 0 # remove nonsignificant at 5% level
-# library("PerformanceAnalytics")
-# chart.Correlation(nce[, !"Plotn", with=F], histogram=T, pch=19)
-corrplot::corrplot(mr,type="lower",addCoef.col = "black",method="color",diag=F, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.6, order = "hclust")
-```
-```{r}
-rm(M); rm(mr); rm(mp)
-```
+## about soil processes related to N
 
 based on clustering and biology:
 - ammonium is oxidised by bacteria and archaea (AOB, AOA)
@@ -63,20 +39,36 @@ based on clustering and biology:
 these two steps are separated steps. The correlation of AO and NO is based on co-occurrence.
 
 - ammonium oxidising group : AOA, AOB, urease (because this enzyme hydrolyses urea to ammonia and CO2)
-- nitrate oxidising group : NS, NB, nifH, potential nitrification, DEA
-```{r}
-imputed_grlfuns[, "soilNflxs" := multidiv(nce[, !"Plotn", with=F], sc = "sd", cent = T)[,1]]
-nce_a <- nce[, .(Plotn, amoA_AOB, amoA_AOA, Urease)]
-nce_n <- nce[, .(Plotn, nxrA_NS, `16S_NB`, nifH, Potential.nitrification, DEA)]
-```
-calculating mini-multifunctionality of both groups
-```{r}
-imputed_grlfuns[, "soilAmmoniaflxs" := multidiv(nce_a[, !"Plotn", with=F], sc="sd", cent=T)[,1]]
-imputed_grlfuns[, "soilNitrateflxs" := multidiv(nce_n[, !"Plotn", with=F], sc="sd", cent=T)[,1]]
+- nitrate oxidising group : NS, NB, nifH, DEA
+- potential nitrification is a separate process
 
-rm(nce_n); rm(nce_a); rm(nce)
-imputed_grlfuns[,c("Urease", "DEA","Potential.nitrification2011", "Potential.nitrification2014","nifH","amoA_AOB.2011","amoA_AOA.2011", "amoA_AOB.2016", "amoA_AOA.2016", "nxrA_NS", "16S_NB") := NULL]
+## soilNitrateflxs
+It could be that nitrospira and nitrobacter have slightly different habitat preferences --> sum their abundance as 'nitrite-oxidising functional gene abundance'. 
+
+Inversion of DEA such that functions "point to same functional direction".
+```{r}
+nce <- imputed_grlfuns[,c("Plotn", "nitrate.production.availability","nifH", "nxrA_NS", "16S_NB")]
+# sum abundances of nitrite oxidising functional genes
+nce[, "nitOx_fga" := nxrA_NS + `16S_NB`]
+nce[, c("nxrA_NS", "16S_NB") := NULL]
+
+# mini-multifunctionality
+imputed_grlfuns[, "soilNitrateflxs" := multidiv(nce[, !"Plotn", with=F], sc="sd", cent=T)[,1]]
+rm(nce)
 ```
+
+## soilAmmoniaflxs
+```{r}
+nce <- imputed_grlfuns[, c("Plotn", "Urease","amoA_AOB.2011","amoA_AOA.2011", "amoA_AOB.2016", "amoA_AOA.2016")]
+# take mean of multi-year-measurements
+nce[, "amoA_AOB" := apply(nce[,c("amoA_AOB.2011", "amoA_AOB.2016")],1, function(x) mean(x, na.rm = T))]
+nce[, "amoA_AOA" := apply(nce[,c("amoA_AOA.2011", "amoA_AOA.2016")],1, function(x) mean(x, na.rm = T))]
+nce[, "amm-ox_funct_gene_abund" := amoA_AOB + amoA_AOA]
+nce[, c("amoA_AOB", "amoA_AOA", "amoA_AOB.2011", "amoA_AOB.2016", "amoA_AOA.2011", "amoA_AOA.2016") := NULL]
+imputed_grlfuns[, "soilAmmoniaflxs" := multidiv(nce[, !"Plotn", with=F], sc="sd", cent=T)[,1]]
+rm(nce)
+```
+
 
 # P_loss_comb
 ```{r}
