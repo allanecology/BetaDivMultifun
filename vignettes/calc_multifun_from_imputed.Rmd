@@ -60,44 +60,22 @@ rm(nce)
 ## soilAmmoniaflxs
 ```{r}
 nce <- imputed_grlfuns[, c("Plotn", "Urease","amoA_AOB.2011","amoA_AOA.2011", "amoA_AOB.2016", "amoA_AOA.2016")]
-# take mean of multi-year-measurements
-nce[, "amoA_AOB" := apply(nce[,c("amoA_AOB.2011", "amoA_AOB.2016")],1, function(x) mean(x, na.rm = T))]
-nce[, "amoA_AOA" := apply(nce[,c("amoA_AOA.2011", "amoA_AOA.2016")],1, function(x) mean(x, na.rm = T))]
-nce[, "amm-ox_funct_gene_abund" := amoA_AOB + amoA_AOA]
-nce[, c("amoA_AOB", "amoA_AOA", "amoA_AOB.2011", "amoA_AOB.2016", "amoA_AOA.2011", "amoA_AOA.2016") := NULL]
+# sum per year and take the mean of 2 years after
+nce[, "amOX_fga2011" := amoA_AOB.2011 + amoA_AOA.2011]
+nce[, "amOX_fga2016" := amoA_AOB.2016 + amoA_AOA.2016]
+nce[, "amOX_fga" := apply(nce[,c("amOX_fga2011", "amOX_fga2016")],1, function(x) mean(x, na.rm = T))]
+nce[, c("amOX_fga2011", "amOX_fga2016", "amoA_AOB.2011", "amoA_AOB.2016", "amoA_AOA.2011", "amoA_AOA.2016") := NULL]
 imputed_grlfuns[, "soilAmmoniaflxs" := multidiv(nce[, !"Plotn", with=F], sc="sd", cent=T)[,1]]
 rm(nce)
 ```
-
-
-# P_loss_comb
-```{r}
-#TODO : P_loss_comb is excluded at the moment, only PRIcomb and P_leaching_risk_comb are used
-
-# plc <- imputed_grlfuns[, c("P_loss2011", "P_leaching_risk2015", "PRI", "PRI.2011")]
-# # take mean of P_loss 2011 and leaching risk 2015
-# plc[, "P_loss" := apply(plc[,c("P_loss2011", "P_leaching_risk2015")],1, mean)]
-# plc[, c("P_loss2011", "P_leaching_risk2015") := NULL]
-# # take mean of PRI
-# plc[, "PRIc" := apply(plc[, c("PRI", "PRI.2011")], 1, mean)]
-# plc[, c("PRI", "PRI.2011") := NULL]
-# data.table::setnames(plc, old = "PRIc", new = "PRI")
-# 
-# imputed_grlfuns[, "P_loss_comb" := multidiv(plc, sc="sd", cent=TRUE)[,1]]
-# 
-# rm(plc)
-# imputed_grlfuns[, c("P_loss2011", "P_leaching_risk2015", "PRI", "PRI.2011") := NULL]
-```
-
 
 # Select functions
 selecting the functions which are used in analysis.
 ```{r}
 # select variables which are included in betadiv multifun analysis
 usedforBetadivMultifun <- usedforBetadivMultifun[!usedforBetadivMultifun == "Plot"]
-#TODO : update
-# usedforBetadivMultifun <- c(usedforBetadivMultifun[- which(usedforBetadivMultifun == "soilNflxs")], "soilAmmoniaflxs", "soilNitrateflxs")
-usedforBetadivMultifun <- c(usedforBetadivMultifun[- which(usedforBetadivMultifun %in% c("PRI", "PRI.2011", "P_leaching_risk2015", "P_loss2011"))], "soilAmmoniaflxs", "soilNitrateflxs")
+#TODO : take out as soon as seed depletion is imputed
+usedforBetadivMultifun <- usedforBetadivMultifun[!usedforBetadivMultifun == "seed.depletion"]
 
 imputed_grlfuns <- imputed_grlfuns[, ..usedforBetadivMultifun]
 #TODO : save functions?
@@ -111,7 +89,7 @@ Of the non-factor columns only
 M <- cor(imputed_grlfuns[, !colnames(imputed_grlfuns) %in% "Plotn", with=F], use="complete.obs")
 
 # imputed_grlfun_corrplot1
-corrplot::corrplot(M,type="lower",addCoef.col = "black",method="color",diag=F, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.6)
+corrplot::corrplot(M,type="lower",addCoef.col = "black",method="color",diag=T, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.6, order = "hclust")
 
 # imputed_grlfun_corrplot2
 corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F)
@@ -126,12 +104,33 @@ corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F, main 
 This part of the script prepares the single function dissimilarities for the GDM models. Each function is fitted individually.
 
 Dissimilarity between plots is the euclidean distance - which is just a substraction in the 1D case.
+
+For each function : build dissimilarity matrix (euclidean distance) and then center & normalise
 ```{r}
-#TODO calculate dissimilarities for single functions and save as RDS for GDM.
-# see p. 65
-#HERE!
+# get a reference Table with the Plot combinations
+singleEFdist <- data.table::data.table(t(combn(imputed_grlfuns$Plotn, 2)))
+data.table::setnames(singleEFdist, old = c("V1", "V2"), new = c("Var1", "Var2"))
 
+for(f in usedforBetadivMultifun[!usedforBetadivMultifun == "Plotn"]){
+  # diffname <- paste("sEFdist", f, sep = "_")
+  # print(diffname)
+  small <- data.frame(imputed_grlfuns[, .(Plotn, get(f))])
+  rownames(small) <- small$Plotn
+  small$Plotn <- NULL
+  diffsmall <- vegan::vegdist(small, method = "euclid")
+  diffsmall <- as.matrix(diffsmall)
+  diffsmall[!lower.tri(diffsmall)] <- NA
+  diffsmall <- reshape2::melt(diffsmall, value.name = "X")
+  diffsmall <- diffsmall[!is.na(diffsmall[, 3]),]
+  diffsmall <- data.table::data.table(diffsmall)
+  diffsmall[, eval(f) := scale(X, center = T)]
+  diffsmall[, X := NULL]
+  # assign(diffname, diffsmall)
+  singleEFdist <- merge(singleEFdist, diffsmall, by = c("Var1", "Var2"), all.y = T)
+  # saveRDS(diffsmall, file = paste(diffname, ".rds", sep = ""))
+}
 
+saveRDS(singleEFdist, "singleEFdist.rds")
 ```
 
 
@@ -271,7 +270,7 @@ saveRDS(EFnestednessQ, "EFnestednessQ.rds")
 ```
 
 ```{r}
-rm(nimputed_grlfuns); rm(imputed_grlfuns); rm(pa_grlfuns); rm(paq_grlfuns); rm(raw_grlfuns)
+rm(nimputed_grlfuns); rm(imputed_grlfuns); rm(pa_grlfuns); rm(raw_grlfuns)
 rm(include)
 rm(p); rm(cols); rm(tres); rm(threshold); rm(upper); rm(upperq); rm(x)
 ```
