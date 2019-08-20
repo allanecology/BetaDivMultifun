@@ -9,6 +9,7 @@ note : packages used : gdm, car, geosphere, viridis and colrobrewer
 # Dependencies
 This script relies on loading the following datasets:
 - EFmaster : dissimilarities of functions
+- singleEFdist : dissimilarities of single functions
 - masterbeta : dissimilarities of trophic groups
 - LUI : LUI (and components) and delta LUI (and delta components)
 - predictors : values of predictors (plot isolation, geographic position)
@@ -91,7 +92,7 @@ rm(foreuclid); rm(forstand); rm(i)
 
 # Check Correlation
 ```{r}
-m <- cor(fordistpreds[, -c(1:2)])
+m <- cor(fordistpreds[, -c(1:2, 36)])
 corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", diag = F, tl.srt = 50, tl.col = "black", order = "hclust", tl.cex = 0.4, cl.cex = 0.3, number.cex = 0.3)
 ```
 Variance inflation
@@ -101,10 +102,10 @@ mod <- paste(funs, " ~ " ,paste(colnames(fordistpreds)[!colnames(fordistpreds) %
 
 m1 <- lm(formula = formula(mod), data = fordistpreds)
 vif_output <- car::vif(m1)
-vif_output[vif_output > 5]
-#TODO : I have variable inflation of over 5 in 4 variables - most probably between nestedness and turnover components!
-# suggest : keep that in mind - for soilfungi decomposers, pathotroph, ... we can not really tell if turnover or nestedness...
+vif_output[which(vif_output[, "GVIF"] > 5),]
 ```
+We will leave the inflated variables in the dataset, but perform a sensitivity analysis later. --> The inflated variables are not distinguishable, maybe the effect is partitioned among them.
+
 
 # Prepare GDM Table
 GDM requires a well-defined table. Below, the names of the columns and their content are listed:
