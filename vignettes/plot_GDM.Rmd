@@ -14,14 +14,14 @@ suppressPackageStartupMessages(library(cowplot)) # needs to be loaded in order t
 
 Load data
 ```{r}
-# gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_LUI_input.Rds", sep = ""))
+gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_LUI_input.Rds", sep = ""))
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_input.Rds", sep = ""))
-gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFturnover_LUI_input.Rds", sep = ""))
+# gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFturnover_LUI_input.Rds", sep = ""))
 gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
 exSplines <- gdm::isplineExtract(gdm_output)
 
-# gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_LUI_permutation.Rds", sep = ""))
-gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_permutation.Rds", sep = ""))
+gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_LUI_permutation.Rds", sep = ""))
+# gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_permutation.Rds", sep = ""))
 ```
 ```{r}
 # take maximum of each variable for barplot
@@ -43,21 +43,24 @@ create results table
 ```{r}
 restab <- data.table::data.table("names" = names(sign), "sign" = sign)
 del <- data.table::data.table("names" = names(maxsplines), "maxsplines" = maxsplines)
-restab <- merge(restab, del, by = "names"); rm(del)
+restab <- data.table::data.table(merge(restab, del, by = "names")); rm(del)
 # get bios
 bios <- grep(paste(plotsequence_bio, collapse = "|"), names(maxsplines), value = T)
-restab[which(names %in% bios), type := "bio"]
+restab[bios, type := "bio"]
 # get abios
 abios <- grep(paste(plotsequence_bio, collapse = "|"), names(maxsplines), value = T, invert = T)
-restab[which(names %in% abios), type := "abio"]
+restab[abios, type := "abio"]
 # get nestedness
 sne <- grep("sne", names(maxsplines), value = T)
-restab[which(names %in% sne), component := "nestedness"]
+restab[sne, component := "nestedness"]
 # get turnover
 to <- grep("sim", names(maxsplines), value = T)
-restab[which(names %in% to), component := "turnover"]
+restab[to, component := "turnover"]
 # get only significant
 restab[, onlysign := (1-sign) * maxsplines]
+
+# add nice names
+restab <- data.table::data.table(merge(nicenames, restab, by = "names"))
 ```
 colors for plotting (21), 16 in the bio plot
 ```{r}
@@ -74,7 +77,7 @@ names(varcols) <- restab$names
 
 
 simple plot
-```{r}
+```{r, eval = F}
 # to plot each spline in a separate plot
 plot(gdm_output, plot.layout = c(3, 2), plot.color = "grey", main="GDM")
 ```
@@ -83,19 +86,29 @@ plot(gdm_output, plot.layout = c(3, 2), plot.color = "grey", main="GDM")
 # Multipanel Barplot
 
 ```{r}
-m <- "EFnestedness LUI model"
-p<-ggplot(data=restab[type == "bio"], aes(x=names, y=onlysign, fill = names)) +
-  geom_bar(stat="identity", color = "black", linetype = rep(c("solid", "dashed"), 16)) + coord_flip() + scale_fill_manual(values = varcols) +
-  ggtitle(m) + ylim(0, 0.6) + theme(legend.position = "none")
+p<-ggplot(data = restab[type == "bio"], aes(x=nicenames, y=onlysign, fill = names)) +
+  geom_bar(stat="identity", color = "black", linetype = rep(c("solid", "dashed"), 16)) + 
+  coord_flip() + 
+  scale_fill_manual(values = varcols) +
+  ylim(0, 0.4) + 
+  theme(legend.position = "none", axis.title = element_blank(),
+        axis.text.y = element_text(size=9, angle = 0),
+        plot.margin = margin(l = 50))
+# aes(x=stringr::str_wrap(nicenames, 10), y=onlysign, fill = names))
+
 # dashed or dotted or solid
 # https://stackoverflow.com/questions/39898870/ggplot-geom-bar-customize-by-linetype-and-fill
 # geom_errorbarh() for horizontal error bars
 # https://www.heropatterns.com/
-q <- ggplot(data = restab[type == "abio"], aes(x=names, y=onlysign, fill = names)) +
-  geom_bar(stat="identity", color = "black", linetype = "solid") + coord_flip() + scale_fill_manual(values = varcols) +
-  ggtitle(m) + ylim(0, 0.6) + theme(legend.position = "none")
+q <- ggplot(data = restab[type == "abio"], aes(x=nicenames, y=onlysign, fill = names)) +
+  geom_bar(stat="identity", color = "black", linetype = "solid") + 
+  coord_flip() + 
+  scale_fill_manual(values = varcols) +
+  ylim(0, 0.4) + 
+  theme(legend.position = "none", axis.title = element_blank(),
+        axis.text.y = element_text(size=9))
 
-plot_grid(p, q, labels = c('A', 'B'), label_size = 12)
+plot_grid(p, q, labels = c('A', 'B'), label_size = 12, nrow = 2, rel_heights = c(0.8, 0.2), align = "v")
 ```
 without significances
 ```{r}
