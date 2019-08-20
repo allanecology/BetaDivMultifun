@@ -108,8 +108,8 @@ rm(pc_glsoil); rm(pca_from_glsoil)
 ## Cleaning for GDM
 ```{r}
 # prepare for gdm (the desired format)
-edis_glsoil <- as.matrix(edis_glsoil)
-edis_glsoil <- cbind(row.names(edis_glsoil), edis_glsoil)
+# edis_glsoil <- as.matrix(edis_glsoil)
+# edis_glsoil <- cbind(row.names(edis_glsoil), edis_glsoil)
 
 # bring to long format for GDM and add to edis_glsoil table
 edis_glsoil <- as.matrix(edis_glsoil)
