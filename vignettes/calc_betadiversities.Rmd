@@ -152,18 +152,27 @@ vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 # no, different plots are missing.
 rm(testplotpresence)
 ```
+only run if `plotNAset` is already known.
+```{r, eval = F}
+# are the same plots missing in all years?
+testplotpresence <- unique(autotroph[Plot %in% plotNAset, .(Year, Plot)])
+vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
+# no, different plots are missing.
+rm(testplotpresence)
+```
 If a plant species is present in at least 1 year, it is considered to be present. Underlying assumption : plant species composition is quite stable, therefore it is representative to assess their presence in a large time span.
 
-Test : check how different the species composition is if considering all years.
+If a plant species is missing in a year, rather the year than the plot is removed. Underlying assumption : if a plot is missing a year, the diversity was not measured as many times as in the other plots.
+
+Years 2009, 2010, 2011, 2015, 2016 are complete.
 
 Assessing presence of plant species in all years. Lichen and Bryophyte species are taken directly from year 2009, as this is the only year.
 ```{r}
+autotroph <- autotroph[Year %in% c("2009", "2010", "2011", "2015", "2016")]
 plants <- autotroph[!Species %in% lichenspecies, ]
 lichens <- autotroph[Species %in% lichenspecies,]
-# sum(length(unique(plants$Species)), length(unique(lichens$Species))) # check if the sum of species is 463 to be sure to have all autotroph species
-
+# if a species is present in at least one year, it is considered to be present
 # calculate the mean of all value (species presence/ absence). If it is not zero, the species was present in at least one year and the value can be set to 1.
-#TODO :HERE check the if a plot is missing - remove year thing. 
 plants <- aggregate(value ~ Species + Plot, plants, function(x) mean(x, na.rm=T))
 plants <- data.table::data.table(plants)
 # nrow(plants) == 344*150 # TRUE : there are 344 species per plot in the new dataset
@@ -183,7 +192,7 @@ hist(autotroph$value)
 hist(lichens$value)
 hist(plants$value)
 ```
-Although working with a range of 9 years, still many plant species are not present in many plots. This indicates that the assumption of stable autotroph species was correct.
+Although working with a range of 5 years, still many plant species are not present in many plots. This indicates that the assumption of stable autotroph species was correct.
 
 ```{r}
 # remove lichens and plants, not used any more
@@ -227,6 +236,12 @@ visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
 ```
 Snails were only measured in 134 plots. They contain 39 species. Insects were measured in 139 plots, they contain 401 species.
+```{r, eval = F}
+# only run if the plot set is known already
+testplotpresence <- unique(herbivore[Plot %in% plotNAset, .(Year, Plot)])
+visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
+rm(testplotpresence)
+```
 
 ```{r, eval=F}
 length(unique(herbivore[Year == "2008", Species]))
@@ -249,11 +264,12 @@ spdiv <- spdiv[!Trophic_level == "herbivore"]
 
 
 
-## Omnivore
+## Omnivore REMOVED
 Consists of arthropods dataset from 2008, ants dataset from 2014_2015, and snails dataset from 2017.
-```{r}
+```{r, eval = F}
 omnivore <- spdiv[Trophic_level == "omnivore"]
 testplotpresence <- unique(omnivore[, .(Year, Plot)])
+# testplotpresence <- unique(omnivore[Plot %in% plotNAset, .(Year, Plot)])
 vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
 ```
@@ -265,25 +281,25 @@ Year       |    2008      | 14 15  |  2017   | all   | 08 & 17   |
 no Plots   |     139      |  110   |  134    |  97   |  124      |
 no Species |     14       |  20    |  21     |  55   |  35       |
 
-```{r}
+```{r, eval = F}
 # length(intersect(omnivore[Year == "2008", Plot], omnivore[Year == "2017", Plot]))
 # length(intersect(intersect(omnivore[Year == "2008", Plot], omnivore[Year == "2017", Plot]), omnivore[Year == "2014_2015", Plot]))
 ```
 Only took the arthropod dataset, as snails and ants have too many missing plots.
-```{r}
+```{r, eval = F}
 omnivore <- omnivore[Year == "2008", .(Species, Plot, value)]
 # omnivore_ant <- omnivore[Year == "2014_2015", .(Species, Plot, value)]
 # omnivore_snail <- omnivore[Year == "2017", .(Species, Plot, value)]
 nrow(omnivore) == 139 * 14 # expected number of rows present
 spdiv <- spdiv[!Trophic_level == "omnivore"]
-#TODO : many plots do not contain any species - take out?
+# many plots do not contain any species - take out
 test <- aggregate(value ~ Plot, omnivore, sum)
 barplot(height = test$value)
 abline(h = mean(test$value), col = "red")
 abline(h = median(test$value), col = "green")
 
 print(test$Plot[which(test$value == 0)])
-#TODO : take out for the moment
+#take out for the moment
 trlevels <- trlevels[-which(trlevels == "omnivore")]
 rm(omnivore)
 ```
@@ -294,6 +310,7 @@ rm(omnivore)
 ```{r}
 secondary.consumer <- spdiv[Trophic_level == "secondary.consumer"]
 testplotpresence <- unique(secondary.consumer[, .(Year, Plot)])
+# testplotpresence <- unique(secondary.consumer[Plot %in% plotNAset, .(Year, Plot)])
 vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
 ```
@@ -306,7 +323,7 @@ no Species | 170   |   4  |
 
 Species set does not overlap.
 
-* **Note** : possibly, set from 2011 was not complete neither? But if the same error as in all insect datasets --> selecting plots from 2008 will solve the issue. In case 2011 Data is used, check this!
+**Note** : possibly, set from 2011 was not complete neither? But if the same error as in all insect datasets --> selecting plots from 2008 will solve the issue. In case 2011 Data is used, check this!
 ```{r, eval=F}
 # length(unique(secondary.consumer[Year == "2008", Species]))
 any(unique(secondary.consumer[Year == "2008", Species]) %in% unique(secondary.consumer[Year == "2011", Species]))
@@ -692,7 +709,7 @@ abline(h = median(bh_overv$value), col = "green")
 ```
 Most plots contain 3 species. 5 Plots do not contain ANY species! Need to be removed from the dataset.
 ```{r}
-#TODO : exclude plots with zero species until we find a solution. 
+# exclude plots with zero species
 # Problem : betadiversity can't be calculated on plots without species.
 zeroplots <- bh_overv$Plot[which(bh_overv$value == 0)]
 belowground.herbivore <- belowground.herbivore[!Plot %in% zeroplots]
@@ -732,7 +749,7 @@ abline(h = median(bp_overv$value), col = "green")
 ```
 There is 1 plot in belowground predators which does not contain any species.
 ```{r}
-#TODO : find out how to handle plots without species
+# take out plot without species
 zeroplots <- bp_overv$Plot[which(bp_overv$value == 0)]
 belowground.predator <- belowground.predator[!Plot %in% zeroplots]
 rm(zeroplots); rm(bp_overv)
@@ -767,10 +784,10 @@ barplot(height = bp_overv$value)
 abline(h = mean(bp_overv$value), col = "red")
 abline(h = median(bp_overv$value), col = "green")
 
-#TODO HERE! There are so many plots without decomposers - no idea if it still worth it... Include them or not?
+# There are so many plots without decomposers - no idea if it still worth it... Include them or not?
 length(unique(decomposer$Species)) # even though 40 species, there are so few present.
 # sum(bp_overv$value == 0) # 81 plots have species, 58 don't, total 139.
-#TODO : take out for the moment, until decision
+# take out
 trlevels <- trlevels[-which(trlevels == "decomposer")]
 ```
 ```{r}
@@ -876,14 +893,27 @@ paste("AEG :", length(grep("A", common.plots)), "   HEG :", length(grep("H", com
 # Select Plots from diversity datasets
 Only keep the selected plots
 ```{r}
+if(!length(plotNAset) > 1){plotNAset <- common.plots}
 for(t in trlevels){
   tr <- get(t)
-  tr <- tr[Plot %in% common.plots, ]
+  tr <- tr[Plot %in% plotNAset, ]
   assign(t, tr)
 }
 # take out HEG31, is automatic as soon as the gapfilling is run. 
 # that means that this betadiversity script needs to be run twice, once before and once after the gapfilling
 ```
+
+# overvievs
+```{r, eval = F}
+sum <- 0
+for(t in trlevels){
+  tr <- get(t)
+  print(c(t, length(unique(tr$Species)), "species"))
+  sum <- sum + length(unique(tr$Species))
+}
+sum
+```
+
 
 
 # Calculate betadiversities
