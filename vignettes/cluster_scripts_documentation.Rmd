@@ -66,3 +66,20 @@ sbatch Rbatch.sh
 
 outfiles : 
 - gdm_EFdistance_LUI_permutation.Rds : 4 permutations
+
+value
+- 1. table : summarizes full model deviance, percent deviance explained by full model
+    p-value of the full model, number of permutations
+- 2. table : variable importance
+- 3. variable significance
+- number of permutations used to calc stats for that model (some GDMs may fail to fit for some permutations/ variable combinations)
+
+Significance is estimated using the bootstrapped p-value when the variable has been permuted.
+
+```{r}
+# show the p-values
+gdmperm[[3]][,1]
+# show the number of permutations used
+gdmperm[[4]][,1]
+```
+
