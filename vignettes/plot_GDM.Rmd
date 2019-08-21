@@ -14,20 +14,25 @@ suppressPackageStartupMessages(library(cowplot)) # needs to be loaded in order t
 
 Load data
 ```{r}
-gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_LUI_input.Rds", sep = ""))
+# gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_LUI_input.Rds", sep = ""))
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_input.Rds", sep = ""))
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFturnover_LUI_input.Rds", sep = ""))
+gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFbeta_LUI_input.Rds", sep = ""))
+
 gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
 exSplines <- gdm::isplineExtract(gdm_output)
 
-gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_LUI_permutation.Rds", sep = ""))
+# gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_LUI_permutation.Rds", sep = ""))
 # gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_permutation.Rds", sep = ""))
+
+permut <- F # T or F, depending wether permutations are available or not
+main <- "EFbeta LUI" # plot title
 ```
 ```{r}
 # take maximum of each variable for barplot
 maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)
 # get significances
-sign <- gdmperm[[3]][,1]
+if(permut == T){sign <- gdmperm[[3]][,1]}
 ```
 create plotting tables
 
@@ -41,29 +46,37 @@ plotsequence_abio <- c("LUI", "deltaLUI", "soil", "isolation", "geo")
 
 create results table
 ```{r}
-restab <- data.table::data.table("names" = names(sign), "sign" = sign)
-del <- data.table::data.table("names" = names(maxsplines), "maxsplines" = maxsplines)
-restab <- data.table::data.table(merge(restab, del, by = "names")); rm(del)
+restab <- data.table::data.table("names" = names(maxsplines), "maxsplines" = maxsplines)
+if(permut == T){
+  del <- data.table::data.table("names" = names(sign), "sign" = sign)
+  restab <- data.table::data.table(merge(restab, del, by = "names")); rm(del)
+}
 # get bios
 bios <- grep(paste(plotsequence_bio, collapse = "|"), names(maxsplines), value = T)
-restab[bios, type := "bio"]
+restab[names %in% bios, type := "bio"]
 # get abios
 abios <- grep(paste(plotsequence_bio, collapse = "|"), names(maxsplines), value = T, invert = T)
-restab[abios, type := "abio"]
+restab[names %in% abios, type := "abio"]
 # get nestedness
 sne <- grep("sne", names(maxsplines), value = T)
-restab[sne, component := "nestedness"]
+restab[names %in% sne, component := "nestedness"]
 # get turnover
 to <- grep("sim", names(maxsplines), value = T)
-restab[to, component := "turnover"]
+restab[names %in% to, component := "turnover"]
 # get only significant
-restab[, onlysign := (1-sign) * maxsplines]
-
+if(permut == T){restab[, maxsplines := (1-sign) * maxsplines]}
 # add nice names
 restab <- data.table::data.table(merge(nicenames, restab, by = "names"))
+# order by above-belowground and alphabetically
+# set the levels of the factor in the wanted order
+data.table::setorder(restab, ground, names)
+# restab[, names := factor(names, levels = names)]
+# order <- restab[type == "bio", names]
+# bring colors into right format
+restab[, color := as.character(color)]
 ```
 colors for plotting (21), 16 in the bio plot
-```{r}
+```{r, eval = F}
 # from pallettes Dark2, Set1 and Accent from RColorBrewer
 cbcols <- c("#1B9E77","#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#A6761D", "#666666",
              "#377EB8", "#984EA3", "#A65628", "#F781BF",
@@ -71,8 +84,8 @@ cbcols <- c("#1B9E77","#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#A
 restab[component == "turnover", color := cbcols ]
 restab[component == "nestedness", color := cbcols]
 restab[type == "abio", color := cbcols[1:length(restab[type == "abio", color])]]
-varcols <- restab$color
-names(varcols) <- restab$names
+# varcols <- restab$color
+# names(varcols) <- restab$names
 ```
 
 
@@ -86,50 +99,57 @@ plot(gdm_output, plot.layout = c(3, 2), plot.color = "grey", main="GDM")
 # Multipanel Barplot
 
 ```{r}
-p<-ggplot(data = restab[type == "bio"], aes(x=nicenames, y=onlysign, fill = names)) +
-  geom_bar(stat="identity", color = "black", linetype = rep(c("solid", "dashed"), 16)) + 
+df <- restab[type == "bio" & ground == "a", ]
+p<-ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names)) +
+  geom_bar(stat="identity", color = "black", linetype = rep(c("solid", "dashed"), nrow(df)/2)) + 
   coord_flip() + 
-  scale_fill_manual(values = varcols) +
+  scale_fill_manual(values = df$color) +
   ylim(0, 0.4) + 
+  ggtitle(main) +
   theme(legend.position = "none", axis.title = element_blank(),
         axis.text.y = element_text(size=9, angle = 0),
-        plot.margin = margin(l = 50))
+        plot.margin = margin(l = 50), 
+        axis.text.x = element_blank(),
+        axis.line.x=element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major.x = element_line(color = "grey")
+        )
+
+df <- restab[type == "bio" & ground == "b", ]
+b <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names)) +
+  geom_bar(stat="identity", color = "black", linetype = rep(c("solid", "dashed"), nrow(df)/2)) + 
+  coord_flip() + 
+  scale_fill_manual(values = df$color) +
+  ylim(0, 0.4) + 
+  theme(legend.position = "none", 
+        axis.title = element_blank(),
+        axis.text.y = element_text(size=9, angle = 0),
+        plot.margin = margin(l = 50),
+        axis.text.x = element_blank(),
+        axis.line.x=element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major.x = element_line(color = "grey"))
 # aes(x=stringr::str_wrap(nicenames, 10), y=onlysign, fill = names))
 
 # dashed or dotted or solid
 # https://stackoverflow.com/questions/39898870/ggplot-geom-bar-customize-by-linetype-and-fill
 # geom_errorbarh() for horizontal error bars
 # https://www.heropatterns.com/
-q <- ggplot(data = restab[type == "abio"], aes(x=nicenames, y=onlysign, fill = names)) +
+df <- restab[type == "abio"]
+q <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names)) +
   geom_bar(stat="identity", color = "black", linetype = "solid") + 
   coord_flip() + 
-  scale_fill_manual(values = varcols) +
+  scale_fill_manual(values = df$color) +
   ylim(0, 0.4) + 
   theme(legend.position = "none", axis.title = element_blank(),
-        axis.text.y = element_text(size=9))
-
-plot_grid(p, q, labels = c('A', 'B'), label_size = 12, nrow = 2, rel_heights = c(0.8, 0.2), align = "v")
-```
-without significances
-```{r}
-m <- "EFturnover LUI model"
-p<-ggplot(data=restab[type == "bio"], aes(x=names, y=maxsplines, fill = names)) +
-  geom_bar(stat="identity", color = "black", linetype = rep(c("solid", "dashed"), 16)) + coord_flip() + scale_fill_manual(values = varcols) +
-  ggtitle(m) + ylim(0, 0.6) + theme(legend.position = "none")
-# dashed or dotted or solid
-# https://stackoverflow.com/questions/39898870/ggplot-geom-bar-customize-by-linetype-and-fill
-# geom_errorbarh() for horizontal error bars
-# https://www.heropatterns.com/
-q <- ggplot(data = restab[type == "abio"], aes(x=names, y=maxsplines, fill = names)) +
-  geom_bar(stat="identity", color = "black", linetype = "solid") + coord_flip() + scale_fill_manual(values = varcols) +
-  ggtitle(m) + ylim(0, 0.6) + theme(legend.position = "none")
-
-plot_grid(p, q, labels = c('A', 'B'), label_size = 12)
+        axis.text.y = element_text(size=9),
+        panel.grid.major.x = element_line(color = "grey"))
 ```
 
-
-
-
+```{r, eval = F}
+plot_grid(p, b, q, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
+# plot_grid(p, b, q, labels = c('aboveground', 'belowground', 'abiotic'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
+```
 
 
 

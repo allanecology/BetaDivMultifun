@@ -1,0 +1,38 @@
+names,nicenames,ground,color
+autotroph.beta.sim,autotroph βto,a,#1B9E77
+autotroph.beta.sne,autotroph βnes,a,#1B9E77
+herbivore.beta.sim,herbivore βto,a,#D95F02
+herbivore.beta.sne,herbivore βnes,a,#D95F02
+plant.pathogen.beta.sim,plant pathogen βto,a,#7570B3
+plant.pathogen.beta.sne,plant pathogen βnes,a,#7570B3
+pollinator.beta.sim,pollinator βto,a,#E7298A
+pollinator.beta.sne,pollinator βnes,a,#E7298A
+secondary.consumer.beta.sim,secondary consumer βto,a,#66A61E
+secondary.consumer.beta.sne,secondary consumer βnes,a,#66A61E
+tertiary.consumer.beta.sim,tertiary consumer βto,a,#E6AB02
+tertiary.consumer.beta.sne,tertiary consumer βnes,a,#E6AB02
+bacteria.RNA.beta.sim,bacteria RNA βto,b,#A6761D
+bacteria.RNA.beta.sne,bacteria RNA βnes,b,#A6761D
+belowground.herbivore.beta.sim,belowground herbivore βto,b,#666666
+belowground.herbivore.beta.sne,belowground herbivore βnes,b,#666666
+belowground.predator.beta.sim,belowground predator βto,b,#377EB8
+belowground.predator.beta.sne,belowground predator βnes,b,#377EB8
+protist.bacterivore.beta.sim,protist bacterivore βto,b,#984EA3
+protist.bacterivore.beta.sne,protist bacterivore βnes,b,#984EA3
+protist.eukaryvore.beta.sim,protist eukaryvore βto,b,#A65628
+protist.eukaryvore.beta.sne,protist eukaryvore βnes,b,#A65628
+protist.omnivore.beta.sim,protist omnivore βto,b,#F781BF
+protist.omnivore.beta.sne,protist omnivore βnes,b,#F781BF
+protist.plant.parasite.beta.sim,protist plant parasite βto,b,#7FC97F
+protist.plant.parasite.beta.sne,protist plant parasite βnes,b,#7FC97F
+soilfungi.decomposer.beta.sim,soilfungi decomposer βto,b,#BEAED4
+soilfungi.decomposer.beta.sne,soilfungi decomposer βnes,b,#BEAED4
+soilfungi.pathotroph.beta.sim,soilfungi pathotroph βto,b,#FDC086
+soilfungi.pathotroph.beta.sne,soilfungi pathotroph βnes,b,#FDC086
+soilfungi.symbiont.beta.sim,soilfungi symbiont βto,b,#FFFF99
+soilfungi.symbiont.beta.sne,soilfungi symbiont βnes,b,#FFFF99
+deltaLUI,ΔLUI,x,#1B9E77
+edis_soil,soil,x,#D95F02
+geo_dist,geographic distance,x,#7570B3
+LUI,LUI,x,#E7298A
+plot_isolation,plot isolation,x,#66A61E
