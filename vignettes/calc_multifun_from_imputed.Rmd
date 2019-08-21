@@ -219,7 +219,7 @@ rm(df)
 
 With max 5 method
 ```{r}
-include <- names(nimputed_grlfuns)[!names(imputed_grlfuns) %in% "Plotn"]
+include <- names(nimputed_grlfuns)[!names(nimputed_grlfuns) %in% "Plotn"]
 pa_grlfuns <- data.table::copy(nimputed_grlfuns)  # dataset for max 5 functions
 
 # CONVERT TO PRESENCE ABSENCE
@@ -229,6 +229,13 @@ pa_grlfuns[, (include) := (.SD * 1), .SDcols = include]
 # CALC BETADIVERSITY
 pa_grlfuns <- data.frame(pa_grlfuns[, !"Plotn", with=F], row.names = pa_grlfuns$Plotn)
 pa_grlfuns <- betapart::beta.pair(pa_grlfuns, index.family = "sorensen")
+
+EFbeta <- pa_grlfuns$beta.sor
+t <- as.matrix(EFbeta)
+t[!lower.tri(t)] <- NA
+t <- reshape2::melt(t, value.name = "EFbeta")
+t <- t[!is.na(t[, 3]), ]
+EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
 
 EFturnover <- pa_grlfuns$beta.sim
 t <- as.matrix(EFturnover)
@@ -248,6 +255,24 @@ EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
 # saveRDS(EFnestedness, "EFnestedness.rds")
 saveRDS(EFmaster, "EFmaster.rds")
 ```
+Plot components of EFbeta
+```{r, eval = F}
+# # check EFmaster
+# EFcheck <- data.table::copy(data.table::data.table(EFmaster))
+# EFcheck[, "check" := EFturnover + EFnestedness - EFbeta]
+# plot(EFcheck$check, ylim = c(-1, 1))
+# rm(EFcheck)
+# TRUE : EFturnover + EFnestedness - EFbeta is always 0 (or very near 0)
+
+plotEFbeta <- reshape2::melt(EFmaster[, c("Var1", "Var2", "EFbeta", "EFturnover", "EFnestedness")], id = c("Var1", "Var2"))
+p <- ggplot2::ggplot(data = plotEFbeta, aes(x = variable, y = value)) +
+  geom_violin() + geom_jitter(shape=".", position=position_jitter(0.2), color = "gray") + 
+  labs(title="Threshold-based dissimiliarity of Ecosystem Functions", xlab = "") + 
+  scale_x_discrete(labels=c("beta", "turnover", "nestedness")) +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank())
+```
+
 
 With quantile method
 ```{r, eval=F}
