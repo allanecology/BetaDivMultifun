@@ -19,6 +19,7 @@ This script relies on loading the following datasets:
 # Cleaning
 maybe this part can be moved to where it should have been done...
 ```{r}
+#TODO : move to other scripts
 colnames(predictors)[1] <- "Plotn"
 # standardise EFdistance
 new <- scale01(EFmaster$EFdistance)
@@ -30,9 +31,9 @@ EFmaster$EFdistance <- new
 Select Variables for the models
 ```{r}
 print("user input required here!")
-# funs is one of : EFdistance, EFturnover, EFnestedness
+# funs is one of : EFdistance, EFturnover, EFnestedness, NEW : EFbeta
 #TODO : single functions
-funs <- "EFnestedness"
+funs <- "EFbeta"
 # LUI is one of the below
 lui <- c("LUI", "deltaLUI")
 # lui <- c("Gstd", "Mstd", "Fstd", "deltaGstd", "deltaMstd", "deltaFstd")
