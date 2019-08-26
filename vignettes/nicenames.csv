@@ -36,3 +36,9 @@ edis_soil,soil,x,#D95F02
 geo_dist,geographic distance,x,#7570B3
 LUI,LUI,x,#E7298A
 plot_isolation,plot isolation,x,#66A61E
+Gstd,Grazing,x,#E6AB02
+Mstd,Mowing,x,#A6761D
+Fstd,Fertilisation,x,#666666
+deltaGstd,Δgrazing,x,#377EB8
+deltaMstd,Δmowing,x,#984EA3
+deltaFstd,Δfertilisation,x,#A65628

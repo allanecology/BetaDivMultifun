@@ -22,11 +22,11 @@ maybe this part can be moved to where it should have been done...
 #TODO : move to other scripts
 colnames(predictors)[1] <- "Plotn"
 # standardise EFdistance
-new <- scale01(EFmaster$EFdistance)
-EFmaster$EFdistance <- new
+#TODO : remove this row as soon as run again
+EFmaster[, EFdistance := scale01(EFdistance)]
     # or single functions
-#TODO : HERE : scale single functions as well! scale all but the first 2 columsn (which contain plots).
-# und bei der gelegenheit - gleich ins richtige skript schieben
+# include <- colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")]
+# singleEFdist[, (include) := lapply(.SD, scale01), .SDcols = include]
 ```
 
 
@@ -38,11 +38,12 @@ print("user input required here!")
 # or singleEF: 
 #    Biomass , dung.removal, Groundwater.recharge, herbivory.20172018, ..., soilAmmoniaflxs
 #TODO : single functions
-funs <- "soilAmmoniaflxs"
+funs <- "EFdistance"
 # NOTE if single function : do this:
-EFmaster <- data.table::copy(singleEFdist)
+# EFmaster <- data.table::copy(singleEFdist)
 # LUI is one of the below
 # lui <- c("LUI", "deltaLUI")
+#TODO : script not working yet for LUI components - they stay in the geo dist subset
 lui <- c("Gstd", "Mstd", "Fstd", "deltaGstd", "deltaMstd", "deltaFstd")
 ```
 
@@ -86,9 +87,10 @@ forpredData <- forpredData[, !names(forpredData) %in% foreuclid]
 
 # calculate geographic distance
 for(i in 1:length(rownames(fordistpreds))){
-  new <- geosphere::distGeo(forpredData[fordistpreds[i, 1], ], forpredData[fordistpreds[i, 2], ])
+  new <- geosphere::distGeo(forpredData[fordistpreds[i, 1], c("Longitude_Dec_Plotcenter", "Latitude_Dec_Plotcenter")], forpredData[fordistpreds[i, 2], c("Longitude_Dec_Plotcenter", "Latitude_Dec_Plotcenter")])
   fordistpreds[i, "geo_dist"] <- new
 }
+#TODO HERE is an error. ... geo dist is not calculated well, because LUI components
 
 # standardization of non-betadiversities to be between 0 and 1
 # apply(fordistpreds, 2, range)
@@ -110,7 +112,8 @@ mod <- paste(funs, " ~ " ,paste(colnames(fordistpreds)[!colnames(fordistpreds) %
 
 m1 <- lm(formula = formula(mod), data = fordistpreds)
 vif_output <- car::vif(m1)
-vif_output[which(vif_output[, "GVIF"] > 5),]
+vif_output[which(vif_output > 5)]
+# vif_output[which(vif_output[, "GVIF"] > 5),]
 ```
 We will leave the inflated variables in the dataset, but perform a sensitivity analysis later. --> The inflated variables are not distinguishable, maybe the effect is partitioned among them.
 
@@ -171,28 +174,4 @@ saveRDS(meltset, file = paste("gdm", funs, lui[1], "input.Rds", sep = "_"))
 capture.output(summary(gdm_output), file = outname)
 ```
 
-# Plot GDM
-```{r}
-exSplines <- gdm::isplineExtract(gdm_output)
-
-# to plot each spline in a separate plot
-plot(gdm_output, plot.layout = c(3, 2), plot.color = "grey",main="GDM",sub= paste(vars_in_model, collapse=', '))
-```
-
-
-# TODO 
-HERE .
-- plot all models
-- solve open TODOS (e.g. variance inflation)
-
-# Estimating P values
-takes too lon gon my computer, this is just the R code to run on a supercomputer.
-```{r, eval=F}
-# fullModelOnly = T : test only the full variable set
-# fullModelOnly = F : estimate model significance and variable importance/ significance using matrix permutation, backward elimination
-# parallel = T
-    # cores : number of cores to be registered for parralel processing
-# outFile : name of outfile
-varimp_output <- gdm::gdm.varImp(meltset, geo=F, parallel=T, nPerm =1) #, fullModelOnly=T)
-```
-
+go to cluster scripts and plot.

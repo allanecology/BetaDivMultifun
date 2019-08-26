@@ -4,6 +4,11 @@ author: "Noelle Schenk"
 date: "August 20, 2019"
 output: html_document
 ---
+```{r}
+suppressPackageStartupMessages(require(ggplot2))
+suppressPackageStartupMessages(require(cowplot))
+```
+
 requirements : 
 - GDM output as .rds, e.g. gdm_EFnestedness_LUI_input.Rds
 - cluster output as .rds, e.g. gdm_EFnestedness_LUI_permutation.Rds
@@ -14,19 +19,23 @@ suppressPackageStartupMessages(library(cowplot)) # needs to be loaded in order t
 
 Load data
 ```{r}
+# luiinput <- "lui"
+luiinput <- "components"
+
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_LUI_input.Rds", sep = ""))
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_input.Rds", sep = ""))
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFturnover_LUI_input.Rds", sep = ""))
-gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFbeta_LUI_input.Rds", sep = ""))
+# gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFbeta_LUI_input.Rds", sep = ""))
+gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_Gstd_input.Rds", sep = ""))
 
 gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
 exSplines <- gdm::isplineExtract(gdm_output)
 
-gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_LUI_permutation.Rds", sep = ""))
+# gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_LUI_permutation.Rds", sep = ""))
 # gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_permutation.Rds", sep = ""))
 
 permut <- F # T or F, depending wether permutations are available or not
-main <- "EFbeta LUI" # plot title
+main <- "EFdistance LUI components" # plot title
 ```
 ```{r}
 # take maximum of each variable for barplot
@@ -41,7 +50,14 @@ Sequence according to effect sizes over all models. until then : alphabetically.
 #TODO : once all models are read, use effect size sequence and not alphabetically
 plotsequence_bio <- c("autotroph", "bacteria.RNA", "belowground.herbivore", "belowground.predator", "herbivore", "plant.pathogen", "pollinator", "protist.bacterivore", "protist.eukaryvore", "protist.omnivore", "protist.plant.parasite", "secondary.consumer", "soilfungi.decomposer", "soilfungi.pathotroph", "soilfungi.symbiont", "tertiary.consumer")
 #TODO : add characteristic color for each trophic level
-plotsequence_abio <- c("LUI", "deltaLUI", "soil", "isolation", "geo")
+
+print("userinput")
+if(luiinput == "lui"){
+  plotsequence_abio <- c("LUI", "deltaLUI", "soil", "isolation", "geo")
+}else if(luiinput == "components"){
+  plotsequence_abio <- c(paste(c("G", "M", "F"), "std", sep = ""), paste("delta", c("Gstd", "Mstd", "Fstd"), sep = ""),
+                         "soil", "isolation", "geo")
+}
 ```
 
 create results table
@@ -135,7 +151,9 @@ b <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names)) +
 # https://stackoverflow.com/questions/39898870/ggplot-geom-bar-customize-by-linetype-and-fill
 # geom_errorbarh() for horizontal error bars
 # https://www.heropatterns.com/
-df <- restab[type == "abio"]
+# df <- restab[type == "abio"]
+df <- restab[ground == "x"]
+#TODO : error when LUI components : type is not abio but "x"
 q <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names)) +
   geom_bar(stat="identity", color = "black", linetype = "solid") + 
   coord_flip() + 
@@ -154,6 +172,109 @@ plot_grid(p, b, q, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heig
 
 
 
+# single EFs heatmap
+load data
+```{r}
+i <- 1
+ni <- colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")][i]
+i <- paste(pathtoout, "/cluster/gdm_", ni, "_LUI_input.Rds", sep = "")
+gdmin <- readRDS(i)
+permut <- "F"
+
+gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
+exSplines <- gdm::isplineExtract(gdm_output)
+
+main <- "EFsingle" # plot title
+
+# take maximum of each variable for barplot
+maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)
+# get significances
+if(permut == T){sign <- gdmperm[[3]][,1]}
+
+# create restults table
+restab <- create_restab()
+data.table::setnames(restab, old = "maxsplines", new = ni)
+restab2 <- data.table::copy(restab)
+```
+
+```{r}
+i <- 2
+for(i in 2:(length(colnames(singleEFdist))-2)){
+  print(i)
+  ni <- colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")][i]
+  i <- paste(pathtoout, "/cluster/gdm_", ni, "_LUI_input.Rds", sep = "")
+  gdmin <- readRDS(i)
+  permut <- "F"
+  gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
+  exSplines <- gdm::isplineExtract(gdm_output)
+  # take maximum of each variable for barplot
+  maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)
+  # get significances
+  if(permut == T){sign <- gdmperm[[3]][,1]}
+  
+  restab <- create_restab()
+  restab <- data.table::data.table(restab)
+  data.table::setnames(restab, old = "maxsplines", new = ni)
+  include <- c(ni, "names")
+  restab2 <- merge(restab2, restab[, ..include], by = "names", all.x = T)
+}
+restab2 <- data.table::data.table(restab2)
+```
+Create heatmap
+```{r}
+pal <- RColorBrewer::brewer.pal(9, "YlOrRd")
+include <- c("nicenames", colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")])
+
+df <- restab2[type == "bio" & ground == "a", ]
+df <- data.table::melt(df[, ..include], id.vars = "nicenames")
+
+a <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
+  geom_tile() +
+  scale_fill_gradientn(colours = pal) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, 
+    size = 12, hjust = 1),
+    plot.margin = margin(l = 50),
+    axis.line.x=element_blank(),
+    axis.text.y = element_text(size=9, angle = 0),
+    axis.ticks.x = element_blank(),
+    panel.grid.major.x = element_line(color = "grey"),
+    legend.position = "none") + 
+  scale_x_discrete(position = "top") 
+
+df <- restab2[type == "bio" & ground == "b", ]
+df <- data.table::melt(df[, ..include], id.vars = "nicenames")
+b <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
+  geom_tile() +
+  scale_fill_gradientn(colours = pal) +
+  theme(legend.position = "none", 
+        axis.title = element_blank(),
+        axis.text.y = element_text(size=9, angle = 0),
+        plot.margin = margin(l = 50),
+        axis.text.x = element_blank(),
+        axis.line.x=element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major.x = element_line(color = "grey"))
+
+
+df <- restab2[type == "abio", ]
+df <- data.table::melt(df[, ..include], id.vars = "nicenames")
+c <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
+  geom_tile() +
+  scale_fill_gradientn(colours = pal) +
+  theme(legend.position = "none", 
+        axis.title = element_blank(),
+        axis.text.y = element_text(size=9, angle = 0),
+        plot.margin = margin(l = 50),
+        axis.text.x = element_blank(),
+        axis.line.x=element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major.x = element_line(color = "grey"))
+```
+
+```{r, eval = F}
+plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
+# plot_grid(p, b, q, labels = c('aboveground', 'belowground', 'abiotic'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
+```
 
 
 
