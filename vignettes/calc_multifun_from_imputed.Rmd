@@ -129,6 +129,9 @@ for(f in usedforBetadivMultifun[!usedforBetadivMultifun == "Plotn"]){
   singleEFdist <- merge(singleEFdist, diffsmall, by = c("Var1", "Var2"), all.y = T)
   # saveRDS(diffsmall, file = paste(diffname, ".rds", sep = ""))
 }
+# standardisation
+include <- colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")]
+singleEFdist[, (include) := lapply(.SD, scale01), .SDcols = include]
 
 saveRDS(singleEFdist, "singleEFdist.rds")
 ```
@@ -176,6 +179,9 @@ EFmaster <- as.matrix(EFmaster)
 EFmaster[!lower.tri(EFmaster)] <- NA
 EFmaster <- reshape2::melt(EFmaster, value.name = "EFdistance")
 EFmaster <- EFmaster[!is.na(EFmaster[, 3]),]
+# standardise
+#TODO : test this row
+EFmaster[, EFdistance := scale01(EFdistance)]
 # saveRDS(EFdistance, "EFdistance.rds")
 rm(pca_grlfuns); rm(pc_grlfuns)
 ```
@@ -250,11 +256,15 @@ t[!lower.tri(t)] <- NA
 t <- reshape2::melt(t, value.name = "EFnestedness")
 t <- t[!is.na(t[, 3]), ]
 EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
-
+```
+standardise and save
+```{r}
 # saveRDS(EFturnover, "EFturnover.rds")
 # saveRDS(EFnestedness, "EFnestedness.rds")
 saveRDS(EFmaster, "EFmaster.rds")
 ```
+
+
 Plot components of EFbeta
 ```{r, eval = F}
 # # check EFmaster
