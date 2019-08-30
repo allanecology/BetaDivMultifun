@@ -74,12 +74,8 @@ selecting the functions which are used in analysis.
 ```{r}
 # select variables which are included in betadiv multifun analysis
 usedforBetadivMultifun <- usedforBetadivMultifun[!usedforBetadivMultifun == "Plot"]
-#TODO : take out as soon as seed depletion is imputed
-usedforBetadivMultifun <- usedforBetadivMultifun[!usedforBetadivMultifun == "seed.depletion"]
-
 imputed_grlfuns <- imputed_grlfuns[, ..usedforBetadivMultifun]
-#TODO : save functions?
-# saveRDS(imputed_grlfuns, "imputed_grlfuns.rds")
+# saveRDS(imputed_grlfuns, "imputed_and_compound_grlfuns.rds")
 ```
 
 # Check Correlations
@@ -167,6 +163,29 @@ plot(pca_grlfuns)
 biplot(pca_grlfuns)
 plot(ecdf(pca_grlfuns$sdev))
 ```
+Plotting first 5 axis
+```{r, eval = F}
+p <- plot(pca_grlfuns)
+p1 <- ggplot2::autoplot(pca_grlfuns, loadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
+               loadings.label.colour = "black", loadings.label.repel = T)
+p2 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
+               loadings.label.colour = "black", loadings.label.repel = T,
+               x = 3, y = 2)
+p3 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
+               loadings.label.colour = "black", loadings.label.repel = T,
+               x = 4, y = 3)
+p4 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
+               loadings.label.colour = "black", loadings.label.repel = T,
+               x = 4, y = 5)
+cowplot::plot_grid(plotslist = list(p1, p2, p3, p4), labels = c("A", "B", "C", "D"), algn = T)
+
+p5 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
+               loadings.label.colour = "black", loadings.label.repel = T,
+               x = 5, y = 6)
+```
+```{r, eval = F}
+rm(p); rm(p1); rm(p2); rm(p3); rm(p4); rm(p5)
+```
 **axis selection** : 
 first 5 axis explain 70 % of variance
 
@@ -179,24 +198,21 @@ EFmaster <- as.matrix(EFmaster)
 EFmaster[!lower.tri(EFmaster)] <- NA
 EFmaster <- reshape2::melt(EFmaster, value.name = "EFdistance")
 EFmaster <- EFmaster[!is.na(EFmaster[, 3]),]
+EFmaster <- data.table::data.table(EFmaster)
 # standardise
-#TODO : test this row
 EFmaster[, EFdistance := scale01(EFdistance)]
-# saveRDS(EFdistance, "EFdistance.rds")
+saveRDS(EFmaster, "EFdistance.rds")
 rm(pca_grlfuns); rm(pc_grlfuns)
 ```
 
 
 ## EFturnover and EFnestedness
 Based on a 50% treshold, classify for each function and each plot presence or absence of the given function. Based on the scaled functions.
-
-TODO Without scaling - in old analysis it was scaled ... check if it works without `nimputed_grlfuns`
 ```{r}
 # percentage of measured functions that exceed a given treshold of their maximum observed level across all study sites.
 # maximum observed level: average of the top five sites.
 threshold <- 0.5
 # tresholds used in Solivieres paper :  0.25,0.5,0.75,0.9
-#TODO : use more thresholds
 ```
 Plot for visualisation
 ```{r}
@@ -207,10 +223,10 @@ names(x) <- nimputed_grlfuns$Plotn
 upper <- mean(sort(x, decreasing = T, na.last=T)[1:5])
 upperq <- quantile(x, probs = threshold)
 
-barplot(x, main="Root Biomass", xlab="Plots")
-abline(a=upper,b=0,col="lightgray")
-abline(a = upperq, b = 0, col = "darkgreen")
-abline(a=upper*threshold, b=0, col="orange")
+# barplot(x, main="Root Biomass", xlab="Plots")
+# abline(a=upper,b=0,col="lightgray")
+# abline(a = upperq, b = 0, col = "darkgreen")
+# abline(a=upper*threshold, b=0, col="orange")
 
 require(cowplot)
 df <- cbind(len = x, deleteme = x)
@@ -223,11 +239,13 @@ p <- ggplot2::ggplot(df, ggplot2::aes(y = len, x= rownames(df))) +
 rm(df)
 ```
 
-With max 5 method
+With threshold max 5 method
 ```{r}
 include <- names(nimputed_grlfuns)[!names(nimputed_grlfuns) %in% "Plotn"]
 pa_grlfuns <- data.table::copy(nimputed_grlfuns)  # dataset for max 5 functions
-
+threshold <- 0.9
+```
+```{r}
 # CONVERT TO PRESENCE ABSENCE
 pa_grlfuns[, (include) := lapply(.SD, function(c) calc_presenceabsence(c, threshold = threshold, type = "max5")), .SDcols = include]
 pa_grlfuns[, (include) := (.SD * 1), .SDcols = include]
@@ -239,21 +257,21 @@ pa_grlfuns <- betapart::beta.pair(pa_grlfuns, index.family = "sorensen")
 EFbeta <- pa_grlfuns$beta.sor
 t <- as.matrix(EFbeta)
 t[!lower.tri(t)] <- NA
-t <- reshape2::melt(t, value.name = "EFbeta")
+t <- reshape2::melt(t, value.name = paste("EFbeta", threshold, sep = "_"))
 t <- t[!is.na(t[, 3]), ]
 EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
 
 EFturnover <- pa_grlfuns$beta.sim
 t <- as.matrix(EFturnover)
 t[!lower.tri(t)] <- NA
-t <- reshape2::melt(t, value.name = "EFturnover")
+t <- reshape2::melt(t, value.name = paste("EFturnover", threshold, sep = "_"))
 t <- t[!is.na(t[, 3]), ]
 EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
 
 EFnestedness <- pa_grlfuns$beta.sne
 t <- as.matrix(EFnestedness)
 t[!lower.tri(t)] <- NA
-t <- reshape2::melt(t, value.name = "EFnestedness")
+t <- reshape2::melt(t, value.name = paste("EFnestedness", threshold, sep = "_"))
 t <- t[!is.na(t[, 3]), ]
 EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
 ```
@@ -297,12 +315,67 @@ paq_grlfuns[, (include) := (.SD * 1), .SDcols = include]
 # CALC BETADIVERSITY
 paq_grlfuns <- data.frame(paq_grlfuns[, !"Plotn", with = F], row.names = paq_grlfuns$Plotn)
 paq_grlfuns <- betapart::beta.pair(paq_grlfuns, index.family = "sorensen")
-EFturnoverQ <- paq_grlfuns$beta.sim
-EFnestednessQ <- paq_grlfuns$beta.sne
 
-saveRDS(EFturnoverQ, "EFturnoverQ.rds")
-saveRDS(EFnestednessQ, "EFnestednessQ.rds")
+EFturnoverQ <- paq_grlfuns$beta.sim
+t <- as.matrix(EFturnoverQ)
+t[!lower.tri(t)] <- NA
+t <- reshape2::melt(t, value.name = "EFturnover_median")
+t <- t[!is.na(t[, 3]), ]
+EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
+
+EFnestednessQ <- paq_grlfuns$beta.sne
+t <- as.matrix(EFnestednessQ)
+t[!lower.tri(t)] <- NA
+t <- reshape2::melt(t, value.name = "EFnestedness_median")
+t <- t[!is.na(t[, 3]), ]
+EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
+
+EFbetaQ <- paq_grlfuns$beta.sor
+t <- as.matrix(EFbetaQ)
+t[!lower.tri(t)] <- NA
+t <- reshape2::melt(t, value.name = "EFbeta_median")
+t <- t[!is.na(t[, 3]), ]
+EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
+
+saveRDS(EFmaster, "EFquantile_median.rds")
 ```
+
+# abundance betadiversity
+Abundance betadiversity of z-scores of functions.
+```{r}
+abund_grlfuns <- data.table::copy(nimputed_grlfuns) # dataset for quantile functions
+# CALC BETADIVERSITY
+abund_grlfuns <- data.frame(abund_grlfuns[, !"Plotn", with = F], row.names = abund_grlfuns$Plotn)
+# scale to be between 0 and 1000 (promille) and round to 0 decimals
+#  betapart does not allow negative values, and decimals do not make sense.
+abund_grlfuns <- apply(abund_grlfuns, 2, function(x) round(scale01(x)*1000, digits = 0))
+
+abund_grlfuns <- betapart::beta.pair.abund(abund_grlfuns, index.family = "bray")
+
+temp <- abund_grlfuns$beta.bray
+t <- as.matrix(temp)
+t[!lower.tri(t)] <- NA
+t <- reshape2::melt(t, value.name = "EFabund_bray")
+t <- t[!is.na(t[, 3]), ]
+EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
+
+temp <- abund_grlfuns$beta.bray.bal
+t <- as.matrix(temp)
+t[!lower.tri(t)] <- NA
+t <- reshape2::melt(t, value.name = "EFabund_bray_bal")
+t <- t[!is.na(t[, 3]), ]
+EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
+
+temp <- abund_grlfuns$beta.bray.gra
+t <- as.matrix(temp)
+t[!lower.tri(t)] <- NA
+t <- reshape2::melt(t, value.name = "EFabund_bray_gra")
+t <- t[!is.na(t[, 3]), ]
+EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
+
+saveRDS(EFmaster, "EFbeta_abund.rds")
+```
+
 
 ```{r}
 rm(nimputed_grlfuns); rm(imputed_grlfuns); rm(pa_grlfuns); rm(raw_grlfuns)
