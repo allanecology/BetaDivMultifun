@@ -116,9 +116,9 @@ negative <- colnames(corrbefun)[which(corrbefun[, lapply(.SD, function(x) min(x,
 ```
 remove negative values - shift whole vector up.
 ```{r}
-# nitrate.production.availability (inverted DEA)
-mindea <- min(befun$nitrate.production.availability, na.rm=T)
-befun$nitrate.production.availability <- befun$nitrate.production.availability + abs(mindea)
+# DEA.inverted
+mindea <- min(befun$DEA.inverted, na.rm=T)
+befun$DEA.inverted <- befun$DEA.inverted + abs(mindea)
 # NO3.2014
 minno <- min(befun$NO3.2014, na.rm=T)
 befun$NO3.2014 <- befun$NO3.2014 + abs(minno)
@@ -160,7 +160,7 @@ for(i in 1:50){
   # re-transform the numeric variables
   current[, (numcols) := lapply(.SD, function(x) (exp(x)-1)), .SDcols = numcols]
   # re-transform the negative values
-  current$nitrate.production.availability <- current$nitrate.production.availability - abs(mindea)
+  current$DEA.inverted <- current$DEA.inverted - abs(mindea)
   current$NO3.2014 <- current$NO3.2014 - abs(minno)
   current$dung.removal <- current$dung.removal - abs(mindung)
   # add back the "Plotn" column which was taken out for imputation

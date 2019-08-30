@@ -39,7 +39,7 @@ based on clustering and biology:
 these two steps are separated steps. The correlation of AO and NO is based on co-occurrence.
 
 - ammonium oxidising group : AOA, AOB, urease (because this enzyme hydrolyses urea to ammonia and CO2)
-- nitrate oxidising group : NS, NB, nifH, nitrate.production.availability (inverted DEA)
+- nitrate oxidising group : NS, NB, nifH, DEA.inverted
 - potential nitrification is a separate process
 
 ## soilNitrateflxs
@@ -47,7 +47,7 @@ It could be that nitrospira and nitrobacter have slightly different habitat pref
 
 Inversion of DEA such that functions "point to same functional direction".
 ```{r}
-nce <- imputed_grlfuns[,c("Plotn", "nitrate.production.availability","nifH", "nxrA_NS", "16S_NB")]
+nce <- imputed_grlfuns[,c("Plotn", "DEA.inverted","nifH", "nxrA_NS", "16S_NB")]
 # sum abundances of nitrite oxidising functional genes
 nce[, "nitOx_fga" := nxrA_NS + `16S_NB`]
 nce[, c("nxrA_NS", "16S_NB") := NULL]
