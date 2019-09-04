@@ -32,7 +32,7 @@ Two variables are produced, `impdat` which contains the gapfilled dataset which 
 ## Data preparation
 
 ```{r}
-befun <- raw_grlfuns
+befun <- data.table::copy(raw_grlfuns)
 ```
 
 chosing the plot set
@@ -70,7 +70,6 @@ update the helper vector `plotNAset.rds` and take out the plot "HEG31"
 plotNAset <- plotNAset[-which(plotNAset == "HEG31")]
 saveRDS(plotNAset, "plotNAset.rds")
 ```
-
 
 ## Check Correlations
 Of the non-factor columns only
@@ -117,15 +116,16 @@ negative <- colnames(corrbefun)[which(corrbefun[, lapply(.SD, function(x) min(x,
 ```
 remove negative values - shift whole vector up.
 ```{r}
-# nitrate.production.availability (inverted DEA)
-mindea <- min(befun$nitrate.production.availability, na.rm=T)
-befun$nitrate.production.availability <- befun$nitrate.production.availability + abs(mindea)
+# DEA.inverted
+mindea <- min(befun$DEA.inverted, na.rm=T)
+befun$DEA.inverted <- befun$DEA.inverted + abs(mindea)
 # NO3.2014
 minno <- min(befun$NO3.2014, na.rm=T)
 befun$NO3.2014 <- befun$NO3.2014 + abs(minno)
 # dung.removal
 mindung <- min(befun$dung.removal, na.rm=T)
 befun$dung.removal <- befun$dung.removal + abs(mindung)
+
 rm(negative)
 ```
 Log transformation of the numeric columns. The natural logartithm of values smaller than 1 is negative. Tehrefore, all values are shifted by 1 again to avoid any negative values in the log transformed dataset.
@@ -160,7 +160,7 @@ for(i in 1:50){
   # re-transform the numeric variables
   current[, (numcols) := lapply(.SD, function(x) (exp(x)-1)), .SDcols = numcols]
   # re-transform the negative values
-  current$nitrate.production.availability <- current$nitrate.production.availability - abs(mindea)
+  current$DEA.inverted <- current$DEA.inverted - abs(mindea)
   current$NO3.2014 <- current$NO3.2014 - abs(minno)
   current$dung.removal <- current$dung.removal - abs(mindung)
   # add back the "Plotn" column which was taken out for imputation
@@ -248,4 +248,4 @@ rm(X); rm(Y); rm(p); rm(naloc); rm(mimperr)
 rm(numcols); rm(tres)
 ```
 
-The multifunctionalities of imputed functions are calculated in another script. Current name "calc_multifun_from_imputed".
+The multifunctionalities of imputed functions are calculated in another script. Current name `calc_multifun_from_imputed.Rmd`.
