@@ -54,7 +54,7 @@ Because PCA can not fit categorical data which have > 2 categories.
 
 This probably adds some overlaping information with the amount of sand, clay etc. But this does not matter, as selecting the PCA components will take this extra information out again.
 
-TODO : *This is a "human" classification, not a "pure physical". Based on which informations? Do we add some "false" information with that, which is then left in the data as only the overlapping information is "removed" in the PCA?*
+*This is a "human" classification, not a "pure physical". Based on which informations? Do we add some "false" information with that, which is then left in the data as only the overlapping information is "removed" in the PCA?*
 
 ```{r}
 stype <- glsoil[, .(Plotn, Soil.type)]
