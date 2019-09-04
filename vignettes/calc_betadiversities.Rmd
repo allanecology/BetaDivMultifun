@@ -19,8 +19,8 @@ Note : this script is based on the Exploratoreis diversity dataset, which is rea
 
 ## Dataset Cleaning
 From cleaning, getting numbers : 
-- 334700 species in the dataset
-- 28 different trophic levels
+- 202944 species in the dataset
+- 20 different trophic levels
 - type = presenceabsence : plant pathogen, ant omnivore
 
 ```{r}
@@ -28,6 +28,11 @@ From cleaning, getting numbers :
 spdiv[, Plot_bexis := NULL]
 # spdiv[, c("Dataversion", "DataID") := NULL]
 spdiv <- merge(spdiv, spinfo, by = "Species", all.x=T)
+# this analysis was done before all missing plot x year combinations were set to NA.
+# they are therefore removed here.
+spdiv <- spdiv[!is.na(value)]
+#TODO : this is a test. remove row above if I find problems
+
 # now I can remove the original datasets, so I save cpu:
 rm(spinfo); gc()
 ```
@@ -55,7 +60,7 @@ unique(spdiv[, .(Trophic_level, Year)])
 ```
 
 ```{r, eval=F}
-length(unique(spdiv$Species)) # 309734 species in the dataset (incl. OTU)
+length(unique(spdiv$Species)) # 202944 species in the dataset (incl. OTU)
 ```
 Get overview of amount of species per trophic level
 ```{r, eval=F}
@@ -121,20 +126,29 @@ Lichens and Bryophytes only 2009 (119 species, 137 plots)
 
 year   |  no. species | no. Plots |
 -------| ------------ | --------- |
-2008   |   344        |  147      |
-2009   |   463        |  150      |
+2008   |   342        |  147      |
+2009   |   485        |  150      |
 2009 l |   119        |  150      |
-2009 p |   344        |  150      |
-2010   |   344        |  150      |
-2011   |   344        |  150      |
-2012   |   344        |  149      |
-2013   |   344        |  149      |
-2014   |   344        |  148      |
-2015   |   344        |  150      |
-2016   |   344        |  150      |
+2009 p |   342        |  150      |
+2010   |   342        |  150      |
+2011   |   342        |  150      |
+2012   |   342        |  149      |
+2013   |   342        |  149      |
+2014   |   342        |  148      |
+2015   |   342        |  150      |
+2016   |   342        |  150      |
 
 ```{r}
 autotroph <- spdiv[Trophic_level == "autotroph"]
+autotroph <- autotroph[Year %in% c("2009", "2008", "2010", "2011", "2012", "2013", "2014", "2015", "2016")]
+autotrophnew <- spdiv[Trophic_level == "autotroph" & Year %in% c("2017", "2018")]
+# find the species in autotroph which are never present in the years I include
+test <- data.table(aggregate(value ~ Species, autotroph, sum))
+exclude <- test[value == 0, Species]
+# test2 <- data.table(aggregate(value ~ Species, autotrophnew, sum))
+notexclude <- test2[value == 0, Species]
+# exclude them from the analysis
+autotroph <- autotroph[!Species %in% exclude]
 
 # how many species and how many plots were measured in the different years?
 length(unique(autotroph[Year == "2008", Plot])) # Changed year and tested for all years for reporting in the table
@@ -142,7 +156,7 @@ length(unique(autotroph[Year == "2008", Plot])) # Changed year and tested for al
 lichenspecies <- setdiff(unique(autotroph[Year == "2009", Species]), unique(autotroph[Year == "2008", Species]))
     # examine lichens and plants separately - same number of plots and expected number of species?
 length(unique(autotroph[!Species %in% lichenspecies, Species]))
-length(unique(autotroph[Species %in% lichenspecies, Plot]))
+length(unique(autotroph[!Species %in% lichenspecies, Plot]))
 ```
 *Plots identities*
 ```{r, eval=F}
