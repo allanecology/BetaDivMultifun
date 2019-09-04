@@ -31,7 +31,6 @@ spdiv <- merge(spdiv, spinfo, by = "Species", all.x=T)
 # this analysis was done before all missing plot x year combinations were set to NA.
 # they are therefore removed here.
 spdiv <- spdiv[!is.na(value)]
-#TODO : this is a test. remove row above if I find problems
 
 # now I can remove the original datasets, so I save cpu:
 rm(spinfo); gc()
@@ -143,10 +142,10 @@ autotroph <- spdiv[Trophic_level == "autotroph"]
 autotroph <- autotroph[Year %in% c("2009", "2008", "2010", "2011", "2012", "2013", "2014", "2015", "2016")]
 autotrophnew <- spdiv[Trophic_level == "autotroph" & Year %in% c("2017", "2018")]
 # find the species in autotroph which are never present in the years I include
-test <- data.table(aggregate(value ~ Species, autotroph, sum))
+test <- data.table::data.table(aggregate(value ~ Species, autotroph, sum))
 exclude <- test[value == 0, Species]
 # test2 <- data.table(aggregate(value ~ Species, autotrophnew, sum))
-notexclude <- test2[value == 0, Species]
+# notexclude <- test2[value == 0, Species]
 # exclude them from the analysis
 autotroph <- autotroph[!Species %in% exclude]
 
@@ -320,9 +319,16 @@ rm(omnivore)
 
 
 ## Secondary consumers
-2008 dataset from 
+arthropods (?) and myriapods
+2008 dataset
+
+update : 2011 dataset is not included any more
 ```{r}
 secondary.consumer <- spdiv[Trophic_level == "secondary.consumer"]
+myria.sc <- spdiv[Trophic_level == "myriapod.secondary.consumer"]
+myria.sc <- myria.sc[Plot %in% secondary.consumer$Plot]
+trlevels <- trlevels[!trlevels == "myriapod.secondary.consumer"]
+
 testplotpresence <- unique(secondary.consumer[, .(Year, Plot)])
 # testplotpresence <- unique(secondary.consumer[Plot %in% plotNAset, .(Year, Plot)])
 vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
@@ -330,14 +336,15 @@ rm(testplotpresence)
 ```
 Only 2008 dataset has some missing values
 
-  Year     | 2008  | 2011 |
----------- | ----- | ---- |
-no Plots   | 139   | 150* |
-no Species | 170   |   4  |
+  Year     | 2008  | 2011 | myriapods |
+---------- | ----- | ---- | --------- |
+no Plots   | 139   | 150* |    150    |
+no Species | 170   |   4  |      4    |
 
 Species set does not overlap.
 
 **Note** : possibly, set from 2011 was not complete neither? But if the same error as in all insect datasets --> selecting plots from 2008 will solve the issue. In case 2011 Data is used, check this!
+
 ```{r, eval=F}
 # length(unique(secondary.consumer[Year == "2008", Species]))
 any(unique(secondary.consumer[Year == "2008", Species]) %in% unique(secondary.consumer[Year == "2011", Species]))
@@ -346,7 +353,8 @@ any(unique(secondary.consumer[Year == "2008", Species]) %in% unique(secondary.co
 Select the Plot set from 2008 and merge the datasets together.
 ```{r}
 secondary.consumer <- secondary.consumer[Plot %in% unique(unique(secondary.consumer[Year == "2008", Plot])), .(Species, Plot, value)]
-nrow(secondary.consumer) == 4 * 139 + 170 * 139 # expected number of rows present
+secondary.consumer <- rbind(myria.sc[, .(Species, Plot, value)], secondary.consumer)
+nrow(secondary.consumer) == 139 * 174  # expected number of rows present
 spdiv <- spdiv[!Trophic_level == "secondary.consumer"]
 ```
 
@@ -484,14 +492,14 @@ length(intersect(unique(protist.bacterivore[Year == "2017", Species]), unique(pr
 |    year    | 2011    | 2011_2012 |  2017  | 2011 2017 | 2017 2011_2012 |
 | ---------- | ------- | --------- | ------ | --------- | -------------- |
 | no Plots   |   149   |   150     |   150  |    149    |     149        |
-| no OTUs    |   856   |   233     |   863  | 833+23+30 |       0        |
+| no OTUs    |   886   |   233     |   863  | 833+23+30 |       0        |
 
 No overlap between 2011 and 2011_2012 and 2017 and 2011_2012. 
 
 For BetaDivMultifun, only year 2011 is chosen : 
 ```{r}
 protist.bacterivore <- protist.bacterivore[Year == "2011", .(Species, Plot, value)]
-nrow(protist.bacterivore) == 149 * 856 # TRUE : The expected number of rows is present.
+nrow(protist.bacterivore) == 149 * 886 # TRUE : The expected number of rows is present.
 spdiv <- spdiv[!Trophic_level == "protist.bacterivore"]
 ```
 
@@ -556,12 +564,12 @@ length(unique(protist.omnivore[Year == "2017", Species]))
 |   Year   |   2011   |  2017  |  both    |
 | -------- | -------- | ------ | -------- |
 | no Plots |   149    |  150   |    149   |
-| no OTUs  |   440    |  434   | 430+10+4 |
+| no OTUs  |   444    |  434   | 430+10+4 |
 
 Only Year 2011 is chosen.
 ```{r}
 protist.omnivore <- protist.omnivore[Year == "2011", .(Species, Plot, value)]
-nrow(protist.omnivore) == 149 * 440 # expected number of rows is present
+nrow(protist.omnivore) == 149 * 444 # expected number of rows is present
 spdiv <- spdiv[!Trophic_level == "protist.omnivore"]
 ```
 
@@ -787,9 +795,24 @@ rm(beta.belowground.predator)
 ```
 
 
-## decomposer
+## decomposer TAKEN OUT
 ```{r}
 decomposer <- spdiv[Trophic_level == "decomposer", .(Species, Plot, value)]
+mdecomposer <- spdiv[Trophic_level == "myriapod.decomposer", .(Species, Plot, value)]
+# update trlevels
+trlevels <- trlevels[!trlevels == "myriapod.decomposer"]
+# length(unique(mdecomposer$Plot))
+
+# merge decomposer and mdecomposers, but only the plots present in arthropods
+mdecomposer <- mdecomposer[Plot %in% decomposer$Plot]
+decomposer <- rbind(decomposer, mdecomposer)
+```
+|   type   | arthropods | myriapods |
+| -------- | ---------- | --------- |
+| #species |     40     |      6    |
+| #Plots   |    139     |    150    |
+
+```{r}
 # testplotpresence <- unique(decomposer[, .(Year, Plot)])
 # vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 # rm(testplotpresence)
