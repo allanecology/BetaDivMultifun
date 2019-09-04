@@ -7,6 +7,7 @@
 #' 
 #' @export
 create_restab <- function(x=1){
+  require(data.table)
   #TODO : once all models are read, use effect size sequence and not alphabetically
   plotsequence_bio <- c("autotroph", "bacteria.RNA", "belowground.herbivore", "belowground.predator", "herbivore", "plant.pathogen", "pollinator", "protist.bacterivore", "protist.eukaryvore", "protist.omnivore", "protist.plant.parasite", "secondary.consumer", "soilfungi.decomposer", "soilfungi.pathotroph", "soilfungi.symbiont", "tertiary.consumer")
   #TODO : add characteristic color for each trophic level

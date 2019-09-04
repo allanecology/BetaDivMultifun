@@ -12,21 +12,18 @@ suppressPackageStartupMessages(require(cowplot))
 requirements : 
 - GDM output as .rds, e.g. gdm_EFnestedness_LUI_input.Rds
 - cluster output as .rds, e.g. gdm_EFnestedness_LUI_permutation.Rds
-```{r}
-suppressPackageStartupMessages(library(cowplot)) # needs to be loaded in order to use it (even within R package)
-```
 
 
 Load data
 ```{r}
-# luiinput <- "lui"
-luiinput <- "components"
+luiinput <- "lui"
+# luiinput <- "components"
 
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_LUI_input.Rds", sep = ""))
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_input.Rds", sep = ""))
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFturnover_LUI_input.Rds", sep = ""))
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFbeta_LUI_input.Rds", sep = ""))
-gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_Gstd_input.Rds", sep = ""))
+# gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_Gstd_input.Rds", sep = ""))
 
 gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
 exSplines <- gdm::isplineExtract(gdm_output)
@@ -172,9 +169,27 @@ plot_grid(p, b, q, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heig
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # single EFs heatmap
 load data
 ```{r}
+singleEFdist <- readRDS(paste(pathtodata, "/assembled_data/general/singleEFdist.rds", sep = "")) # already scaled
 i <- 1
 ni <- colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")][i]
 i <- paste(pathtoout, "/cluster/gdm_", ni, "_LUI_input.Rds", sep = "")
@@ -222,7 +237,8 @@ restab2 <- data.table::data.table(restab2)
 ```
 Create heatmap
 ```{r}
-pal <- RColorBrewer::brewer.pal(9, "YlOrRd")
+# pal <- RColorBrewer::brewer.pal(9, "YlOrRd")
+pal <- RColorBrewer::brewer.pal(9, "Greys")
 include <- c("nicenames", colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")])
 
 df <- restab2[type == "bio" & ground == "a", ]
@@ -238,7 +254,8 @@ a <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
     axis.text.y = element_text(size=9, angle = 0),
     axis.ticks.x = element_blank(),
     panel.grid.major.x = element_line(color = "grey"),
-    legend.position = "none") + 
+    axis.title = element_blank(),
+    legend.position = "top") + 
   scale_x_discrete(position = "top") 
 
 df <- restab2[type == "bio" & ground == "b", ]
@@ -272,7 +289,10 @@ c <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
 ```
 
 ```{r, eval = F}
-plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
+# plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
+plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.43, 0.47, 0.11), align = "v")
+# plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.58, 0.44, 0.10), align = "v") # grayscale with legend
+
 # plot_grid(p, b, q, labels = c('aboveground', 'belowground', 'abiotic'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
 ```
 
