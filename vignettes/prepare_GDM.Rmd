@@ -15,21 +15,6 @@ This script relies on loading the following datasets:
 - predictors : values of predictors (plot isolation, geographic position)
 - predictors soil : euclidean distance of soil pca
 
-
-# Cleaning
-maybe this part can be moved to where it should have been done...
-```{r}
-#TODO : move to other scripts
-colnames(predictors)[1] <- "Plotn"
-# standardise EFdistance
-#TODO : remove this row as soon as run again
-EFmaster[, EFdistance := scale01(EFdistance)]
-    # or single functions
-# include <- colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")]
-# singleEFdist[, (include) := lapply(.SD, scale01), .SDcols = include]
-```
-
-
 # Select Variables
 Select Variables for the models
 ```{r}

@@ -166,6 +166,7 @@ rm(plot.names)
 combine covariates to a predictor dataset
 ```{r, eval=F}
 predictors <- merge(plt.sur, geodist, by = "row.names")
+colnames(predictors)[1] <- "Plotn"
 
 saveRDS(predictors, file = "predictors.rds")
 
