@@ -26,7 +26,6 @@ luiy[ ,Mstd := TotalMowing / MeanM, by = EP_PlotID]
 luiy[ ,Gstd := TotalGrazing / MeanG , by = EP_PlotID]
 
 # calculate DELTA LUI and DELTA COMPONENTS
-#TODO : standardise?
 luiy[ , deltaLUI := sd(LUI), by = EP_PlotID]
 luiy[ , deltaFstd := sd(Fstd), by = EP_PlotID]
 luiy[ , deltaMstd := sd(Mstd), by = EP_PlotID]
