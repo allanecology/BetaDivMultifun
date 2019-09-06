@@ -166,18 +166,19 @@ plot(ecdf(pca_grlfuns$sdev))
 Plotting first 5 axis
 ```{r, eval = F}
 p <- plot(pca_grlfuns)
+labelsize <- 3
 p1 <- ggplot2::autoplot(pca_grlfuns, loadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
-               loadings.label.colour = "black", loadings.label.repel = T)
+               loadings.label.colour = "black", loadings.label.repel = T, loadings.label.size = labelsize)
 p2 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
-               loadings.label.colour = "black", loadings.label.repel = T,
+               loadings.label.colour = "black", loadings.label.repel = T, loadings.label.size = labelsize,
                x = 3, y = 2)
-p3 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
-               loadings.label.colour = "black", loadings.label.repel = T,
+p3 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "gray", 
+               loadings.label.colour = "black", loadings.label.repel = T, loadings.label.size = labelsize,
                x = 4, y = 3)
 p4 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
-               loadings.label.colour = "black", loadings.label.repel = T,
+               loadings.label.colour = "black", loadings.label.repel = T, loadings.label.size = labelsize,
                x = 4, y = 5)
-cowplot::plot_grid(plotslist = list(p1, p2, p3, p4), labels = c("A", "B", "C", "D"), algn = T)
+cowplot::plot_grid(plotlist = list(p1, p2, p3, p4), labels = c("A", "B", "C", "D"), align = T)
 
 p5 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
                loadings.label.colour = "black", loadings.label.repel = T,
@@ -215,28 +216,41 @@ threshold <- 0.5
 # tresholds used in Solivieres paper :  0.25,0.5,0.75,0.9
 ```
 Plot for visualisation
-```{r}
-x <- nimputed_grlfuns$Root.biomass
-names(x) <- nimputed_grlfuns$Plotn
+```{r, eval = F}
+# plot all 18 functions on one page
+# x <- nimputed_grlfuns$Root.biomass
+require(cowplot)
 
-# calc mean of top 5 values
-upper <- mean(sort(x, decreasing = T, na.last=T)[1:5])
-upperq <- quantile(x, probs = threshold)
+for(i in colnames(nimputed_grlfuns)[which(colnames(nimputed_grlfuns) != "Plotn")]){
+  x <- nimputed_grlfuns[, get(i)]
+  names(x) <- nimputed_grlfuns$Plotn
+  # calc mean of top 5 values
+  upper <- mean(sort(x, decreasing = T, na.last=T)[1:5])
+  upperq <- quantile(x, probs = threshold)
+  df <- cbind(len = x, deleteme = x)
+  p <- ggplot2::ggplot(df, ggplot2::aes(y = len, x= rownames(df))) +
+  ggplot2::geom_bar(stat="identity") +
+  ggplot2::geom_abline(intercept = upper, slope = 0, color = "lightgray") +
+  ggplot2::geom_abline(intercept = upper*threshold, slope = 0, color =cols[1]) +
+  ggplot2::geom_abline(intercept = upperq, slope = 0, color = cols[2]) +
+  theme(axis.text.x=element_blank()) + xlab("Plots") + ylab(i)
+  plotname <- paste("plot", i, sep = "")
+  assign(plotname, p)
+  rm(p)
+}
+rm(i)
+
+plotnames <- paste("plot", colnames(nimputed_grlfuns)[which(colnames(nimputed_grlfuns) != "Plotn")], sep = "")
+
+plot_grid(plotlist = list(plotBiomass, plotdung.removal, plotGroundwater.recharge, plotherbivory.20172018, plotLitter.decomposition, plotN_leaching_risk2015, plotpathogen.infection, plotPhosphatase, plotPotential.nitrification, plotcaterpillars.predation, plotRoot.biomass, plotRoot.decomposition, plotseed.depletion, plotsoilCflxs, plotP_leaching_risk_comb, plotsoilNitrateflxs, plotsoilAmmoniaflxs),
+          align = T)
 
 # barplot(x, main="Root Biomass", xlab="Plots")
 # abline(a=upper,b=0,col="lightgray")
 # abline(a = upperq, b = 0, col = "darkgreen")
 # abline(a=upper*threshold, b=0, col="orange")
 
-require(cowplot)
-df <- cbind(len = x, deleteme = x)
-p <- ggplot2::ggplot(df, ggplot2::aes(y = len, x= rownames(df))) +
-  ggplot2::geom_bar(stat="identity") +
-  ggplot2::geom_abline(intercept = upper, slope = 0, color = "lightgray") +
-  ggplot2::geom_abline(intercept = upper*threshold, slope = 0, color =cols[1]) +
-  ggplot2::geom_abline(intercept = upperq, slope = 0, color = cols[2]) +
-  theme(axis.text.x=element_blank()) + xlab("Plots") + ylab("Root biomass [g]") 
-rm(df)
+rm(df); rm(plotBiomass, plotdung.removal, plotGroundwater.recharge, plotherbivory.20172018, plotLitter.decomposition, plotN_leaching_risk2015, plotpathogen.infection, plotPhosphatase, plotPotential.nitrification, plotcaterpillars.predation, plotRoot.biomass, plotRoot.decomposition, plotseed.depletion, plotsoilCflxs, plotP_leaching_risk_comb, plotsoilNitrateflxs, plotsoilAmmoniaflxs)
 ```
 
 With threshold max 5 method
