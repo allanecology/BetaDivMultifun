@@ -4,6 +4,7 @@ author: "Noelle Schenk"
 date: "June 21, 2019"
 output: html_document
 ---
+
 note : packages used : gdm, car, geosphere, viridis and colrobrewer
 
 # Dependencies
@@ -20,16 +21,22 @@ Select Variables for the models
 ```{r}
 print("user input required here!")
 # funs is one of : EFdistance, EFturnover, EFnestedness, NEW : EFbeta
+#    EFturnover_0.5, EFnestedness_0.5, EFturnover_0.75, EFturnover_0.9
 # or singleEF: 
 #    Biomass , dung.removal, Groundwater.recharge, herbivory.20172018, ..., soilAmmoniaflxs
+#Biomass"                 "dung.removal"            "Groundwater.recharge"   
+ # [6] "herbivory.20172018"      "Litter.decomposition"    "N_leaching_risk2015"     "pathogen.infection"      "Phosphatase"            
+# [11] "Potential.nitrification" "caterpillars.predation"  "Root.biomass"            "Root.decomposition"      "seed.depletion"         
+# [16] "soilCflxs"               "P_leaching_risk_comb"    "soilNitrateflxs"         "soilAmmoniaflxs"
+
 #TODO : single functions
-funs <- "EFdistance"
+# funs <- "Phosphatase"
 # NOTE if single function : do this:
-# EFmaster <- data.table::copy(singleEFdist)
+EFmaster <- data.table::copy(singleEFdist)
 # LUI is one of the below
-# lui <- c("LUI", "deltaLUI")
+lui <- c("LUI", "deltaLUI")
 #TODO : script not working yet for LUI components - they stay in the geo dist subset
-lui <- c("Gstd", "Mstd", "Fstd", "deltaGstd", "deltaMstd", "deltaFstd")
+# lui <- c("Gstd", "Mstd", "Fstd", "deltaGstd", "deltaMstd", "deltaFstd")
 ```
 
 Ecosystem Functions : either EFdistance, EFturnover, EFnestedness or single functions
