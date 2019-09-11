@@ -20,22 +20,23 @@ This script relies on loading the following datasets:
 Select Variables for the models
 ```{r}
 print("user input required here!")
-# funs is one of : EFdistance, EFturnover, EFnestedness, NEW : EFbeta
-#    EFturnover_0.5, EFnestedness_0.5, EFturnover_0.75, EFturnover_0.9
-# or singleEF: 
+source('/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/analysis_nonpublic.R', echo=TRUE)
+# funs <- c("EFdistance", "EFturnover_0.5", "EFnestedness_0.5", "EFturnover_0.75", "EFturnover_0.9", "EFnestedness_0.9", "EFnestedness_0.75")
+# funs <- c("EFabund_bray", "EFabund_bray_bal", "EFabund_bray_gra", "EFturnover_median", "EFnestedness_median", "EFbeta_median")
+# funs2 <- c("EFbeta_0.1", "EFturnover_0.1", "EFnestedness_0.1", "EFbeta_0.2", "EFturnover_0.2", "EFnestedness_0.2", "EFbeta_0.3", "EFturnover_0.3", "EFnestedness_0.3", "EFbeta_0.4"       "EFturnover_0.4"   "EFnestedness_0.4" "EFbeta_0.5"       "EFturnover_0.5"   "EFnestedness_0.5", "EFbeta_0.6", "EFturnover_0.6", "EFnestedness_0.6", "EFbeta_0.7", "EFturnover_0.7", "EFnestedness_0.7", "EFbeta_0.8", "EFturnover_0.8", "EFnestedness_0.8", "EFbeta_0.9", "EFturnover_0.9", "EFnestedness_0.9")
+funs <- colnames(EFmaster)[27]
+
+# funs is one of :  EFturnover, EFnestedness, NEW : EFbeta
+#    , , , 
+
 #    Biomass , dung.removal, Groundwater.recharge, herbivory.20172018, ..., soilAmmoniaflxs
 #Biomass"                 "dung.removal"            "Groundwater.recharge"   
  # [6] "herbivory.20172018"      "Litter.decomposition"    "N_leaching_risk2015"     "pathogen.infection"      "Phosphatase"            
 # [11] "Potential.nitrification" "caterpillars.predation"  "Root.biomass"            "Root.decomposition"      "seed.depletion"         
 # [16] "soilCflxs"               "P_leaching_risk_comb"    "soilNitrateflxs"         "soilAmmoniaflxs"
 
-#TODO : single functions
-# funs <- "Phosphatase"
-# NOTE if single function : do this:
-EFmaster <- data.table::copy(singleEFdist)
 # LUI is one of the below
 lui <- c("LUI", "deltaLUI")
-#TODO : script not working yet for LUI components - they stay in the geo dist subset
 # lui <- c("Gstd", "Mstd", "Fstd", "deltaGstd", "deltaMstd", "deltaFstd")
 ```
 
@@ -82,7 +83,6 @@ for(i in 1:length(rownames(fordistpreds))){
   new <- geosphere::distGeo(forpredData[fordistpreds[i, 1], c("Longitude_Dec_Plotcenter", "Latitude_Dec_Plotcenter")], forpredData[fordistpreds[i, 2], c("Longitude_Dec_Plotcenter", "Latitude_Dec_Plotcenter")])
   fordistpreds[i, "geo_dist"] <- new
 }
-#TODO HERE is an error. ... geo dist is not calculated well, because LUI components
 
 # standardization of non-betadiversities to be between 0 and 1
 # apply(fordistpreds, 2, range)
@@ -93,14 +93,14 @@ rm(foreuclid); rm(forstand); rm(i)
 ```
 
 # Check Correlation
-```{r}
+```{r, eval = F}
 m <- cor(fordistpreds[, -c(1:2, 36)])
 corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", diag = F, tl.srt = 50, tl.col = "black", order = "hclust", tl.cex = 0.4, cl.cex = 0.3, number.cex = 0.3)
 ```
 Variance inflation
 ```{r}
 # generate model
-mod <- paste(funs, " ~ " ,paste(colnames(fordistpreds)[!colnames(fordistpreds) %in% c("EFdistance", "Var1", "Var2")], collapse = " + "))
+mod <- paste(funs, " ~ " ,paste(colnames(fordistpreds)[!colnames(fordistpreds) %in% c(funs, "Var1", "Var2")], collapse = " + "))
 
 m1 <- lm(formula = formula(mod), data = fordistpreds)
 vif_output <- car::vif(m1)
