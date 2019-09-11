@@ -1,44 +1,44 @@
 names,nicenames,ground,color
-autotroph.beta.sim,autotroph βto,a,#1B9E77
-autotroph.beta.sne,autotroph βnes,a,#1B9E77
-herbivore.beta.sim,herbivore βto,a,#D95F02
-herbivore.beta.sne,herbivore βnes,a,#D95F02
-plant.pathogen.beta.sim,plant pathogen βto,a,#7570B3
-plant.pathogen.beta.sne,plant pathogen βnes,a,#7570B3
-pollinator.beta.sim,pollinator βto,a,#E7298A
-pollinator.beta.sne,pollinator βnes,a,#E7298A
-secondary.consumer.beta.sim,secondary consumer βto,a,#66A61E
-secondary.consumer.beta.sne,secondary consumer βnes,a,#66A61E
-tertiary.consumer.beta.sim,tertiary consumer βto,a,#E6AB02
-tertiary.consumer.beta.sne,tertiary consumer βnes,a,#E6AB02
-bacteria.RNA.beta.sim,bacteria RNA βto,b,#A6761D
-bacteria.RNA.beta.sne,bacteria RNA βnes,b,#A6761D
-belowground.herbivore.beta.sim,belowground herbivore βto,b,#666666
-belowground.herbivore.beta.sne,belowground herbivore βnes,b,#666666
-belowground.predator.beta.sim,belowground predator βto,b,#377EB8
-belowground.predator.beta.sne,belowground predator βnes,b,#377EB8
-protist.bacterivore.beta.sim,protist bacterivore βto,b,#984EA3
-protist.bacterivore.beta.sne,protist bacterivore βnes,b,#984EA3
-protist.eukaryvore.beta.sim,protist eukaryvore βto,b,#A65628
-protist.eukaryvore.beta.sne,protist eukaryvore βnes,b,#A65628
-protist.omnivore.beta.sim,protist omnivore βto,b,#F781BF
-protist.omnivore.beta.sne,protist omnivore βnes,b,#F781BF
+autotroph.beta.sim,autotroph βto,a,#66A61E
+autotroph.beta.sne,autotroph βnes,a,#66A61E
+herbivore.beta.sim,herbivore βto,a,#1B9E77
+herbivore.beta.sne,herbivore βnes,a,#1B9E77
+plant.pathogen.beta.sim,plant pathogen βto,a,#377EB8
+plant.pathogen.beta.sne,plant pathogen βnes,a,#377EB8
+pollinator.beta.sim,pollinator βto,a,#7570B3
+pollinator.beta.sne,pollinator βnes,a,#7570B3
+secondary.consumer.beta.sim,secondary consumer βto,a,#E6AB02
+secondary.consumer.beta.sne,secondary consumer βnes,a,#E6AB02
+tertiary.consumer.beta.sim,tertiary consumer βto,a,#D95F02
+tertiary.consumer.beta.sne,tertiary consumer βnes,a,#D95F02
+bacteria.RNA.beta.sim,bacteria RNA βto,b,#666666
+bacteria.RNA.beta.sne,bacteria RNA βnes,b,#666666
+belowground.herbivore.beta.sim,belowground herbivore βto,b,#A6761D
+belowground.herbivore.beta.sne,belowground herbivore βnes,b,#A6761D
+belowground.predator.beta.sim,belowground predator βto,b,#A65628
+belowground.predator.beta.sne,belowground predator βnes,b,#A65628
+protist.bacterivore.beta.sim,protist bacterivore βto,b,#FDC086
+protist.bacterivore.beta.sne,protist bacterivore βnes,b,#FDC086
+protist.eukaryvore.beta.sim,protist eukaryvore βto,b,#F781BF
+protist.eukaryvore.beta.sne,protist eukaryvore βnes,b,#F781BF
+protist.omnivore.beta.sim,protist omnivore βto,b,#FFFF99
+protist.omnivore.beta.sne,protist omnivore βnes,b,#FFFF99
 protist.plant.parasite.beta.sim,protist plant parasite βto,b,#7FC97F
 protist.plant.parasite.beta.sne,protist plant parasite βnes,b,#7FC97F
-soilfungi.decomposer.beta.sim,soilfungi decomposer βto,b,#BEAED4
-soilfungi.decomposer.beta.sne,soilfungi decomposer βnes,b,#BEAED4
-soilfungi.pathotroph.beta.sim,soilfungi pathotroph βto,b,#FDC086
-soilfungi.pathotroph.beta.sne,soilfungi pathotroph βnes,b,#FDC086
-soilfungi.symbiont.beta.sim,soilfungi symbiont βto,b,#FFFF99
-soilfungi.symbiont.beta.sne,soilfungi symbiont βnes,b,#FFFF99
-deltaLUI,ΔLUI,x,#1B9E77
-edis_soil,soil,x,#D95F02
-geo_dist,geographic distance,x,#7570B3
-LUI,LUI,x,#E7298A
+soilfungi.decomposer.beta.sim,soilfungi decomposer βto,b,#984EA3
+soilfungi.decomposer.beta.sne,soilfungi decomposer βnes,b,#984EA3
+soilfungi.pathotroph.beta.sim,soilfungi pathotroph βto,b,#E7298A
+soilfungi.pathotroph.beta.sne,soilfungi pathotroph βnes,b,#E7298A
+soilfungi.symbiont.beta.sim,soilfungi symbiont βto,b,#BEAED4
+soilfungi.symbiont.beta.sne,soilfungi symbiont βnes,b,#BEAED4
+deltaLUI,ΔLUI,x,#BEAED4
+edis_soil,soil,x,#A6761D
+geo_dist,geographic distance,x,#377EB8
+LUI,LUI,x,#7570B3
 plot_isolation,plot isolation,x,#66A61E
-Gstd,Grazing,x,#E6AB02
-Mstd,Mowing,x,#A6761D
-Fstd,Fertilisation,x,#666666
-deltaGstd,Δgrazing,x,#377EB8
-deltaMstd,Δmowing,x,#984EA3
-deltaFstd,Δfertilisation,x,#A65628
+Gstd,Grazing,x,#D95F02
+Mstd,Mowing,x,#E6AB02
+Fstd,Fertilisation,x,#E7298A
+deltaGstd,Δgrazing,x,#FDC086
+deltaMstd,Δmowing,x,#FFFF99
+deltaFstd,Δfertilisation,x,#F781BF

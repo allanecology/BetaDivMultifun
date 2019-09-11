@@ -16,14 +16,14 @@ requirements :
 
 Load data
 ```{r}
-luiinput <- "lui"
-# luiinput <- "components"
+# luiinput <- "lui"
+luiinput <- "components"
 
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_LUI_input.Rds", sep = ""))
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_input.Rds", sep = ""))
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFturnover_LUI_input.Rds", sep = ""))
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFbeta_LUI_input.Rds", sep = ""))
-# gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_Gstd_input.Rds", sep = ""))
+gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_Gstd_input.Rds", sep = ""))
 
 gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
 exSplines <- gdm::isplineExtract(gdm_output)
@@ -87,18 +87,8 @@ data.table::setorder(restab, ground, names)
 # order <- restab[type == "bio", names]
 # bring colors into right format
 restab[, color := as.character(color)]
-```
-colors for plotting (21), 16 in the bio plot
-```{r, eval = F}
-# from pallettes Dark2, Set1 and Accent from RColorBrewer
-cbcols <- c("#1B9E77","#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#A6761D", "#666666",
-             "#377EB8", "#984EA3", "#A65628", "#F781BF",
-            "#7FC97F", "#BEAED4","#FDC086", "#FFFF99")
-restab[component == "turnover", color := cbcols ]
-restab[component == "nestedness", color := cbcols]
-restab[type == "abio", color := cbcols[1:length(restab[type == "abio", color])]]
-# varcols <- restab$color
-# names(varcols) <- restab$names
+
+restab[type == "abio", component := "abio"]
 ```
 
 
@@ -150,7 +140,6 @@ b <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names)) +
 # https://www.heropatterns.com/
 # df <- restab[type == "abio"]
 df <- restab[ground == "x"]
-#TODO : error when LUI components : type is not abio but "x"
 q <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names)) +
   geom_bar(stat="identity", color = "black", linetype = "solid") + 
   coord_flip() + 
@@ -160,11 +149,47 @@ q <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names)) +
         axis.text.y = element_text(size=9),
         panel.grid.major.x = element_line(color = "grey"))
 ```
-
 ```{r, eval = F}
 plot_grid(p, b, q, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
 # plot_grid(p, b, q, labels = c('aboveground', 'belowground', 'abiotic'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
 ```
+
+Multipanel barplot with overview bars
+
+Aboveground - belowground - abiotic
+```{r}
+restab2 <- create_restab2()
+df <- data.frame(restab2)
+ov1 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = nicenames)) +
+  geom_bar(stat="identity", color = "black", linetype = "solid") +
+  coord_flip() +
+  scale_fill_manual(values = df$color) +
+  theme(legend.position = "none", axis.title = element_blank(),
+        axis.text.y = element_text(size=9),
+        panel.grid.major.x = element_line(color = "grey"))
+```
+```{r, eval = F}
+plot_grid(p, b, q, ov1, labels = c('A', '', 'B', 'C'), label_size = 12, nrow = 4, rel_heights = c(0.08, 0.11, 0.065, 0.035), align = "v") # LUI components
+```
+
+
+turnover - nestedness - abiotic
+```{r}
+restab3 <- create_restab_3()
+df <- data.frame(restab3)
+ov2 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = nicenames)) +
+  geom_bar(stat="identity", color = "black", linetype = "solid") +
+  coord_flip() +
+  scale_fill_manual(values = df$color) +
+  theme(legend.position = "none", axis.title = element_blank(),
+        axis.text.y = element_text(size=9),
+        panel.grid.major.x = element_line(color = "grey"))
+```
+```{r, eval = F}
+plot_grid(p, b, q, ov1, labels = c('A', '', 'B', 'C'), label_size = 12, nrow = 4, rel_heights = c(0.08, 0.11, 0.065, 0.035), align = "v") # LUI components
+```
+
+
 
 
 
@@ -188,7 +213,7 @@ plot_grid(p, b, q, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heig
 
 # single EFs heatmap
 load data
-```{r}
+```{r, eval = F}
 singleEFdist <- readRDS(paste(pathtodata, "/assembled_data/general/singleEFdist.rds", sep = "")) # already scaled
 i <- 1
 ni <- colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")][i]
@@ -212,7 +237,7 @@ data.table::setnames(restab, old = "maxsplines", new = ni)
 restab2 <- data.table::copy(restab)
 ```
 
-```{r}
+```{r, eval = F}
 i <- 2
 for(i in 2:(length(colnames(singleEFdist))-2)){
   print(i)
@@ -236,7 +261,7 @@ for(i in 2:(length(colnames(singleEFdist))-2)){
 restab2 <- data.table::data.table(restab2)
 ```
 Create heatmap
-```{r}
+```{r, eval = F}
 # pal <- RColorBrewer::brewer.pal(9, "YlOrRd")
 pal <- RColorBrewer::brewer.pal(9, "Greys")
 include <- c("nicenames", colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")])
@@ -286,6 +311,7 @@ c <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
         axis.line.x=element_blank(),
         axis.ticks.x = element_blank(),
         panel.grid.major.x = element_line(color = "grey"))
+
 ```
 
 ```{r, eval = F}
