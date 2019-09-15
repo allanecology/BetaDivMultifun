@@ -103,25 +103,25 @@ create_restab_3 <- function(x=1){
   
   unscaled[, color := "x"]
   unscaled[nicenames == "turnover", color := "#E6AB02"]; unscaled[nicenames == "nestedness", color := "#984EA3"]; unscaled[nicenames == "abiotic", color := "#666666"]
-  restab2 <- data.table::copy(unscaled)
+  restab3 <- data.table::copy(unscaled)
   
   # averaged but not scaled
   temp <- data.table::copy(unscaled) 
   temp[, maxsplines := maxsplines / weights]
   temp[, type := "averaged"]
-  restab2 <- rbindlist(list(restab2, temp)) # add to unscaled (rbind)
+  restab3 <- rbindlist(list(restab3, temp)) # add to unscaled (rbind)
   
   # scale but not averaged
   temp <- data.table::copy(unscaled)
   temp[, maxsplines := maxsplines / sum(temp$maxsplines)]
   temp[, type := "scaled"]
-  restab2 <- rbindlist(list(restab2, temp)) # add to unscaled (rbind)
+  restab3 <- rbindlist(list(restab3, temp)) # add to unscaled (rbind)
   
   # scale and averaged
   temp <- data.table::copy(unscaled)
   temp[, maxsplines := maxsplines / weights]
   temp[, maxsplines := maxsplines / sum(temp$maxsplines)]
   temp[, type := "averaged_scaled"]
-  restab2 <- rbindlist(list(restab2, temp)) # add to unscaled (rbind)
-  return(restab2)
+  restab3 <- rbindlist(list(restab3, temp)) # add to unscaled (rbind)
+  return(restab3)
 }
