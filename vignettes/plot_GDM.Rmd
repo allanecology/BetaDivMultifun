@@ -19,7 +19,7 @@ Load data
 luiinput <- "lui"
 # luiinput <- "components"
 
-# gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_LUI_input.Rds", sep = ""))
+gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_LUI_input.Rds", sep = ""))
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_input.Rds", sep = ""))
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFturnover_LUI_input.Rds", sep = ""))
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFbeta_LUI_input.Rds", sep = ""))
@@ -32,7 +32,7 @@ exSplines <- gdm::isplineExtract(gdm_output)
 # gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_permutation.Rds", sep = ""))
 
 permut <- F # T or F, depending wether permutations are available or not
-main <- "EFdistance LUI components" # plot title
+main <- "EFdistance LUI" # plot title
 ```
 ```{r}
 # take maximum of each variable for barplot
@@ -111,7 +111,7 @@ plot(gdm_output, plot.layout = c(3, 2), plot.color = "grey", main="GDM")
 
 # Multipanel Barplot
 
-```{r}
+```{r, eval = F}
 df <- restab[type == "bio" & ground == "a", ]
 p<-ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names)) +
   geom_bar(stat="identity", color = "black", linetype = rep(c("solid", "dashed"), nrow(df)/2)) + 
@@ -171,24 +171,9 @@ plot_grid(p, b, q, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heig
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # single EFs heatmap
 load data
-```{r}
+```{r, eval = F}
 singleEFdist <- readRDS(paste(pathtodata, "/assembled_data/general/singleEFdist.rds", sep = "")) # already scaled
 i <- 1
 ni <- colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")][i]
@@ -212,7 +197,7 @@ data.table::setnames(restab, old = "maxsplines", new = ni)
 restab2 <- data.table::copy(restab)
 ```
 
-```{r}
+```{r, eval = F}
 i <- 2
 for(i in 2:(length(colnames(singleEFdist))-2)){
   print(i)
@@ -236,7 +221,7 @@ for(i in 2:(length(colnames(singleEFdist))-2)){
 restab2 <- data.table::data.table(restab2)
 ```
 Create heatmap
-```{r}
+```{r, eval = F}
 # pal <- RColorBrewer::brewer.pal(9, "YlOrRd")
 pal <- RColorBrewer::brewer.pal(9, "Greys")
 include <- c("nicenames", colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")])
