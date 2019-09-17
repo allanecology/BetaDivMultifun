@@ -50,11 +50,8 @@ create_restab <- function(x=1){
 create_restab2 <- function(x=1){
   require(data.table)
   # unscaled
-  unscaled <- data.table(aggregate(maxsplines ~ ground, restab, sum))
-  unscaled2 <- data.table(aggregate(maxsplines ~ ground, restab, length))
-  setnames(unscaled2, old = "maxsplines", new = "weights")
-  unscaled <-merge(unscaled, unscaled2); rm(unscaled2)
-  
+  unscaled <- data.table::data.table(aggregate(maxsplines ~ ground, restab, sum))
+
   unscaled[, type := "unscaled"]
   unscaled[, nicenames := "x"]
   unscaled[ground == "a", nicenames := "aboveground"]; unscaled[ground == "b", nicenames := "belowground"]; unscaled[ground == "x", nicenames := "abiotic"]
@@ -63,21 +60,20 @@ create_restab2 <- function(x=1){
   unscaled[nicenames == "aboveground", color := "#66A61E"]; unscaled[nicenames == "belowground", color := "#A65628"]; unscaled[nicenames == "abiotic", color := "#666666"]
   restab2 <- data.table::copy(unscaled)
   
-  # averaged but not scaled
-  temp <- data.table::copy(unscaled) 
-  temp[, maxsplines := maxsplines / weights]
-  temp[, type := "averaged"]
+  # mean (average)
+  temp <- data.table(aggregate(maxsplines ~ ground, restab, mean)) # get means from original restab
+  temp <- cbind(temp, unscaled[, .(type, nicenames, color)]) # add color and stuff
+  temp[, type := "average"]
   restab2 <- rbindlist(list(restab2, temp)) # add to unscaled (rbind)
   
-  # scale but not averaged
+  # scale
   temp <- data.table::copy(unscaled)
   temp[, maxsplines := maxsplines / sum(temp$maxsplines)]
   temp[, type := "scaled"]
   restab2 <- rbindlist(list(restab2, temp)) # add to unscaled (rbind)
   
-  # scale and averaged
-  temp <- data.table::copy(unscaled)
-  temp[, maxsplines := maxsplines / weights]
+  # scale the averaged
+  temp <- data.table::copy(restab2[type == "average",])
   temp[, maxsplines := maxsplines / sum(temp$maxsplines)]
   temp[, type := "averaged_scaled"]
   restab2 <- rbindlist(list(restab2, temp)) # add to unscaled (rbind)
@@ -93,9 +89,6 @@ create_restab_3 <- function(x=1){
   require(data.table)
   # unscaled
   unscaled <- data.table(aggregate(maxsplines ~ component, restab, sum))
-  unscaled2 <- data.table(aggregate(maxsplines ~ component, restab, length))
-  setnames(unscaled2, old = "maxsplines", new = "weights")
-  unscaled <-merge(unscaled, unscaled2); rm(unscaled2)
   
   unscaled[, type := "unscaled"]
   unscaled[, nicenames := "x"]
@@ -105,23 +98,23 @@ create_restab_3 <- function(x=1){
   unscaled[nicenames == "turnover", color := "#E6AB02"]; unscaled[nicenames == "nestedness", color := "#984EA3"]; unscaled[nicenames == "abiotic", color := "#666666"]
   restab3 <- data.table::copy(unscaled)
   
-  # averaged but not scaled
-  temp <- data.table::copy(unscaled) 
-  temp[, maxsplines := maxsplines / weights]
-  temp[, type := "averaged"]
+  # mean (average)
+  temp <- data.table(aggregate(maxsplines ~ component, restab, mean)) # get means from original restab
+  temp <- cbind(temp, unscaled[, .(type, nicenames, color)]) # add color and stuff
+  temp[, type := "average"]
   restab3 <- rbindlist(list(restab3, temp)) # add to unscaled (rbind)
   
-  # scale but not averaged
+  # scale
   temp <- data.table::copy(unscaled)
   temp[, maxsplines := maxsplines / sum(temp$maxsplines)]
   temp[, type := "scaled"]
   restab3 <- rbindlist(list(restab3, temp)) # add to unscaled (rbind)
   
-  # scale and averaged
-  temp <- data.table::copy(unscaled)
-  temp[, maxsplines := maxsplines / weights]
+  # scale the averaged
+  temp <- data.table::copy(restab3[type == "average",])
   temp[, maxsplines := maxsplines / sum(temp$maxsplines)]
   temp[, type := "averaged_scaled"]
   restab3 <- rbindlist(list(restab3, temp)) # add to unscaled (rbind)
+  
   return(restab3)
 }

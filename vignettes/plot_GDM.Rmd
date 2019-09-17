@@ -16,9 +16,9 @@ requirements :
 
 Load data
 ```{r}
-# luiinput <- "lui"
-luiinput <- "components"
-name <- "gdm_EFnestedness_0.3_LUI"
+luiinput <- "lui"
+# luiinput <- "components"
+name <- "gdm_EFturnover_0.75_LUI"
 
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFturnover_0.5_LUI_input.Rds", sep = ""))
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_Gstd_input.Rds", sep = ""))
@@ -88,6 +88,9 @@ data.table::setorder(restab, ground, names)
 restab[, color := as.character(color)]
 
 restab[type == "abio", component := "abio"]
+
+restab[component %in% c("turnover", "abio"), linetypet := "solid"]
+restab[component == "nestedness", linetypet := "dotted"]
 ```
 
 
@@ -102,10 +105,10 @@ plot(gdm_output, plot.layout = c(3, 2), plot.color = "grey", main="GDM")
 
 ```{r, eval = T}
 df <- restab[type == "bio" & ground == "a", ]
-p<-ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names)) +
-  geom_bar(stat="identity", color = "black", linetype = rep(c("solid", "dashed"), nrow(df)/2)) + 
+p<-ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
+  geom_bar(stat="identity", color = "black") + 
   coord_flip() + 
-  scale_fill_manual(values = df$color) +
+  scale_fill_identity() + scale_linetype_identity() + # the best option for customizing linetype, color,...!
   ylim(0, 0.44) + 
   ggtitle(main) +
   theme(legend.position = "none", axis.title = element_blank(),
@@ -118,10 +121,10 @@ p<-ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names)) +
         )
 
 df <- restab[type == "bio" & ground == "b", ]
-b <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names)) +
-  geom_bar(stat="identity", color = "black", linetype = rep(c("solid", "dashed"), nrow(df)/2)) + 
+b <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
+  geom_bar(stat="identity", color = "black") + 
   coord_flip() +
-  scale_fill_manual(values = df$color) +
+  scale_fill_identity() + scale_linetype_identity() +
   ylim(0, 0.44) +
   theme(legend.position = "none", 
         axis.title = element_blank(),
@@ -139,14 +142,17 @@ b <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names)) +
 # https://www.heropatterns.com/
 # df <- restab[type == "abio"]
 df <- restab[ground == "x"]
-q <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names)) +
-  geom_bar(stat="identity", color = "black", linetype = "solid") + 
+q <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names, linetype = linetypet)) +
+  geom_bar(stat="identity", color = "black") + 
   coord_flip() + 
-  scale_fill_manual(values = df$color) +
+  scale_fill_manual(values = df$color) + scale_linetype_identity() +
   ylim(0, 0.44) + 
   theme(legend.position = "none", axis.title = element_blank(),
         axis.text.y = element_text(size=9),
         panel.grid.major.x = element_line(color = "grey"))
+# # plot pure legend - only works if legend is there (legend.position taken out)
+# legend <- cowplot::get_legend(q)
+# plot_grid(NULL, legend)
 ```
 ```{r, eval = F}
 plot_grid(p, b, q, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
@@ -158,33 +164,42 @@ Multipanel barplot with overview bars
 Aboveground - belowground - abiotic
 ```{r}
 restab2 <- create_restab2()
+restab2 <- restab2[type %in% c("unscaled", "averaged_scaled")]
 df <- data.frame(restab2)
-ov1 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = nicenames)) +
+ov1 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = color)) +
   geom_bar(stat="identity", color = "black", linetype = "solid") +
   coord_flip() +
-  scale_fill_manual(values = df$color) +
+  scale_fill_identity() +
   theme(legend.position = "none", axis.title = element_blank(),
         axis.text.y = element_text(size=9),
         panel.grid.major.x = element_line(color = "grey"))
+# plot pure legend
+# legend <- cowplot::get_legend(ov1)
+# plot_grid(NULL, legend, ncol = 1)
 ```
 ```{r, eval = F}
-plot_grid(p, b, q, ov1, labels = c('A', '', 'B', 'C'), label_size = 12, nrow = 4, rel_heights = c(0.08, 0.11, 0.065, 0.035), align = "v") # LUI components
+# plot_grid(p, b, q, ov1, labels = c('A', '', 'B', 'C'), label_size = 12, nrow = 4, rel_heights = c(0.08, 0.11, 0.065, 0.035), align = "v") # LUI components
 ```
 
 turnover - nestedness - abiotic
 ```{r}
 restab3 <- create_restab_3()
+restab3 <- restab3[type %in% c("unscaled", "averaged_scaled")]
 df <- data.frame(restab3)
-ov2 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = nicenames)) +
+ov2 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = color)) +
   geom_bar(stat="identity", color = "black", linetype = "solid") +
   coord_flip() +
-  scale_fill_manual(values = df$color) +
+  scale_fill_identity() +
   theme(legend.position = "none", axis.title = element_blank(),
         axis.text.y = element_text(size=9),
         panel.grid.major.x = element_line(color = "grey"))
+# plot pure legend
+# legend <- cowplot::get_legend(ov2)
+# plot_grid(NULL, legend)
 ```
 ```{r, eval = F}
-plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.27, 0.37, 0.13, 0.11, 0.11), align = "v") # LUI components
+# plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.27, 0.37, 0.13, 0.11, 0.11), align = "v") # LUI components
+plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.27, 0.37, 0.13, 0.075, 0.075), align = "v") # 2 summary bars
 name
 ```
 
