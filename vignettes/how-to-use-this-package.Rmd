@@ -38,7 +38,9 @@ If you are not using Linux and there was any requirement, R will tell you in its
 # running these lines will take some time ...
 install.packages("devtools")
 library(devtools)
-devtools::install_github("klutometis/roxygen")
+#devtools::install_github("klutometis/roxygen")
+# the roxygen2 source possibly changed now
+devtools::install_github("r-lib/roxygen2")
 library(roxygen2)
 ```
 
