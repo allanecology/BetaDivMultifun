@@ -10,8 +10,11 @@ suppressPackageStartupMessages(require(cowplot))
 ```
 
 requirements : 
+- me : connect to planteco and nsch to get input files
 - GDM output as .rds, e.g. gdm_EFnestedness_LUI_input.Rds
 - cluster output as .rds, e.g. gdm_EFnestedness_LUI_permutation.Rds
+- run `results_nonpublic.R` : load pathtoout and nicenames
+  - run `plotting.R` to have function create_restab2() working (data.table problem)
 
 
 Load data
@@ -163,6 +166,9 @@ Multipanel barplot with overview bars
 
 Aboveground - belowground - abiotic
 ```{r}
+#TODO : requires to run manually plotting.R
+
+require(data.table)
 restab2 <- create_restab2()
 restab2 <- restab2[type %in% c("unscaled", "averaged_scaled")]
 df <- data.frame(restab2)
@@ -178,7 +184,7 @@ ov1 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = color)) +
 # plot_grid(NULL, legend, ncol = 1)
 ```
 ```{r, eval = F}
-# plot_grid(p, b, q, ov1, labels = c('A', '', 'B', 'C'), label_size = 12, nrow = 4, rel_heights = c(0.08, 0.11, 0.065, 0.035), align = "v") # LUI components
+plot_grid(p, b, q, ov1, labels = c('A', '', 'B', 'C'), label_size = 12, nrow = 4, rel_heights = c(0.08, 0.11, 0.065, 0.035), align = "v") # LUI components
 ```
 
 turnover - nestedness - abiotic
