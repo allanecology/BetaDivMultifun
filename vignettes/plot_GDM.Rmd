@@ -9,6 +9,12 @@ suppressPackageStartupMessages(require(ggplot2))
 suppressPackageStartupMessages(require(cowplot))
 ```
 
+```{r}
+#TODO somehow structure the input choices
+# maybe automatically read in all possible file names?
+```
+
+
 requirements : 
 - me : connect to planteco and nsch to get input files
 - GDM output as .rds, e.g. gdm_EFnestedness_LUI_input.Rds
@@ -17,10 +23,19 @@ requirements :
   - run `plotting.R` to have function create_restab2() working (data.table problem)
 
 
-Load data
+## Prepare the regression testing
+Prepare the variables which are used for regression testing
+```{r, eval = F}
+luiinput <- "lui"
+name <- "gdm_EFturnover_0.75_LUI"
+```
+
+
+## Load data
 ```{r}
 luiinput <- "lui"
 # luiinput <- "components"
+
 name <- "gdm_EFturnover_0.75_LUI"
 
 # gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFturnover_0.5_LUI_input.Rds", sep = ""))
@@ -35,6 +50,7 @@ exSplines <- gdm::isplineExtract(gdm_output)
 
 permut <- F # T or F, depending wether permutations are available or not
 main <- name # plot title
+create_plot <- T
 ```
 ```{r}
 # take maximum of each variable for barplot
@@ -106,7 +122,7 @@ plot(gdm_output, plot.layout = c(3, 2), plot.color = "grey", main="GDM")
 
 # Multipanel Barplot
 
-```{r, eval = T}
+```{r, eval = F}
 df <- restab[type == "bio" & ground == "a", ]
 p<-ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
   geom_bar(stat="identity", color = "black") + 
@@ -158,17 +174,19 @@ q <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names, linetype = l
 # plot_grid(NULL, legend)
 ```
 ```{r, eval = F}
-plot_grid(p, b, q, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
-# plot_grid(p, b, q, labels = c('aboveground', 'belowground', 'abiotic'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
+if(create_plot == T){
+  plot_grid(p, b, q, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
+
+  # plot_grid(p, b, q, labels = c('aboveground', 'belowground', 'abiotic'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
+}
 ```
 
 Multipanel barplot with overview bars
 
 Aboveground - belowground - abiotic
 ```{r}
-#TODO : requires to run manually plotting.R
+#TODO : requires to run manually plotting.R because of data.table issue
 
-require(data.table)
 restab2 <- create_restab2()
 restab2 <- restab2[type %in% c("unscaled", "averaged_scaled")]
 df <- data.frame(restab2)
@@ -183,8 +201,10 @@ ov1 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = color)) +
 # legend <- cowplot::get_legend(ov1)
 # plot_grid(NULL, legend, ncol = 1)
 ```
-```{r, eval = F}
-plot_grid(p, b, q, ov1, labels = c('A', '', 'B', 'C'), label_size = 12, nrow = 4, rel_heights = c(0.08, 0.11, 0.065, 0.035), align = "v") # LUI components
+```{r, eval = T}
+if(create_plot == T){
+  plot_grid(p, b, q, ov1, labels = c('A', '', 'B', 'C'), label_size = 12, nrow = 4, rel_heights = c(0.08, 0.11, 0.065, 0.035), align = "v") # LUI components
+}
 ```
 
 turnover - nestedness - abiotic
@@ -203,10 +223,11 @@ ov2 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = color)) +
 # legend <- cowplot::get_legend(ov2)
 # plot_grid(NULL, legend)
 ```
-```{r, eval = F}
-# plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.27, 0.37, 0.13, 0.11, 0.11), align = "v") # LUI components
-plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.27, 0.37, 0.13, 0.075, 0.075), align = "v") # 2 summary bars
-name
+```{r, eval = T}
+if(create_plot){
+  # plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.27, 0.37, 0.13, 0.11, 0.11), align = "v") # LUI components
+  plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.27, 0.37, 0.13, 0.075, 0.075), align = "v") # 2 summary bars
+}
 ```
 
 ```{r,eval = T}
@@ -219,9 +240,24 @@ saveRDS(restab, paste("list_restab_", name, ".Rds", sep = ""))
 
 
 
+# testing
+```{r}
+abs(length(restab) - 3) < 10^(-3)
+length(restab2) == length(restab3)
+abs(mean(restab2$maxsplines) - 0.4810926) < 10^(-3)
+```
+
+
+
+
+
+
+
 
 
 # single EFs heatmap
+
+
 load data
 ```{r, eval = F}
 singleEFdist <- readRDS(paste(pathtodata, "/assembled_data/general/singleEFdist.rds", sep = "")) # already scaled
