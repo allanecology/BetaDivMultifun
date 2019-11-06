@@ -27,14 +27,6 @@ requirements :
   - run `plotting.R` to have function create_restab2() working (data.table problem)
 
 
-## Prepare the regression testing
-Prepare the variables which are used for regression testing
-```{r, eval = F}
-luiinput <- "lui"
-name <- "gdm_EFturnover_0.75_LUI"
-```
-
-
 ## Load data
 
 ### User input
@@ -47,7 +39,7 @@ permut <- F # T or F, depending wether permutations are available or not
 
 read input data and produce gdm result
 ```{r}
-gdmin <- readRDS(paste(pathtoout, "/cluster/", name, "_input.Rds", sep = ""))
+gdmin <- read_in_gdm_input_dataset()
 gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
 exSplines <- gdm::isplineExtract(gdm_output)
 main <- name # plot title
