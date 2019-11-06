@@ -13,6 +13,9 @@ suppressPackageStartupMessages(require(cowplot))
 #TODO somehow structure the input choices
 # maybe automatically read in all possible file names?
 # shift stuff to functions
+
+# fill in code to work with significances
+#TODO : order of trophic groups :  once all models are read, use effect size sequence and not alphabetically
 ```
 
 
@@ -33,26 +36,26 @@ name <- "gdm_EFturnover_0.75_LUI"
 
 
 ## Load data
+
+### User input
 ```{r}
-luiinput <- "lui"
-# luiinput <- "components"
-
+luiinput <- "lui" # luiinput <- "components"
 name <- "gdm_EFturnover_0.75_LUI"
+create_plot <- T
+permut <- F # T or F, depending wether permutations are available or not
+```
 
-# gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFturnover_0.5_LUI_input.Rds", sep = ""))
-# gdmin <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_Gstd_input.Rds", sep = ""))
+read input data and produce gdm result
+```{r}
 gdmin <- readRDS(paste(pathtoout, "/cluster/", name, "_input.Rds", sep = ""))
-
 gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
 exSplines <- gdm::isplineExtract(gdm_output)
-
-# gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFdistance_LUI_permutation.Rds", sep = ""))
-# gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_permutation.Rds", sep = ""))
-
-permut <- F # T or F, depending wether permutations are available or not
 main <- name # plot title
-create_plot <- T
+#TODO change name to "main" --> just one variable name.
+
+# gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_permutation.Rds", sep = ""))
 ```
+
 ```{r}
 # take maximum of each variable for barplot
 maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)
@@ -63,17 +66,8 @@ create plotting tables
 
 Sequence according to effect sizes over all models. until then : alphabetically.
 ```{r}
-#TODO : once all models are read, use effect size sequence and not alphabetically
 plotsequence_bio <- c("autotroph", "bacteria.RNA", "belowground.herbivore", "belowground.predator", "herbivore", "plant.pathogen", "pollinator", "protist.bacterivore", "protist.eukaryvore", "protist.omnivore", "protist.plant.parasite", "secondary.consumer", "soilfungi.decomposer", "soilfungi.pathotroph", "soilfungi.symbiont", "tertiary.consumer")
-#TODO : add characteristic color for each trophic level
-
-print("userinput")
-if(luiinput == "lui"){
-  plotsequence_abio <- c("LUI", "deltaLUI", "soil", "isolation", "geo")
-}else if(luiinput == "components"){
-  plotsequence_abio <- c(paste(c("G", "M", "F"), "std", sep = ""), paste("delta", c("Gstd", "Mstd", "Fstd"), sep = ""),
-                         "soil", "isolation", "geo")
-}
+plotsequence_abio <- define_rownames_lui_or_components(luiinput = luiinput)
 ```
 
 create results table
