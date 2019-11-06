@@ -40,3 +40,5 @@ Imports:
     Hmisc,
     gdm
 RoxygenNote: 6.1.1
+Suggests: 
+    testthat
