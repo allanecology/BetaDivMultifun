@@ -1,12 +1,11 @@
-#' Read in GDM dataset as specified by user
-#'
-#' Read GDM input file as it is defined by the variables `pathtoout` and `name`.
+
+#' create GDM input file path
 #' 
-#' @return the dataset which was read in.
-read_in_gdm_input_dataset <- function(pathtoout, name) {
-  gdmin <-
-    readRDS(paste(pathtoout, "/cluster/", name, "_input.Rds", sep = ""))
-  return(gdmin)
+#' pastes together the path where to get the gdm input file (.rds) which has been
+#' created before
+paste_gdm_input_path_together <- function(pathtoout, name){
+  path_to_gdmin <- paste(pathtoout, "/cluster/", name, "_input.Rds", sep = "")
+  return(path_to_gdmin)
 }
 
 
