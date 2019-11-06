@@ -35,15 +35,16 @@ luiinput <- "lui" # luiinput <- "components"
 name <- "gdm_EFturnover_0.75_LUI"
 create_plot <- T
 permut <- F # T or F, depending wether permutations are available or not
+main <- name # plot title
+#TODO change name to "main" --> just one variable name.
 ```
 
 read input data and produce gdm result
 ```{r}
 gdmin <- readRDS(paste_gdm_input_path_together(pathtoout = pathtoout, name = name))
+
 gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
 exSplines <- gdm::isplineExtract(gdm_output)
-main <- name # plot title
-#TODO change name to "main" --> just one variable name.
 
 # gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_permutation.Rds", sep = ""))
 ```
@@ -222,7 +223,7 @@ if(create_plot){
 
 ```{r,eval = T}
 restab <- list(restab, restab2, restab3)
-saveRDS(restab, paste("list_restab_", name, ".Rds", sep = ""))
+saveRDS(restab, paste("list_restab_", main, ".Rds", sep = ""))
 ```
 
 
