@@ -123,55 +123,58 @@ plot(gdm_output, plot.layout = c(3, 2), plot.color = "grey", main="GDM")
 # Multipanel Barplot
 
 ```{r, eval = F}
-df <- restab[type == "bio" & ground == "a", ]
-p<-ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
-  geom_bar(stat="identity", color = "black") + 
-  coord_flip() + 
-  scale_fill_identity() + scale_linetype_identity() + # the best option for customizing linetype, color,...!
-  ylim(0, 0.44) + 
-  ggtitle(main) +
-  theme(legend.position = "none", axis.title = element_blank(),
-        axis.text.y = element_text(size=9, angle = 0),
-        plot.margin = margin(l = 50), 
-        axis.text.x = element_blank(),
-        axis.line.x=element_blank(),
-        axis.ticks.x = element_blank(),
-        panel.grid.major.x = element_line(color = "grey")
-        )
+if(create_plot){
+  df <- restab[type == "bio" & ground == "a", ]
+  p<-ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
+    geom_bar(stat="identity", color = "black") + 
+    coord_flip() + 
+    scale_fill_identity() + scale_linetype_identity() + # the best option for customizing linetype, color,...!
+    ylim(0, 0.44) + 
+    ggtitle(main) +
+    theme(legend.position = "none", axis.title = element_blank(),
+          axis.text.y = element_text(size=9, angle = 0),
+          plot.margin = margin(l = 50), 
+          axis.text.x = element_blank(),
+          axis.line.x=element_blank(),
+          axis.ticks.x = element_blank(),
+          panel.grid.major.x = element_line(color = "grey")
+    )
+  
+  df <- restab[type == "bio" & ground == "b", ]
+  b <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
+    geom_bar(stat="identity", color = "black") + 
+    coord_flip() +
+    scale_fill_identity() + scale_linetype_identity() +
+    ylim(0, 0.44) +
+    theme(legend.position = "none", 
+          axis.title = element_blank(),
+          axis.text.y = element_text(size=9, angle = 0),
+          plot.margin = margin(l = 50),
+          axis.text.x = element_blank(),
+          axis.line.x=element_blank(),
+          axis.ticks.x = element_blank(),
+          panel.grid.major.x = element_line(color = "grey"))
+  # aes(x=stringr::str_wrap(nicenames, 10), y=onlysign, fill = names))
+  
+  # dashed or dotted or solid
+  # https://stackoverflow.com/questions/39898870/ggplot-geom-bar-customize-by-linetype-and-fill
+  # geom_errorbarh() for horizontal error bars
+  # https://www.heropatterns.com/
+  # df <- restab[type == "abio"]
+  df <- restab[ground == "x"]
+  q <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names, linetype = linetypet)) +
+    geom_bar(stat="identity", color = "black") + 
+    coord_flip() + 
+    scale_fill_manual(values = df$color) + scale_linetype_identity() +
+    ylim(0, 0.44) + 
+    theme(legend.position = "none", axis.title = element_blank(),
+          axis.text.y = element_text(size=9),
+          panel.grid.major.x = element_line(color = "grey"))
+  # # plot pure legend - only works if legend is there (legend.position taken out)
+  # legend <- cowplot::get_legend(q)
+  # plot_grid(NULL, legend)
+}
 
-df <- restab[type == "bio" & ground == "b", ]
-b <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
-  geom_bar(stat="identity", color = "black") + 
-  coord_flip() +
-  scale_fill_identity() + scale_linetype_identity() +
-  ylim(0, 0.44) +
-  theme(legend.position = "none", 
-        axis.title = element_blank(),
-        axis.text.y = element_text(size=9, angle = 0),
-        plot.margin = margin(l = 50),
-        axis.text.x = element_blank(),
-        axis.line.x=element_blank(),
-        axis.ticks.x = element_blank(),
-        panel.grid.major.x = element_line(color = "grey"))
-# aes(x=stringr::str_wrap(nicenames, 10), y=onlysign, fill = names))
-
-# dashed or dotted or solid
-# https://stackoverflow.com/questions/39898870/ggplot-geom-bar-customize-by-linetype-and-fill
-# geom_errorbarh() for horizontal error bars
-# https://www.heropatterns.com/
-# df <- restab[type == "abio"]
-df <- restab[ground == "x"]
-q <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names, linetype = linetypet)) +
-  geom_bar(stat="identity", color = "black") + 
-  coord_flip() + 
-  scale_fill_manual(values = df$color) + scale_linetype_identity() +
-  ylim(0, 0.44) + 
-  theme(legend.position = "none", axis.title = element_blank(),
-        axis.text.y = element_text(size=9),
-        panel.grid.major.x = element_line(color = "grey"))
-# # plot pure legend - only works if legend is there (legend.position taken out)
-# legend <- cowplot::get_legend(q)
-# plot_grid(NULL, legend)
 ```
 ```{r, eval = F}
 if(create_plot == T){
@@ -242,9 +245,31 @@ saveRDS(restab, paste("list_restab_", name, ".Rds", sep = ""))
 
 # testing
 ```{r}
-abs(length(restab) - 3) < 10^(-3)
-length(restab2) == length(restab3)
-abs(mean(restab2$maxsplines) - 0.4810926) < 10^(-3)
+tolerance <- 10^(-3)
+
+check_restab_summary_stats <- function(restab, restab2, restab3, tolerance){
+  res <- c()
+  res["mean_restab_a"] <- abs(mean(restab[[1]]$maxsplines) - 0.05098799) < tolerance
+  res["mean_restab_b"] <- abs(mean(restab[[2]]$maxsplines) - 0.4810926) < tolerance
+  res["mean_restab_c"] <- abs(mean(restab[[3]]$maxsplines) - 0.4810926) < tolerance
+  res["mean_restab2"] <- abs(mean(restab2$maxsplines) - 0.4810926) < tolerance
+  res["mean_restab3"] <- abs(mean(restab3$maxsplines) - 0.4810926) < tolerance
+  res["nrow_restab_a_b_c"] <- abs(nrow(restab[[1]]) + nrow(restab[[2]]) + nrow(restab[[3]]) - 49) < tolerance
+  res["nrow_restab2_3"] <- abs(nrow(restab2) - nrow(restab3)) < tolerance
+  res["length_restab2_equal_restab3"] <- length(restab2) == length(restab3)
+  return(res)
+}
+
+run_EFturnover075_test <- function(){
+  res <- check_restab_summary_stats(restab, restab2, restab3, tolerance = tolerance)
+  if(all(res) == T){
+    print("test was successful. Mean and length of restab, restab2 and restab3 are as expected.")
+  } else {
+    print("test not successful. Inspect the following vector in order to see which ")
+  }
+}
+
+run_EFturnover075_test()
 ```
 
 
