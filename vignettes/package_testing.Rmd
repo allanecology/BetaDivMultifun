@@ -1,0 +1,14 @@
+---
+title: "getting_packacke_testing"
+author: "noelleschenk"
+date: "11/6/2019"
+output: html_document
+---
+
+This vignette follows the instructions of Hadley Wichkam's R packaging book.
+
+# setting up testing for your package
+```{r}
+usethis::use_testthat()
+```
+
