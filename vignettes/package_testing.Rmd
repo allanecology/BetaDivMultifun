@@ -17,3 +17,10 @@ Run from console :
 usethis::use_test("testname")
 ```
 produces an R file with an example in the folder test/testthat/.
+
+
+Run all tests (run from console)
+```{r}
+devtools::test()
+```
+
