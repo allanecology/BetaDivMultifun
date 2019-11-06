@@ -39,7 +39,7 @@ permut <- F # T or F, depending wether permutations are available or not
 
 read input data and produce gdm result
 ```{r}
-gdmin <- read_in_gdm_input_dataset()
+gdmin <- readRDS(paste_gdm_input_path_together(pathtoout = pathtoout, name = name))
 gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
 exSplines <- gdm::isplineExtract(gdm_output)
 main <- name # plot title
