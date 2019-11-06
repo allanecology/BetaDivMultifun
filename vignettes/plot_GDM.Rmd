@@ -12,11 +12,12 @@ suppressPackageStartupMessages(require(cowplot))
 ```{r}
 #TODO somehow structure the input choices
 # maybe automatically read in all possible file names?
+# shift stuff to functions
 ```
 
 
 requirements : 
-- me : connect to planteco and nsch to get input files
+- user : connect to planteco and nsch to get input files
 - GDM output as .rds, e.g. gdm_EFnestedness_LUI_input.Rds
 - cluster output as .rds, e.g. gdm_EFnestedness_LUI_permutation.Rds
 - run `results_nonpublic.R` : load pathtoout and nicenames
