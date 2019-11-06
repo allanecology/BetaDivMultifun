@@ -10,7 +10,10 @@ This vignette follows the instructions of Hadley Wichkam's R packaging book.
 # setting up testing for your package
 ```{r}
 # install testthat if required
-devtools::use_testthat()
 usethis::use_testthat()
 ```
-
+Run from console : 
+```{r}
+usethis::use_test("testname")
+```
+produces an R file with an example in the folder test/testthat/.
