@@ -77,12 +77,6 @@ create results table
 restab <- create_restab0()
 ```
 
-simple plot
-```{r, eval = F}
-# to plot each spline in a separate plot
-plot(gdm_output, plot.layout = c(3, 2), plot.color = "grey", main="GDM")
-```
-
 
 # Multipanel Barplot
 without overview bars
