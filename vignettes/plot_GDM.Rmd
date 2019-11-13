@@ -32,18 +32,16 @@ requirements :
 ### User input
 ```{r}
 luiinput <- "lui" # luiinput <- "components"
-name <- "gdm_EFturnover_0.75_LUI"
-create_plot <- T
+model_name <- "gdm_EFturnover_0.75_LUI"
+create_plot <- F
 permut <- F # T or F, depending wether permutations are available or not
 ```
 
 read input data and produce gdm result
 ```{r}
-gdmin <- readRDS(paste_gdm_input_path_together(pathtoout = pathtoout, name = name))
+gdmin <- readRDS(paste_gdm_input_path_together(pathtoout = pathtoout, name = model_name))
 gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
 exSplines <- gdm::isplineExtract(gdm_output)
-main <- name # plot title
-#TODO change name to "main" --> just one variable name.
 
 # gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_permutation.Rds", sep = ""))
 ```
@@ -117,7 +115,7 @@ if(create_plot){
     coord_flip() + 
     scale_fill_identity() + scale_linetype_identity() + # the best option for customizing linetype, color,...!
     ylim(0, 0.44) + 
-    ggtitle(main) +
+    ggtitle(model_name) +
     theme(legend.position = "none", axis.title = element_blank(),
           axis.text.y = element_text(size=9, angle = 0),
           plot.margin = margin(l = 50), 
@@ -222,7 +220,7 @@ if(create_plot){
 
 ```{r,eval = T}
 restab <- list(restab, restab2, restab3)
-saveRDS(restab, paste("list_restab_", name, ".Rds", sep = ""))
+saveRDS(restab, paste("list_restab_", model_name, ".Rds", sep = ""))
 ```
 
 
@@ -281,8 +279,6 @@ permut <- "F"
 
 gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
 exSplines <- gdm::isplineExtract(gdm_output)
-
-main <- "EFsingle" # plot title
 
 # take maximum of each variable for barplot
 maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)
