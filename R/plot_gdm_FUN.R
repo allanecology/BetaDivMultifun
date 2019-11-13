@@ -88,3 +88,33 @@ create_restab0 <- function(){
   
   return(restab)
 }
+NULL
+
+
+#' create plot "p"
+#' 
+#' code to create plot p : bio and aboveground
+#' 
+#' @import ggplot2
+#' @improt cowplot
+#' 
+#' @export
+create_bio_aboveground_barplot <- function(){
+  df <- restab[type == "bio" & ground == "a", ]
+  p<-ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
+    geom_bar(stat="identity", color = "black") + 
+    coord_flip() + 
+    scale_fill_identity() + scale_linetype_identity() + # the best option for customizing linetype, color,...!
+    ylim(0, 0.44) + 
+    ggtitle(model_name) +
+    theme(legend.position = "none", axis.title = element_blank(),
+          axis.text.y = element_text(size=9, angle = 0),
+          plot.margin = margin(l = 50), 
+          axis.text.x = element_blank(),
+          axis.line.x=element_blank(),
+          axis.ticks.x = element_blank(),
+          panel.grid.major.x = element_line(color = "grey")
+    )
+  return(b)
+}
+NULL
