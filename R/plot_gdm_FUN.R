@@ -42,3 +42,49 @@ define_rownames_lui_or_components <- function(luiinput) {
 }
 
 NULL
+
+#' create restab 0
+#' 
+#' Function containing code to create the first restab for plotting
+#' 
+#' @import data.table
+#' 
+#' @export
+#' 
+create_restab0 <- function(){
+  restab <- data.table::data.table("names" = names(maxsplines), "maxsplines" = maxsplines)
+  if(permut == T){
+    del <- data.table::data.table("names" = names(sign), "sign" = sign)
+    restab <- data.table::data.table(merge(restab, del, by = "names")); rm(del)
+  }
+  # get bios
+  bios <- grep(paste(plotsequence_bio, collapse = "|"), names(maxsplines), value = T)
+  restab[names %in% bios, type := "bio"]
+  # get abios
+  abios <- grep(paste(plotsequence_bio, collapse = "|"), names(maxsplines), value = T, invert = T)
+  restab[names %in% abios, type := "abio"]
+  # get nestedness
+  sne <- grep("sne", names(maxsplines), value = T)
+  restab[names %in% sne, component := "nestedness"]
+  # get turnover
+  to <- grep("sim", names(maxsplines), value = T)
+  restab[names %in% to, component := "turnover"]
+  # get only significant
+  if(permut == T){restab[, maxsplines := (1-sign) * maxsplines]}
+  # add nice names
+  restab <- data.table::data.table(merge(nicenames, restab, by = "names"))
+  # order by above-belowground and alphabetically
+  # set the levels of the factor in the wanted order
+  data.table::setorder(restab, ground, names)
+  # restab[, names := factor(names, levels = names)]
+  # order <- restab[type == "bio", names]
+  # bring colors into right format
+  restab[, color := as.character(color)]
+  
+  restab[type == "abio", component := "abio"]
+  
+  restab[component %in% c("turnover", "abio"), linetypet := "solid"]
+  restab[component == "nestedness", linetypet := "dotted"]
+  
+  return(restab)
+}

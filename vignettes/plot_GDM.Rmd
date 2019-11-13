@@ -39,7 +39,7 @@ If F, `luiinput` and `model_name` need to be given manually.
 *note* that i <- 6 for testing.
 ```{r}
 automaticrun <- T
-create_plot <- T
+create_plot <- F
 permut <- F # T or F, depending wether permutations are available or not
 # i <- 6 # i <- 6 for testing
 if(automaticrun){
@@ -73,7 +73,12 @@ plotsequence_abio <- define_rownames_lui_or_components(luiinput = luiinput)
 ```
 
 create results table
-```{r}
+```{r, eval = T}
+restab <- create_restab0()
+```
+
+```{r, eval = F}
+
 restab <- data.table::data.table("names" = names(maxsplines), "maxsplines" = maxsplines)
 if(permut == T){
   del <- data.table::data.table("names" = names(sign), "sign" = sign)
