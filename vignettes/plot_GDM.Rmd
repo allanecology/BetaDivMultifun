@@ -138,6 +138,11 @@ if(create_plot == T){
 ```{r,eval = T}
 restab <- list(restab, restab2, restab3)
 saveRDS(restab, paste("list_restab_", model_name, ".Rds", sep = ""))
+
+ggsave(filename=paste(model_name, "_multipanel_barplot.pdf", sep = ""), plot = multipanel_without_overviews, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
+ggsave(filename = paste(model_name, "_multipanel_barplot_overviewbars.pdf", sep = ""), plot = multipanel_with_overview_bars, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 
 
@@ -146,7 +151,7 @@ saveRDS(restab, paste("list_restab_", model_name, ".Rds", sep = ""))
 
 
 # testing
-```{r}
+```{r, eval = F}
 tolerance <- 10^(-3)
 
 check_restab_summary_stats <- function(restab, restab2, restab3, tolerance){
