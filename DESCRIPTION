@@ -38,7 +38,8 @@ Imports:
     grid,
     visdat,
     Hmisc,
-    gdm
+    gdm,
+    testthat
 RoxygenNote: 6.1.1
 Suggests: 
     testthat (>= 2.1.0)
