@@ -33,11 +33,27 @@ requirements :
 ## Load data
 
 ### User input
+Either chose automaticrun T or F. If T, the model names and lui input are automatically read in from model_names in a loop, started from `results_nonpublic.R`.
+```
+for(i in nrow(model_names)){
+  source("plot_GDM.R")
+}
+```
+If F, `luiinput` and `model_name` need to be given manually.
+*note* that i <- 6 for testing.
 ```{r}
-luiinput <- "lui" # luiinput <- "components"
-model_name <- "gdm_EFturnover_0.75_LUI"
+automaticrun <- T
 create_plot <- F
 permut <- F # T or F, depending wether permutations are available or not
+i <- 6
+if(automaticrun){
+  print("automatic input")
+  luiinput <- model_names$luiinput[i]
+  model_name <- model_names$name[i]
+} else {
+  luiinput <- "lui" # luiinput <- "components"
+  model_name <- "gdm_EFturnover_0.75_LUI"
+}
 ```
 
 read input data and produce gdm result
