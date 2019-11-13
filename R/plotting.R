@@ -1,13 +1,20 @@
+#' BetaDivMultifun
+#'
+#' @name BetaDivMultifun
+#' @docType package
+NULL
+
+
 #' Create the table for plotting
 #'
 #' 
 #' @return A data.table ready for plotting
 #' @examples
 #' blabla TODO
+#' @import data.table
 #' 
 #' @export
 create_restab <- function(x=1){
-  require(data.table)
   #TODO : once all models are read, use effect size sequence and not alphabetically
   plotsequence_bio <- c("autotroph", "bacteria.RNA", "belowground.herbivore", "belowground.predator", "herbivore", "plant.pathogen", "pollinator", "protist.bacterivore", "protist.eukaryvore", "protist.omnivore", "protist.plant.parasite", "secondary.consumer", "soilfungi.decomposer", "soilfungi.pathotroph", "soilfungi.symbiont", "tertiary.consumer")
   #TODO : add characteristic color for each trophic level
@@ -43,12 +50,19 @@ create_restab <- function(x=1){
   # print("hello")
   return(data.frame(restab))
 }
+NULL
 
 
-
-
+#' Create the table 2 for plotting
+#'
+#' 
+#' @return A data.table ready for plotting
+#' @examples
+#' blabla TODO
+#' @import data.table
+#' 
+#' @export
 create_restab2 <- function(x=1){
-  require(data.table)
   # unscaled
   unscaled <- data.table::data.table(aggregate(maxsplines ~ ground, restab, sum))
 
@@ -79,14 +93,22 @@ create_restab2 <- function(x=1){
   restab2 <- rbindlist(list(restab2, temp)) # add to unscaled (rbind)
   return(restab2)
 }
+NULL
 
 
 
 
-
-
+#' Create the table 3 for plotting
+#'
+#' 
+#' @return A data.table ready for plotting
+#' @examples
+#' blabla TODO
+#' 
+#' @import data.table
+#' 
+#' @export
 create_restab_3 <- function(x=1){
-  require(data.table)
   # unscaled
   unscaled <- data.table(aggregate(maxsplines ~ component, restab, sum))
   
@@ -118,3 +140,4 @@ create_restab_3 <- function(x=1){
   
   return(restab3)
 }
+NULL
