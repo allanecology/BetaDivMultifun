@@ -108,13 +108,15 @@ Aboveground - belowground - abiotic
 restab2 <- create_restab2()
 restab2 <- restab2[type %in% c("unscaled", "averaged_scaled")]
 df <- data.frame(restab2)
-ov1 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = color)) +
-  geom_bar(stat="identity", color = "black", linetype = "solid") +
-  coord_flip() +
-  scale_fill_identity() +
-  theme(legend.position = "none", axis.title = element_blank(),
-        axis.text.y = element_text(size=9),
-        panel.grid.major.x = element_line(color = "grey"))
+
+# ov1 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = color)) +
+#   geom_bar(stat="identity", color = "black", linetype = "solid") +
+#   coord_flip() +
+#   scale_fill_identity() +
+#   theme(legend.position = "none", axis.title = element_blank(),
+#         axis.text.y = element_text(size=9),
+#         panel.grid.major.x = element_line(color = "grey"))
+ov1 <- create_overview_above_below_abiotic_barplot()
 # plot pure legend
 # legend <- cowplot::get_legend(ov1)
 # plot_grid(NULL, legend, ncol = 1)
