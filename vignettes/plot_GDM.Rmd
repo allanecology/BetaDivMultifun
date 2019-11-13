@@ -88,28 +88,15 @@ if(create_plot){
   # https://stackoverflow.com/questions/39898870/ggplot-geom-bar-customize-by-linetype-and-fill
   # geom_errorbarh() for horizontal error bars
   # https://www.heropatterns.com/
-  # df <- restab[type == "abio"]
-  
-  # df <- restab[ground == "x"]
-  # q <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names, linetype = linetypet)) +
-  #   geom_bar(stat="identity", color = "black") +
-  #   coord_flip() +
-  #   scale_fill_manual(values = df$color) + scale_linetype_identity() +
-  #   ylim(0, 0.44) +
-  #   theme(legend.position = "none", axis.title = element_blank(),
-  #         axis.text.y = element_text(size=9),
-  #         panel.grid.major.x = element_line(color = "grey"))
-  
+  q <- create_abio_barplot()
   # # plot pure legend - only works if legend is there (legend.position taken out)
   # legend <- cowplot::get_legend(q)
   # plot_grid(NULL, legend)
 }
-
 ```
 ```{r, eval = T}
 if(create_plot == T){
   plot_grid(p, b, q, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
-
   # plot_grid(p, b, q, labels = c('aboveground', 'belowground', 'abiotic'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
 }
 ```
