@@ -159,10 +159,12 @@ rownames(meltset) <- paste(plotorder$Var1, plotorder$Var2, sep=".")
 The model name is automatically generated from `funs` and `lui`.
 ```{r}
 outname <- paste("gdm", funs, lui[1], "output.txt", sep = "_")
+outnameRDS <- paste("gdm", funs, lui[1], "output.Rds", sep = "_")
 gdm_output <- gdm::gdm(meltset, geo = F, splines = NULL, knots = NULL)
 
 # save input and output
 saveRDS(meltset, file = paste("gdm", funs, lui[1], "input.Rds", sep = "_"))
+saveRDS(gdm_output, outnameRDS)
 capture.output(summary(gdm_output), file = outname)
 ```
 
