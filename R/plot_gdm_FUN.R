@@ -165,6 +165,6 @@ create_abio_barplot <- function(){
     theme(legend.position = "none", axis.title = element_blank(),
           axis.text.y = element_text(size=9),
           panel.grid.major.x = element_line(color = "grey"))
-  return(b)
+  return(q)
 }
 NULL
