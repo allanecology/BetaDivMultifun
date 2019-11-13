@@ -115,6 +115,34 @@ create_bio_aboveground_barplot <- function(){
           axis.ticks.x = element_blank(),
           panel.grid.major.x = element_line(color = "grey")
     )
+  return(p)
+}
+NULL
+
+#' create plot bio belowground
+#' 
+#' code to create plot p : bio and belowground
+#' 
+#' @import ggplot2
+#' @improt cowplot
+#' 
+#' @export
+create_bio_belowground_barplot <- function(){
+  df <- restab[type == "bio" & ground == "b", ]
+  b <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
+    geom_bar(stat="identity", color = "black") + 
+    coord_flip() +
+    scale_fill_identity() + scale_linetype_identity() +
+    ylim(0, 0.44) +
+    theme(legend.position = "none", 
+          axis.title = element_blank(),
+          axis.text.y = element_text(size=9, angle = 0),
+          plot.margin = margin(l = 50),
+          axis.text.x = element_blank(),
+          axis.line.x=element_blank(),
+          axis.ticks.x = element_blank(),
+          panel.grid.major.x = element_line(color = "grey"))
+  # aes(x=stringr::str_wrap(nicenames, 10), y=onlysign, fill = names))
   return(b)
 }
 NULL
