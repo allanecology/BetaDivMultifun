@@ -27,7 +27,6 @@ requirements :
   - pathtoout : path to location where gdm input of model is stored. points to a folder, where the folder cluster witht the model input is.
   - nicenames : helper file to get nice names of functions and trophic levels
   - model_names : helper file where all model names are stored, in order to run automatically.
-- run `plotting.R` to have function create_restab2() working (data.table problem)
 
 
 ## Load data
