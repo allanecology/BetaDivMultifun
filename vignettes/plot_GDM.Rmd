@@ -23,8 +23,11 @@ requirements :
 - user : connect to planteco and nsch to get input files
 - GDM output as .rds, e.g. gdm_EFnestedness_LUI_input.Rds
 - cluster output as .rds, e.g. gdm_EFnestedness_LUI_permutation.Rds
-- run `results_nonpublic.R` : load pathtoout and nicenames
-  - run `plotting.R` to have function create_restab2() working (data.table problem)
+- run `results_nonpublic.R` : load pathtoout, nicenames and model_names
+  - pathtoout : path to location where gdm input of model is stored. points to a folder, where the folder cluster witht the model input is.
+  - nicenames : helper file to get nice names of functions and trophic levels
+  - model_names : helper file where all model names are stored, in order to run automatically.
+- run `plotting.R` to have function create_restab2() working (data.table problem)
 
 
 ## Load data
@@ -42,15 +45,12 @@ read input data and produce gdm result
 gdmin <- readRDS(paste_gdm_input_path_together(pathtoout = pathtoout, name = model_name))
 gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
 exSplines <- gdm::isplineExtract(gdm_output)
+maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE) # take maximum of each variable for barplot
 
-# gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_permutation.Rds", sep = ""))
-```
-
-```{r}
-# take maximum of each variable for barplot
-maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)
-# get significances
-if(permut == T){sign <- gdmperm[[3]][,1]}
+if(permut == T){
+  gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_permutation.Rds", sep = ""))
+  sign <- gdmperm[[3]][,1]
+}
 ```
 create plotting tables
 
