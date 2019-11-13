@@ -146,3 +146,25 @@ create_bio_belowground_barplot <- function(){
   return(b)
 }
 NULL
+
+#' create plot abio
+#' 
+#' code to create plot abio
+#' 
+#' @import ggplot2
+#' @improt cowplot
+#' 
+#' @export
+create_abio_barplot <- function(){
+  df <- restab[ground == "x"]
+  q <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names, linetype = linetypet)) +
+    geom_bar(stat="identity", color = "black") +
+    coord_flip() +
+    scale_fill_manual(values = df$color) + scale_linetype_identity() +
+    ylim(0, 0.44) +
+    theme(legend.position = "none", axis.title = element_blank(),
+          axis.text.y = element_text(size=9),
+          panel.grid.major.x = element_line(color = "grey"))
+  return(b)
+}
+NULL

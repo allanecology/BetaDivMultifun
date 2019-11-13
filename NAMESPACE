@@ -3,6 +3,7 @@
 export(CompareToReferenceDataset)
 export(calc_presenceabsence)
 export(colComb)
+export(create_abio_barplot)
 export(create_bio_aboveground_barplot)
 export(create_bio_belowground_barplot)
 export(create_restab)
