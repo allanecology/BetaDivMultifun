@@ -4,7 +4,7 @@
 #' pastes together the path where to get the gdm input file (.rds) which has been
 #' created before
 paste_gdm_input_path_together <- function(pathtoout, name){
-  path_to_gdmin <- paste(pathtoout, "/cluster/", name, "_input.Rds", sep = "")
+  path_to_gdmin <- paste(pathtoout, "/cluster/", name, "_output.Rds", sep = "")
   return(path_to_gdmin)
 }
 

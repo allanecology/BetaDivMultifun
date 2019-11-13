@@ -26,7 +26,7 @@ gdm_soilNitrateflxs_LUI,lui,F
 gdm_EFabund_bray_bal_LUI,lui,F
 gdm_EFabund_bray_gra_LUI,lui,F
 gdm_EFabund_bray_LUI,lui,F
-gdm_EFbeta_0.1_comp,components,F
+gdm_EFbeta_0.1_Gstd,components,F
 gdm_EFbeta_0.1_LUI,lui,F
 gdm_EFbeta_0.2_LUI,lui,F
 gdm_EFbeta_0.3_LUI,lui,F
@@ -38,7 +38,7 @@ gdm_EFbeta_0.75_LUI,lui,F
 gdm_EFbeta_0.8_LUI,lui,F
 gdm_EFbeta_0.9_LUI,lui,F
 gdm_EFbeta_median_LUI,lui,F
-gdm_EFdistance_comp,components,F
+gdm_EFdistance_Gstd,components,F
 gdm_EFnestedness_0.1_LUI,lui,F
 gdm_EFnestedness_0.2_LUI,lui,F
 gdm_EFnestedness_0.3_LUI,lui,F

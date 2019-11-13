@@ -7,6 +7,7 @@ output: html_document
 ```{r}
 suppressPackageStartupMessages(require(ggplot2))
 suppressPackageStartupMessages(require(cowplot))
+#TODO add @import package to the function which will be used for plotting
 ```
 
 ```{r}
@@ -41,8 +42,7 @@ permut <- F # T or F, depending wether permutations are available or not
 
 read input data and produce gdm result
 ```{r}
-gdmin <- readRDS(paste_gdm_input_path_together(pathtoout = pathtoout, name = model_name))
-gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
+gdm_output <- readRDS(paste_gdm_input_path_together(pathtoout = pathtoout, name = model_name))
 exSplines <- gdm::isplineExtract(gdm_output)
 maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE) # take maximum of each variable for barplot
 
