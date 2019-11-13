@@ -11,11 +11,7 @@ suppressPackageStartupMessages(require(cowplot))
 ```
 
 ```{r}
-#TODO somehow structure the input choices
-# maybe automatically read in all possible file names?
-# shift stuff to functions
-
-# fill in code to work with significances
+#TODO :  fill in code to work with significances
 #TODO : order of trophic groups :  once all models are read, use effect size sequence and not alphabetically
 ```
 
@@ -27,7 +23,7 @@ requirements :
 - run `results_nonpublic.R` : load pathtoout, nicenames and model_names
   - pathtoout : path to location where gdm input of model is stored. points to a folder, where the folder cluster witht the model input is.
   - nicenames : helper file to get nice names of functions and trophic levels
-  - model_names : helper file where all model names are stored, in order to run automatically.
+  - model_names : helper file for automation. Contains 3 columns : `name`  contains the all model names for `model_name`, `luiinput` contains either "lui" or "components" as LUI input for `luiinput` and `permut` is either TRUE or FALSE.
 
 
 ## Load data
@@ -43,13 +39,14 @@ If F, `luiinput` and `model_name` need to be given manually.
 *note* that i <- 6 for testing.
 ```{r}
 automaticrun <- T
-create_plot <- F
+create_plot <- T
 permut <- F # T or F, depending wether permutations are available or not
-i <- 6
+# i <- 6 # i <- 6 for testing
 if(automaticrun){
   print("automatic input")
   luiinput <- model_names$luiinput[i]
   model_name <- model_names$name[i]
+  permut <- model_names$permut[i]
 } else {
   luiinput <- "lui" # luiinput <- "components"
   model_name <- "gdm_EFturnover_0.75_LUI"
@@ -121,8 +118,8 @@ plot(gdm_output, plot.layout = c(3, 2), plot.color = "grey", main="GDM")
 
 
 # Multipanel Barplot
-
-```{r, eval = F}
+without overview bars
+```{r, eval = T}
 if(create_plot){
   df <- restab[type == "bio" & ground == "a", ]
   p<-ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
@@ -176,7 +173,7 @@ if(create_plot){
 }
 
 ```
-```{r, eval = F}
+```{r, eval = T}
 if(create_plot == T){
   plot_grid(p, b, q, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
 
@@ -188,8 +185,6 @@ Multipanel barplot with overview bars
 
 Aboveground - belowground - abiotic
 ```{r}
-#TODO : requires to run manually plotting.R because of data.table issue
-
 restab2 <- create_restab2()
 restab2 <- restab2[type %in% c("unscaled", "averaged_scaled")]
 df <- data.frame(restab2)
