@@ -39,7 +39,7 @@ If F, `luiinput` and `model_name` need to be given manually.
 *note* that i <- 6 for testing.
 ```{r}
 automaticrun <- T
-create_plot <- F
+create_plot <- T
 permut <- F # T or F, depending wether permutations are available or not
 # i <- 6 # i <- 6 for testing
 if(automaticrun){
@@ -81,74 +81,59 @@ restab <- create_restab0()
 # Multipanel Barplot
 without overview bars
 ```{r, eval = T}
-if(create_plot){
-  p <- create_bio_aboveground_barplot()
-  b <- create_bio_belowground_barplot()
-  # dashed or dotted or solid
-  # https://stackoverflow.com/questions/39898870/ggplot-geom-bar-customize-by-linetype-and-fill
-  # geom_errorbarh() for horizontal error bars
-  # https://www.heropatterns.com/
-  q <- create_abio_barplot()
-  # # plot pure legend - only works if legend is there (legend.position taken out)
-  # legend <- cowplot::get_legend(q)
-  # plot_grid(NULL, legend)
-}
+p <- create_bio_aboveground_barplot()
+b <- create_bio_belowground_barplot()
+# dashed or dotted or solid
+# https://stackoverflow.com/questions/39898870/ggplot-geom-bar-customize-by-linetype-and-fill
+# geom_errorbarh() for horizontal error bars
+# https://www.heropatterns.com/
+q <- create_abio_barplot()
+# # plot pure legend - only works if legend is there (legend.position taken out)
+# legend <- cowplot::get_legend(q)
+# plot_grid(NULL, legend)
 ```
-```{r, eval = T}
-if(create_plot == T){
-  plot_grid(p, b, q, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
-  # plot_grid(p, b, q, labels = c('aboveground', 'belowground', 'abiotic'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
-}
-```
-
-Multipanel barplot with overview bars
-
-Aboveground - belowground - abiotic
+overview bar : Aboveground - belowground - abiotic
 ```{r}
 restab2 <- create_restab2()
 restab2 <- restab2[type %in% c("unscaled", "averaged_scaled")]
 df <- data.frame(restab2)
+ov1 <- create_overview_above_below_abiotic_barplot()
+# plot pure legend
+# legend <- cowplot::get_legend(ov1)
+# plot_grid(NULL, legend, ncol = 1)
+```
+overview bar : turnover - nestedness - abiotic
+```{r}
+restab3 <- create_restab_3()
+restab3 <- restab3[type %in% c("unscaled", "averaged_scaled")]
+df <- data.frame(restab3)
 
-# ov1 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = color)) +
+# ov2 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = color)) +
 #   geom_bar(stat="identity", color = "black", linetype = "solid") +
 #   coord_flip() +
 #   scale_fill_identity() +
 #   theme(legend.position = "none", axis.title = element_blank(),
 #         axis.text.y = element_text(size=9),
 #         panel.grid.major.x = element_line(color = "grey"))
-ov1 <- create_overview_above_below_abiotic_barplot()
-# plot pure legend
-# legend <- cowplot::get_legend(ov1)
-# plot_grid(NULL, legend, ncol = 1)
-```
-```{r, eval = T}
-if(create_plot == T){
-  plot_grid(p, b, q, ov1, labels = c('A', '', 'B', 'C'), label_size = 12, nrow = 4, rel_heights = c(0.08, 0.11, 0.065, 0.035), align = "v") # LUI components
-}
-```
-
-turnover - nestedness - abiotic
-```{r}
-restab3 <- create_restab_3()
-restab3 <- restab3[type %in% c("unscaled", "averaged_scaled")]
-df <- data.frame(restab3)
-ov2 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = color)) +
-  geom_bar(stat="identity", color = "black", linetype = "solid") +
-  coord_flip() +
-  scale_fill_identity() +
-  theme(legend.position = "none", axis.title = element_blank(),
-        axis.text.y = element_text(size=9),
-        panel.grid.major.x = element_line(color = "grey"))
+ov2 <- create_overview_turnover_nestedness_abiotic_barplot()
 # plot pure legend
 # legend <- cowplot::get_legend(ov2)
 # plot_grid(NULL, legend)
 ```
+
 ```{r, eval = T}
-if(create_plot){
+if(create_plot == T){
+  multipanel_without_overviews <- plot_grid(p, b, q, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
+  # plot_grid(p, b, q, labels = c('aboveground', 'belowground', 'abiotic'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
+  
+  # multipanel_with_overview_above_below <- plot_grid(p, b, q, ov1, labels = c('A', '', 'B', 'C'), label_size = 12, nrow = 4, rel_heights = c(0.08, 0.11, 0.065, 0.035), align = "v") # LUI components
+  
+  multipanel_with_overview_bars <- plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.27, 0.37, 0.13, 0.075, 0.075), align = "v") # 2 summary bars
   # plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.27, 0.37, 0.13, 0.11, 0.11), align = "v") # LUI components
-  plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.27, 0.37, 0.13, 0.075, 0.075), align = "v") # 2 summary bars
 }
+
 ```
+
 
 ```{r,eval = T}
 restab <- list(restab, restab2, restab3)

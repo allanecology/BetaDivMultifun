@@ -193,6 +193,27 @@ create_overview_above_below_abiotic_barplot <- function(){
 }
 NULL
 
+#' create plot Overview : turnover - newtedness - abiotic
+#' 
+#' code to create overview
+#' 
+#' @import ggplot2
+#' @improt cowplot
+#' 
+#' @export
+create_overview_turnover_nestedness_abiotic_barplot <- function(){
+  ov2 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = color)) +
+    geom_bar(stat="identity", color = "black", linetype = "solid") +
+    coord_flip() +
+    scale_fill_identity() +
+    theme(legend.position = "none", axis.title = element_blank(),
+          axis.text.y = element_text(size=9),
+          panel.grid.major.x = element_line(color = "grey"))
+  
+  return(ov2)
+}
+NULL
+
 
 
 
