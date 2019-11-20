@@ -96,7 +96,7 @@ NULL
 #' code to create plot p : bio and aboveground
 #' 
 #' @import ggplot2
-#' @improt cowplot
+#' @import cowplot
 #' 
 #' @export
 create_bio_aboveground_barplot <- function(){
@@ -124,7 +124,7 @@ NULL
 #' code to create plot p : bio and belowground
 #' 
 #' @import ggplot2
-#' @improt cowplot
+#' @import cowplot
 #' 
 #' @export
 create_bio_belowground_barplot <- function(){
@@ -152,7 +152,7 @@ NULL
 #' code to create plot abio
 #' 
 #' @import ggplot2
-#' @improt cowplot
+#' @import cowplot
 #' 
 #' @export
 create_abio_barplot <- function(){
@@ -177,7 +177,7 @@ NULL
 #' code to create overview
 #' 
 #' @import ggplot2
-#' @improt cowplot
+#' @import cowplot
 #' 
 #' @export
 create_overview_above_below_abiotic_barplot <- function(){
@@ -198,7 +198,7 @@ NULL
 #' code to create overview
 #' 
 #' @import ggplot2
-#' @improt cowplot
+#' @import cowplot
 #' 
 #' @export
 create_overview_turnover_nestedness_abiotic_barplot <- function(){
