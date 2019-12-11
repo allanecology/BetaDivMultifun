@@ -1,44 +1,44 @@
-names,nicenames,ground,color
-autotroph.beta.sim,autotroph βto,a,#66A61E
-autotroph.beta.sne,autotroph βnes,a,#66A61E
-herbivore.beta.sim,herbivore βto,a,#1B9E77
-herbivore.beta.sne,herbivore βnes,a,#1B9E77
-plant.pathogen.beta.sim,plant pathogen βto,a,#377EB8
-plant.pathogen.beta.sne,plant pathogen βnes,a,#377EB8
-pollinator.beta.sim,pollinator βto,a,#7570B3
-pollinator.beta.sne,pollinator βnes,a,#7570B3
-secondary.consumer.beta.sim,secondary consumer βto,a,#E6AB02
-secondary.consumer.beta.sne,secondary consumer βnes,a,#E6AB02
-tertiary.consumer.beta.sim,tertiary consumer βto,a,#D95F02
-tertiary.consumer.beta.sne,tertiary consumer βnes,a,#D95F02
-bacteria.RNA.beta.sim,bacteria RNA βto,b,#666666
-bacteria.RNA.beta.sne,bacteria RNA βnes,b,#666666
-belowground.herbivore.beta.sim,belowground herbivore βto,b,#A6761D
-belowground.herbivore.beta.sne,belowground herbivore βnes,b,#A6761D
-belowground.predator.beta.sim,belowground predator βto,b,#A65628
-belowground.predator.beta.sne,belowground predator βnes,b,#A65628
-protist.bacterivore.beta.sim,protist bacterivore βto,b,#FDC086
-protist.bacterivore.beta.sne,protist bacterivore βnes,b,#FDC086
-protist.eukaryvore.beta.sim,protist eukaryvore βto,b,#F781BF
-protist.eukaryvore.beta.sne,protist eukaryvore βnes,b,#F781BF
-protist.omnivore.beta.sim,protist omnivore βto,b,#FFFF99
-protist.omnivore.beta.sne,protist omnivore βnes,b,#FFFF99
-protist.plant.parasite.beta.sim,protist plant parasite βto,b,#7FC97F
-protist.plant.parasite.beta.sne,protist plant parasite βnes,b,#7FC97F
-soilfungi.decomposer.beta.sim,soilfungi decomposer βto,b,#984EA3
-soilfungi.decomposer.beta.sne,soilfungi decomposer βnes,b,#984EA3
-soilfungi.pathotroph.beta.sim,soilfungi pathotroph βto,b,#E7298A
-soilfungi.pathotroph.beta.sne,soilfungi pathotroph βnes,b,#E7298A
-soilfungi.symbiont.beta.sim,soilfungi symbiont βto,b,#BEAED4
-soilfungi.symbiont.beta.sne,soilfungi symbiont βnes,b,#BEAED4
-deltaLUI,ΔLUI,x,#BEAED4
-edis_soil,soil,x,#A6761D
-geo_dist,geographic distance,x,#377EB8
-LUI,LUI,x,#7570B3
-plot_isolation,plot isolation,x,#66A61E
-Gstd,Grazing,x,#D95F02
-Mstd,Mowing,x,#E6AB02
-Fstd,Fertilisation,x,#E7298A
-deltaGstd,Δgrazing,x,#FDC086
-deltaMstd,Δmowing,x,#FFFF99
-deltaFstd,Δfertilisation,x,#F781BF
+names,nicenames,ground,color,linetypeto
+autotroph.beta.sim,autotroph βto,a,#66A61E,solid
+autotroph.beta.sne,autotroph βnes,a,#66A61E,dashed
+herbivore.beta.sim,herbivore βto,a,#1B9E77,solid
+herbivore.beta.sne,herbivore βnes,a,#1B9E77,dashed
+plant.pathogen.beta.sim,plant pathogen βto,a,#377EB8,solid
+plant.pathogen.beta.sne,plant pathogen βnes,a,#377EB8,dashed
+pollinator.beta.sim,pollinator βto,a,#7570B3,solid
+pollinator.beta.sne,pollinator βnes,a,#7570B3,dashed
+secondary.consumer.beta.sim,secondary consumer βto,a,#E6AB02,solid
+secondary.consumer.beta.sne,secondary consumer βnes,a,#E6AB02,dashed
+tertiary.consumer.beta.sim,tertiary consumer βto,a,#D95F02,solid
+tertiary.consumer.beta.sne,tertiary consumer βnes,a,#D95F02,dashed
+bacteria.RNA.beta.sim,bacteria RNA βto,b,#666666,solid
+bacteria.RNA.beta.sne,bacteria RNA βnes,b,#666666,dashed
+belowground.herbivore.beta.sim,belowground herbivore βto,b,#A6761D,solid
+belowground.herbivore.beta.sne,belowground herbivore βnes,b,#A6761D,dashed
+belowground.predator.beta.sim,belowground predator βto,b,#A65628,solid
+belowground.predator.beta.sne,belowground predator βnes,b,#A65628,dashed
+protist.bacterivore.beta.sim,protist bacterivore βto,b,#FDC086,solid
+protist.bacterivore.beta.sne,protist bacterivore βnes,b,#FDC086,dashed
+protist.eukaryvore.beta.sim,protist eukaryvore βto,b,#F781BF,solid
+protist.eukaryvore.beta.sne,protist eukaryvore βnes,b,#F781BF,dashed
+protist.omnivore.beta.sim,protist omnivore βto,b,#FFFF99,solid
+protist.omnivore.beta.sne,protist omnivore βnes,b,#FFFF99,dashed
+protist.plant.parasite.beta.sim,protist plant parasite βto,b,#7FC97F,solid
+protist.plant.parasite.beta.sne,protist plant parasite βnes,b,#7FC97F,dashed
+soilfungi.decomposer.beta.sim,soilfungi decomposer βto,b,#984EA3,solid
+soilfungi.decomposer.beta.sne,soilfungi decomposer βnes,b,#984EA3,dashed
+soilfungi.pathotroph.beta.sim,soilfungi pathotroph βto,b,#E7298A,solid
+soilfungi.pathotroph.beta.sne,soilfungi pathotroph βnes,b,#E7298A,dashed
+soilfungi.symbiont.beta.sim,soilfungi symbiont βto,b,#BEAED4,solid
+soilfungi.symbiont.beta.sne,soilfungi symbiont βnes,b,#BEAED4,dashed
+deltaLUI,ΔLUI,x,#BEAED4,solid
+edis_soil,soil,x,#A6761D,solid
+geo_dist,geographic distance,x,#377EB8,solid
+LUI,LUI,x,#7570B3,solid
+plot_isolation,plot isolation,x,#66A61E,solid
+Gstd,Grazing,x,#D95F02,solid
+Mstd,Mowing,x,#E6AB02,solid
+Fstd,Fertilisation,x,#E7298A,solid
+deltaGstd,Δgrazing,x,#FDC086,solid
+deltaMstd,Δmowing,x,#FFFF99,solid
+deltaFstd,Δfertilisation,x,#F781BF,solid
