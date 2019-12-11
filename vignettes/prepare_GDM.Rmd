@@ -118,7 +118,9 @@ fordistpreds <- merge(fordistpreds, xLUI, by = "Var2", all.x = T)
 ```{r, eval = F}
 # name : modelname "_corrplot_before_gdm.pdf"
 m <- cor(fordistpreds[, -c(1:2, 36)])
+pdf(paste("out/", modelname, "_corrplot_before_gdm.pdf", sep = ""), paper = "a4r")
 corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", diag = F, tl.srt = 50, tl.col = "black", order = "hclust", tl.cex = 0.4, cl.cex = 0.3, number.cex = 0.3)
+dev.off()
 ```
 Variance inflation
 ```{r}
@@ -128,7 +130,7 @@ m1 <- lm(formula = formula(mod), data = fordistpreds)
 vif_output <- car::vif(m1)
 vif_output[which(vif_output > 5)]
 # vif_output[which(vif_output[, "GVIF"] > 5),]
-capture.output(mod, 
+capture.output(mod,
                vif_output[which(vif_output > 5)],
                file = paste(modelname, "_vif_before_gdm.txt"))
 ```
@@ -192,9 +194,9 @@ gdm_output <- gdm::gdm(meltset, geo = F, splines = NULL, knots = NULL)
 # summary(gdm_output)
 
 # save input and output
-saveRDS(meltset, file = paste("gdm", funs, lui[1], "input.Rds", sep = "_"))
-saveRDS(gdm_output, outnameRDS)
-capture.output(summary(gdm_output), file = outname)
+saveRDS(meltset, file = paste("out/", paste("gdm", funs, lui[1], "input.Rds", sep = "_"), sep = ""))
+saveRDS(gdm_output, paste("out/", outnameRDS, sep = ""))
+capture.output(summary(gdm_output), file = paste("out/", outname, sep = ""))
 ```
 
 go to cluster scripts and plot.
