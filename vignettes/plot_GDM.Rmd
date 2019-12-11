@@ -51,18 +51,16 @@ if(automaticrun){
   luiinput <- "lui" # luiinput <- "components"
   model_name <- "gdm_EFturnover_0.75_LUI"
 }
+if(permut == T){
+  gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_permutation.Rds", sep = ""))
+  sign <- gdmperm[[3]][,1]
+}
 ```
 
 read input data and produce gdm result
 ```{r}
 gdm_output <- readRDS(paste_gdm_input_path_together(pathtoout = pathtoout, name = model_name))
 exSplines <- gdm::isplineExtract(gdm_output)
-maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE) # take maximum of each variable for barplot
-
-if(permut == T){
-  gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_permutation.Rds", sep = ""))
-  sign <- gdmperm[[3]][,1]
-}
 ```
 create plotting tables
 
@@ -72,8 +70,46 @@ plotsequence_bio <- c("autotroph", "bacteria.RNA", "belowground.herbivore", "bel
 plotsequence_abio <- define_rownames_lui_or_components(luiinput = luiinput)
 ```
 
+
+# create lineplot
+```{r}
+# extract I splines y axes and get LUI x axis
+lineplot_data <- data.table(cbind(exSplines$x[, "Geographic"], exSplines$y))
+setnames(lineplot_data, old = c("V1", "Geographic"), new = c("xaxis", "LUI"))
+lineplot_data <- melt(lineplot_data, measure.vars = colnames(lineplot_data)[-1], id.vars = "xaxis", 
+                      variable.name = "names")
+# adding plot information from nicenames
+lineplot_data <- merge(lineplot_data, nicenames, by = "names", all.x = T)
+# lineplot function
+create_gdm_lineplot <- function(data){
+  p <- ggplot(data, aes(x = xaxis, y = value, fill = names, linetype = linetypeto)) +
+    geom_line(aes(linetype=linetypeto, color=color)) +
+    scale_fill_identity() + scale_linetype_identity() + scale_color_identity() +
+    # labs(title = model_name) +
+    # xlab("LUI") + 
+    ylab("functional dissimilarity") +
+    theme(legend.position = "none",
+          axis.title = element_blank())
+  return(p)
+}
+# above, below and abiotic subplots
+p <- create_gdm_lineplot(lineplot_data[ground == "a"]) + labs(title = model_name)
+q <- create_gdm_lineplot(lineplot_data[ground == "b"])
+r <- create_gdm_lineplot(lineplot_data[ground == "x"])
+
+lin <- plot_grid(p, NULL, q, NULL, r, NULL,  labels = c('A', '', 'B', '', 'C', ''), nrow = 3,
+                 align = "v")
+#TODO : nice legend, just 1 x axis, common y axis (global ymax)
+```
+
+
+
+
+
 create results table
 ```{r, eval = T}
+maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE) # take maximum of each variable for barplot
+
 restab <- create_restab0()
 ```
 
