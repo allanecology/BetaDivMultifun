@@ -53,7 +53,7 @@ lui <- c("LUI", "deltaLUI")
 xaxis_gdm <- "LUI"
 
 lui <- lui[!lui %in% xaxis_gdm]
-modelname <- paste("gdm", funs, lui[1], sep = "_")
+modelname <- paste("gdm", funs, xaxis_gdm, sep = "_")
 model_output <- list()
 ```
 
@@ -188,13 +188,13 @@ meltset <- gdm::formatsitepair(bioData=meltset, bioFormat = 4, predData=meltset)
 # Run GDM
 The model name is automatically generated from `funs` and `lui`.
 ```{r}
-outname <- paste("gdm", funs, lui[1], "output.txt", sep = "_")
-outnameRDS <- paste("gdm", funs, lui[1], "output.Rds", sep = "_")
-gdm_output <- gdm::gdm(meltset, geo = F, splines = NULL, knots = NULL)
+outname <- paste("gdm", funs, xaxis_gdm, "output.txt", sep = "_")
+outnameRDS <- paste("gdm", funs, xaxis_gdm, "output.Rds", sep = "_")
+gdm_output <- gdm::gdm(meltset, geo = T)
 # summary(gdm_output)
 
 # save input and output
-saveRDS(meltset, file = paste("out/", paste("gdm", funs, lui[1], "input.Rds", sep = "_"), sep = ""))
+saveRDS(meltset, file = paste("out/", paste("gdm", funs, xaxis_gdm, "input.Rds", sep = "_"), sep = ""))
 saveRDS(gdm_output, paste("out/", outnameRDS, sep = ""))
 capture.output(summary(gdm_output), file = paste("out/", outname, sep = ""))
 ```
