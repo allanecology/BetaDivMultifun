@@ -11,21 +11,33 @@ note : packages used : gdm, car, geosphere, viridis and colrobrewer
 This script relies on loading the following datasets:
 - EFmaster : dissimilarities of functions
 - singleEFdist : dissimilarities of single functions
+TODO : is singleEFdist really needed?
 - masterbeta : dissimilarities of trophic groups
 - LUI : LUI (and components) and delta LUI (and delta components)
 - predictors : values of predictors (plot isolation, geographic position)
 - predictors soil : euclidean distance of soil pca
 
+# outputs COLLECT THEM BY HAND AT THE MOMENT!
+- correlation plot
+- variable inflations
+- gdm models
+
+
 # Select Variables
 Select Variables for the models
+- Ecosystem Functions : either EFdistance, EFturnover, EFnestedness or single functions
+- LUI : either LUI and delta LUI or the individual components
+- xaxis_gdm : is LUI or a component
 ```{r}
+#TODO : find good solution for this script : need to have an R script or function to run models after each other quite automatically.
+#TODO : need to collect output automatically, but all together.
 print("user input required here!")
-source('/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/analysis_nonpublic.R', echo=TRUE)
+source('/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/analysis_nonpublic.R', echo=F)
 # funs <- c("EFdistance", "EFturnover_0.5", "EFnestedness_0.5", "EFturnover_0.75", "EFturnover_0.9", "EFnestedness_0.9", "EFnestedness_0.75")
 # funs <- c("EFabund_bray", "EFabund_bray_bal", "EFabund_bray_gra", "EFturnover_median", "EFnestedness_median", "EFbeta_median")
 # funs2 <- c("EFbeta_0.1", "EFturnover_0.1", "EFnestedness_0.1", "EFbeta_0.2", "EFturnover_0.2", "EFnestedness_0.2", "EFbeta_0.3", "EFturnover_0.3", "EFnestedness_0.3", "EFbeta_0.4"       "EFturnover_0.4"   "EFnestedness_0.4" "EFbeta_0.5"       "EFturnover_0.5"   "EFnestedness_0.5", "EFbeta_0.6", "EFturnover_0.6", "EFnestedness_0.6", "EFbeta_0.7", "EFturnover_0.7", "EFnestedness_0.7", "EFbeta_0.8", "EFturnover_0.8", "EFnestedness_0.8", "EFbeta_0.9", "EFturnover_0.9", "EFnestedness_0.9")
-funs <- colnames(EFmaster)[27]
-
+# funs <- colnames(EFmaster)[27]
+funs <- "EFdistance"
 # funs is one of :  EFturnover, EFnestedness, NEW : EFbeta
 #    , , , 
 
@@ -38,24 +50,23 @@ funs <- colnames(EFmaster)[27]
 # LUI is one of the below
 lui <- c("LUI", "deltaLUI")
 # lui <- c("Gstd", "Mstd", "Fstd", "deltaGstd", "deltaMstd", "deltaFstd")
-```
+xaxis_gdm <- "LUI"
 
-Ecosystem Functions : either EFdistance, EFturnover, EFnestedness or single functions
-```{r}
-include <- c("Var1", "Var2", funs)
-EFmaster <- EFmaster[, ..include]
-```
-
-LUI : either LUI and delta LUI or the individual components
-```{r}
-LUI <- LUI[, c("Plotn", lui)]
+lui <- lui[!lui %in% xaxis_gdm]
+modelname <- paste("gdm", funs, lui[1], sep = "_")
+model_output <- list()
 ```
 
 # Prepare for GDM
-
-Group dissimilarity matrices (long format):
-combine functions, betadiversity and predictors
 ```{r}
+include <- c("Var1", "Var2", funs)
+EFmaster <- EFmaster[, ..include]
+
+xLUI <- LUI[, c("Plotn", xaxis_gdm)]
+LUI <- LUI[, c("Plotn", lui)]
+
+# Group dissimilarity matrices (long format):
+# combine functions, betadiversity and predictors
 fordistpreds <- merge(predictors_soil, masterbeta, by = c("Var1", "Var2"))
 fordistpreds <- merge(fordistpreds, EFmaster, by = c("Var1", "Var2"))
 rm(predictors_soil, masterbeta); gc()
@@ -92,8 +103,20 @@ fordistpreds[, names(fordistpreds) %in% forstand] <- apply(fordistpreds[, names(
 rm(foreuclid); rm(forstand); rm(i)
 ```
 
+# add LUI values
+add the LUI value selected by `xaxis_gdm` as geographic coordinate to the gdm data.
+```{r}
+setnames(xLUI, old = c("Plotn", xaxis_gdm), new = c("Var1", "s1.xCoord"))
+fordistpreds <- merge(fordistpreds, xLUI, by = "Var1", all.x = T)
+setnames(xLUI, old = c("Var1", "s1.xCoord"), new = c("Var2", "s2.xCoord"))
+fordistpreds <- merge(fordistpreds, xLUI, by = "Var2", all.x = T)
+```
+
+
+
 # Check Correlation
 ```{r, eval = F}
+# name : modelname "_corrplot_before_gdm.pdf"
 m <- cor(fordistpreds[, -c(1:2, 36)])
 corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", diag = F, tl.srt = 50, tl.col = "black", order = "hclust", tl.cex = 0.4, cl.cex = 0.3, number.cex = 0.3)
 ```
@@ -101,11 +124,13 @@ Variance inflation
 ```{r}
 # generate model
 mod <- paste(funs, " ~ " ,paste(colnames(fordistpreds)[!colnames(fordistpreds) %in% c(funs, "Var1", "Var2")], collapse = " + "))
-
 m1 <- lm(formula = formula(mod), data = fordistpreds)
 vif_output <- car::vif(m1)
 vif_output[which(vif_output > 5)]
 # vif_output[which(vif_output[, "GVIF"] > 5),]
+capture.output(mod, 
+               vif_output[which(vif_output > 5)],
+               file = paste(modelname, "_vif_before_gdm.txt"))
 ```
 We will leave the inflated variables in the dataset, but perform a sensitivity analysis later. --> The inflated variables are not distinguishable, maybe the effect is partitioned among them.
 
@@ -132,16 +157,16 @@ data.table::setcolorder(meltset, colorder)
 # define the new colnames
 names(meltset)[names(meltset) %in% funs] = "distance" # functions column is named "distance"
 # all predictors are having s1. at the beginning
-newnames <- paste("s1.", colorder1, sep = "")
-names(meltset)[-1] <- newnames
+newnames <- paste("s1.", colorder1[!colorder1 %in% c("s1.xCoord", "s2.xCoord")], sep = "")
+names(meltset)[!names(meltset) %in% c("distance", "s1.xCoord", "s2.xCoord")] <- newnames
 
 # adding new columns at the right positions
-newcols <- c("weights", "s1.xCoord", "s1.yCoord", "s2.xCoord", "s2.yCoord")
+newcols <- c("weights", "s1.yCoord", "s2.yCoord")
 meltset[, (newcols) := 0]
 meltset[, weights := 1]
 
 # order in right position
-colorder <- c("distance", newcols, newnames)
+colorder <- c("distance", newcols[1], "s1.xCoord", newcols[2], "s2.xCoord", newcols[3], newnames)
 data.table::setcolorder(meltset, colorder)
 
 # add empty s2. columns at the end
@@ -153,6 +178,9 @@ meltset <- as.data.frame(meltset)
 
 # row names of meltset must be the plot combinations
 rownames(meltset) <- paste(plotorder$Var1, plotorder$Var2, sep=".")
+
+# formatsitepair has been used, but does not do anything to the data if runned like this
+meltset <- gdm::formatsitepair(bioData=meltset, bioFormat = 4, predData=meltset) 
 ```
 
 # Run GDM
@@ -161,6 +189,7 @@ The model name is automatically generated from `funs` and `lui`.
 outname <- paste("gdm", funs, lui[1], "output.txt", sep = "_")
 outnameRDS <- paste("gdm", funs, lui[1], "output.Rds", sep = "_")
 gdm_output <- gdm::gdm(meltset, geo = F, splines = NULL, knots = NULL)
+# summary(gdm_output)
 
 # save input and output
 saveRDS(meltset, file = paste("gdm", funs, lui[1], "input.Rds", sep = "_"))
