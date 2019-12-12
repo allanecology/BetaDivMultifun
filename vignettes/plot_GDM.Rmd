@@ -60,6 +60,15 @@ read input data and produce gdm result
 ```{r}
 gdm_output <- readRDS(paste_gdm_input_path_together(pathtoout = pathtoout, name = model_name))
 exSplines <- gdm::isplineExtract(gdm_output)
+# get model specs
+model_specs <- paste(
+model_name,
+paste("deviance of the fitted GDM model :", round(gdm_output$gdmdeviance, 3)),
+paste("deviance of the null model : ", round(gdm_output$nulldeviance, 3)),
+paste("percentage of null deviance \n explained by the fitted GDM model :", round(gdm_output$explained, 3)),
+"3 splines used, knots at min, max and 50% (default). ",
+paste("LUI knots at :", paste(round(gdm_output$knots[1:3], 3), collapse = ", ")),
+sep = "\n")
 ```
 create plotting tables
 
@@ -71,6 +80,7 @@ plotsequence_abio <- define_rownames_lui_or_components(luiinput = luiinput)
 
 
 # create lineplot
+naming convention : `model_name` + "_lineplot_all_modelspec.pdf"
 ```{r}
 # extract I splines y axes and get LUI x axis
 lineplot_data <- data.table(cbind(exSplines$x[, "Geographic"], exSplines$y))
@@ -81,14 +91,17 @@ lineplot_data <- melt(lineplot_data, measure.vars = colnames(lineplot_data)[-1],
 lineplot_data <- merge(lineplot_data, nicenames, by = "names", all.x = T)
 
 # above, below and abiotic subplots
-p <- create_gdm_lineplot(lineplot_data[ground == "a"]) + labs(title = model_name)
+p <- create_gdm_lineplot(lineplot_data[ground == "a"])
 q <- create_gdm_lineplot(lineplot_data[ground == "b"])
 r <- create_gdm_lineplot(lineplot_data[ground == "x"])
+labsplot <- ggplot(NULL) + #annotate("text", x = 0.8, y = 0.5, size=8, label = model_name) +
+  theme_void() + annotate("text", x = 0.4, y = 0.5, size = 4, label = model_specs)
 biotic_legend <- get_nice_legend(type = "biotic") # plot with plot_grid(biotic_legend)
 abiotic_legend <- get_nice_legend(type = "abiotic")
 
 # add together the subplots
-lin <- plot_grid(p, biotic_legend, q, NULL, r, abiotic_legend,  labels = c('A', '', 'B', '', 'C', ''), nrow = 3)
+lin <- plot_grid(p, biotic_legend, q, labsplot, r, abiotic_legend,  labels = c('A', '', 'B', '', 'C', ''), nrow = 3)
+model_name
 ```
 
 create results table
