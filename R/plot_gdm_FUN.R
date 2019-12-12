@@ -215,5 +215,81 @@ create_overview_turnover_nestedness_abiotic_barplot <- function(){
 NULL
 
 
+#' get legends of plots
+#' 
+#' based on the overview table `ǹicenames.csv`, the legend shows colors
+#' for the different predictors.
+#' the legend is split into abiotic and biotic predictors, as there are
+#' 16 different colors, but 28 different predictors.
+#' TODO : add the overview bar colors as well, to produce legend for them.
+#' @param type character, is either "biotic" or "abiotic".
+#' @return `legend`, legend extracted with `cowplot::get_legend` which can be plotted
+#' using `cowplot::plot_grid(legend)`.
+#'
+#' @import ggplot2
+#' @import cowplot
+#' @import data.table
+#'
+#' @export
+get_nice_legend <- function(type){
+  # type needs to be either biotic or abiotic
+  nicenames[, testvals := 1]
+  short_nicenames <- unique(nicenames[, .(legendnames, testvals, color, ground)])
+  short_nicenames[, legendnames := as.factor(legendnames)]
+  if(type == "biotic"){
+    biotic <- ggplot(short_nicenames[ground %in% c("a", "b")], aes(x = legendnames, y = testvals, fill = color)) +
+      geom_bar(stat = "identity", color = "black") +
+      scale_fill_identity("", labels = short_nicenames[ground %in% c("a", "b"), legendnames], guide = "legend") +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+      ggtitle("betadiversity colors")
+    legend <- get_legend(biotic)
+  }
+  if(type == "abiotic"){
+    abiotic <- ggplot(short_nicenames[ground %in% c("x")], aes(x = legendnames, y = testvals, fill = color)) +
+      geom_bar(stat = "identity", color = "black") +
+      scale_fill_identity("", labels = short_nicenames[ground %in% c("x"), legendnames], guide = "legend") +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+      ggtitle("betadiversity colors")
+    suppressWarnings(legend <- get_legend(abiotic)) # because of delta characters in legendnames
+  }
+  if(!(type %in% c("biotic", "abiotic"))){
+    print("type must be either biotic or abiotic.")
+  }
+  return(legend)
+}
 
+NULL
+
+#' create lineplots
+#' 
+#' create lineplots based on the I splines extracted from a gdm model
+#' with the function `gdm::isplineExtract`.
+#' Used the overview table `ǹicenames.csv` for graphical parameters as
+#' line types and color.
+#' Does not plot a legend, the legend can be produced with the function
+#' `get_nice_legend`.
+#' 
+#' TODO : add vertical grid lines, remove x axis for above plots
+#' @param data data.table, produced by `gdm::isplineExtract` and further
+#' cleaning (as shown in `plot_gdm.Rmd`).
+#' @return a ggplot2 plot element, with lineplots.
+#'
+#' @import ggplot2
+#' @import cowplot
+#' @import data.table
+#'
+#' @export
+create_gdm_lineplot <- function(data){
+  p <- ggplot(data, aes(x = xaxis, y = value, fill = names, linetype = linetypeto)) +
+    geom_line(aes(linetype=linetypeto, color=color)) +
+    scale_fill_identity() + scale_linetype_identity() + scale_color_identity() +
+    # labs(title = model_name) +
+    # xlab("LUI") + 
+    ylab("functional dissimilarity") +
+    theme(legend.position = "none",
+          axis.title = element_blank()
+    )
+  return(p)
+}
+NULL
 
