@@ -1,10 +1,10 @@
 name,luiinput,permut
 gdm_EFdistance_LUI,lui,F
 gdm_EFnestedness_0.5_LUI,lui,F
-gdm_EFnestedness_0.75_LUI,lui,F
+gdm_EFnestedness_0.7_LUI,lui,F
 gdm_EFnestedness_0.9_LUI,lui,F
 gdm_EFturnover_0.5_LUI,lui,F
-gdm_EFturnover_0.75_LUI,lui,F
+gdm_EFturnover_0.7_LUI,lui,F
 gdm_EFturnover_0.9_LUI,lui,F
 gdm_Biomass_LUI,lui,F
 gdm_caterpillars.predation_LUI,lui,F
