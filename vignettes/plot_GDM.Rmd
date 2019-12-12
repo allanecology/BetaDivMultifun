@@ -7,7 +7,6 @@ output: html_document
 ```{r}
 suppressPackageStartupMessages(require(ggplot2))
 suppressPackageStartupMessages(require(cowplot))
-#TODO add @import package to the function which will be used for plotting
 ```
 
 ```{r}
@@ -92,16 +91,12 @@ abiotic_legend <- get_nice_legend(type = "abiotic")
 lin <- plot_grid(p, biotic_legend, q, NULL, r, abiotic_legend,  labels = c('A', '', 'B', '', 'C', ''), nrow = 3)
 ```
 
-
-
-
-
 create results table
 ```{r, eval = T}
 maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE) # take maximum of each variable for barplot
-
 restab <- create_restab0()
 ```
+
 
 
 # Multipanel Barplot
@@ -204,6 +199,13 @@ run_EFturnover075_test <- function(){
 
 run_EFturnover075_test()
 ```
+
+
+
+
+
+
+
 
 
 
