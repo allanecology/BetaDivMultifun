@@ -104,6 +104,34 @@ lin <- plot_grid(p, biotic_legend, q, labsplot, r, abiotic_legend,  labels = c('
 model_name
 ```
 
+
+```{r}
+#TODO place somewhere better
+#############################
+#
+# treshold selection
+#
+#############################
+
+# models with function calculated with threshold : 
+# thresholds between 0.1 and 0.9.
+# need selection : by percent deviance explained.
+
+# require : 
+# model_results : the model results saved manually from the models
+setorder(model_results, cols = "EF")
+model_results[, EF := factor(EF, ordered = T, levels = c("distance", "singleEF", "abund", "beta", "turnover", "nestedness"))]
+str(model_results)
+
+
+ggplot(model_results, aes(x = name, y = `% deviance explained`, fill = EF)) + 
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+#TODO can add nice names at some point
+```
+
+
+
 create results table
 ```{r, eval = T}
 maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE) # take maximum of each variable for barplot
