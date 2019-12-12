@@ -29,36 +29,38 @@ Select Variables for the models
 - LUI : either LUI and delta LUI or the individual components
 - xaxis_gdm : is LUI or a component
 ```{r}
-#TODO : find good solution for this script : need to have an R script or function to run models after each other quite automatically.
-#TODO : need to collect output automatically, but all together.
-print("user input required here!")
+# print("user input required here!")
 source('/run/user/1001/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=planteco/DATA/BE_Synthesis/BetaDivMultifun/analysis_nonpublic.R', echo=F)
-# funs <- c("EFdistance", "EFturnover_0.5", "EFnestedness_0.5", "EFturnover_0.75", "EFturnover_0.9", "EFnestedness_0.9", "EFnestedness_0.75")
-# funs <- c("EFabund_bray", "EFabund_bray_bal", "EFabund_bray_gra", "EFturnover_median", "EFnestedness_median", "EFbeta_median")
-# funs2 <- c("EFbeta_0.1", "EFturnover_0.1", "EFnestedness_0.1", "EFbeta_0.2", "EFturnover_0.2", "EFnestedness_0.2", "EFbeta_0.3", "EFturnover_0.3", "EFnestedness_0.3", "EFbeta_0.4"       "EFturnover_0.4"   "EFnestedness_0.4" "EFbeta_0.5"       "EFturnover_0.5"   "EFnestedness_0.5", "EFbeta_0.6", "EFturnover_0.6", "EFnestedness_0.6", "EFbeta_0.7", "EFturnover_0.7", "EFnestedness_0.7", "EFbeta_0.8", "EFturnover_0.8", "EFnestedness_0.8", "EFbeta_0.9", "EFturnover_0.9", "EFnestedness_0.9")
-# funs <- colnames(EFmaster)[27]
-funs <- "EFdistance"
-# funs is one of :  EFturnover, EFnestedness, NEW : EFbeta
-#    , , , 
 
-#    Biomass , dung.removal, Groundwater.recharge, herbivory.20172018, ..., soilAmmoniaflxs
-#Biomass"                 "dung.removal"            "Groundwater.recharge"   
- # [6] "herbivory.20172018"      "Litter.decomposition"    "N_leaching_risk2015"     "pathogen.infection"      "Phosphatase"            
-# [11] "Potential.nitrification" "caterpillars.predation"  "Root.biomass"            "Root.decomposition"      "seed.depletion"         
-# [16] "soilCflxs"               "P_leaching_risk_comb"    "soilNitrateflxs"         "soilAmmoniaflxs"
+##  PSEUDO-AUTOMATIC RUNNING
+# specify what is required here
+# can be run from `analysis_nonpublic.R`:
+
+## MODELS
+funs <- "EFdistance"
+# funs <- "EFabund_bray_gra"
+
+## TURNOVER AND NESTEDNESS
+# with several thresholds
+# funs <- paste("EFturnover_", c(seq(0.1, 0.9, 0.1), "median"), sep = "")[1] # from 1 to 10
+# funs <- paste("EFnestedness_", c(seq(0.1, 0.9, 0.1), "median"), sep = "")[1] # from 1 to 9
+
+## SINGLE FUNCTIONS
+# funs <- colnames(EFmaster)[11] # from 3 to 19
 
 # LUI is one of the below
-lui <- c("LUI", "deltaLUI")
-# lui <- c("Gstd", "Mstd", "Fstd", "deltaGstd", "deltaMstd", "deltaFstd")
-xaxis_gdm <- "LUI"
+# lui <- c("LUI", "deltaLUI")
+lui <- c("Gstd", "Mstd", "Fstd", "deltaGstd", "deltaMstd", "deltaFstd")
 
-lui <- lui[!lui %in% xaxis_gdm]
-modelname <- paste("gdm", funs, xaxis_gdm, sep = "_")
-model_output <- list()
+# xaxis_gdm <- "LUI"
+xaxis_gdm <- "Fstd"
 ```
 
 # Prepare for GDM
 ```{r}
+lui <- lui[!lui %in% xaxis_gdm]
+modelname <- paste("gdm", funs, xaxis_gdm, sep = "_")
+
 include <- c("Var1", "Var2", funs)
 EFmaster <- EFmaster[, ..include]
 
@@ -115,7 +117,7 @@ fordistpreds <- merge(fordistpreds, xLUI, by = "Var2", all.x = T)
 
 
 # Check Correlation
-```{r, eval = F}
+```{r, eval = T}
 # name : modelname "_corrplot_before_gdm.pdf"
 m <- cor(fordistpreds[, -c(1:2, 36)])
 pdf(paste("out/", modelname, "_corrplot_before_gdm.pdf", sep = ""), paper = "a4r")
@@ -132,7 +134,7 @@ vif_output[which(vif_output > 5)]
 # vif_output[which(vif_output[, "GVIF"] > 5),]
 capture.output(mod,
                vif_output[which(vif_output > 5)],
-               file = paste(modelname, "_vif_before_gdm.txt"))
+               file = paste("out/", modelname, "_vif_before_gdm.txt", sep = ""))
 ```
 We will leave the inflated variables in the dataset, but perform a sensitivity analysis later. --> The inflated variables are not distinguishable, maybe the effect is partitioned among them.
 
@@ -188,7 +190,7 @@ meltset <- gdm::formatsitepair(bioData=meltset, bioFormat = 4, predData=meltset)
 # Run GDM
 The model name is automatically generated from `funs` and `lui`.
 ```{r}
-outname <- paste("gdm", funs, xaxis_gdm, "output.txt", sep = "_")
+outname <- paste("gdm", funs, xaxis_gdm, "output_summary.txt", sep = "_")
 outnameRDS <- paste("gdm", funs, xaxis_gdm, "output.Rds", sep = "_")
 gdm_output <- gdm::gdm(meltset, geo = T)
 # summary(gdm_output)
