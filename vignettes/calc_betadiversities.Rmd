@@ -316,6 +316,9 @@ print(test$Plot[which(test$value == 0)])
 trlevels <- trlevels[-which(trlevels == "omnivore")]
 rm(omnivore)
 ```
+```{r}
+trlevels <- trlevels[-which(trlevels == "omnivore")]
+```
 
 
 ## Secondary consumers
@@ -878,6 +881,8 @@ rm(bp_overv)
 ```
 144 Plots with 705 species.
 
+
+
 # Find plot Selection
 Find subset of plots without missing diversity data and store.
 
@@ -993,6 +998,39 @@ save betadiversity datasets
 saveRDS(trlevels, "trlevels_vector.rds")
 saveRDS(masterbeta, "master_beta.rds")
 ```
+
+# Calculate alpha diversities
+```{r}
+for(t in trlevels){
+  tr <- get(t)
+  alpha <- aggregate(value ~ Plot, tr, function(x) sum(x))
+  alphaname <- paste(t, ".alpha", sep = "")
+  setnames(alpha, old = c("Plot", "value"), new = c("Var1", alphaname))
+  assign(alphaname, alpha)
+}
+rm(t); rm(tr); rm(alpha); rm(alphaname)
+
+# put all alphas together to masteralpha
+masteralpha <- data.table::copy(autotroph.alpha) # by hand for trlevels[1]
+for(t in trlevels[-1]){
+  alphaname <- paste(t, ".alpha", sep = "")
+  tr <- get(alphaname)
+  masteralpha <- merge(masteralpha, tr, by = "Var1", all.x = T)
+}
+# save alphadiversities
+saveRDS(masteralpha, "master_alpha.rds")
+
+# combine betadiversity masters with alphas
+masterdiversity <- merge(masterbeta, masteralpha, by = "Var1", all.x = T)
+backup <- colnames(masteralpha)
+colnames(masteralpha) <- paste(colnames(masteralpha), "2", sep = ".")
+setnames(masteralpha, old = "Var1.2", new = "Var2")
+masterdiversity <- merge(masterdiversity, masteralpha, by = "Var2", all.x = T)
+
+# save masterdiversity
+saveRDS(masterdiversity, "master_diversity_alpha_beta.rds")
+```
+
 
 
 # Cleaning

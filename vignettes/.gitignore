@@ -3,3 +3,5 @@ function_imputation.html
 function_imputation.tex
 gdm_EFnestedness_LUI_output.txt
 *.Rds
+out
+*.txt

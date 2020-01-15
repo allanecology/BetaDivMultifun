@@ -10,11 +10,7 @@ suppressPackageStartupMessages(require(cowplot))
 ```
 
 ```{r}
-#TODO somehow structure the input choices
-# maybe automatically read in all possible file names?
-# shift stuff to functions
-
-# fill in code to work with significances
+#TODO :  fill in code to work with significances
 #TODO : order of trophic groups :  once all models are read, use effect size sequence and not alphabetically
 ```
 
@@ -23,37 +19,56 @@ requirements :
 - user : connect to planteco and nsch to get input files
 - GDM output as .rds, e.g. gdm_EFnestedness_LUI_input.Rds
 - cluster output as .rds, e.g. gdm_EFnestedness_LUI_permutation.Rds
-- run `results_nonpublic.R` : load pathtoout and nicenames
-  - run `plotting.R` to have function create_restab2() working (data.table problem)
+- run `results_nonpublic.R` : load pathtoout, nicenames and model_names
+  - pathtoout : path to location where gdm input of model is stored. points to a folder, where the folder cluster witht the model input is.
+  - nicenames : helper file to get nice names of functions and trophic levels
+  - model_names : helper file for automation. Contains 3 columns : `name`  contains the all model names for `model_name`, `luiinput` contains either "lui" or "components" as LUI input for `luiinput` and `permut` is either TRUE or FALSE.
 
 
 ## Load data
 
 ### User input
+Either chose automaticrun T or F. If T, the model names and lui input are automatically read in from model_names in a loop, started from `results_nonpublic.R`.
+```
+for(i in nrow(model_names)){
+  source("plot_GDM.R")
+}
+```
+If F, `luiinput` and `model_name` need to be given manually.
+*note* that i <- 6 for testing.
 ```{r}
-luiinput <- "lui" # luiinput <- "components"
-name <- "gdm_EFturnover_0.75_LUI"
+automaticrun <- T
 create_plot <- T
 permut <- F # T or F, depending wether permutations are available or not
-main <- name # plot title
-#TODO change name to "main" --> just one variable name.
+# i <- 6 # i <- 6 for testing
+if(automaticrun){
+  print("automatic input")
+  luiinput <- model_names$luiinput[i]
+  model_name <- model_names$name[i]
+  permut <- model_names$permut[i]
+} else {
+  luiinput <- "lui" # luiinput <- "components"
+  model_name <- "gdm_EFturnover_0.75_LUI"
+}
+if(permut == T){
+  gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_permutation.Rds", sep = ""))
+  sign <- gdmperm[[3]][,1]
+}
 ```
 
 read input data and produce gdm result
 ```{r}
-gdmin <- readRDS(paste_gdm_input_path_together(pathtoout = pathtoout, name = name))
-
-gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
+gdm_output <- readRDS(paste_gdm_input_path_together(pathtoout = pathtoout, name = model_name))
 exSplines <- gdm::isplineExtract(gdm_output)
-
-# gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_permutation.Rds", sep = ""))
-```
-
-```{r}
-# take maximum of each variable for barplot
-maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)
-# get significances
-if(permut == T){sign <- gdmperm[[3]][,1]}
+# get model specs
+model_specs <- paste(
+model_name,
+paste("deviance of the fitted GDM model :", round(gdm_output$gdmdeviance, 3)),
+paste("deviance of the null model : ", round(gdm_output$nulldeviance, 3)),
+paste("percentage of null deviance \n explained by the fitted GDM model :", round(gdm_output$explained, 3)),
+"3 splines used, knots at min, max and 50% (default). ",
+paste("LUI knots at :", paste(round(gdm_output$knots[1:3], 3), collapse = ", ")),
+sep = "\n")
 ```
 create plotting tables
 
@@ -63,167 +78,137 @@ plotsequence_bio <- c("autotroph", "bacteria.RNA", "belowground.herbivore", "bel
 plotsequence_abio <- define_rownames_lui_or_components(luiinput = luiinput)
 ```
 
-create results table
+
+# create lineplot
+naming convention : `model_name` + "_lineplot_all_modelspec.pdf"
 ```{r}
-restab <- data.table::data.table("names" = names(maxsplines), "maxsplines" = maxsplines)
-if(permut == T){
-  del <- data.table::data.table("names" = names(sign), "sign" = sign)
-  restab <- data.table::data.table(merge(restab, del, by = "names")); rm(del)
-}
-# get bios
-bios <- grep(paste(plotsequence_bio, collapse = "|"), names(maxsplines), value = T)
-restab[names %in% bios, type := "bio"]
-# get abios
-abios <- grep(paste(plotsequence_bio, collapse = "|"), names(maxsplines), value = T, invert = T)
-restab[names %in% abios, type := "abio"]
-# get nestedness
-sne <- grep("sne", names(maxsplines), value = T)
-restab[names %in% sne, component := "nestedness"]
-# get turnover
-to <- grep("sim", names(maxsplines), value = T)
-restab[names %in% to, component := "turnover"]
-# get only significant
-if(permut == T){restab[, maxsplines := (1-sign) * maxsplines]}
-# add nice names
-restab <- data.table::data.table(merge(nicenames, restab, by = "names"))
-# order by above-belowground and alphabetically
-# set the levels of the factor in the wanted order
-data.table::setorder(restab, ground, names)
-# restab[, names := factor(names, levels = names)]
-# order <- restab[type == "bio", names]
-# bring colors into right format
-restab[, color := as.character(color)]
+# extract I splines y axes and get LUI x axis
+lineplot_data <- data.table(cbind(exSplines$x[, "Geographic"], exSplines$y))
+setnames(lineplot_data, old = c("V1", "Geographic"), new = c("xaxis", "LUI"))
+lineplot_data <- melt(lineplot_data, measure.vars = colnames(lineplot_data)[-1], id.vars = "xaxis", 
+                      variable.name = "names")
+# adding plot information from nicenames
+lineplot_data <- merge(lineplot_data, nicenames, by = "names", all.x = T)
 
-restab[type == "abio", component := "abio"]
+# above, below and abiotic subplots
+p <- create_gdm_lineplot(lineplot_data[ground == "a"])
+q <- create_gdm_lineplot(lineplot_data[ground == "b"])
+r <- create_gdm_lineplot(lineplot_data[ground == "x"])
+labsplot <- ggplot(NULL) + #annotate("text", x = 0.8, y = 0.5, size=8, label = model_name) +
+  theme_void() + annotate("text", x = 0.4, y = 0.5, size = 4, label = model_specs)
+biotic_legend <- get_nice_legend(type = "biotic") # plot with plot_grid(biotic_legend)
+abiotic_legend <- get_nice_legend(type = "abiotic")
 
-restab[component %in% c("turnover", "abio"), linetypet := "solid"]
-restab[component == "nestedness", linetypet := "dotted"]
+# add together the subplots
+lin <- plot_grid(p, biotic_legend, q, labsplot, r, abiotic_legend,  labels = c('A', '', 'B', '', 'C', ''), nrow = 3)
+model_name
 ```
 
 
-simple plot
-```{r, eval = F}
-# to plot each spline in a separate plot
-plot(gdm_output, plot.layout = c(3, 2), plot.color = "grey", main="GDM")
+```{r}
+#TODO place somewhere better
+#############################
+#
+# treshold selection
+#
+#############################
+
+# models with function calculated with threshold : 
+# thresholds between 0.1 and 0.9.
+# need selection : by percent deviance explained.
+
+# require : 
+# model_results : the model results saved manually from the models
+setorder(model_results, cols = "EF")
+model_results[, EF := factor(EF, ordered = T, levels = c("distance", "singleEF", "abund", "beta", "turnover", "nestedness"))]
+str(model_results)
+
+
+ggplot(model_results, aes(x = name, y = `% deviance explained`, fill = EF)) + 
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+#TODO can add nice names at some point
 ```
+
+
+
+create results table
+```{r, eval = T}
+maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE) # take maximum of each variable for barplot
+restab <- create_restab0()
+```
+
 
 
 # Multipanel Barplot
-
-```{r, eval = F}
-if(create_plot){
-  df <- restab[type == "bio" & ground == "a", ]
-  p<-ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
-    geom_bar(stat="identity", color = "black") + 
-    coord_flip() + 
-    scale_fill_identity() + scale_linetype_identity() + # the best option for customizing linetype, color,...!
-    ylim(0, 0.44) + 
-    ggtitle(main) +
-    theme(legend.position = "none", axis.title = element_blank(),
-          axis.text.y = element_text(size=9, angle = 0),
-          plot.margin = margin(l = 50), 
-          axis.text.x = element_blank(),
-          axis.line.x=element_blank(),
-          axis.ticks.x = element_blank(),
-          panel.grid.major.x = element_line(color = "grey")
-    )
-  
-  df <- restab[type == "bio" & ground == "b", ]
-  b <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
-    geom_bar(stat="identity", color = "black") + 
-    coord_flip() +
-    scale_fill_identity() + scale_linetype_identity() +
-    ylim(0, 0.44) +
-    theme(legend.position = "none", 
-          axis.title = element_blank(),
-          axis.text.y = element_text(size=9, angle = 0),
-          plot.margin = margin(l = 50),
-          axis.text.x = element_blank(),
-          axis.line.x=element_blank(),
-          axis.ticks.x = element_blank(),
-          panel.grid.major.x = element_line(color = "grey"))
-  # aes(x=stringr::str_wrap(nicenames, 10), y=onlysign, fill = names))
-  
-  # dashed or dotted or solid
-  # https://stackoverflow.com/questions/39898870/ggplot-geom-bar-customize-by-linetype-and-fill
-  # geom_errorbarh() for horizontal error bars
-  # https://www.heropatterns.com/
-  # df <- restab[type == "abio"]
-  df <- restab[ground == "x"]
-  q <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names, linetype = linetypet)) +
-    geom_bar(stat="identity", color = "black") + 
-    coord_flip() + 
-    scale_fill_manual(values = df$color) + scale_linetype_identity() +
-    ylim(0, 0.44) + 
-    theme(legend.position = "none", axis.title = element_blank(),
-          axis.text.y = element_text(size=9),
-          panel.grid.major.x = element_line(color = "grey"))
-  # # plot pure legend - only works if legend is there (legend.position taken out)
-  # legend <- cowplot::get_legend(q)
-  # plot_grid(NULL, legend)
-}
-
+without overview bars
+```{r, eval = T}
+p <- create_bio_aboveground_barplot()
+b <- create_bio_belowground_barplot()
+# dashed or dotted or solid
+# https://stackoverflow.com/questions/39898870/ggplot-geom-bar-customize-by-linetype-and-fill
+# geom_errorbarh() for horizontal error bars
+# https://www.heropatterns.com/
+q <- create_abio_barplot()
+# # plot pure legend - only works if legend is there (legend.position taken out)
+# legend <- cowplot::get_legend(q)
+# plot_grid(NULL, legend)
 ```
-```{r, eval = F}
-if(create_plot == T){
-  plot_grid(p, b, q, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
-
-  # plot_grid(p, b, q, labels = c('aboveground', 'belowground', 'abiotic'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
-}
-```
-
-Multipanel barplot with overview bars
-
-Aboveground - belowground - abiotic
+overview bar : Aboveground - belowground - abiotic
 ```{r}
-#TODO : requires to run manually plotting.R because of data.table issue
-
 restab2 <- create_restab2()
 restab2 <- restab2[type %in% c("unscaled", "averaged_scaled")]
 df <- data.frame(restab2)
-ov1 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = color)) +
-  geom_bar(stat="identity", color = "black", linetype = "solid") +
-  coord_flip() +
-  scale_fill_identity() +
-  theme(legend.position = "none", axis.title = element_blank(),
-        axis.text.y = element_text(size=9),
-        panel.grid.major.x = element_line(color = "grey"))
+ov1 <- create_overview_above_below_abiotic_barplot()
 # plot pure legend
 # legend <- cowplot::get_legend(ov1)
 # plot_grid(NULL, legend, ncol = 1)
 ```
-```{r, eval = T}
-if(create_plot == T){
-  plot_grid(p, b, q, ov1, labels = c('A', '', 'B', 'C'), label_size = 12, nrow = 4, rel_heights = c(0.08, 0.11, 0.065, 0.035), align = "v") # LUI components
-}
-```
-
-turnover - nestedness - abiotic
+overview bar : turnover - nestedness - abiotic
 ```{r}
 restab3 <- create_restab_3()
 restab3 <- restab3[type %in% c("unscaled", "averaged_scaled")]
 df <- data.frame(restab3)
-ov2 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = color)) +
-  geom_bar(stat="identity", color = "black", linetype = "solid") +
-  coord_flip() +
-  scale_fill_identity() +
-  theme(legend.position = "none", axis.title = element_blank(),
-        axis.text.y = element_text(size=9),
-        panel.grid.major.x = element_line(color = "grey"))
+
+# ov2 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = color)) +
+#   geom_bar(stat="identity", color = "black", linetype = "solid") +
+#   coord_flip() +
+#   scale_fill_identity() +
+#   theme(legend.position = "none", axis.title = element_blank(),
+#         axis.text.y = element_text(size=9),
+#         panel.grid.major.x = element_line(color = "grey"))
+ov2 <- create_overview_turnover_nestedness_abiotic_barplot()
 # plot pure legend
 # legend <- cowplot::get_legend(ov2)
 # plot_grid(NULL, legend)
 ```
+
 ```{r, eval = T}
-if(create_plot){
+if(create_plot == T){
+  multipanel_without_overviews <- plot_grid(p, b, q, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
+  # plot_grid(p, b, q, labels = c('aboveground', 'belowground', 'abiotic'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
+  
+  # multipanel_with_overview_above_below <- plot_grid(p, b, q, ov1, labels = c('A', '', 'B', 'C'), label_size = 12, nrow = 4, rel_heights = c(0.08, 0.11, 0.065, 0.035), align = "v") # LUI components
+  
+  multipanel_with_overview_bars <- plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.27, 0.37, 0.13, 0.075, 0.075), align = "v") # 2 summary bars
   # plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.27, 0.37, 0.13, 0.11, 0.11), align = "v") # LUI components
-  plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.27, 0.37, 0.13, 0.075, 0.075), align = "v") # 2 summary bars
 }
+
 ```
+
 
 ```{r,eval = T}
 restab <- list(restab, restab2, restab3)
+<<<<<<< HEAD
 saveRDS(restab, paste("list_restab_", main, ".Rds", sep = ""))
+=======
+saveRDS(restab, paste("list_restab_", model_name, ".Rds", sep = ""))
+
+ggsave(filename=paste(model_name, "_multipanel_barplot.pdf", sep = ""), plot = multipanel_without_overviews, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
+ggsave(filename = paste(model_name, "_multipanel_barplot_overviewbars.pdf", sep = ""), plot = multipanel_with_overview_bars, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
+>>>>>>> 3c6d2cf6b13b489bcf0092c377f5045ac073b986
 ```
 
 
@@ -232,7 +217,7 @@ saveRDS(restab, paste("list_restab_", main, ".Rds", sep = ""))
 
 
 # testing
-```{r}
+```{r, eval = F}
 tolerance <- 10^(-3)
 
 check_restab_summary_stats <- function(restab, restab2, restab3, tolerance){
@@ -268,6 +253,13 @@ run_EFturnover075_test()
 
 
 
+
+
+
+
+
+
+
 # single EFs heatmap
 
 
@@ -282,8 +274,6 @@ permut <- "F"
 
 gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
 exSplines <- gdm::isplineExtract(gdm_output)
-
-main <- "EFsingle" # plot title
 
 # take maximum of each variable for barplot
 maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)

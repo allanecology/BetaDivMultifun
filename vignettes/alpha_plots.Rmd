@@ -1,0 +1,56 @@
+---
+title: "alpha_diversity_plots"
+author: "Noelle Schenk"
+date: "11/20/2019"
+output: html_document
+---
+requirements : `masterdiversity` in the file "master_diversity_alpha_beta.rds", see file analysis_nonpublic.R
+- `trlevels`
+```{r}
+masterdiversity <- data.table(masterdiversity)
+require(cowplot)
+require(RColorBrewer)
+library(viridis)
+```
+
+# all trophic levels
+```{r}
+jitter <- position_jitter(width = 0.1, height = 0.1)
+
+for(t in trlevels){
+  t_colnames <- grep(t, colnames(masterdiversity), value = T)
+  subset <- masterdiversity[, ..t_colnames]
+  
+  namesref <- c(
+    "alpha" = paste(t, ".alpha", sep = ""),
+    "alpha2" = paste(t, ".alpha.2", sep = ""),
+    "beta.sim" = paste(t, ".beta.sim", sep = ""),
+    "beta.sne" = paste(t, ".beta.sne", sep = "")
+  )
+  
+  plot_turnover <- ggplot(subset, aes(y = get(namesref[["alpha"]]), x = get(namesref[["alpha2"]]))) +
+    geom_point(aes(colour = get(namesref[["beta.sim"]])), size = 4, position = jitter) +
+    scale_colour_viridis_c() +
+    ggtitle(label = t, subtitle = "coloured by turnover") + 
+    xlab("alpha diversity plot 1") + ylab("alpha diversity plot 2") +
+    labs(colour = "beta")
+  
+  plot_nestedness <- ggplot(subset, aes(y = get(namesref[["alpha"]]), x = get(namesref[["alpha2"]]))) +
+    geom_point(aes(colour = get(namesref[["beta.sne"]])), size = 4, position = jitter) +
+    scale_colour_viridis_c() +
+    ggtitle(label = t, subtitle = "coloured by nestedness") + 
+    xlab("alpha diversity plot 1") + ylab("alpha diversity plot 2") +
+    labs(colour = "beta")
+  
+  plotname <- paste("plot_alpha_", t, sep = "")
+  p <- plot_grid(plot_turnover, plot_nestedness,rel_widths = 1, rel_heights = 1, labels = c("to", "nes"), align = "h")
+  assign(plotname, p)
+  
+  ggsave(filename=paste(plotname, "_coloured_by_beta.pdf", sep = ""), plot = p, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
+  
+}
+rm(p); rm(plot_nestedness); rm(plot_turnover); rm(subset); rm(namesref); rm(t); rm(t_colnames); rm(plotname)
+```
+
+

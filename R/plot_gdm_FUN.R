@@ -4,7 +4,7 @@
 #' pastes together the path where to get the gdm input file (.rds) which has been
 #' created before
 paste_gdm_input_path_together <- function(pathtoout, name){
-  path_to_gdmin <- paste(pathtoout, "/cluster/", name, "_input.Rds", sep = "")
+  path_to_gdmin <- paste(pathtoout, "/GDM/", name, "_output.Rds", sep = "")
   return(path_to_gdmin)
 }
 
@@ -42,3 +42,254 @@ define_rownames_lui_or_components <- function(luiinput) {
 }
 
 NULL
+
+#' create restab 0
+#' 
+#' Function containing code to create the first restab for plotting
+#' 
+#' @import data.table
+#' 
+#' @export
+#' 
+create_restab0 <- function(){
+  restab <- data.table::data.table("names" = names(maxsplines), "maxsplines" = maxsplines)
+  if(permut == T){
+    del <- data.table::data.table("names" = names(sign), "sign" = sign)
+    restab <- data.table::data.table(merge(restab, del, by = "names")); rm(del)
+  }
+  # get bios
+  bios <- grep(paste(plotsequence_bio, collapse = "|"), names(maxsplines), value = T)
+  restab[names %in% bios, type := "bio"]
+  # get abios
+  abios <- grep(paste(plotsequence_bio, collapse = "|"), names(maxsplines), value = T, invert = T)
+  restab[names %in% abios, type := "abio"]
+  # get nestedness
+  sne <- grep("sne", names(maxsplines), value = T)
+  restab[names %in% sne, component := "nestedness"]
+  # get turnover
+  to <- grep("sim", names(maxsplines), value = T)
+  restab[names %in% to, component := "turnover"]
+  # get only significant
+  if(permut == T){restab[, maxsplines := (1-sign) * maxsplines]}
+  # add nice names
+  restab <- data.table::data.table(merge(nicenames, restab, by = "names"))
+  # order by above-belowground and alphabetically
+  # set the levels of the factor in the wanted order
+  data.table::setorder(restab, ground, names)
+  # restab[, names := factor(names, levels = names)]
+  # order <- restab[type == "bio", names]
+  # bring colors into right format
+  restab[, color := as.character(color)]
+  
+  restab[type == "abio", component := "abio"]
+  
+  restab[component %in% c("turnover", "abio"), linetypet := "solid"]
+  restab[component == "nestedness", linetypet := "dotted"]
+  
+  return(restab)
+}
+NULL
+
+
+#' create plot "p"
+#' 
+#' code to create plot p : bio and aboveground
+#' 
+#' @import ggplot2
+#' @import cowplot
+#' 
+#' @export
+create_bio_aboveground_barplot <- function(){
+  df <- restab[type == "bio" & ground == "a", ]
+  p<-ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
+    geom_bar(stat="identity", color = "black") + 
+    coord_flip() + 
+    scale_fill_identity() + scale_linetype_identity() + # the best option for customizing linetype, color,...!
+    ylim(0, 0.44) + 
+    ggtitle(model_name) +
+    theme(legend.position = "none", axis.title = element_blank(),
+          axis.text.y = element_text(size=9, angle = 0),
+          plot.margin = margin(l = 50), 
+          axis.text.x = element_blank(),
+          axis.line.x=element_blank(),
+          axis.ticks.x = element_blank(),
+          panel.grid.major.x = element_line(color = "grey")
+    )
+  return(p)
+}
+NULL
+
+#' create plot bio belowground
+#' 
+#' code to create plot p : bio and belowground
+#' 
+#' @import ggplot2
+#' @import cowplot
+#' 
+#' @export
+create_bio_belowground_barplot <- function(){
+  df <- restab[type == "bio" & ground == "b", ]
+  b <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
+    geom_bar(stat="identity", color = "black") + 
+    coord_flip() +
+    scale_fill_identity() + scale_linetype_identity() +
+    ylim(0, 0.44) +
+    theme(legend.position = "none", 
+          axis.title = element_blank(),
+          axis.text.y = element_text(size=9, angle = 0),
+          plot.margin = margin(l = 50),
+          axis.text.x = element_blank(),
+          axis.line.x=element_blank(),
+          axis.ticks.x = element_blank(),
+          panel.grid.major.x = element_line(color = "grey"))
+  # aes(x=stringr::str_wrap(nicenames, 10), y=onlysign, fill = names))
+  return(b)
+}
+NULL
+
+#' create plot abio
+#' 
+#' code to create plot abio
+#' 
+#' @import ggplot2
+#' @import cowplot
+#' 
+#' @export
+create_abio_barplot <- function(){
+  df <- restab[ground == "x"]
+  q <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names, linetype = linetypet)) +
+    geom_bar(stat="identity", color = "black") +
+    coord_flip() +
+    scale_fill_manual(values = df$color) + scale_linetype_identity() +
+    ylim(0, 0.44) +
+    theme(legend.position = "none", axis.title = element_blank(),
+          axis.text.y = element_text(size=9),
+          panel.grid.major.x = element_line(color = "grey"))
+  return(q)
+}
+NULL
+
+
+
+
+#' create plot Overview : Aboveground - belowground - abiotic
+#' 
+#' code to create overview
+#' 
+#' @import ggplot2
+#' @import cowplot
+#' 
+#' @export
+create_overview_above_below_abiotic_barplot <- function(){
+  ov1 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = color)) +
+    geom_bar(stat="identity", color = "black", linetype = "solid") +
+    coord_flip() +
+    scale_fill_identity() +
+    theme(legend.position = "none", axis.title = element_blank(),
+          axis.text.y = element_text(size=9),
+          panel.grid.major.x = element_line(color = "grey"))
+
+  return(ov1)
+}
+NULL
+
+#' create plot Overview : turnover - newtedness - abiotic
+#' 
+#' code to create overview
+#' 
+#' @import ggplot2
+#' @import cowplot
+#' 
+#' @export
+create_overview_turnover_nestedness_abiotic_barplot <- function(){
+  ov2 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = color)) +
+    geom_bar(stat="identity", color = "black", linetype = "solid") +
+    coord_flip() +
+    scale_fill_identity() +
+    theme(legend.position = "none", axis.title = element_blank(),
+          axis.text.y = element_text(size=9),
+          panel.grid.major.x = element_line(color = "grey"))
+  
+  return(ov2)
+}
+NULL
+
+
+#' get legends of plots
+#' 
+#' based on the overview table `ǹicenames.csv`, the legend shows colors
+#' for the different predictors.
+#' the legend is split into abiotic and biotic predictors, as there are
+#' 16 different colors, but 28 different predictors.
+#' TODO : add the overview bar colors as well, to produce legend for them.
+#' @param type character, is either "biotic" or "abiotic".
+#' @return `legend`, legend extracted with `cowplot::get_legend` which can be plotted
+#' using `cowplot::plot_grid(legend)`.
+#'
+#' @import ggplot2
+#' @import cowplot
+#' @import data.table
+#'
+#' @export
+get_nice_legend <- function(type){
+  # type needs to be either biotic or abiotic
+  nicenames[, testvals := 1]
+  short_nicenames <- unique(nicenames[, .(legendnames, testvals, color, ground)])
+  short_nicenames[, legendnames := as.factor(legendnames)]
+  if(type == "biotic"){
+    biotic <- ggplot(short_nicenames[ground %in% c("a", "b")], aes(x = legendnames, y = testvals, fill = color)) +
+      geom_bar(stat = "identity", color = "black") +
+      scale_fill_identity("", labels = short_nicenames[ground %in% c("a", "b"), legendnames], guide = "legend") +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+      ggtitle("betadiversity colors")
+    legend <- get_legend(biotic)
+  }
+  if(type == "abiotic"){
+    abiotic <- ggplot(short_nicenames[ground %in% c("x")], aes(x = legendnames, y = testvals, fill = color)) +
+      geom_bar(stat = "identity", color = "black") +
+      scale_fill_identity("", labels = short_nicenames[ground %in% c("x"), legendnames], guide = "legend") +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+      ggtitle("betadiversity colors")
+    suppressWarnings(legend <- get_legend(abiotic)) # because of delta characters in legendnames
+  }
+  if(!(type %in% c("biotic", "abiotic"))){
+    print("type must be either biotic or abiotic.")
+  }
+  return(legend)
+}
+
+NULL
+
+#' create lineplots
+#' 
+#' create lineplots based on the I splines extracted from a gdm model
+#' with the function `gdm::isplineExtract`.
+#' Used the overview table `ǹicenames.csv` for graphical parameters as
+#' line types and color.
+#' Does not plot a legend, the legend can be produced with the function
+#' `get_nice_legend`.
+#' 
+#' TODO : add vertical grid lines, remove x axis for above plots
+#' @param data data.table, produced by `gdm::isplineExtract` and further
+#' cleaning (as shown in `plot_gdm.Rmd`).
+#' @return a ggplot2 plot element, with lineplots.
+#'
+#' @import ggplot2
+#' @import cowplot
+#' @import data.table
+#'
+#' @export
+create_gdm_lineplot <- function(data){
+  p <- ggplot(data, aes(x = xaxis, y = value, fill = names, linetype = linetypeto)) +
+    geom_line(aes(linetype=linetypeto, color=color)) +
+    scale_fill_identity() + scale_linetype_identity() + scale_color_identity() +
+    # labs(title = model_name) +
+    # xlab("LUI") + 
+    ylab("functional dissimilarity") +
+    theme(legend.position = "none",
+          axis.title = element_blank()
+    )
+  return(p)
+}
+NULL
+
