@@ -105,8 +105,9 @@ model_name
 ```
 
 
-```{r}
-#TODO place somewhere better
+
+# create sensitivity comparison: deviance explained
+```{r, eval = F}
 #############################
 #
 # treshold selection
@@ -124,7 +125,7 @@ model_results[, EF := factor(EF, ordered = T, levels = c("distance", "singleEF",
 str(model_results)
 
 
-ggplot(model_results, aes(x = name, y = `% deviance explained`, fill = EF)) + 
+devexpl <- ggplot(model_results, aes(x = name, y = `% deviance explained`, fill = EF)) + 
   geom_bar(stat = "identity") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 #TODO can add nice names at some point
