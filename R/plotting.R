@@ -63,6 +63,13 @@ NULL
 #' 
 #' @export
 create_restab2 <- function(x=1){
+  # divide plants by 2 and half to each overview bar above- and belowground
+  auto <- restab[legendnames == "autotroph",]
+  auto[ ,ground := "b"]
+  auto <- rbind(restab[legendnames == "autotroph"], auto)
+  auto[, maxsplines := maxsplines / 2]
+  restab <- rbindlist(list(auto, restab[legendnames != "autotroph",]))
+  
   # unscaled
   unscaled <- data.table::data.table(aggregate(maxsplines ~ ground, restab, sum))
 
