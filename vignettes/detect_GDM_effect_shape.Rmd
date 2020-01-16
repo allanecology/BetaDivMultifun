@@ -1,0 +1,335 @@
+---
+title: "detect GDM effect shape"
+author: "Noelle Schenk"
+date: "1/15/2020"
+output: html_document
+---
+this script detects the shape of gdm model lines
+required dataset : 
+
+```{r}
+require(MASS)
+require(pgirmess)
+require(nlme)
+require(nls2)
+```
+
+```{r}
+## define model names either automatically or manually
+model_name <- model_names$name[1]
+# model_name <- "gdm_EFdistance_LUI"
+
+gdm_output <- readRDS(paste_gdm_input_path_together(pathtoout = pathtoout, name = model_name))
+exSplines <- gdm::isplineExtract(gdm_output)
+```
+prepare data (copied from `plot_GDM.Rmd`)
+```{r}
+# extract I splines y axes and get LUI x axis
+lineplot_data <- data.table(cbind(exSplines$x[, "Geographic"], exSplines$y))
+setnames(lineplot_data, old = c("V1", "Geographic"), new = c("xaxis", "LUI"))
+lineplot_data <- melt(lineplot_data, measure.vars = colnames(lineplot_data)[-1], id.vars = "xaxis", 
+                      variable.name = "names")
+# adding plot information from nicenames
+lineplot_data <- merge(lineplot_data, nicenames, by = "names", all.x = T)
+lineplot_data <- lineplot_data[, .(names, xaxis, value)]
+```
+
+# simulations
+## power law
+```{r}
+cols <- RColorBrewer::brewer.pal(9, "Set1")
+# power law
+par(mfrow = c(1, 2))
+x <- seq(0, 3, 0.001)
+plot(x, 0.1 * x ^ 0.1, type = "l", ylim = c(0, 0.12), main = "y ~ b * x ^ z , increasing z with constant b")
+lines(x, 0.1 * x ^ 0.3, col = cols[1])
+lines(x, 0.1 * x ^ 0.5, col = cols[2])
+lines(x, 0.1 * x ^ 0.7, col = cols[3])
+lines(x, 0.1 * x ^ 0.9, col = cols[4])
+lines(x, 0.1 * x ^ 1, col = cols[5])
+lines(x, 0.1 * x ^ 1.5, col = cols[6])
+lines(x, 0.1 * x ^ 2, col = cols[7])
+lines(x, 0.1 * x ^ 3, col = cols[8])
+lines(x, 0.1 * x ^ 4, col = cols[9])
+
+plot(x, 1 * x ^ 0.1, type = "l", ylim = c(0, 1.1), main = "y ~ b * x ^ z , decreasing b with 2 constant z (<1 and >1)")
+lines(x, 0.9 * x ^ 0.1, col = cols[1])
+lines(x, 0.5 * x ^ 0.1, col = cols[2])
+lines(x, 0.1 * x ^ 0.1, col = cols[3])
+lines(x, 0.3 * x ^ 0.1, col = cols[4])
+lines(x, 0.7 * x ^ 0.1, col = cols[5])
+lines(x, 2 * x ^ 3, col = cols[6])
+lines(x, 3 * x ^ 3, col = cols[7])
+lines(x, 4 * x ^ 3, col = cols[8])
+lines(x, 5 * x ^ 3, col = cols[9])
+par(mfrow = c(1, 1))
+```
+# exponential
+find appropriate starting values for exponential model
+```{r}
+par(mfrow = c(1, 1))
+x <- seq(0, 3, 0.001)
+
+plot(x, 1*exp(-1*x) + 0, type = "l", main = "y ~ k*exp(-b1*xaxis) + b0", ylim = c(0, 1))
+lines(x, 2*exp(-1*x) + 0, col = cols[1])
+lines(x, 0.5*exp(-1*x) + 0, col = cols[2])
+lines(x, 2*exp(-1*x) + 0, col = cols[3])
+
+lines(x, 1*exp(0.5*x) -1, col = cols[4])
+lines(x, 1*exp(0.1*x) -1, col = cols[5])
+
+lines(x, 1*exp(-1*x) -0.1, col = cols[6])
+```
+
+
+```{r}
+par(mfrow = c(2, 2))
+test <-lineplot_data[names == "autotroph.beta.sne",]
+# test with other names as well (e.g. LUI, geo.dist, ...)
+
+nlc <- nls.control(maxiter = 10000)
+
+# fit a linear model
+lin_mod <- lm(value ~ xaxis, data = test)
+AIC(lin_mod)
+par(mfrow = c(2, 2))
+# plot(lin_mod)
+plot(test$xaxis, test$value, main = "modelled values and fitted with power law model", sub = round(AIC(lin_mod), 2))
+abline(lin_mod, col = cols[1], lwd = 3)
+
+# fit an asymptotic model
+asym_mod <- gnls(value ~ SSlogis(xaxis, Asym, xmid, scal), data = test,
+            weights = varPower())
+plot(test$xaxis, test$value, main = "modelled values and fitted with asymptotic model", sub = round(AIC(asym_mod), 2))
+yy <- coef(asym_mod)[1] / (1 + exp((coef(asym_mod)[2] - test$xaxis)/coef(asym_mod)[3] )) # == SSlogis(xx, *):
+lines(test$xaxis, yy, col = cols[1], lwd = 3)
+
+# fit exponential model
+exp_mod <- tryCatch(nls(value ~ k*exp(-b1 * xaxis) + b0, start = list(k = 1, b0 = -0.5, b1 = -1), data = test), silent = T) # growth
+exp_mod <- tryCatch(nls(value ~ k*exp(-b1 * xaxis) + b0, start = list(k = 1, b0 = 1, b1 = 0), data = test), silent = T) # decay
+plot(test$xaxis, test$value, main = "modelled values and fitted with exponential model", sub = round(AIC(exp_mod), 2))
+yy <- coef(exp_mod)[1] * (exp(-(coef(exp_mod)[3]) * test$xaxis)) + coef(exp_mod)[2]
+lines(test$xaxis, yy, col = cols[1], lwd = 3)
+
+# power law
+pow_mod <- tryCatch(nls(value ~ b*xaxis^z, start = list(b = 1, z = 0.1), data = test))
+summary_pow_mod <- summary(pow_mod)
+plot(test$xaxis, test$value, main = "modelled values and fitted with power law model", , sub = round(AIC(pow_mod), 2))
+lines(test$xaxis, summary_pow_mod$coefficients[1,1] * test$xaxis ^ summary_pow_mod$coefficients[2, 1], col = cols[1], lwd = 3)
+```
+
+
+- linear : lm() , y ~ a + b
+- asymptotic : model <- drm(Y ~ X, fct = DRC.asymReg())
+gnls(response ~ Asym+(R0-Asym)*exp(-exp(lrc)*LUI), params=list(Asym + lrc ~ LUI.sd, R0 ~ Exploratory), start = c(p[1],0,p[3],0,p[3],1,1), DF,control=nlc)
+- exponential : 
+try(gnls(response ~ a*exp(-b*LUI), params=list(a ~ Exploratory + LUI.sd, b ~ LUI.sd), start=c(1,1,1,1,1,1),DF)),
+- power law
+```{r}
+set.seed(1234)
+X <- c(1, 3, 5, 7, 9, 11, 13, 20)
+a <- 20; b <- 5; c <- 0.3
+Ye <- asymReg.fun(X, a, b, c)
+epsilon <- rnorm(8, 0, 0.5)
+Y <- Ye + epsilon
+model <- drm(Y ~ X, fct = DRC.asymReg())
+plot(model, log="", main = "Asymptotic regression")
+```
+
+
+
+```{r}
+evaluate.all <- function(response, DF, p = NULL, reduced = FALSE, models = "All"){
+
+DF <- cbind(response = DF[[response]], DF)
+
+DF <- DF[complete.cases(DF$response),]
+
+nlc <- nls.control(maxiter = 10000)
+
+if(length(p)==0){
+
+p <- try(getInitial(response ~ SSasymp(LUI, Asym, R0, lrc), data = DF))
+
+if(inherits(p, "try-error")){
+
+print("Please supply starting parameters for Asymptotic exponential")
+}}
+
+spars<-cbind(seq(0,1,length.out=1000), seq(0,2,length.out = 1000), seq(-3,1, length.out = 1000))
+spars <- data.frame(apply(spars,2,sample))
+names(spars)<-letters[1:3]
+invisible(capture.output(m <- try(nls2(response ~ a+b*(LUI^c), start=spars, algorithm="brute-force",DF))))
+p2 <- coef(m)
+
+L=list(
+#### No LUI.sd
+try(lm(response ~  Exploratory, DF)),
+try(lm(response ~  Exploratory + Fstd, DF)),
+try(lm(response ~  Exploratory + Mstd, DF)),
+try(lm(response ~  Exploratory + Gstd, DF)),
+try(lm(response ~  Exploratory + Fstd + Gstd, DF)),
+try(lm(response ~  Exploratory + Fstd + Mstd, DF)),
+try(lm(response ~  Exploratory + Mstd + Gstd, DF)),
+try(lm(response ~  Exploratory + Fstd + Mstd + Gstd, DF)),
+
+try(lm(response ~  Exploratory + poly(Fstd,2), DF)),
+try(lm(response ~  Exploratory + poly(Mstd,2), DF)),
+try(lm(response ~  Exploratory + poly(Gstd,2), DF)),
+
+try(lm(response ~  Exploratory + poly(Fstd,2) + Mstd, DF)),
+try(lm(response ~  Exploratory + poly(Fstd,2) + Mstd + Gstd, DF)),
+try(lm(response ~  Exploratory + poly(Fstd,2) + Gstd, DF)),
+
+try(lm(response ~  Exploratory + poly(Mstd,2) + Fstd, DF)),
+try(lm(response ~  Exploratory + poly(Mstd,2) + Fstd + Gstd, DF)),
+try(lm(response ~  Exploratory + poly(Mstd,2) + Gstd, DF)),
+
+try(lm(response ~  Exploratory + poly(Gstd,2) + Fstd, DF)),
+try(lm(response ~  Exploratory + poly(Gstd,2) + Fstd + Mstd, DF)),
+try(lm(response ~  Exploratory + poly(Gstd,2) + Mstd, DF)),
+
+try(lm(response ~  Exploratory + poly(Fstd,2) + poly(Mstd,2), DF)),
+try(lm(response ~  Exploratory + poly(Fstd,2) + poly(Gstd,2), DF)),
+try(lm(response ~  Exploratory + poly(Mstd,2) + poly(Gstd,2), DF)),
+
+try(lm(response ~  Exploratory + poly(Fstd,2) + poly(Mstd,2) + Gstd, DF)),
+try(lm(response ~  Exploratory + poly(Fstd,2) + poly(Gstd,2) + Mstd, DF)),
+try(lm(response ~  Exploratory + poly(Mstd,2) + poly(Gstd,2) + Fstd, DF)),
+
+try(lm(response ~  Exploratory + poly(Fstd,2) + poly(Mstd,2) + poly(Gstd,2), DF)),
+
+try(lm(response ~  Exploratory + LUI, DF)),
+try(lm(response ~  Exploratory + poly(LUI,2), DF)),
+try(lm(response ~  Exploratory + poly(LUI,3), DF)),
+try(gnls(response ~ a*exp(-b*LUI), params = list(a~Exploratory, b~1), start = c(1,1,1,1), DF)),
+try(gnls(response ~ Asym+(R0-Asym)*exp(-exp(lrc)*LUI), params=list(Asym + lrc ~ 1, R0 ~ Exploratory), start = c(p[c(1,3)],p[2],1,1), DF,control=nlc)),
+try(gnls(response ~ a+b*(LUI^c), params=list(a ~Exploratory, b + c ~ 1), start=c(p2[1],0,0,p2[2],p2[3]),DF)),
+
+### LUI.sd main effect
+try(lm(response ~ Exploratory + LUI.sd, DF)),
+try(lm(response ~  Exploratory + LUI.sd + Fstd, DF)),
+try(lm(response ~  Exploratory + LUI.sd + Mstd, DF)),
+try(lm(response ~  Exploratory + LUI.sd + Gstd, DF)),
+try(lm(response ~  Exploratory + LUI.sd + Fstd + Gstd, DF)),
+try(lm(response ~  Exploratory + LUI.sd + Fstd + Mstd, DF)),
+try(lm(response ~  Exploratory + LUI.sd + Mstd + Gstd, DF)),
+try(lm(response ~  Exploratory + LUI.sd + Fstd + Mstd + Gstd, DF)),
+
+try(lm(response ~  Exploratory + LUI.sd + poly(Fstd,2), DF)),
+try(lm(response ~  Exploratory + LUI.sd + poly(Mstd,2), DF)),
+try(lm(response ~  Exploratory + LUI.sd + poly(Gstd,2), DF)),
+
+try(lm(response ~  Exploratory + LUI.sd + poly(Fstd,2) + Mstd, DF)),
+try(lm(response ~  Exploratory + LUI.sd + poly(Fstd,2) + Mstd + Gstd, DF)),
+try(lm(response ~  Exploratory + LUI.sd + poly(Fstd,2) + Gstd, DF)),
+
+try(lm(response ~  Exploratory + LUI.sd + poly(Mstd,2) + Fstd, DF)),
+try(lm(response ~  Exploratory + LUI.sd + poly(Mstd,2) + Fstd + Gstd, DF)),
+try(lm(response ~  Exploratory + LUI.sd + poly(Mstd,2) + Gstd, DF)),
+
+try(lm(response ~  Exploratory + LUI.sd + poly(Gstd,2) + Fstd, DF)),
+try(lm(response ~  Exploratory + LUI.sd + poly(Gstd,2) + Fstd + Mstd, DF)),
+try(lm(response ~  Exploratory + LUI.sd + poly(Gstd,2) + Mstd, DF)),
+
+try(lm(response ~  Exploratory + LUI.sd + poly(Fstd,2) + poly(Mstd,2), DF)),
+try(lm(response ~  Exploratory + LUI.sd + poly(Fstd,2) + poly(Gstd,2), DF)),
+try(lm(response ~  Exploratory + LUI.sd + poly(Mstd,2) + poly(Gstd,2), DF)),
+
+try(lm(response ~  Exploratory + LUI.sd + poly(Fstd,2) + poly(Mstd,2) + Gstd, DF)),
+try(lm(response ~  Exploratory + LUI.sd + poly(Fstd,2) + poly(Gstd,2) + Mstd, DF)),
+try(lm(response ~  Exploratory + LUI.sd + poly(Mstd,2) + poly(Gstd,2) + Fstd, DF)),
+
+try(lm(response ~  Exploratory + LUI.sd +  poly(Fstd,2) + poly(Mstd,2) + poly(Gstd,2), DF)),
+
+try(lm(response ~ Exploratory + LUI + LUI.sd, DF)),
+try(lm(response ~ Exploratory + poly(LUI,2) + LUI.sd, DF)),
+try(lm(response ~ Exploratory + poly(LUI,3) + LUI.sd, DF)),
+try(gnls(response ~ a*exp(-b*LUI), params=list(a ~ Exploratory + LUI.sd, b ~ 1), start=c(1,1,1,1,1),DF)),
+try(gnls(response ~ Asym+(R0-Asym)*exp(-exp(lrc)*LUI), params=list(Asym + lrc ~ 1, R0 ~ Exploratory + LUI.sd), start = c(p[c(1,3)],p[2],1,1,0), DF,control=nlc)),
+try(gnls(response ~ Asym+(R0-Asym)*exp(-exp(lrc)*LUI), params=list(Asym ~ LUI.sd,  lrc ~ 1, R0 ~ Exploratory), start = c(p[1],0,p[3],p[2],1,1), DF,control=nlc)),
+try(gnls(response ~ Asym+(R0-Asym)*exp(-exp(lrc)*LUI), params=list(Asym ~ 1,  lrc ~ LUI.sd, R0 ~ Exploratory), start = c(p[c(1,3)],0,p[2],1,1), DF,control=nlc)),
+try(gnls(response ~ a+b*(LUI^c), params=list(a ~Exploratory + LUI.sd, b + c ~ 1), start=c(p2[1],0,0,0,p2[2],p2[3]),DF)),
+
+### LUI.sd interaction
+try(lm(response ~ Exploratory + LUI * LUI.sd, DF)),
+try(lm(response ~ Exploratory + poly(LUI,2) * LUI.sd, DF)),
+try(lm(response ~ Exploratory + poly(LUI,3) * LUI.sd, DF)),
+try(gnls(response ~ a*exp(-b*LUI), params=list(a ~ Exploratory + LUI.sd, b ~ LUI.sd), start=c(1,1,1,1,1,1),DF)),
+try(gnls(response ~ Asym+(R0-Asym)*exp(-exp(lrc)*LUI), params=list(Asym + lrc ~ LUI.sd, R0 ~ Exploratory), start = c(p[1],0,p[3],0,p[3],1,1), DF,control=nlc)),
+try(gnls(response ~ Asym+(R0-Asym)*exp(-exp(lrc)*LUI), params=list(Asym~ LUI.sd, lrc ~ 1, R0 ~ Exploratory + LUI.sd), start = c(p[1],0,p[3],p[3],1,1,0), DF,control=nlc)),
+try(gnls(response ~ Asym+(R0-Asym)*exp(-exp(lrc)*LUI), params=list(Asym~ 1, lrc ~ LUI.sd, R0 ~ Exploratory + LUI.sd), start = c(p[1],p[3],0,p[3],1,1,0), DF,control=nlc)),
+try(gnls(response ~ Asym+(R0-Asym)*exp(-exp(lrc)*LUI), params=list(Asym + lrc ~ LUI.sd, R0 ~ Exploratory + LUI.sd), start = c(p[1],0,p[3],0,p[3],1,1,0), DF,control=nlc)),
+try(gnls(response ~ a+b*(LUI^c), params=list(a ~Exploratory+ LUI.sd, b + c ~ LUI.sd), start=c(p2[1],0,0,0,p2[2],0,p2[3],0),DF))
+)
+
+names(L) <- paste("model", 1:length(L), sep ="")
+
+### select reduced set without lui.sd interactions
+if (reduced == TRUE){
+L <- L[1:68]
+}
+else{}
+
+#### select set with only LUI or without LUI
+
+cfs <- lapply(L,"[",1)
+cfs <- lapply(cfs, function(x)(names(unlist(x))))
+
+if(models == "LUI.only"){
+L <- L[-grep("std",cfs)]
+}
+if(models == "no.LUI"){
+L <- L[grep("std",cfs)]
+}
+else{}
+
+#to select only those models that converged without error
+
+L2 <- Filter(function(x) !inherits(x, "try-error"), L)
+
+## pseudo r2
+
+fit <- lapply(L2, fitted)
+
+pr2 <- lapply(fit, function(x)(cor(x, DF$response, method = "pearson", use = "complete.obs")^2))
+
+pr2 <- unlist(pr2)
+
+# actual model selection based on AICc:
+
+df <- data.frame(selMod(L2))
+
+nn <- as.numeric(row.names(df))
+
+pr2 <- pr2[nn]
+
+df <- cbind(df, "pseudo.r2" = pr2)
+
+# return the models accounting for 95% of AIC weights
+
+if(sum(df[,"w_ic"])<0.95){
+
+called <- L2[nn]
+print("all models in 95% set")
+}
+else{
+selected <- nn[1:which(cumsum(df[,"w_ic"])>=0.95)[1]]
+
+# return the model formula (this has the structure response~...,data=DF)
+called <- L2[selected]
+}
+
+### rename rownames of df so that the numbers correspond to model positions in the full list not in the reduced list (L2)
+
+names(L2) <- which(lapply(L, inherits,"try-error")==FALSE)
+rownames(df) <- names(L2[nn])
+ 
+# Finally, return the selected models
+
+returnlist <- list(response=response, models=df, selected.model=called, all.models=L2)
+
+return(returnlist)
+}
+```
+

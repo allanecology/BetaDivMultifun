@@ -9,6 +9,31 @@ In order to run R code on the cluster, please follow the instructions on the [UB
 - get user profile
 - install R and the required packages
 - run the examples
+```{bash}
+module load vital-it
+module avail 2>&1 | grep " R\/"
+# check if your R version is there, e.g. 3.6.1 for me
+module load R/3.6.1
+
+# install packages
+R # open R and within R, type : 
+install.packages("gdm")
+# accept using personal library
+# select CRAN
+```
+
+
+# Data
+model results need to be uploaded : <modelname>_input.Rds files which contian site-pair tables, as used for gdm models.
+```{bash}
+ssh <username>@submit.unibe.ch
+
+scp /path/to/file <username>@submit.unibe.ch:/path/to/target_dir/
+
+scp <username>@submit.unibe.ch:/path/to/file /path/to/target_dir/
+```
+source : https://docs.id.unibe.ch/ubelix/getting-started
+
 
 # Scripts
 2 scripts are required : an R script which contains the R code and a SLURM script which contains the cluster code.
@@ -28,7 +53,7 @@ gdm_model <- readRDS(paste("data/", name, "_input.Rds", sep = ""))
 # cores : number of cores to be registered for parralel processing
 # outFile : name of outfile
 
-varimp_output <- gdm::gdm.varImp(gdm_model, geo=F, parallel=T, nPerm =100, cores = 10)
+varimp_output <- gdm::gdm.varImp(gdm_model, geo=T, parallel=T, nPerm =100, cores = 10)
 
 saveRDS(varimp_output, file = paste("out/", name, "_perm.Rds", sep = ""))
 ```
@@ -60,7 +85,24 @@ R CMD BATCH --no-save -no-restore gdm.R
 To submit the job to the cluster (run both scripts).
 ```{bash}
 sbatch Rbatch.sh
+squeue -u <username>
 ```
+
+
+# workflow
+cluster workflow 
+1. change name in gdm.R to current .Rds file
+2. change job name ,
+
+
+3. sbatch Rbatch.sh
+4. record job ID in this file
+
+automatically replace names
+```{bash}
+sed -i 's/gdm_EFdistance_Gstd/gdm_EFdistance_Mstd/g' gdm.R Rbatch.sh
+```
+
 
 
 outfiles : 

@@ -4,7 +4,7 @@ author: "Noelle Schenk"
 date: "August 20, 2019"
 output: html_document
 ---
-```{r}
+```{r, eval = T}
 suppressPackageStartupMessages(require(ggplot2))
 suppressPackageStartupMessages(require(cowplot))
 ```
@@ -81,7 +81,7 @@ plotsequence_abio <- define_rownames_lui_or_components(luiinput = luiinput)
 
 # create lineplot
 naming convention : `model_name` + "_lineplot_all_modelspec.pdf"
-```{r}
+```{r, eval = F}
 # extract I splines y axes and get LUI x axis
 lineplot_data <- data.table(cbind(exSplines$x[, "Geographic"], exSplines$y))
 setnames(lineplot_data, old = c("V1", "Geographic"), new = c("xaxis", "LUI"))
@@ -94,11 +94,16 @@ lineplot_data <- merge(lineplot_data, nicenames, by = "names", all.x = T)
 p <- create_gdm_lineplot(lineplot_data[ground == "a"])
 q <- create_gdm_lineplot(lineplot_data[ground == "b"])
 r <- create_gdm_lineplot(lineplot_data[ground == "x"])
+```
+
+```{r}
 labsplot <- ggplot(NULL) + #annotate("text", x = 0.8, y = 0.5, size=8, label = model_name) +
   theme_void() + annotate("text", x = 0.4, y = 0.5, size = 4, label = model_specs)
 biotic_legend <- get_nice_legend(type = "biotic") # plot with plot_grid(biotic_legend)
 abiotic_legend <- get_nice_legend(type = "abiotic")
+```
 
+```{r, eval = F}
 # add together the subplots
 lin <- plot_grid(p, biotic_legend, q, labsplot, r, abiotic_legend,  labels = c('A', '', 'B', '', 'C', ''), nrow = 3)
 model_name
@@ -178,32 +183,48 @@ ov2L <- create_overview_turnover_nestedness_abiotic_barplot(legend = T)
 # plot_grid(NULL, ov2L, ncol = 3)
 ```
 
+## combined plot
 ```{r, eval = T}
 if(create_plot == T){
   multipanel_without_overviews <- plot_grid(p, b, q, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
   # plot_grid(p, b, q, labels = c('aboveground', 'belowground', 'abiotic'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
-  
+  annotated_multipanel_without_overviews <- ggdraw(multipanel_without_overviews) +
+  draw_plot(labsplot, .65, .65, .35, .35) 
   # multipanel_with_overview_above_below <- plot_grid(p, b, q, ov1, labels = c('A', '', 'B', 'C'), label_size = 12, nrow = 4, rel_heights = c(0.08, 0.11, 0.065, 0.035), align = "v") # LUI components
   
   multipanel_with_overview_bars <- plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.27, 0.37, 0.13, 0.075, 0.075), align = "v") # 2 summary bars
   # plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.27, 0.37, 0.13, 0.11, 0.11), align = "v") # LUI components
+  annotated_multipanel_with_overview_bars <- ggdraw(multipanel_with_overview_bars) +
+  draw_plot(labsplot, .65, .65, .35, .35) 
 }
+```
 
+combined legends
+```{r, eval = T}
+biotic_legend <- get_nice_legend(type = "biotic") # plot with plot_grid(biotic_legend)
+abiotic_legend <- get_nice_legend(type = "abiotic")
+
+all_legends <- plot_grid(biotic_legend, abiotic_legend, ov1L, ov2L, nrow = 4, rel_heights = c(0.3, 0.3, 0.1, 0.1))
+all_legends <- plot_grid(NULL, NULL, NULL, NULL,  all_legends, NULL, NULL, NULL, nrow = 3, rel_heights = c(0.1, 0.8, 0.1))
+ggsave(filename = "all_legends_incl_overview.pdf", plot = all_legends, device=cairo_pdf,
+       width = 8.27, height = 11.96, units = "in", dpi = 900)
 ```
 
 
 ```{r,eval = T}
 restab <- list(restab, restab2, restab3)
-<<<<<<< HEAD
-saveRDS(restab, paste("list_restab_", main, ".Rds", sep = ""))
-=======
 saveRDS(restab, paste("list_restab_", model_name, ".Rds", sep = ""))
 
-ggsave(filename=paste(model_name, "_multipanel_barplot.pdf", sep = ""), plot = multipanel_without_overviews, device=cairo_pdf,
-       width = 11.96, height = 8.27, units = "in", dpi = 900)
+# ggsave(filename=paste(model_name, "_multipanel_barplot.pdf", sep = ""), plot = multipanel_without_overviews, device=cairo_pdf,
+       # width = 11.96, height = 8.27, units = "in", dpi = 900)
 ggsave(filename = paste(model_name, "_multipanel_barplot_overviewbars.pdf", sep = ""), plot = multipanel_with_overview_bars, device=cairo_pdf,
        width = 11.96, height = 8.27, units = "in", dpi = 900)
->>>>>>> 3c6d2cf6b13b489bcf0092c377f5045ac073b986
+
+# save annotated plots
+# ggsave(filename=paste(model_name, "_multipanel_barplot_annotated.pdf", sep = ""), plot = annotated_multipanel_without_overviews, device=cairo_pdf,
+       # width = 11.96, height = 8.27, units = "in", dpi = 900)
+ggsave(filename = paste(model_name, "_multipanel_barplot_overviewbars_annotated.pdf", sep = ""), plot = annotated_multipanel_with_overview_bars, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 
 
