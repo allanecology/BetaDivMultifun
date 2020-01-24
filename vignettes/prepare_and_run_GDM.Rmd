@@ -80,6 +80,14 @@ setnames(geodist, old = c("Var1", "s1.xCoord", "s1.yCoord"), new = c("Var2", "s2
 gdminput <- merge(gdminput, geodist, by = "Var2")
 ```
 
+### variant : by hand geographic distance calculation
+Geographic distance can also be calculated with geosphere package and normally added to gdminput, when geo = F in gdm.
+```{r, eval = T}
+gdminput[, s1.geosphere_distgeo := geosphere::distGeo(p1 = as.matrix(gdminput[, .(s1.yCoord, s1.xCoord)]), 
+                                                   p2 = as.matrix(gdminput[, .(s2.yCoord, s2.xCoord)]))]
+gdminput[, s2.geosphere_distgeo := 0]
+```
+
 
 ## betadiversities
 Prepare for each betadiversity two columns : one "s1.<name_of_diversity>" containing the betadiversity values and one "s2.<name_of_diversity>" with 0.
@@ -122,6 +130,13 @@ gdminput <- merge(gdminput, predictors_soil, by = c("Var1", "Var2"))
 fix column order as required by gdm. The required columns, followed by s1.betadiversities, s1.LUI, s1.predictors, s2.betadiversities, s2.LUI, s2.predictors.
 convert to data.frame and assign rownames to be the plot combinations separated by dot.
 ```{r}
+### variant : by hand geographic distance calculation
+# adjust colorder so it includes s1.geosphere_distgeo and s2.geosphere_distgeo
+colorder_gdm_input <- append(colorder_gdm_input, "s1.geosphere_distgeo", after=max(grep("s1.", colorder_gdm_input)))
+colorder_gdm_input <- append(colorder_gdm_input, "s2.geosphere_distgeo", after = max(grep("s2.", colorder_gdm_input)))
+```
+
+```{r}
 gdminput <- data.table::setcolorder(gdminput, colorder_gdm_input)
 
 gdminput[, rown := paste(Var1, Var2, sep = ".")]
@@ -132,6 +147,9 @@ gdminput$rown <- NULL
 
 gdminput <- gdm::formatsitepair(bioData=gdminput, bioFormat = 4, predData=gdminput) 
 ```
+
+
+
 
 # run GDM
 ```{r}
