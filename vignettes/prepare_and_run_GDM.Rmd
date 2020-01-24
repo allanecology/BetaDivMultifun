@@ -82,7 +82,7 @@ gdminput <- merge(gdminput, geodist, by = "Var2")
 
 ### variant : by hand geographic distance calculation
 Geographic distance can also be calculated with geosphere package and normally added to gdminput, when geo = F in gdm.
-```{r, eval = T}
+```{r, eval = F}
 gdminput[, s1.geosphere_distgeo := geosphere::distGeo(p1 = as.matrix(gdminput[, .(s1.yCoord, s1.xCoord)]), 
                                                    p2 = as.matrix(gdminput[, .(s2.yCoord, s2.xCoord)]))]
 gdminput[, s2.geosphere_distgeo := 0]
@@ -129,7 +129,7 @@ gdminput <- merge(gdminput, predictors_soil, by = c("Var1", "Var2"))
 # finalising dataset for GDM
 fix column order as required by gdm. The required columns, followed by s1.betadiversities, s1.LUI, s1.predictors, s2.betadiversities, s2.LUI, s2.predictors.
 convert to data.frame and assign rownames to be the plot combinations separated by dot.
-```{r}
+```{r, eval = F}
 ### variant : by hand geographic distance calculation
 # adjust colorder so it includes s1.geosphere_distgeo and s2.geosphere_distgeo
 colorder_gdm_input <- append(colorder_gdm_input, "s1.geosphere_distgeo", after=max(grep("s1.", colorder_gdm_input)))
