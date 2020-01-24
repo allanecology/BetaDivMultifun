@@ -1,0 +1,151 @@
+---
+title: "prepare and run GDM"
+author: "Noelle Schenk"
+date: "1/24/2020"
+output: html_document
+---
+
+# Dependencies
+## Data
+- colorder_gdm_input : the order of columns which is used for GDM input data. Can be given manually, but is very tedious
+- EFmaster : ecosystem function dissimilarities
+- masterbeta
+- LUI
+- predictors, predictors_soil
+
+## packages
+- BetaDivMultifun (as usual)
+    - the pacakges used by betadivmultifun
+- (possibly incomplete) list of packages : data.table, gdm
+
+# output
+- gdm input .CSV and .Rds
+- gdm output as .Rds
+- gdm summary output as .txt
+
+# select input
+depending on the model intented to run, chose the appropriate variables below.
+```{r}
+# ECOSYSTEM FUNCTION
+funs <- "EFdistance"
+
+# LUI
+## name of the chosen LUI
+# compon_lui <- "LUI"
+compon_lui <- "components"
+
+## column titles of the chosen LUI
+# lui <- c("LUI", "deltaLUI")
+lui <- c("Gstd", "Mstd", "Fstd", "deltaGstd", "deltaMstd", "deltaFstd")
+```
+chose selected input from mastertables
+```{r}
+modelname <- paste("gdm", funs, compon_lui, sep = "_")
+
+include <- c("Var1", "Var2", funs)
+EFmaster <- EFmaster[, ..include]
+rm(include)
+
+LUI <- LUI[, c("Plotn", lui)]
+LUI <- data.table(LUI)
+
+# create table containing geographic distances
+geodist <- predictors[, c("Plotn", "Longitude_Dec_Plotcenter", "Latitude_Dec_Plotcenter")]
+geodist <- data.table(geodist)
+predictors <- data.table(predictors)
+predictors <- predictors[, .(Plotn, plot_isolation)]
+predictors_soil <- data.table(predictors_soil)
+```
+
+
+# prepare GDM input table
+
+## ecosystem functions
+Distance in ecosystem functions is called "distance"
+```{r}
+setnames(EFmaster, old = funs, new = "distance")
+gdminput <- data.table::copy(EFmaster)
+gdminput[, weights := 1]
+rm(EFmaster)
+```
+
+## geographic distance
+xcoord = Latitude
+ycoord = Longitude
+```{r}
+setcolorder(geodist, c("Plotn", "Latitude_Dec_Plotcenter", "Longitude_Dec_Plotcenter"))
+setnames(geodist, old = c("Plotn", "Latitude_Dec_Plotcenter","Longitude_Dec_Plotcenter"), new = c("Var1", "s1.xCoord", "s1.yCoord"))
+gdminput <- merge(gdminput, geodist, by = c("Var1"))
+setnames(geodist, old = c("Var1", "s1.xCoord", "s1.yCoord"), new = c("Var2", "s2.xCoord", "s2.yCoord"))
+gdminput <- merge(gdminput, geodist, by = "Var2")
+```
+
+
+## betadiversities
+Prepare for each betadiversity two columns : one "s1.<name_of_diversity>" containing the betadiversity values and one "s2.<name_of_diversity>" with 0.
+GDM expects two values per predictor, but as dissimilarities for betadivs are already calculated, the input is just the distance between the actual distance (beta diversity) and 0.
+```{r}
+# add betadiversities
+colnames(masterbeta)[-c(1,2)] <- paste("s1.", colnames(masterbeta)[-c(1,2)], sep = "")
+gdminput <- merge(gdminput, masterbeta, by = c("Var1", "Var2"))
+# add 0 columns
+zeronames <- gsub("s1.", "s2.", colnames(masterbeta)[-c(1,2)])
+gdminput[, (zeronames) := 0]
+```
+
+## LUI
+```{r}
+setnames(LUI, old = c("Plotn", colnames(LUI)[-1]), new = c("Var1", paste("s1.", colnames(LUI)[-1], sep = "")))
+gdminput <- merge(gdminput, LUI, by = "Var1")
+setnames(LUI, old = c("Var1", colnames(LUI)[-1]), new = c("Var2", gsub("s1.", "s2.", colnames(LUI)[-1])))
+gdminput <- merge(gdminput, LUI, by = "Var2")
+```
+
+
+## covariates
+```{r}
+# create predictors table with edis_soil
+setnames(predictors_soil, old = "edis_soil", new = "s1.edis_soil")
+predictors_soil[, s2.edis_soil := 0]
+
+# add plot isolation
+setnames(predictors, old = c("Plotn" ,"plot_isolation"), new = c("Var1" ,"s1.plot_isolation"))
+predictors_soil <- merge(predictors_soil, predictors, by = "Var1")
+setnames(predictors, old = c("Var1" ,"s1.plot_isolation"), new = c("Var2" ,"s2.plot_isolation"))
+predictors_soil <- merge(predictors_soil, predictors, by = "Var2")
+rm(predictors)
+gdminput <- merge(gdminput, predictors_soil, by = c("Var1", "Var2"))
+```
+
+
+# finalising dataset for GDM
+fix column order as required by gdm. The required columns, followed by s1.betadiversities, s1.LUI, s1.predictors, s2.betadiversities, s2.LUI, s2.predictors.
+convert to data.frame and assign rownames to be the plot combinations separated by dot.
+```{r}
+gdminput <- data.table::setcolorder(gdminput, colorder_gdm_input)
+
+gdminput[, rown := paste(Var1, Var2, sep = ".")]
+gdminput[,c("Var1","Var2") := NULL]
+gdminput <- as.data.frame(gdminput)
+rownames(gdminput) <- gdminput$rown
+gdminput$rown <- NULL
+
+gdminput <- gdm::formatsitepair(bioData=gdminput, bioFormat = 4, predData=gdminput) 
+```
+
+# run GDM
+```{r}
+gdm_output <- gdm::gdm(gdminput, geo = T)
+```
+
+# save output
+```{r}
+outname <- paste("gdm", funs, compon_lui, "output_summary.txt", sep = "_")
+outnameRDS <- paste("gdm", funs, compon_lui, "output.Rds", sep = "_")
+
+# save input and output
+saveRDS(gdminput, file = paste("vignettes/out/", paste("gdm", funs, compon_lui, "input.Rds", sep = "_"), sep = ""))
+write.csv(gdminput, file = paste("vignettes/out/", paste("gdm", funs, compon_lui, "input.CSV", sep = "_"), sep = ""))
+saveRDS(gdm_output, paste("vignettes/out/", outnameRDS, sep = ""))
+capture.output(summary(gdm_output), file = paste("vignettes/out/", outname, sep = ""))
+```
