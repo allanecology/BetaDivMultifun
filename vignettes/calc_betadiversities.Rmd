@@ -4,15 +4,9 @@ author: "Noelle Schenk, Caterina Penone"
 date: "May 7, 2019"
 output: html_document
 ---
-*requires* : spdiv, spinfo (spinfo is the file containing information about all species, spdiv is the collected data.)
-```{r, eval=T}
-#TODO : if script is still working, remove those - are included in DESCRIPTION file of the package
-require(naniar)
-require(ggplot2)
-require(grid)
-require(VennDiagram)
-require(visdat)
-```
+*requires* : 
+- datasets : spdiv, spinfo (spinfo is the file containing information about all species, spdiv is the collected data.)
+- plotNAset (the names of plots which are included)
 
 # Load and merge dataset
 Note : this script is based on the Exploratoreis diversity dataset, which is read in with the script `analysis_nonpublic.R`. It reads in the two datasets `spdiv` and `spinfo`.
@@ -165,8 +159,8 @@ vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 # no, different plots are missing.
 rm(testplotpresence)
 ```
-only run if `plotNAset` is already known.
-```{r, eval = F}
+
+```{r, eval = T}
 # are the same plots missing in all years?
 testplotpresence <- unique(autotroph[Plot %in% plotNAset, .(Year, Plot)])
 vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
@@ -250,7 +244,6 @@ rm(testplotpresence)
 ```
 Snails were only measured in 134 plots. They contain 39 species. Insects were measured in 139 plots, they contain 401 species.
 ```{r, eval = F}
-# only run if the plot set is known already
 testplotpresence <- unique(herbivore[Plot %in% plotNAset, .(Year, Plot)])
 visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
@@ -866,7 +859,7 @@ spdiv <- spdiv[!Trophic_level == "pollinator"]
 ```
 ```{r}
 bp_overv <- aggregate(value ~ Plot, pollinator, sum)
-barplot(height = bp_overv$value)
+barplot(height = bp_overv$value, ylab = "number of pollinator species per plot")
 abline(h = mean(bp_overv$value), col = "red")
 abline(h = median(bp_overv$value), col = "green")
 ```
@@ -897,7 +890,7 @@ for(t in trlevels){
 ```
 There is no more plot with zero species in the dataset.
 
-Select the plots without missing information and store. 
+Select the plots without missing information and store. This chunk of code generates `plotNAset.rds`, the selected set of plots.
 ```{r, eval=F}
 plots <- list()
 for(t in trlevels){
