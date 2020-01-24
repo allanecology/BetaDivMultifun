@@ -4,6 +4,100 @@ author: "Noelle Schenk"
 date: "June 21, 2019"
 output: html_document
 ---
+```{r}
+#TODO check if something from old code is still usable, comment well new code
+
+# first run prepare_and_run_GDM
+checkgdminput <- data.table::copy(gdminput)
+# checkgdminput$rown <- rownames(checkgdminput)
+checkgdminput <- data.table(checkgdminput)
+
+# calc euclidean distance between each predictor pair of checkgdminput
+dists <- colnames(checkgdminput)[grep("beta", colnames(checkgdminput))]
+dists <- grep("s2.", dists, value = T)
+checkgdminput[, (dists) := NULL]
+checkgdminput[, weights := NULL]
+
+# LUI
+luicols <- grep(paste(lui, collapse="|"), colnames(checkgdminput), value=TRUE)
+if(length(grep("Gstd", lui)) > 1){
+  print("lui components")
+  checkgdminput[, Gstd := s1.Gstd - s2.Gstd]
+  checkgdminput[, Mstd := s1.Mstd - s2.Mstd]
+  checkgdminput[, Fstd := s1.Fstd - s2.Fstd]
+  checkgdminput[, deltaGstd := s1.deltaGstd - s2.deltaGstd]
+  checkgdminput[, deltaMstd := s1.deltaMstd - s2.deltaMstd]
+  checkgdminput[, deltaFstd := s1.deltaFstd - s2.deltaFstd]
+  checkgdminput[, (luicols) := NULL]
+}
+#TODO add if clause for LUI
+
+checkgdminput[, geosphere_distgeo := geosphere::distGeo(p1 = as.matrix(checkgdminput[, .(s1.yCoord, s1.xCoord)]), 
+                                                      p2 = as.matrix(checkgdminput[, .(s2.yCoord, s2.xCoord)]))]
+geocol <- grep("Coord", colnames(checkgdminput), value = T)
+checkgdminput[, (geocol) := NULL]
+checkgdminput[, s2.geosphere_distgeo := NULL]
+
+# predictors
+checkgdminput[, edis_soil := s1.edis_soil - s2.edis_soil]
+checkgdminput[, plot_isolation := s1.plot_isolation - s2.plot_isolation]
+del <- c("s1.edis_soil", "s2.edis_soil", "s1.plot_isolation", "s2.plot_isolation")
+checkgdminput[, (del) := NULL]
+
+# rename s1
+colnames(checkgdminput) <- gsub("s1.", "", colnames(checkgdminput))
+
+## correlation plot
+# name : modelname "_corrplot_before_gdm.pdf"
+m <- cor(checkgdminput)
+pdf(paste("vignettes/out/", modelname, "_corrplot_before_gdm.pdf", sep = ""), paper = "a4r")
+corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", diag = F, tl.srt = 50, tl.col = "black", order = "hclust", tl.cex = 0.4, cl.cex = 0.3, number.cex = 0.3)
+dev.off()
+
+m[m < 0.5 & m > -0.5] <- 0
+corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "circle", diag = F, tl.srt = 50, tl.col = "black", order = "hclust", tl.cex = 0.4, cl.cex = 0.3, number.cex = 0.3)
+
+
+## variance inflation in linear model
+# generate model
+mod <- paste("distance ~ " ,paste(colnames(checkgdminput)[!colnames(checkgdminput) %in% c("distance")], collapse = " + "))
+m1 <- lm(formula = formula(mod), data = checkgdminput)
+# save linear model
+
+vif_output <- car::vif(m1)
+vif_output[which(vif_output > 5)]
+# vif_output[which(vif_output[, "GVIF"] > 5),]
+capture.output(mod,
+               vif_output[which(vif_output > 5)],
+               file = paste("out/", modelname, "_vif_before_gdm.txt", sep = ""))
+
+# plot linear model
+m1$coefficients
+test <- summary(m1)
+coefs <- test$coefficients
+coefs <- data.table(coefs)
+coefs[, names := rownames(test$coefficients)]
+coefs[`Pr(>|t|)` < 0.05, pval_symbol := "*"]
+coefs[`Pr(>|t|)` > 0.05, pval_symbol := ""]
+
+linplot <- ggplot(coefs, aes(x = names, y = Estimate)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  geom_text(aes(label=pval_symbol), y=0.4, color="black", size=3.5) +
+  geom_errorbar(aes(ymin=Estimate-`Std. Error`, ymax=Estimate+`Std. Error`), width=.2, color = "red") +
+  background_grid() +
+  ggtitle(modelname) +
+  ylab("linear model estimates") +
+  xlab("") +
+  labs(caption = "error bars correspond to standard errors")
+
+ggsave(linplot, filename = paste("vignettes/out/", modelname, "_linear_model_directions.pdf", sep = ""), dpi = 400,
+       units = "cm", width = 29.7, height = 21)
+```
+
+
+
+
 
 note : packages used : gdm, car, geosphere, viridis and colrobrewer
 
