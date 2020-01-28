@@ -129,6 +129,13 @@ gdminput <- merge(gdminput, predictors_soil, by = c("Var1", "Var2"))
 # finalising dataset for GDM
 fix column order as required by gdm. The required columns, followed by s1.betadiversities, s1.LUI, s1.predictors, s2.betadiversities, s2.LUI, s2.predictors.
 convert to data.frame and assign rownames to be the plot combinations separated by dot.
+
+GDM requires a well-defined table. Below, the names of the columns and their content are listed:
+- distance : distance between ecosystem functions
+- weights : column containing all 1 (because we weigh all comparisons the same)
+- s1.xCoord, s1.yCoord, s2.xCoord, s2.yCoord : 4 columns which will be ignored as I will set geo = F in the gdm() function. 
+- s1.pred1, ..., s1.predn : here I fill in my predictor columns, (all have s1. at the beginning)
+- s2.pred1, ..., s2.predn : here I fill in columns of zero to imitate I would not have given distance but two values.
 ```{r, eval = F}
 ### variant : by hand geographic distance calculation
 # adjust colorder so it includes s1.geosphere_distgeo and s2.geosphere_distgeo
@@ -167,3 +174,9 @@ write.csv(gdminput, file = paste("vignettes/out/", paste("gdm", funs, compon_lui
 saveRDS(gdm_output, paste("vignettes/out/", outnameRDS, sep = ""))
 capture.output(summary(gdm_output), file = paste("vignettes/out/", outname, sep = ""))
 ```
+
+
+# next steps
+- check the input table for correlations and produce linear model and variance inflation `check_GDM_input.Rmd`
+- plot models
+- run permutations (cluster scripts)
