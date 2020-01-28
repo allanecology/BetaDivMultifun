@@ -64,6 +64,7 @@ for(t in unique(spdiv$Trophic_level)){
 Store trophic levels in vector
 ```{r}
 trlevels <- sort(unique(spdiv$Trophic_level))
+trlevels <- trlevels[!trlevels %in% c("pollinator", "tertiary.consumer", "decomposer", "myriapod.decomposer")]
 ```
 
 
@@ -369,7 +370,7 @@ subset     | birds  | birds bats | birds bats |  birds  |  birds   |
 no Plot    |  150   |  150+149   |  150+150   |  150    |  150     |
 no Species |  67    | 78= 67+11  | 78= 67+11  |  67     |  67      |
 
-```{r}
+```{r, eval = F}
 # unique(tertiary.consumer[Year == "2012", Group_fine])
 # length(unique(tertiary.consumer[Year == "2012", Plot]))
 
@@ -792,7 +793,7 @@ rm(beta.belowground.predator)
 
 
 ## decomposer TAKEN OUT
-```{r}
+```{r, eval = F}
 decomposer <- spdiv[Trophic_level == "decomposer", .(Species, Plot, value)]
 mdecomposer <- spdiv[Trophic_level == "myriapod.decomposer", .(Species, Plot, value)]
 # update trlevels
@@ -808,7 +809,7 @@ decomposer <- rbind(decomposer, mdecomposer)
 | #species |     40     |      6    |
 | #Plots   |    139     |    150    |
 
-```{r}
+```{r, eval = F}
 # testplotpresence <- unique(decomposer[, .(Year, Plot)])
 # vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 # rm(testplotpresence)
@@ -822,10 +823,10 @@ length(unique(decomposer$Species)) # even though 40 species, there are so few pr
 # sum(bp_overv$value == 0) # 81 plots have species, 58 don't, total 139.
 # take out
 trlevels <- trlevels[-which(trlevels == "decomposer")]
+rm(decomposer)
 ```
 ```{r}
 spdiv <- spdiv[!Trophic_level == "decomposer"]
-rm(decomposer)
 ```
 
 
@@ -883,6 +884,7 @@ Find subset of plots without missing diversity data and store.
 
 Is there any plot with zero species?
 ```{r, eval=F}
+#HERE
 for(t in trlevels){
   print(t)
   tr <- get(t)
@@ -899,7 +901,7 @@ for(t in trlevels){
   tr <- get(t)
   plots[[t]] <- unique(tr$Plot)
 }
-common.plots <- Reduce(intersect,plots) #128 plots
+common.plots <- Reduce(intersect,plots) #130 plots
 # take out HEG31 because this is taken out in functions
 common.plots <- common.plots[-which(common.plots == "HEG31")]
 saveRDS(common.plots, file = "plotNAset.rds")
@@ -919,10 +921,10 @@ paste("AEG :", length(grep("A", common.plots)), "   HEG :", length(grep("H", com
 ```
 | region    | no. plots |
 | --------- | --------- |
-| all       |    128    |
+| all       |    129    |
 | AEG       |    40     |
 | HEG       |    43     |
-| SEG       |    45     |
+| SEG       |    46     |
 
 
 
@@ -950,7 +952,20 @@ for(t in trlevels){
 }
 sum
 ```
-
+[1] "autotroph" "461"       "species"  
+[1] "bacteria.RNA" "140510"       "species"     
+[1] "belowground.herbivore" "11"                    "species"              
+[1] "belowground.predator" "17"                   "species"             
+[1] "herbivore" "401"       "species"  
+[1] "plant.pathogen" "84"             "species"       
+[1] "protist.bacterivore" "886"                 "species"            
+[1] "protist.eukaryvore" "217"                "species"           
+[1] "protist.omnivore" "444"              "species"         
+[1] "protist.plant.parasite" "96"                     "species"               
+[1] "secondary.consumer" "174"                "species"           
+[1] "soilfungi.decomposer" "12342"                "species"             
+[1] "soilfungi.pathotroph" "4097"                 "species"             
+[1] "soilfungi.symbiont" "1416"               "species"   
 
 
 # Calculate betadiversities
@@ -1030,7 +1045,7 @@ saveRDS(masterdiversity, "master_diversity_alpha_beta.rds")
 
 # Cleaning
 ```{r}
-rm(spdiv); rm(test); rm(tr); rm(t); rm(redplotset); rm(plots); rm(b.tr)
+rm(spdiv); rm(test); rm(tr); rm(t); rm(redplotset); rm(plots)
 rm(list = trlevels)
 rm(list = trlevels_components)
 ```
