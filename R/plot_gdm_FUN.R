@@ -294,8 +294,8 @@ NULL
 #' with the function `gdm::isplineExtract`.
 #' Used the overview table `ǹicenames.csv` for graphical parameters as
 #' line types and color.
-#' Does not plot a legend, the legend can be produced with the function
-#' `get_nice_legend`.
+#' Can plot a legend if legend is set to T, but the legend is recommended
+#' to be produced by the function `get_nice_legend`.
 #' 
 #' TODO : add vertical grid lines, remove x axis for above plots
 #' @param data data.table, produced by `gdm::isplineExtract` and further
@@ -307,16 +307,20 @@ NULL
 #' @import data.table
 #'
 #' @export
-create_gdm_lineplot <- function(data){
+create_gdm_lineplot <- function(data, legend = F){
+  test <- unique(data[, .(color, nicenames)])
   p <- ggplot(data, aes(x = xaxis, y = value, fill = names, linetype = linetypeto)) +
-    geom_line(aes(linetype=linetypeto, color=color)) +
-    scale_fill_identity() + scale_linetype_identity() + scale_color_identity() +
-    # labs(title = model_name) +
-    # xlab("LUI") + 
-    ylab("functional dissimilarity") +
-    theme(legend.position = "none",
-          axis.title = element_blank()
-    )
+    geom_line(aes(linetype=linetypeto, color=color), size = 1.6) +
+    scale_linetype_identity() + 
+    scale_color_identity(name = "trophic levels", 
+                         guide = "legend", 
+                         breaks = test$color,
+                         labels = test$nicenames) +
+    theme(axis.title = element_blank()) +
+    background_grid()
+  if(!legend){
+    p <- p + theme(legend.position = "none")
+  }
   return(p)
 }
 NULL
