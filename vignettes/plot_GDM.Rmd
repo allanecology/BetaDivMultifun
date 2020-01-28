@@ -40,11 +40,10 @@ for(i in nrow(model_names)){
 If F, `luiinput` and `model_name` need to be given manually.
 *note* that i <- 6 for testing.
 ```{r}
-automaticrun <- T
+automaticrun <- F
     # only provide if automaticrun is F
-luiinput <- "components" # luiinput <- "components"
-model_name <- "gdm_EFturnover_0.75_LUI"
-create_plot <- T
+luiinput <- "components" # lui or components
+model_name <- "gdm_EFdistance_components"
 permut <- F # T or F, depending wether permutations are available or not
 ```
 
