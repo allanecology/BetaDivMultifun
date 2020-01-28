@@ -265,24 +265,22 @@ get_nice_legend <- function(type){
   short_nicenames <- unique(nicenames[, .(legendnames, testvals, color, ground)])
   short_nicenames[, legendnames := as.factor(legendnames)]
   if(type == "biotic"){
-    biotic <- ggplot(short_nicenames[ground %in% c("a", "b")], aes(x = legendnames, y = testvals, fill = color)) +
-      geom_bar(stat = "identity", color = "black") +
-      scale_fill_identity("", labels = short_nicenames[ground %in% c("a", "b"), legendnames], guide = "legend") +
-      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-      ggtitle("betadiversity colors")
-    legend <- get_legend(biotic)
+    dat <- short_nicenames[ground %in% c("a", "b")]
   }
   if(type == "abiotic"){
-    abiotic <- ggplot(short_nicenames[ground %in% c("x")], aes(x = legendnames, y = testvals, fill = color)) +
-      geom_bar(stat = "identity", color = "black") +
-      scale_fill_identity("", labels = short_nicenames[ground %in% c("x"), legendnames], guide = "legend") +
-      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-      ggtitle("betadiversity colors")
-    suppressWarnings(legend <- get_legend(abiotic)) # because of delta characters in legendnames
+    dat <- short_nicenames[ground %in% c("x")]
   }
   if(!(type %in% c("biotic", "abiotic"))){
     print("type must be either biotic or abiotic.")
   }
+  p <- ggplot(dat, aes(x = legendnames, y = testvals, fill = color)) +
+    geom_bar(stat = "identity", color = "black") +
+    scale_fill_identity(name = "", guide = "legend",
+                        breaks = dat[, color],
+                        labels = dat[, legendnames]) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    ggtitle("betadiversity colors")
+  suppressWarnings(legend <- get_legend(p)) # because of delta characters in legendnames
   return(legend)
 }
 
@@ -307,13 +305,13 @@ NULL
 #' @import data.table
 #'
 #' @export
-create_gdm_lineplot <- function(data, legend = F){
+create_gdm_lineplot <- function(data, legend = F, ymax = 1){
   test <- unique(data[, .(color, nicenames)])
   p <- ggplot(data, aes(x = xaxis, y = value, fill = names, linetype = linetypeto)) +
     geom_line(aes(linetype=linetypeto, color=color), size = 1.6) +
+    ylim(0, ymax) +
     scale_linetype_identity() + 
-    scale_color_identity(name = "trophic levels", 
-                         guide = "legend", 
+    scale_color_identity(name = "", guide = "legend", 
                          breaks = test$color,
                          labels = test$nicenames) +
     theme(axis.title = element_blank()) +
