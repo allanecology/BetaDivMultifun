@@ -33,7 +33,7 @@ soilfungi.symbiont.beta.sim,soilfungi symbiont βto,b,#BEAED4,solid,soilfungi sy
 soilfungi.symbiont.beta.sne,soilfungi symbiont βnes,b,#BEAED4,dashed,soilfungi symbiont
 deltaLUI,ΔLUI,x,#BEAED4,solid,ΔLUI
 edis_soil,soil,x,#A6761D,solid,soil
-geo_dist,geographic distance,x,#377EB8,solid,geographic distance
+Geographic,geographic distance,x,#377EB8,solid,geographic distance
 LUI,LUI,x,#7570B3,solid,LUI
 plot_isolation,plot isolation,x,#66A61E,solid,plot isolation
 Gstd,Grazing,x,#D95F02,solid,Grazing
