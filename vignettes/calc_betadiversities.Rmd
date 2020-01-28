@@ -355,8 +355,8 @@ spdiv <- spdiv[!Trophic_level == "secondary.consumer"]
 ```
 
 
-## Tertiary consumer
-```{r}
+## Tertiary consumer REMOVED
+```{r, eval = F}
 tertiary.consumer <- spdiv[Trophic_level == "tertiary.consumer"]
 testplotpresence <- unique(tertiary.consumer[, .(Year, Plot)])
 vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
@@ -379,7 +379,7 @@ batspecies <- setdiff(unique(tertiary.consumer[Year == "2009", Species]), unique
 The Bird and Bat species of the different years are the same.
 
 Take average of Species occurrence and check how often species occur. We assume that birds and bats are difficult to measure, therefore having a large time window makes sense. A species is considered to be present in a plot, if it is present at least in one year.
-```{r}
+```{r, eval = F}
 birds <- aggregate(value ~ Species + Plot, tertiary.consumer[Group_fine == "Birds"], function(x) mean(x, na.rm=T))
 birds <- data.table::data.table(birds)
 # nrow(birds) == 67 * 150 # TRUE : 67 species in 150 plots
@@ -400,9 +400,9 @@ nrow(bats) == 11 * 150 # expected number of rows present (11 species in 150 plot
 tertiary.consumer <- rbind(birds, bats)
 
 nrow(tertiary.consumer) == 150 * (11 + 67)
+rm(bats); rm(birds); rm(batspecies)
 ```
 ```{r}
-rm(bats); rm(birds); rm(batspecies)
 spdiv <- spdiv[!Trophic_level == "tertiary.consumer"]
 ```
 
@@ -851,19 +851,19 @@ nrow(plant.pathogen) == 84 * 148
 ```
 
 
-## pollinator
+## pollinator REMOVED
 
-```{r}
+```{r, eval = F}
 pollinator <- spdiv[Trophic_level == "pollinator"]
 spdiv <- spdiv[!Trophic_level == "pollinator"]
 ```
-```{r}
+```{r, eval = F}
 bp_overv <- aggregate(value ~ Plot, pollinator, sum)
 barplot(height = bp_overv$value, ylab = "number of pollinator species per plot")
 abline(h = mean(bp_overv$value), col = "red")
 abline(h = median(bp_overv$value), col = "green")
 ```
-```{r}
+```{r, eval = F}
 pollinator <- pollinator[!Plot %in% bp_overv$Plot[which(bp_overv$value == 0)]]
 # fill in missing combinations
 pollinator <- data.table::setDT(pollinator)[data.table::CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
@@ -873,7 +873,9 @@ nrow(pollinator) == 705 * 144
 rm(bp_overv)
 ```
 144 Plots with 705 species.
-
+```{r}
+spdiv <- spdiv[!Trophic_level == "pollinator"]
+```
 
 
 # Find plot Selection
