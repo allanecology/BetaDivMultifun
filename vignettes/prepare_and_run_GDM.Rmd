@@ -12,6 +12,7 @@ output: html_document
 - masterbeta
 - LUI
 - predictors, predictors_soil
+see `analysis_nonpublic.R` file.
 
 ## packages
 - BetaDivMultifun (as usual)
