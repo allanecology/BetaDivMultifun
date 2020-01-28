@@ -4,6 +4,18 @@ author: "Noelle Schenk"
 date: "June 21, 2019"
 output: html_document
 ---
+Requirements : 
+- script is runned right after `prepare_and_run_GDM.Rmd`. Requires its output `gdminput`.
+    - note that `gdminput` is also saved as .csv and .Rds from the above mentioned script.
+
+The script calculates euclidean distances (simple substraction) of the covariates and LUI as well as the geographic distance based on coordinates and forms a table with all distances. A correlation plot is produced and a linear model fitted and both are saved. Variance inflation of the linear model is calculated and saved.
+
+Output : 
+- correlation plot `vignettes/out/<modelname>_corrplot_before_gdm.pdf`
+- linear model output `vignettes/out/<modelname>_linear_model_before_gdm.Rds`
+- variance inflation `out/<modelname>_vif_before_gdm.txt`
+- linear model plot `vignettes/out/<modelname>_linear_model_directions.pdf`
+
 ```{r}
 #TODO check if something from old code is still usable, comment well new code
 
@@ -63,13 +75,14 @@ corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "circle", 
 mod <- paste("distance ~ " ,paste(colnames(checkgdminput)[!colnames(checkgdminput) %in% c("distance")], collapse = " + "))
 m1 <- lm(formula = formula(mod), data = checkgdminput)
 # save linear model
+saveRDS(m1, file = paste("vignettes/out/", modelname, "_linear_model_before_gdm.Rds", sep = ""))
 
 vif_output <- car::vif(m1)
 vif_output[which(vif_output > 5)]
 # vif_output[which(vif_output[, "GVIF"] > 5),]
 capture.output(mod,
                vif_output[which(vif_output > 5)],
-               file = paste("out/", modelname, "_vif_before_gdm.txt", sep = ""))
+               file = paste("vignettes/out/", modelname, "_vif_before_gdm.txt", sep = ""))
 
 # plot linear model
 m1$coefficients
@@ -98,23 +111,6 @@ ggsave(linplot, filename = paste("vignettes/out/", modelname, "_linear_model_dir
 
 
 
-
-note : packages used : gdm, car, geosphere, viridis and colrobrewer
-
-# Dependencies
-This script relies on loading the following datasets:
-- EFmaster : dissimilarities of functions
-- singleEFdist : dissimilarities of single functions
-TODO : is singleEFdist really needed?
-- masterbeta : dissimilarities of trophic groups
-- LUI : LUI (and components) and delta LUI (and delta components)
-- predictors : values of predictors (plot isolation, geographic position)
-- predictors soil : euclidean distance of soil pca
-
-# outputs COLLECT THEM BY HAND AT THE MOMENT!
-- correlation plot
-- variable inflations
-- gdm models
 
 
 # Select Variables
