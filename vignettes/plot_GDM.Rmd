@@ -47,7 +47,7 @@ if(automaticrun){
   model_name <- model_names$name[i]
   permut <- model_names$permut[i]
 } else {
-  luiinput <- "lui" # luiinput <- "components"
+  luiinput <- "components" # luiinput <- "components"
   model_name <- "gdm_EFturnover_0.75_LUI"
 }
 if(permut == T){
@@ -78,18 +78,28 @@ plotsequence_bio <- c("autotroph", "bacteria.RNA", "belowground.herbivore", "bel
 plotsequence_abio <- define_rownames_lui_or_components(luiinput = luiinput)
 ```
 
+# create plotting table
+longtable, used 1:1 for lineplot
+```{r}
+# create data table with results
+    # one column with xaxis values and one column with yaxis values, and one column
+    # containing names
+x <- data.table(exSplines$x)
+x[, ids := as.numeric(seq(1, nrow(x)))] # ids are required for later matching with y
+y <- data.table(exSplines$y)
+y[, ids := as.numeric(seq(1, nrow(y)))]
+x <- melt(x, measure.vars = colnames(x), value.name = "xaxis", id.vars = "ids", variable.name = "names") # get to long format
+y <- melt(y, measure.vars = colnames(y), value.name = "value", id.vars = "ids", variable.name = "names")
+    # add x and y values
+lineplot_data <- merge(x, y, by = c("ids", "names"))
+lineplot_data[, names := as.character(names)] # somehow required for merging
+lineplot_data <- merge(lineplot_data, nicenames, by = "names", all.x = T)
+```
+
 
 # create lineplot
 naming convention : `model_name` + "_lineplot_all_modelspec.pdf"
 ```{r, eval = F}
-# extract I splines y axes and get LUI x axis
-lineplot_data <- data.table(cbind(exSplines$x[, "Geographic"], exSplines$y))
-setnames(lineplot_data, old = c("V1", "Geographic"), new = c("xaxis", "LUI"))
-lineplot_data <- melt(lineplot_data, measure.vars = colnames(lineplot_data)[-1], id.vars = "xaxis", 
-                      variable.name = "names")
-# adding plot information from nicenames
-lineplot_data <- merge(lineplot_data, nicenames, by = "names", all.x = T)
-
 # above, below and abiotic subplots
 p <- create_gdm_lineplot(lineplot_data[ground == "a"])
 q <- create_gdm_lineplot(lineplot_data[ground == "b"])
