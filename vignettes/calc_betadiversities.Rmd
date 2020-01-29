@@ -64,7 +64,9 @@ for(t in unique(spdiv$Trophic_level)){
 Store trophic levels in vector
 ```{r}
 trlevels <- sort(unique(spdiv$Trophic_level))
-trlevels <- trlevels[!trlevels %in% c("pollinator", "tertiary.consumer", "decomposer", "myriapod.decomposer")]
+#TODO decide if with tertiary consumers or without
+# trlevels <- trlevels[!trlevels %in% c("pollinator", "tertiary.consumer", "decomposer", "myriapod.decomposer")]
+trlevels <- trlevels[!trlevels %in% c("pollinator", "decomposer", "myriapod.decomposer")]
 ```
 
 
@@ -164,7 +166,7 @@ rm(testplotpresence)
 ```{r, eval = T}
 # are the same plots missing in all years?
 testplotpresence <- unique(autotroph[Plot %in% plotNAset, .(Year, Plot)])
-vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
+visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 # no, different plots are missing.
 rm(testplotpresence)
 ```
@@ -328,7 +330,7 @@ trlevels <- trlevels[!trlevels == "myriapod.secondary.consumer"]
 
 testplotpresence <- unique(secondary.consumer[, .(Year, Plot)])
 # testplotpresence <- unique(secondary.consumer[Plot %in% plotNAset, .(Year, Plot)])
-vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
+visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
 ```
 Only 2008 dataset has some missing values
@@ -358,9 +360,10 @@ spdiv <- spdiv[!Trophic_level == "secondary.consumer"]
 
 ## Tertiary consumer REMOVED
 ```{r, eval = F}
+#HERE
 tertiary.consumer <- spdiv[Trophic_level == "tertiary.consumer"]
 testplotpresence <- unique(tertiary.consumer[, .(Year, Plot)])
-vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
+visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
 ```
 
@@ -381,6 +384,7 @@ The Bird and Bat species of the different years are the same.
 
 Take average of Species occurrence and check how often species occur. We assume that birds and bats are difficult to measure, therefore having a large time window makes sense. A species is considered to be present in a plot, if it is present at least in one year.
 ```{r, eval = F}
+#TODO if only birds, don't run bat lines and assing tertiary.consumer to "bird"
 birds <- aggregate(value ~ Species + Plot, tertiary.consumer[Group_fine == "Birds"], function(x) mean(x, na.rm=T))
 birds <- data.table::data.table(birds)
 # nrow(birds) == 67 * 150 # TRUE : 67 species in 150 plots
@@ -413,7 +417,7 @@ spdiv <- spdiv[!Trophic_level == "tertiary.consumer"]
 ```{r}
 bacteria.RNA <- spdiv[Trophic_level == "bacteria.RNA"]
 testplotpresence <- unique(bacteria.RNA[, .(Year, Plot)])
-vis_miss(data.table::dcast(testplotpresence, Plot ~ Year))
+visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~ Year))
 rm(testplotpresence)
 ```
 Not visible in the plot, but there are only 148 plots for both years.
@@ -469,7 +473,7 @@ spdiv <- spdiv[!Trophic_level == "bacteria.RNA"]
 ```{r}
 protist.bacterivore <- spdiv[Trophic_level == "protist.bacterivore"]
 testplotpresence <- unique(protist.bacterivore[, .(Year, Plot)])
-vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
+visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
 ```
 Only 1 plot missing, in 2011
@@ -884,7 +888,6 @@ Find subset of plots without missing diversity data and store.
 
 Is there any plot with zero species?
 ```{r, eval=F}
-#HERE
 for(t in trlevels){
   print(t)
   tr <- get(t)
