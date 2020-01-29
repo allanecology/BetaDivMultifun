@@ -28,7 +28,8 @@ see `analysis_nonpublic.R` file.
 depending on the model intented to run, chose the appropriate variables below.
 ```{r}
 # ECOSYSTEM FUNCTION
-funs <- "EFdistance"
+# funs <- "EFdistance"
+funs <- "soilAmmoniaflxs"
 
 # LUI
 ## name of the chosen LUI
@@ -145,12 +146,23 @@ colorder_gdm_input <- append(colorder_gdm_input, "s2.geosphere_distgeo", after =
 ```
 
 ```{r}
+# --------- intermediate solution start
 #TODO change input file, fix this
 # adapt for LUi
 test <- read.csv("colord.csv", header = T)
 colorder_gdm_input <- as.vector(t(test))
 rm(test)
 #TODO maybe add tertiary consumers
+colorder_gdm_input[36]
+# grep("tertiary", colnames(gdminput), value = T)
+colorder_gdm_input <- append(colorder_gdm_input, c("s1.tertiary.consumer.beta.sne"), after = 36)
+colorder_gdm_input[22]
+colorder_gdm_input <- append(colorder_gdm_input, c("s1.tertiary.consumer.beta.sim"), after = 22)
+colorder_gdm_input[56]
+colorder_gdm_input <- append(colorder_gdm_input, "s2.tertiary.consumer.beta.sim", after = 56)
+colorder_gdm_input[71]
+colorder_gdm_input <- append(colorder_gdm_input, "s2.tertiary.consumer.beta.sne", after = 71)
+# --------- intermediate solution end
 
 gdminput <- data.table::setcolorder(gdminput, colorder_gdm_input)
 
