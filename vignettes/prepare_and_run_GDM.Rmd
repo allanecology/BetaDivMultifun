@@ -36,8 +36,8 @@ compon_lui <- "LUI"
 # compon_lui <- "components"
 
 ## column titles of the chosen LUI
-# lui <- c("LUI", "deltaLUI")
-lui <- c("Gstd", "Mstd", "Fstd", "deltaGstd", "deltaMstd", "deltaFstd")
+lui <- c("LUI", "deltaLUI")
+# lui <- c("Gstd", "Mstd", "Fstd", "deltaGstd", "deltaMstd", "deltaFstd")
 ```
 chose selected input from mastertables
 ```{r}
@@ -145,7 +145,15 @@ colorder_gdm_input <- append(colorder_gdm_input, "s2.geosphere_distgeo", after =
 ```
 
 ```{r}
+#TODO change input file, fix this
+# adapt for LUi
+test <- read.csv("colord.csv", header = T)
+colorder_gdm_input <- as.vector(t(test))
+rm(test)
+#TODO maybe add tertiary consumers
+
 gdminput <- data.table::setcolorder(gdminput, colorder_gdm_input)
+
 
 gdminput[, rown := paste(Var1, Var2, sep = ".")]
 gdminput[,c("Var1","Var2") := NULL]
