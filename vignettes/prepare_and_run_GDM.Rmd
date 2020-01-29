@@ -32,8 +32,8 @@ funs <- "EFdistance"
 
 # LUI
 ## name of the chosen LUI
-# compon_lui <- "LUI"
-compon_lui <- "components"
+compon_lui <- "LUI"
+# compon_lui <- "components"
 
 ## column titles of the chosen LUI
 # lui <- c("LUI", "deltaLUI")
