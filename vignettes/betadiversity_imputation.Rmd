@@ -4,13 +4,14 @@ author: "Noelle Schenk"
 date: "1/30/2020"
 output: html_document
 ---
-
-Needs to be runned on the cluster
+# Intro
+run on the cluster. Too large dataset for running on own machine (contains comparisons, not just <150 rows as the functions dataset).
 
 instructions : `cluster_scripts_documentation.R`
 
 file : `betadiversity_imputation.R`
 data : `master_diversity_alpha_beta.rds`
+    place to `BetaDivMultifun/` at the moment (not within vignettes, not in data.)
 
 slurm file:
 ```{bash}
