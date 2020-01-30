@@ -1,0 +1,43 @@
+---
+title: "betadiv imputation"
+author: "Noelle Schenk"
+date: "1/30/2020"
+output: html_document
+---
+
+Needs to be runned on the cluster
+
+instructions : `cluster_scripts_documentation.R`
+
+file : `betadiversity_imputation.R`
+data : `master_diversity_alpha_beta.rds`
+
+slurm file:
+```{bash}
+#!/bin/sh
+#SBATCH --mail-user=<mail>
+#SBATCH --mail-type=end,fail
+
+#SBATCH --mem-per-cpu=4G
+#SBATCH --time=2:00:00
+#SBATCH --workdir=.
+#SBATCH --cpus-per-task=8
+#SBATCH --job-name="beta_imp_test"
+
+# change
+#SBATCH --output=R.out
+#SBATCH --error=R.err
+
+############################# execute code here################################
+module load vital-it
+module load R/latest
+
+R CMD BATCH --no-save -no-restore betadiversity_imputation.R
+```
+
+```{bash}
+sbatch Rbatch.sh
+squeue -u <username>
+```
+
+Submitted batch job 18971051
