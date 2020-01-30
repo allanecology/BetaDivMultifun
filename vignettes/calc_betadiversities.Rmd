@@ -987,21 +987,25 @@ rm(t); rm(tr); rm(b.tr); rm(trsimname); rm(trnesname)
 # convert to long format
 trlevels_components <- c(paste(trlevels, ".beta.sim", sep=""), paste(trlevels, ".beta.sne", sep=""))
 # create super-dataframe to store all betadiversities
-t <- trlevels_components[1] ; tr <- get(t) ; tr <- as.matrix(tr) ; tr[!lower.tri(tr)] <- NA
+t <- trlevels_components[1] ; tr <- get(t) ; tr <- as.matrix(tr) ; tr[!lower.tri(tr)] <- 1000
 tr <- reshape2::melt(tr, value.name = t)
-# masterbeta <- tr[!is.na(tr[, 3]),] #TODO changed that : no removal of NA values
+tr <- tr[which(tr[,3] != 1000), ] 
+nrow(tr[which(tr[,3] != 1000), ]) ==  (150*150) - ((150*150 / 2) +150/2) # 11175 rows left
+# masterbeta <- tr[!is.na(tr[, 3]),] #TODO changed that : no removal of NA values, but of values = 1000
 masterbeta <- tr
 
 for(t in trlevels_components[-1]){
   tr <- get(t)
   tr <- as.matrix(tr)
-  tr[!lower.tri(tr)] <- NA
+  tr[!lower.tri(tr)] <- 1000
   tr <- reshape2::melt(tr, value.name = t)
   # tr <- tr[!is.na(tr[, 3]),] #TODO removed 
-  masterbeta <- merge(masterbeta, tr, by = c("Var1", "Var2"))
+  tr <- tr[which(tr[,3] != 1000), ] 
+  masterbeta <- merge(masterbeta, tr, by = c("Var1", "Var2"), all.x = T)
 }
 rm(tr); rm(t)
 ```
+
 save betadiversity datasets
 ```{r}
 # for(t in trlevels){
