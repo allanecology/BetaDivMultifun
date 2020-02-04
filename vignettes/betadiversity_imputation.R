@@ -111,5 +111,5 @@ for(i in 1:2){
 }
 rm(current); rm(i)
 # USER : may change filename
-saveRDS(impbetavals, file="raw_imputed_betadiversity_values_complete.rds")
-saveRDS(impbetaerr, file = "raw_imputed_betadiversity_errors_complete.rds")
+saveRDS(impvals, file="raw_imputed_betadiversity_values_complete.rds")
+saveRDS(imperr, file = "raw_imputed_betadiversity_errors_complete.rds")
