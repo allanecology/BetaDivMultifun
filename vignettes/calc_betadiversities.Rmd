@@ -386,7 +386,7 @@ The Bird and Bat species of the different years are the same.
 
 Take average of Species occurrence and check how often species occur. We assume that birds and bats are difficult to measure, therefore having a large time window makes sense. A species is considered to be present in a plot, if it is present at least in one year.
 ```{r, eval = T}
-birds <- aggregate(value ~ Species + Plot, tertiary.consumer[Group_fine == "Birds"], function(x) mean(x, na.rm=T))
+birds <- aggregate(value ~ Species + Plot, tertiary.consumer[Group_fine == "Birds"], function(x) mean(x, na.rm=T)) # combine years
 birds <- data.table::data.table(birds)
 # nrow(birds) == 67 * 150 # TRUE : 67 species in 150 plots
 hist(birds$value, main="Presence of bird species among years")
@@ -397,7 +397,7 @@ nrow(birds) == 67 * 150 # expected number of rows present (67 species in 150 plo
 # note : following block is uncommented to exclude bats from analysis
 # bats <- aggregate(value ~ Species + Plot, tertiary.consumer[Group_fine == "Bats" & Species %in% batspecies], function(x) mean(x, na.rm=T))
 # bats <- data.table::data.table(bats)
-# # nrow(bats) == 11 * 150
+# nrow(bats) == 11 * 150
 # hist(bats$value)
 # # If species is present at least in one year, take it as present
 # bats[value > 0, value := 1]
@@ -407,15 +407,33 @@ nrow(birds) == 67 * 150 # expected number of rows present (67 species in 150 plo
 # tertiary.consumer <- rbind(birds, bats)
 tertiary.consumer <- data.table::copy(birds)
 
+#------------------- considerations about bird plots
+#TODO wait for new bird data and set plots without species to betadiversity == 0
 nrow(tertiary.consumer) == 150 * (67)
 rm(birds) #; rm(bats); rm(batspecies)
 
-# remove plots with 0 species
 test <- data.table::data.table(aggregate(value ~ Plot, tertiary.consumer, sum))
 barplot(height = test$value)
+
+
+beta.belowground.herbivore <- prepare_for_betapair(tertiary.consumer)
+beta.belowground.herbivore <- betapart::beta.pair(beta.belowground.herbivore, index.family = "sorensen")
+test <- beta.belowground.herbivore$beta.sor
+test <- as.matrix(test)
+test <- reshape2::melt(test, value.name = "tertiary.consumer")
+
+# birds plots set : 
+unique(test$Plot)
+
+p <- data.table::data.table(aggregate(value ~ Plot, bats, sum))
+
+
 # remove plots with 0 species
 tertiary.consumer <- tertiary.consumer[!Plot %in% test[value == 0, Plot], ]
+#------------------- considerations about bird plots
 ```
+
+
 ```{r}
 spdiv <- spdiv[!Trophic_level == "tertiary.consumer"]
 ```
