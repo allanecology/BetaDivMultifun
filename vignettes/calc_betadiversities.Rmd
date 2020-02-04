@@ -210,6 +210,7 @@ spdiv <- spdiv[!Trophic_level == "autotroph"]
 ```
 
 
+
 ## herbivore
 ```{r}
 herbivore <- spdiv[Trophic_level == "herbivore"]
@@ -273,6 +274,7 @@ spdiv <- spdiv[!Trophic_level == "herbivore"]
 
 ## Omnivore REMOVED
 Consists of arthropods dataset from 2008, ants dataset from 2014_2015, and snails dataset from 2017.
+Removed biologically because they represent the interaction of herbivores and secondary consumers in the analysis. Including them makes it more difficult to differentiate between herbivores and carnivores.
 ```{r, eval = F}
 omnivore <- spdiv[Trophic_level == "omnivore"]
 testplotpresence <- unique(omnivore[, .(Year, Plot)])
@@ -312,6 +314,7 @@ rm(omnivore)
 ```
 ```{r}
 trlevels <- trlevels[-which(trlevels == "omnivore")]
+spdiv <- spdiv[!Trophic_level == "omnivore"]
 ```
 
 
@@ -353,6 +356,7 @@ secondary.consumer <- secondary.consumer[Plot %in% unique(unique(secondary.consu
 secondary.consumer <- rbind(myria.sc[, .(Species, Plot, value)], secondary.consumer)
 nrow(secondary.consumer) == 139 * 174  # expected number of rows present
 spdiv <- spdiv[!Trophic_level == "secondary.consumer"]
+spdiv <- spdiv[!Trophic_level == "myriapod.secondary.consumer"]
 ```
 
 
@@ -405,6 +409,12 @@ tertiary.consumer <- data.table::copy(birds)
 
 nrow(tertiary.consumer) == 150 * (67)
 rm(birds) #; rm(bats); rm(batspecies)
+
+# remove plots with 0 species
+test <- data.table::data.table(aggregate(value ~ Plot, tertiary.consumer, sum))
+barplot(height = test$value)
+# remove plots with 0 species
+tertiary.consumer <- tertiary.consumer[!Plot %in% test[value == 0, Plot], ]
 ```
 ```{r}
 spdiv <- spdiv[!Trophic_level == "tertiary.consumer"]
@@ -830,6 +840,7 @@ rm(decomposer)
 ```
 ```{r}
 spdiv <- spdiv[!Trophic_level == "decomposer"]
+spdiv <- spdiv[!Trophic_level == "myriapod.decomposer"]
 ```
 
 
