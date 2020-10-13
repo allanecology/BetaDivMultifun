@@ -104,3 +104,81 @@ ggplot(res, aes(x = n_common_species, y = beta)) +
 plot(res$n_common_species, res$beta.to)
 x <- seq(0, 1000)
 points(res$n_common_species, res$beta.to * ((2*res$n_common_species)+10+10)/((2*res$n_common_species)+2+10+10), col = "red")
+
+
+########
+# alpha diversity
+#
+# are alpha and double 0 related? how to include any information of alpha diversity 
+# in my analysis?
+
+# use bird example dataset with turnover and nestedness
+data(bbsData)
+del <- beta.pair(bbs1980)
+
+sim <- del$beta.sim
+sim <- as.matrix(sim)
+sim[!lower.tri(sim, diag = F)] <- 1000
+sim <- reshape2::melt(sim, value.name = "beta.sim")
+sim <- data.table(sim)
+sim <- sim[beta.sim != 1000, ]
+
+sne <- del$beta.sne
+sne <- as.matrix(sne)
+sne[!lower.tri(sne, diag = F)] <- 1000
+sne <- data.table(reshape2::melt(sne, value.name = "beta.sne"))
+sne <- sne[beta.sne != 1000, ]
+
+simul_data <- merge(sim, sne, by = c("Var1", "Var2"))
+rm(sne); rm(sim); rm(del)
+
+# calc alpha diversity
+# rowsums
+alpha <- data.frame(rowSums(bbs1980))
+colnames(alpha) <- "alpha1"
+alpha$Var1 <- rownames(alpha)
+alpha <- data.table(alpha)
+
+simul_data <- merge(simul_data, alpha, by = "Var1")
+setnames(alpha, old = c("Var1", "alpha1"), new = c("Var2", "alpha2"))
+simul_data <- merge(simul_data, alpha, by = "Var2")
+
+# mean alpha
+simul_data[, mean_alpha := rowMeans(simul_data[,.(alpha1, alpha2)])]
+# calc double 0s
+# 
+# length(intersect(which(bbs1980["AL", ] == 0), which(bbs1980["AK", ] == 0)))
+# # second way of testing
+# test <- rbind(bbs1980["AL", ], bbs1980["AK", ])
+# sum(colSums(test) == 0)
+simul_data[, "double_0" := -1]
+for(i in 1:nrow(simul_data)){
+  var1 <- as.character(simul_data[i, Var1])
+  var2 <- as.character(simul_data[i, Var2])
+  d0 <- length(intersect(which(bbs1980[var1, ] == 0), which(bbs1980[var2, ] == 0)))
+  simul_data[i, double_0 := d0]
+}
+rm(var1); rm(var2); rm(i); rm(d0)
+
+
+
+hist(simul_data$beta.sne)
+hist(simul_data$beta.sim)
+
+d0 <- ggplot(simul_data, aes(x = double_0, y = mean_alpha)) +
+  geom_point()
+d1 <- ggplot(simul_data, aes(x = double_0, y = alpha1)) +
+  geom_point()
+d2 <- ggplot(simul_data, aes(x = double_0, y = alpha2)) +
+  geom_point()
+
+abi <- ggplot(simul_data, aes(x = mean_alpha, y = beta.sim)) +
+  geom_point()
+
+abn <- ggplot(simul_data, aes(x = mean_alpha, y = beta.sne)) +
+  geom_point()
+
+abibn <- ggplot(simul_data, aes(x = mean_alpha, y = beta.sim, col = beta.sne)) +
+  geom_point()
+
+plot_grid(d0, d1, d2, abi, abn, abibn)
