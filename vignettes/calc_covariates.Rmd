@@ -67,14 +67,14 @@ summary(pca_from_glsoil)
 ### PCA insights
 ```{r, eval=F}
 # color by soil type
-ggplot2::autoplot(pca_from_glsoil, data = pc_glsoil, colour = 'Soil.type')
+ggplot2::autoplot(pca_from_glsoil, data = pc_glsoil, colour = 'TWI')
 ggplot2::autoplot(pca_from_glsoil, data = pc_glsoil, colour = 'Soil.depth')
 
 ggplot2::autoplot(pca_from_glsoil, data = pc_glsoil, loadings = TRUE, loadings.colour = 'darkgray', loadings.label = TRUE, loadings.label.size = 2)
 ```
 
 ```{r, eval=F}
-ggplot2::autoplot(pca_from_glsoil, x=3, y=4, data=pc_glsoil, colour="Soil.type")
+ggplot2::autoplot(pca_from_glsoil, x=3, y=4, data=pc_glsoil, colour="TWI")
 ggplot2::autoplot(pca_from_glsoil, x=3, y=4, data=pc_glsoil, colour="pH")
 ```
 
@@ -87,10 +87,6 @@ pca_from_glsoil <- pca_from_glsoil$x[, 1:14]
 ## Computation of Dissimilarity Matrices
 With euclidian distance : `edis_glsoil`
 
-note : betadiversity is not calculated, but in case : 
-With betadiversity : `beta_glsoil`.
-*note* beta.pair.abund can not handle negative abundance values. Therefore, data needs to be centered around 0 instead of centered around 0. However, max is `r max(pca_from_glsoil)` and min is `r min(pca_from_glsoil)`. Would need an "abundance" value which makes sense.
-
 ```{r}
 # select plot set from matrix
 pca_from_glsoil <- data.frame(pca_from_glsoil)
@@ -100,8 +96,6 @@ pca_from_glsoil <- pca_from_glsoil[which(rownames(pca_from_glsoil) %in% plotNAse
 # compute dissimilarities for the first 14 principal components (euclidian distance)
 edis_glsoil <- vegan::vegdist(pca_from_glsoil, method = "euclid")
 
-# # In case I would want to calc beta, I would need to find good solution for handling negative values. Don't think so
-# beta_glsoil <- betapart::beta.pair.abund(pca_from_glsoil)
 rm(pc_glsoil); rm(pca_from_glsoil)
 ```
 
@@ -118,7 +112,7 @@ edis_glsoil <- reshape2::melt(edis_glsoil, value.name = "edis_soil")
 edis_glsoil <- edis_glsoil[!is.na(edis_glsoil[, 3]),]
 nrow(edis_glsoil) == choose(127, 2)
 
-# store soil dissimilarity matrix separately, as storing diss object in a list as rds is not possible
+# store soil dissimilarity matrix separately if needed
 saveRDS(edis_glsoil, "predictors_soil.rds")
 ```
 
