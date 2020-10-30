@@ -14,9 +14,6 @@ This scripts loads and cleans soil covariates (also selects the plots for analys
 # Soil
 ## Cleaning soil covariates
 ```{r}
-#USER : change paths and uncomment wanted
-# main_glsoil <- fread("../data/Grassland EP soil descriptors.txt")
-# small_glsoil <- fread("../data/BE env covariates.txt") # from here, I only take soil type and TWI
 small_glsoil <- small_glsoil[, c("Plot", "Soil.type", "TWI")]
 # take out empty row at the end
 small_glsoil <- small_glsoil[Plot != "",]
@@ -72,3 +69,4 @@ stype[, Soil.type := NULL]
 glsoil <- merge(glsoil, stype, by="Plotn", all=T)
 rm(stype)
 ```
+
