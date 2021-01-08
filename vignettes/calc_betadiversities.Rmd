@@ -314,7 +314,7 @@ aggregate(Plot ~ Species, herbivore[Group_fine == "Hymenoptera", ], length)
 # From report : exclude these 2 species? The trophic level herbivores included two species (\gls{tenthredo arcuata} and \gls{tenthredo notha}) which contained missing entries in many plots. Therefore they were excluded from analysis. 
 # check out code here : https://github.com/biodiversity-exploratories-synthesis/Grassland_diversity_dataset/blob/master/201116_UpdateGRLdataset.R
 # caterina solved the problem somehow.
-#test
+
 # remove from spdiv
 spdiv <- spdiv[!Trophic_level == "herbivore"]
 ```
