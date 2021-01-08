@@ -369,13 +369,15 @@ spdiv <- spdiv[!Trophic_level == "herbivore"]
 Consists of arthropods dataset from 2008, ants dataset from 2014_2015, and snails dataset from 2017.
 Removed biologically because they represent the interaction of herbivores and secondary consumers in the analysis. Including them makes it more difficult to differentiate between herbivores and carnivores.
 ```{r, eval = F}
-omnivore <- spdiv[Trophic_level == "omnivore"]
+omnivore <- spdiv[Trophic_level %in% c("omnivore.arthropod", "omnivore.ant", "omnivore.snail")]
 testplotpresence <- unique(omnivore[, .(Year, Plot)])
 # testplotpresence <- unique(omnivore[Plot %in% plotNAset, .(Year, Plot)])
-vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
+visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
 ```
 Many plots are missing.
+
+*note* : some details of the table might have changed after the last update of the diversity dataset. The main message remains the same.
 
 subset     |  arthropods  | ants   | snails  |  all  |  arth&sn  | 
 ---------- | ------------ | ------ | ------- | ----- | --------- |
@@ -393,7 +395,6 @@ omnivore <- omnivore[Year == "2008", .(Species, Plot, value)]
 # omnivore_ant <- omnivore[Year == "2014_2015", .(Species, Plot, value)]
 # omnivore_snail <- omnivore[Year == "2017", .(Species, Plot, value)]
 nrow(omnivore) == 139 * 14 # expected number of rows present
-spdiv <- spdiv[!Trophic_level == "omnivore"]
 # many plots do not contain any species - take out
 test <- aggregate(value ~ Plot, omnivore, sum)
 barplot(height = test$value)
@@ -401,61 +402,55 @@ abline(h = mean(test$value), col = "red")
 abline(h = median(test$value), col = "green")
 
 print(test$Plot[which(test$value == 0)])
-#take out for the moment
-trlevels <- trlevels[-which(trlevels == "omnivore")]
 rm(omnivore)
 ```
 ```{r}
+#TODO : maybe better just exclude them from the beginning from trlevels.
 trlevels <- trlevels[-which(trlevels == "omnivore")]
 spdiv <- spdiv[!Trophic_level == "omnivore"]
 ```
 
 
 ## Secondary consumers
-arthropods (?) and myriapods
-2008 dataset
-
-update : 2011 dataset is not included any more
+arthropods (2008) and myriapods (2011)
 ```{r}
-secondary.consumer <- spdiv[Trophic_level == "secondary.consumer"]
-myria.sc <- spdiv[Trophic_level == "myriapod.secondary.consumer"]
-myria.sc <- myria.sc[Plot %in% secondary.consumer$Plot]
-trlevels <- trlevels[!trlevels == "myriapod.secondary.consumer"]
+secondary.consumer <- spdiv[Trophic_level %in% c("secondary.consumer.arthropod", "secondary.consumer.myriapod")]
+myria.sc <- spdiv[Trophic_level == "secondary.consumer.myriapod"]
+#TODO keep that? : trlevels <- trlevels[!trlevels == "secondary.consumer.myriapod"]
 
-testplotpresence <- unique(secondary.consumer[, .(Year, Plot)])
+testplotpresence <- unique(secondary.consumer[, .(Trophic_level, Plot)])
 # testplotpresence <- unique(secondary.consumer[Plot %in% plotNAset, .(Year, Plot)])
-visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
+visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Trophic_level))
 rm(testplotpresence)
 ```
-Only 2008 dataset has some missing values
+Only arthropods dataset has some missing values
 
-  Year     | 2008  | 2011 | myriapods |
----------- | ----- | ---- | --------- |
-no Plots   | 139   | 150* |    150    |
-no Species | 170   |   4  |      4    |
+```{r, eval=F}
+# length(unique(secondary.consumer[Trophic_level == "secondary.consumer.arthropod", Species]))
+# any(unique(secondary.consumer[Trophic_level == "secondary.consumer.arthropod", Species]) %in% unique(secondary.consumer[Trophic_level == "secondary.consumer.myriapod", Species]))
+```
+  Year     | arthropods  |  myriapods |
+---------- | ----------- |  --------- |
+no Plots   |      139    |      150   |
+no Species |      170    |       4    |
 
 Species set does not overlap.
 
-**Note** : possibly, set from 2011 was not complete neither? But if the same error as in all insect datasets --> selecting plots from 2008 will solve the issue. In case 2011 Data is used, check this!
-
-```{r, eval=F}
-# length(unique(secondary.consumer[Year == "2008", Species]))
-any(unique(secondary.consumer[Year == "2008", Species]) %in% unique(secondary.consumer[Year == "2011", Species]))
-```
-
-Select the Plot set from 2008 and merge the datasets together.
+Select the arthropod Plots and remove the missing plots from myriapods.
 ```{r}
-secondary.consumer <- secondary.consumer[Plot %in% unique(unique(secondary.consumer[Year == "2008", Plot])), .(Species, Plot, value)]
-secondary.consumer <- rbind(myria.sc[, .(Species, Plot, value)], secondary.consumer)
+sc_plotset <- unique(secondary.consumer[Trophic_level == "secondary.consumer.arthropod", Plot])
+secondary.consumer <- secondary.consumer[Plot %in% sc_plotset, .(Species, Plot, value)]
 nrow(secondary.consumer) == 139 * 174  # expected number of rows present
-spdiv <- spdiv[!Trophic_level == "secondary.consumer"]
-spdiv <- spdiv[!Trophic_level == "myriapod.secondary.consumer"]
+spdiv <- spdiv[!Trophic_level == "secondary.consumer.arthropod"]
+spdiv <- spdiv[!Trophic_level == "secondary.consumer.myriapod"]
 ```
 
 
 ## Tertiary consumer
 only included birds, not bats. Bats are not expected to have direct effects on any of the included functions.
 ```{r, eval = T}
+#TODO HERE STECKEN GEBLIEBEN HIER WEITERMACHEN
+# wurden birds und bats jetzt benutzt oder nicht? (update text oben!)
 tertiary.consumer <- spdiv[Trophic_level == "tertiary.consumer"]
 testplotpresence <- unique(tertiary.consumer[, .(Year, Plot)])
 visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
