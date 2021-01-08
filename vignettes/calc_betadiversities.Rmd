@@ -174,16 +174,16 @@ autotrophnew <- spdiv[Trophic_level == "autotroph" & Year %in% c("2017", "2018")
 # find the species in autotroph which are never present in the years
 test <- data.table::data.table(aggregate(value ~ Species, autotroph, sum))
 exclude <- test[value == 0, Species]
-# test2 <- data.table(aggregate(value ~ Species, autotrophnew, sum))
-# notexclude <- test2[value == 0, Species]
 # exclude them from the analysis
 autotroph <- autotroph[!Species %in% exclude]
 
+# get numbers for table above :
 # how many species and how many plots were measured in the different years?
-length(unique(autotroph[Year == "2008", Plot])) # Changed year and tested for all years for reporting in the table
+# length(unique(autotroph[Year == "2008", Plot])) # Changed year and tested for all years for reporting in the table
+
 # get vector with lichen species to examine lichens separately
 lichenspecies <- setdiff(unique(autotroph[Year == "2009", Species]), unique(autotroph[Year == "2008", Species]))
-    # examine lichens and plants separately - same number of plots and expected number of species?
+  # examine lichens and plants separately - same number of plots and expected number of species?
 length(unique(autotroph[!Species %in% lichenspecies, Species]))
 length(unique(autotroph[!Species %in% lichenspecies, Plot]))
 ```
@@ -191,18 +191,20 @@ length(unique(autotroph[!Species %in% lichenspecies, Plot]))
 ```{r, eval=F}
 # are the same plots missing in all years?
 testplotpresence <- unique(autotroph[, .(Year, Plot)])
-vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
+visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 # no, different plots are missing.
 rm(testplotpresence)
 ```
 
 ```{r, eval = T}
+# note : this chunk depends on plotNAset, which is not available from the first round on. (is created by this script and updated by another later. (circularity in scripts))
 # are the same plots missing in all years?
 testplotpresence <- unique(autotroph[Plot %in% plotNAset, .(Year, Plot)])
 visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 # no, different plots are missing.
 rm(testplotpresence)
 ```
+
 If a plant species is present in at least 1 year, it is considered to be present. Underlying assumption : plant species composition is quite stable, therefore it is representative to assess their presence in a large time span.
 
 If a plant species is missing in a year, rather the year than the plot is removed. Underlying assumption : if a plot is missing a year, the diversity was not measured as many times as in the other plots.
@@ -218,7 +220,7 @@ lichens <- autotroph[Species %in% lichenspecies,]
 # calculate the mean of all value (species presence/ absence). If it is not zero, the species was present in at least one year and the value can be set to 1.
 plants <- aggregate(value ~ Species + Plot, plants, function(x) mean(x, na.rm=T))
 plants <- data.table::data.table(plants)
-# nrow(plants) == 344*150 # TRUE : there are 344 species per plot in the new dataset
+# nrow(plants) == 342*150 # TRUE : there are 342 species per plot in the new dataset
 # Check how many plant species have been present / absent in how many years
 hist(plants$value, main="Presence of plant species among years", sub="The plot indicates if a plant species was either present in no year, \n in 1 years , ... , in all 9 years. Most species are never present", xlab = "")
 
@@ -227,7 +229,7 @@ plants[value != 0, value := 1]
 
 # add the lichens dataset to the plants dataset
 autotroph <- rbind(plants, lichens[, .(Species, Plot, value)])
-nrow(autotroph) == 150 * 344 + 150 * 119 # TRUE : there are 119 lichen and 344 plant species in all 150 plots.
+nrow(autotroph) == 150 * 342 + 150 * 119 # TRUE : there are 119 lichen and 342 plant species in all 150 plots.
 ```
 
 ```{r}
