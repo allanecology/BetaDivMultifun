@@ -234,48 +234,67 @@ spdiv <- spdiv[!Trophic_level == "autotroph"]
 
 
 ## herbivore
+candidates to include : herbivore.arthropod and herbivore.snail
 ```{r}
-herbivore <- spdiv[Trophic_level %in% c("herbivore", "herbivore.snail")]
+herbivore <- spdiv[Trophic_level %in% c("herbivore.arthropod", "herbivore.snail")]
 ```
-Note : the code below can be deleted as soon as the new diversity dataset is available.
+first check plot set for arthropods, then check which plots are covered by snail data as well.
+
+**herbivore.arthropod** consist of 4 groups ("Hemiptera"   "Coleoptera"  "Hymenoptera" "Orthoptera"), some contain missing plots. Chose the plot intersect with complete coverage.
 ```{r}
 # Arthropod herbivores consist of 3 Groups, 2 of them contain missing data, one not.
 # We can only take the plots present in all groups --> reduce the number of plots
-unique(herbivore[Year == "2008", Group_fine])
-length(unique(herbivore[Year == "2008" & Group_fine == "Hymenoptera", Plot]))
+unique(herbivore[Trophic_level == "herbivore.arthropod", Group_fine])
+length(unique(herbivore[Trophic_level == "herbivore.arthropod" & Group_fine == "Orthoptera", Plot]))
 ```
-| Dataset  | Hemiptera | Coleoptera  | Hymenoptera | Orthoptera |
-| -------- | --------- |------------ |------------ |----------- |
-| no Plots |  139      |     139     |  **150**    |  139       |
+| Dataset    | Hemiptera | Coleoptera  | Hymenoptera | Orthoptera |
+| --------   | --------- |------------ |------------ |----------- |
+| no Plots   |  139      |     139     |  **145**    |  139       |
+| no Species |  197      |     182     |    6        |  16        |
 ```{r}
-herbivore_plotset <- unique(herbivore[Year == "2008" & Group_fine == "Orthoptera", Plot])
+arthro_plotset <- intersect(
+  unique(herbivore[Trophic_level == "herbivore.arthropod" & Group_fine == "Hemiptera", Plot]),
+  unique(herbivore[Trophic_level == "herbivore.arthropod" & Group_fine == "Orthoptera", Plot]))
+arthro_plotset <- intersect(arthro_plotset,
+  unique(herbivore[Trophic_level == "herbivore.arthropod" & Group_fine == "Hymenoptera", Plot])
+)
+arthro_plotset <- intersect(arthro_plotset,
+  unique(herbivore[Trophic_level == "herbivore.arthropod" & Group_fine == "Coleoptera", Plot])
+)
+
 # check if the plot set is consistent
-sum(herbivore_plotset != unique(herbivore[Year == "2008" & Group_fine == "Hemiptera", Plot])) # all the same
-sum(herbivore_plotset != unique(herbivore[Year == "2008" & Group_fine == "Coleoptera", Plot])) # all the same
+sum(arthro_plotset != unique(herbivore[Year == "2008" & Group_fine == "Hemiptera", Plot])) # all the same
+sum(arthro_plotset != unique(herbivore[Year == "2008" & Group_fine == "Coleoptera", Plot])) # all the same
 
-# select the plot set for herbivores
-# select all rows which are EITHER from 2008 (arthropods) and from the selected plot list, OR they are from 2017
-# species from 2017 don't have to be part of the selected plots
-herbivore <- herbivore[Plot %in% herbivore_plotset & Year == "2008" | Year == "2017", ]
-rm(herbivore_plotset)
+# Exclude the plots which are to exclude from arthropods (only arthropods so snails can be checked independently, although this would not be necessary).
+herbivore <- herbivore[Plot %in% arthro_plotset & Trophic_level == "herbivore.arthropod" | Trophic_level == "herbivore.snail", ]
+rm(arthro_plotset)
 ```
 
-
+**herbivore.snail**
 ```{r}
-testplotpresence <- unique(herbivore[, .(Year, Plot)])
-visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
+testplotpresence <- unique(herbivore[, .(Trophic_level, Plot)])
+visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Trophic_level))
 rm(testplotpresence)
 ```
-Snails were only measured in 134 plots. They contain 39 species. Insects were measured in 139 plots, they contain 401 species.
+Snails were only measured in 134 plots. They contain 39 species. Insects were measured in 134 plots, they contain 401 species.
+Snails seem to be missing mostly in one region : in SEG, 16 plots are missing, no missings in the other regions.
 ```{r, eval = F}
+length(grep("AEG", unique(herbivore[Trophic_level == "herbivore.snail", Plot]), value = T)) # 50
+length(grep("SEG", unique(herbivore[Trophic_level == "herbivore.snail", Plot]), value = T)) # 34
+length(grep("HEG", unique(herbivore[Trophic_level == "herbivore.snail", Plot]), value = T)) # 50
+```
+
+```{r, eval = F}
+#TODO leave this chunk? depends on plotNAset and therefore circular.. maybe better use arthro_plotset or completely delete
 testplotpresence <- unique(herbivore[Plot %in% plotNAset, .(Year, Plot)])
 visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
 ```
-
+Only 124 plots contain both arthropods and snails.
 ```{r, eval=F}
-length(unique(herbivore[Year == "2008", Species]))
-length(intersect(herbivore[Year == "2008", Plot], herbivore[Year == "2017", Plot]))
+length(unique(herbivore[Trophic_level == "herbivore.arthropod", Species])) # 401
+length(intersect(herbivore[Trophic_level == "herbivore.arthropod", Plot], herbivore[Trophic_level == "herbivore.snail", Plot])) # 124
 ```
 
 | Year       |  2008    |  2017   | both   |
@@ -284,10 +303,18 @@ length(intersect(herbivore[Year == "2008", Plot], herbivore[Year == "2017", Plot
 | no Plots   |   139    |  134    |  124   |
 | no Species |   401    |   39    |  440   |
 
-Too many missing plots in snails dataset. Take insects dataset only.
+Too many missing plots in snails, and too few species. Take insects dataset only.
 ```{r}
-herbivore <- herbivore[Year == "2008", .(Species, Plot, value)]
-nrow(herbivore) == 139 * 401 # 401 species in 139 plots present
+herbivore <- herbivore[Trophic_level == "herbivore.arthropod", .(Species, Plot, value)]
+nrow(herbivore) == 139 * 401 # 401 species in 139 plots present . If number is not correct, some species were not measured in all plots.
+#TODO : error HERE stecken geblieben HERE HIER: 
+nrow(herbivore[Group_fine == "Hymenoptera", ]) == 139*6 # too few values
+aggregate(Plot ~ Species, herbivore[Group_fine == "Hymenoptera", ], length)
+# again Tethredo_arcuata and Tenthredo notha have some missing plots!
+# From report : exclude these 2 species? The trophic level herbivores included two species (\gls{tenthredo arcuata} and \gls{tenthredo notha}) which contained missing entries in many plots. Therefore they were excluded from analysis. 
+# check out code here : https://github.com/biodiversity-exploratories-synthesis/Grassland_diversity_dataset/blob/master/201116_UpdateGRLdataset.R
+# caterina solved the problem somehow.
+
 # remove from spdiv
 spdiv <- spdiv[!Trophic_level == "herbivore"]
 ```
