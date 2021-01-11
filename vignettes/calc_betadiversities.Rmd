@@ -59,8 +59,9 @@ Group to 18 trophic levels as needed for analysis. (see also `info_diversity.ods
 #TODO change names or NOT? if not, delete this chunk and the dataset names_trlevel
 
 # take out trophic levels which are not used in analysis
-spdiv <- spdiv[!Trophic_level %in% c("unknown.protist", "unknown.soilfungi", "unknown.acari", "herbivore.bird", "protist.parasite.nonplant", "mainlybacterivore.protist", "decomposer.acari")]
+spdiv <- spdiv[!Trophic_level %in% c("unknown.protist", "unknown.soilfungi", "unknown.acari", "herbivore.bird", "protist.parasite.nonplant", "mainlybacterivore.protist", "carnivore.acari")]
 ## herbivore.bird, former vertebrate herbivore : only 104 plots
+## carnivore.acari : only 1 species
 
 # take out trophic levels which were excluded during this analysis
 # OPTION : comment out to reproduce reason of exclusion
