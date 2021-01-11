@@ -59,10 +59,12 @@ Group to 18 trophic levels as needed for analysis. (see also `info_diversity.ods
 #TODO change names or NOT? if not, delete this chunk and the dataset names_trlevel
 
 # take out trophic levels which are not used in analysis
-spdiv <- spdiv[!Trophic_level %in% c("detritivore", "unknown.protist", "unknown.soilfungi", "unknown.acari", "vert.herb", "protist.parasite.nonplant")]
+spdiv <- spdiv[!Trophic_level %in% c("unknown.protist", "unknown.soilfungi", "unknown.acari", "herbivore.bird", "protist.parasite.nonplant", "mainlybacterivore.protist", "decomposer.acari")]
+## herbivore.bird, former vertebrate herbivore : only 104 plots
+
 # take out trophic levels which were excluded during this analysis
 # OPTION : comment out to reproduce reason of exclusion
-exclude <- c("pollinator", "pollinator.arthropod", "decomposer.acari", "decomposer.arthropod", "decomposer.myriapod", "decomposer.soilfungi", "omnivore.arthropod", "omnivore.protist", "omnivore")
+exclude <- c("pollinator.arthropod", "decomposer.arthropod", "decomposer.myriapod", "decomposer.soilfungi", "omnivore.arthropod", "omnivore.protist", "omnivore")
 #TODO : go through trophic levels and find out which ones to include and which not. Sind da wirklich so viele neue namen, oder sind sie nur umbenennnt etc.?
 spdiv <- spdiv[!Trophic_level %in% exclude, ]
 
@@ -919,30 +921,33 @@ spdiv <- spdiv[!Trophic_level == "decomposer.myriapod"]
 ## plant pathogen
 
 ```{r}
-plant.pathogen <- spdiv[Trophic_level == "plant.pathogen"]
-spdiv <- spdiv[!Trophic_level == "plant.pathogen"]
+plant.pathogen <- spdiv[Trophic_level == "plantpathogen.fungi"]
 ```
 ```{r}
-bp_overv <- aggregate(value ~ Plot, plant.pathogen, sum)
+bp_overv <- data.table(aggregate(value ~ Plot, plant.pathogen, sum))
 barplot(height = bp_overv$value)
 abline(h = mean(bp_overv$value), col = "red")
 abline(h = median(bp_overv$value), col = "green")
+# 2 plots without species are removed:
+plant.pathogen <- plant.pathogen[!Plot %in% bp_overv[value == 0, Plot], ]
 ```
-remove missing plots
+84 species in 142 plots
 ```{r}
-plant.pathogen <- plant.pathogen[!Plot %in% bp_overv$Plot[which(bp_overv$value == 0)]]
 # fill in missing combinations
 plant.pathogen <- data.table::setDT(plant.pathogen)[data.table::CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
 plant.pathogen[is.na(value), value := 0 ]
-nrow(plant.pathogen) == 84 * 148
+
+length(unique(plant.pathogen$Plot))
+nrow(plant.pathogen) == 84 * 142
+
+spdiv <- spdiv[!Trophic_level == "plantpathogen.fungi"]
 ```
 
 
 ## pollinator REMOVED
 
 ```{r, eval = F}
-pollinator <- spdiv[Trophic_level == "pollinator"]
-spdiv <- spdiv[!Trophic_level == "pollinator"]
+pollinator <- spdiv[Trophic_level == "pollinator.arthropod"]
 ```
 ```{r, eval = F}
 bp_overv <- aggregate(value ~ Plot, pollinator, sum)
@@ -955,14 +960,31 @@ pollinator <- pollinator[!Plot %in% bp_overv$Plot[which(bp_overv$value == 0)]]
 # fill in missing combinations
 pollinator <- data.table::setDT(pollinator)[data.table::CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
 pollinator[is.na(value), value := 0 ]
+length(unique(pollinator$Species))
 nrow(pollinator) == 705 * 144
 # cleaning
 rm(bp_overv)
 ```
 144 Plots with 705 species.
 ```{r}
-spdiv <- spdiv[!Trophic_level == "pollinator"]
+spdiv <- spdiv[!Trophic_level == "pollinator.arthropod"]
 ```
+
+# acari
+decomposer.acari
+```{r}
+decomp.acari <- spdiv[Trophic_level == "decomposer.acari"]
+length(unique(decomp.acari$Plot))
+
+bp_overv <- data.table(aggregate(value ~ Plot, decomp.acari, sum))
+barplot(height = bp_overv$value, ylab = "number of pollinator species per plot")
+abline(h = mean(bp_overv$value), col = "red")
+abline(h = median(bp_overv$value), col = "green")
+decomp.acari <- decomp.acari[!Plot %in% bp_overv[value == 0, Plot], ]
+#TODO include or not?
+rm(bp_overv)
+```
+46 species, 140 plots
 
 
 # Find plot Selection
