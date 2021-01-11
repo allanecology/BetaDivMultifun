@@ -514,7 +514,6 @@ all(tertiary.consumer[Plot %in% c("AEG06"), Species] == tertiary.consumer[Plot %
 rm(test)
 ```
 
-
 ```{r}
 spdiv <- spdiv[!Trophic_level == "tertiary.consumer.birdbat"]
 ```
@@ -532,45 +531,36 @@ Not visible in the plot, but there are only 148 plots for both years.
 
 Check if OTU names are the same in both years. No obvious overlap.
 ```{r, eval=F}
-length(setdiff(unique(bacteria.RNA[Year == "2014", Species]), unique(bacteria.RNA[Year == "2011", Species])))
-# length(unique(bacteria.RNA$Species))
-# The OTU names prefix is either bac11 or bac14 ...
-# grep("01ece679a6294aadf97b931ce39a539a", bacteria.RNA$Species)
-bacteria.RNA[grep("01ece679a6294aadf97b931ce39a539a", bacteria.RNA$Species), Year]
-```
-The OTUs can be compared across the years. However, we will only work with the 2011 dataset in order to be more consistent with the years.
-Replace the prefix by bac_ instead of bac11_ and bac14_
-```{r, eval=F}
-# In case the years would be combined
-bacteria.RNA[grep("bac11_", Species), Species := gsub("bac11_", "bac14_", Species)]
+grep("01ece679a6294aadf97b931ce39a539a", bacteria.RNA$Species, value = T)
+unique(bacteria.RNA[grep("01ece679a6294aadf97b931ce39a539a", bacteria.RNA$Species), Year]) # species present in both years
 ```
 
-|    year    |  2011   |  2014     |  
-| ---------- | ------- | --------- | 
-| no Plots   |   148   |   148     |
-| no OTUs    |  140510 |  139691   |
+The OTUs can be compared across the years. However, we will only work with the 2011 dataset in order to be more consistent with the years.
+Replace the prefix by bac_ instead of bac11_ and bac14_
+
+|    year    |  2011   |  2014     |  2011 & 14 |
+| ---------- | ------- | --------- | -----------|
+| no Plots   |   148   |   148     |   148      |
+| no OTUs    |  140510 |  139691   |   174945   |
 
 ```{r, eval=F}
 length(unique(bacteria.RNA[Year == "2014", Species])) # 139691
-length(setdiff(unique(bacteria.RNA[Year == "2011", Species]), unique(bacteria.RNA[Year == "2014", Species]))) # 34435 # 35254
-length(intersect(unique(bacteria.RNA[Year == "2011", Species]), unique(bacteria.RNA[Year == "2014", Species]))) # 105256
-```
-2014 : 34435 OTUs unique to 2014, 105256 overlapping of total 139691. ~ 1/4 to 3/4
-2011 : 35254 OTUs unique to 2011, 105256 overlapping of total 140510. ~ 1/4 to 3/4
-```{r}
+length(setdiff(unique(bacteria.RNA[Year == "2011", Species]), unique(bacteria.RNA[Year == "2014", Species]))) # 35254 unique to 2011, 34435 unique to 2014
+length(intersect(unique(bacteria.RNA[Year == "2011", Species]), unique(bacteria.RNA[Year == "2014", Species]))) # 105256 present in both years
+
 grid::grid.newpage()
-VennDiagram::draw.pairwise.venn(area1 = 34435 + 105256, area2 = 35254 + 105256, cross.area = 105256, category = c("2011 OTU", "2014 OTU"))
+VennDiagram::draw.pairwise.venn(area1 = 34435 + 105256, area2 = 35254 + 105256, cross.area = 105256, category = c("2014 OTU", "2011 OTU"))
+# approx. overlap of 3/4
 ```
 Select 2011 dataset.
 ```{r}
 bacteria.RNA <- bacteria.RNA[Year == "2011", .(Species, Plot, value)]
 # The bacteria RNA dataset had been reduced: all species-plot combinations with 0 were removed.
-# reconstruct them (code from Caterina)
-bacteria.RNA <- data.table::setDT(bacteria.RNA)[data.table::CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
+# reconstruct them (code from Caterina, see https://github.com/biodiversity-exploratories-synthesis/Synthesis-dataset-manual/blob/main/Synthesis%20datasets%20%20How%20to%20use.md under "Missing" zeros)
+bacteria.RNA <- data.table::setDT(bacteria.RNA)[data.table::CJ(Species = Species, Plot = Plot, unique = T), on=.(Species, Plot)]
 bacteria.RNA[is.na(value), value := 0 ]
-# # add NA values for the two missing plots
-# bac_missing <- rbind(data.table::data.table(Species = unique(bacteria.RNA[Plot == "AEG21", Species]), Plot = "AEG33", value = NA),
-#                      data.table::data.table(Species = unique(bacteria.RNA[Plot == "AEG21", Species]), Plot = "AEG34", value = NA))
+# note : no need to add back NA plots, as they are excluded from this analyis anyways
+
 nrow(bacteria.RNA) == 148 * 140510 # expected number of plots present
 spdiv <- spdiv[!Trophic_level == "bacteria.RNA"]
 ```
