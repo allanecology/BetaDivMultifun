@@ -567,9 +567,9 @@ spdiv <- spdiv[!Trophic_level == "bacteria.RNA"]
 
 
 ## protist.bacterivore
-2011, 2011_2012, 2017 datasets
+2011, 2017 datasets
 ```{r}
-protist.bacterivore <- spdiv[Trophic_level == "protist.bacterivore"]
+protist.bacterivore <- spdiv[Trophic_level == "bacterivore.protist"]
 testplotpresence <- unique(protist.bacterivore[, .(Year, Plot)])
 visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
@@ -577,23 +577,18 @@ rm(testplotpresence)
 Only 1 plot missing, in 2011
 
 Are the OTU the same across years?
-Datasets 2011 and 2017 are comparable with each others, but not with dataset 2011_2012. The name appendices for the latter need to be preserved, the other prefixes can be removed.
+Datasets 2011 and 2017 are comparable with each other.
 ```{r, eval=F}
-protist.bacterivore[grep("_protist24426", Species), Species := gsub("_protist24426", "", Species)] # remove appendix from 2011
-protist.bacterivore[grep("_protist24466", Species), Species := gsub("_protist24466", "", Species)] # remove appendix from 2017
-
-length(setdiff(unique(protist.bacterivore[Year == "2011", Species]), unique(protist.bacterivore[Year == "2011_2012", Species])))
-length(intersect(unique(protist.bacterivore[Year == "2017", Species]), unique(protist.bacterivore[Year == "2011_2012", Species])))
-# length(unique(protist.bacterivore[Year == "2011", Species]))
-# length(unique(protist.bacterivore[Year == "2011_2012", Species]))
+length(setdiff(unique(protist.bacterivore[Year == "2011", Species]), unique(protist.bacterivore[Year == "2017", Species])))
+length(intersect(unique(protist.bacterivore[Year == "2017", Species]), unique(protist.bacterivore[Year == "2011", Species])))
+length(unique(protist.bacterivore[Year == "2011", Plot]))
+length(unique(protist.bacterivore[, Species]))
 ```
 
-|    year    | 2011    | 2011_2012 |  2017  | 2011 2017 | 2017 2011_2012 |
-| ---------- | ------- | --------- | ------ | --------- | -------------- |
-| no Plots   |   149   |   150     |   150  |    149    |     149        |
-| no OTUs    |   886   |   233     |   863  | 833+23+30 |       0        |
-
-No overlap between 2011 and 2011_2012 and 2017 and 2011_2012. 
+|    year    | 2011    |  2017  | 2011 2017 |
+| ---------- | ------- | ------ | --------- |
+| no Plots   |   149   |   150  |    150    |
+| no OTUs    |   886   |   886  |    886    |
 
 For BetaDivMultifun, only year 2011 is chosen : 
 ```{r}
@@ -606,42 +601,36 @@ spdiv <- spdiv[!Trophic_level == "protist.bacterivore"]
 
 ## protist.eukaryvore
 ```{r}
-protist.eukaryvore <- spdiv[Trophic_level == "protist.eukaryvore"]
+protist.eukaryvore <- spdiv[Trophic_level == "eukaryvore.protist"]
 testplotpresence <- unique(protist.eukaryvore[, .(Year, Plot)])
-vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
+visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
 ```
 Only 1 plot missing, in 2011.
 
 ```{r, eval=F}
-# code for OTU renaming, in case they would like to be combined.
-protist.eukaryvore[grep("_protist24426", Species), Species := gsub("_protist24426", "", Species)] # clean 2011
-protist.eukaryvore[grep("_protist24466", Species), Species := gsub("_protist24466", "", Species)] # clean 2017
-```
-
-```{r, eval=F}
 # interchange intersect with setdiff and modify years to obtain values in table below
-length(setdiff(unique(protist.eukaryvore[Year == "2017", Species]), unique(protist.eukaryvore[Year == "2011", Species])))
-length(unique(protist.eukaryvore[Year == "2011", Plot]))
+# length(intersect(unique(protist.eukaryvore[Year == "2017", Species]), unique(protist.eukaryvore[Year == "2011", Species])))
+length(unique(protist.eukaryvore[Year == "2017", Plot]))
 ```
 
 |   Year   |   2011   |  2017  |  both    |
 | -------- | -------- | ------ | -------- |
-| no Plots |   149    |  150   |    149   |
-| no OTUs  |   211    |  210   | 204+7+6  |
+| no Plots |   149    |  150   |    150   |
+| no OTUs  |   217    |  217   |    217   |
 
 For BetaDivMultifun, only year 2011 is chosen : 
 ```{r}
 protist.eukaryvore <- protist.eukaryvore[Year == "2011", .(Species, Plot, value)]
-nrow(protist.eukaryvore) == 149 * 211 # TRUE : The expected number of rows is present.
-spdiv <- spdiv[!Trophic_level == "protist.eukaryvore"]
+nrow(protist.eukaryvore) == 149 * 217 # TRUE : The expected number of rows is present.
+spdiv <- spdiv[!Trophic_level == "eukaryvore.protist"]
 ```
 
 
 ## protist.omnivore
 
 ```{r}
-protist.omnivore <- spdiv[Trophic_level == "protist.omnivore"]
+protist.omnivore <- spdiv[Trophic_level == "omnivore.protist"]
 testplotpresence <- unique(protist.omnivore[, .(Year, Plot)])
 vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
@@ -649,27 +638,22 @@ rm(testplotpresence)
 Only 1 plot missing, in 2011.
 
 ```{r, eval=F}
-# code for enaming of OTUs in case years would be combined.
-protist.omnivore[grep("_protist24426", Species), Species := gsub("_protist24426", "", Species)] # clean 2011
-protist.omnivore[grep("_protist24466", Species), Species := gsub("_protist24466", "", Species)] # clean 2017
-```
-
-```{r, eval=F}
 # interchange intersect with setdiff and modify years to obtain values in table below
 length(intersect(unique(protist.omnivore[Year == "2011", Species]), unique(protist.omnivore[Year == "2017", Species])))
-length(unique(protist.omnivore[Year == "2017", Species]))
+length(unique(protist.omnivore[Year == "2017", Plot]))
+length(unique(protist.omnivore[, Plot]))
 ```
 
 |   Year   |   2011   |  2017  |  both    |
 | -------- | -------- | ------ | -------- |
-| no Plots |   149    |  150   |    149   |
-| no OTUs  |   444    |  434   | 430+10+4 |
+| no Plots |   149    |  150   |    150   |
+| no OTUs  |   444    |  444   |    444   |
 
 Only Year 2011 is chosen.
 ```{r}
 protist.omnivore <- protist.omnivore[Year == "2011", .(Species, Plot, value)]
 nrow(protist.omnivore) == 149 * 444 # expected number of rows is present
-spdiv <- spdiv[!Trophic_level == "protist.omnivore"]
+spdiv <- spdiv[!Trophic_level == "omnivore.protist"]
 ```
 
 
@@ -677,35 +661,29 @@ spdiv <- spdiv[!Trophic_level == "protist.omnivore"]
 ## protist.plant.parasite
 
 ```{r}
-protist.plant.parasite <- spdiv[Trophic_level == "protist.plant.parasite"]
+protist.plant.parasite <- spdiv[Trophic_level == "plantparasite.protist"]
 testplotpresence <- unique(protist.plant.parasite[, .(Year, Plot)])
-vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
+visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
 ```
 Only 1 plot missing, in 2011.
 
 ```{r, eval=F}
-# Code for OTU renaming, in case years would be combined.
-protist.plant.parasite[grep("_protist24426", Species), Species := gsub("_protist24426", "", Species)] # clean 2011
-protist.plant.parasite[grep("_protist24466", Species), Species := gsub("_protist24466", "", Species)] # clean 2017
-```
-
-```{r, eval=F}
 # interchange intersect with setdiff and modify years to obtain values in table below
-length(setdiff(unique(protist.plant.parasite[Year == "2017", Species]), unique(protist.plant.parasite[Year == "2011", Species])))
-length(unique(protist.plant.parasite[Year == "2017", Plot]))
+length(intersect(unique(protist.plant.parasite[Year == "2017", Species]), unique(protist.plant.parasite[Year == "2011", Species])))
+length(unique(protist.plant.parasite[Year == "2017", Species]))
 ```
 
 |   Year   |   2011   |  2017  |  both    |
 | -------- | -------- | ------ | -------- |
 | no Plots |   149    |  150   |    149   |
-| no OTUs  |   96     |   95   |  95+1+0  |
+| no OTUs  |   96     |   96   |     96   |
 
 Only 2011 is chosen
 ```{r}
 protist.plant.parasite <- protist.plant.parasite[Year == "2011", .(Species, Plot, value)]
 nrow(protist.plant.parasite) == 149 * 96
-spdiv <- spdiv[!Trophic_level == "protist.plant.parasite"]
+spdiv <- spdiv[!Trophic_level == "plantparasite.protist"]
 ```
 
 
