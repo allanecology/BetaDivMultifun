@@ -27,12 +27,11 @@ spdiv <- merge(spdiv, spinfo, by = "Species", all.x=T)
 # Therefore remove all rows with NA.
 spdiv <- spdiv[!is.na(value)]
 
+# Set to presence-absence
+spdiv[value != 0, value := 1]
+
 # now I can remove the original datasets, so I save cpu:
 rm(spinfo); gc()
-```
-Set to presence-absence
-```{r}
-spdiv[value != 0, value := 1]
 ```
 
 
@@ -40,16 +39,8 @@ spdiv[value != 0, value := 1]
 Group to 18 trophic levels as needed for analysis. (see also `info_diversity.ods`)
 ```{r}
 #TODO DIESES SKRIPT
-# - acari anschauen
 # - übersichten über die trophic levels, number of species etc. ev. nach unten schieben --> 
 #    zu dem Part, wo das Diversity dataset parat ist.
-# - ev. Diversity dataset cleaning skript machen? Separieren von calc_betadiversity...?
-
-#TODO INS REINE SCHREIBEN : 
-# - sauber alle unbenutzten trophic levels entfernen
-# - ev. alle excluded trophic levels nach hinten befördern
-
-
 
 # # rename trophic levels with names from the previous version of the diversity dataset
 # # (old ID : 190802, new ID : 201124)
@@ -59,55 +50,63 @@ Group to 18 trophic levels as needed for analysis. (see also `info_diversity.ods
 #TODO change names or NOT? if not, delete this chunk and the dataset names_trlevel
 
 # take out trophic levels which are not used in analysis
-spdiv <- spdiv[!Trophic_level %in% c("unknown.protist", "unknown.soilfungi", "unknown.acari", "herbivore.bird", "protist.parasite.nonplant", "mainlybacterivore.protist", "carnivore.acari")]
-## herbivore.bird, former vertebrate herbivore : only 104 plots
-## carnivore.acari : only 1 species
+# not looked at in this script
+exclude <- c("unknown.protist", "unknown.soilfungi", "unknown.acari", "herbivore.bird", "protist.parasite.nonplant", "mainlybacterivore.protist", "decomposer.collembola")
+# herbivore.bird, former vertebrate herbivore vert.herb : only 104 plots
+# protist.parasite.nonplant :  probably wise to remove, we don't expect to affect any function directly
+# mainlybacterivore.protist : less studied --> less information about their roles. expected to 
+#      have similar role than bacterivores.
+# decomposer.collembola : data from 2019, newer than the newest function (from 2017)
 
-# take out trophic levels which were excluded during this analysis
-# OPTION : comment out to reproduce reason of exclusion
-exclude <- c("pollinator.arthropod", "decomposer.arthropod", "decomposer.myriapod", "decomposer.soilfungi", "omnivore.arthropod", "omnivore.protist", "omnivore")
-#TODO : go through trophic levels and find out which ones to include and which not. Sind da wirklich so viele neue namen, oder sind sie nur umbenennnt etc.?
+# take out trophic leels which are not used in analsis
+# but are looked at in this script (can be outcommented to reproduce reason of exclusion)
+exclude <- c(exclude, "pollinator.arthropod", "omnivore.snail", "omnivore.ant", "omnivore.arthropod", "decomposer.arthropod", "decomposer.acari", "decomposer.myriapod", "carnivore.acari", "herbivore.snail")
+#TODO pollinator.arthropod : TODO (note : there is code for it in this script)
+# omnivores : represent interactions between secondary.consumers and herbivores
+# carnivore.acari : only 1 species
+# herbivore.snail : too few plots
+# decomposers : from 2019, functions are until 2017 - too young.
+
 spdiv <- spdiv[!Trophic_level %in% exclude, ]
-
-# merge the trophic levels which are merged in analysis
-spdiv[Trophic_level == "herbivore.snail", Trophic_level := "herbivore"]
-spdiv[Trophic_level == "omnivore.ant", Trophic_level := "omnivore"]
-spdiv[Trophic_level == "omnivore.snail", Trophic_level := "omnivore"]
-spdiv[Trophic_level == "mainlybacterivore.protist", Trophic_level := "bacterivore.protist"]
-# unique(spdiv$Trophic_level)
 ```
 
-show years
+overview dataset
 ```{r, eval=F}
-#TODO : move this downwards, after selecting trophic levels
 unique(spdiv[, .(Trophic_level, Year)])
-```
-
-```{r, eval=F}
-length(unique(spdiv$Species)) # 191696 species in the dataset (incl. OTU)
-```
-Get overview of amount of species per trophic level
-```{r, eval=F}
-#TODO : also move downwards
+length(unique(spdiv$Species)) # 183388 species in the dataset (incl. OTU)
+# Get overview of amount of species per trophic level
 for(t in unique(spdiv$Trophic_level)){
   print(c(t, length(unique(spdiv[Trophic_level == t, Species]))))
 }
 ```
+[1] "bacteria.RNA" "174945"      
+[1] "herbivore.arthropod" "401"                
+[1] "autotroph" "495"      
+[1] "tertiary.consumer.birdbat" "78"                       
+[1] "secondary.consumer.arthropod" "170"                         
+[1] "plantpathogen.fungi" "84"                 
+[1] "secondary.consumer.arthropodsoillarvae" "17"                                    
+[1] "herbivore.arthropodsoillarvae" "11"                           
+[1] "secondary.consumer.myriapod" "4"                          
+[1] "omnivore.protist" "444"             
+[1] "eukaryvore.protist" "217"               
+[1] "plantparasite.protist" "96"                   
+[1] "bacterivore.protist" "886"                
+[1] "decomposer.soilfungi" "4069"                
+[1] "symbiont.soilfungi" "1010"              
+[1] "pathotroph.soilfungi" "461"  
+
+
 Store trophic levels in vector
 ```{r}
 trlevels <- sort(unique(spdiv$Trophic_level))
-#TODO : is this required here?
-# exclude trophic levels which were excluded due to reasons below
-#  (found out during data preparation that they should be excluded)
-trlevels <- trlevels[!trlevels %in% c("pollinator", "pollinator.arthropod",
-                                      "decomposer.acari", "decomposer.arthropod", "decomposer.myriapod", "decomposer.soilfungi")]
 ```
-
 
 
 # Check if diversity across years is correlated
 Create new column with trophic level and year
 ```{r, eval=F}
+#TODO : move this chunk below
 spdiv[, trlevel_year := paste(Trophic_level, Year, sep = "")]
 ```
 Correlation plot of all trophic levels and years? Or better betadiversity among years?
@@ -120,7 +119,7 @@ Correlation plot of all trophic levels and years? Or better betadiversity among 
 # testing with 1 trophic level, 2 years
 # for presence absence
 #TODO : rename tertiary.consumer to tertiary.consumer.birdbat
-for(trlevel in c("autotroph", "secondary.consumer", "tertiary.consumer")){
+for(trlevel in c("autotroph", "secondary.consumer", "tertiary.consumer.birdbat")){
   pdf(paste("corr_diversity_across_years_", trlevel, ".pdf", sep=""), paper = "a4r")
   par(mfrow=c(12,12))
   test <- spdiv[Trophic_level == trlevel, .(Species, value, trlevel_year, Plot, Year)]
@@ -244,7 +243,7 @@ Although working with a range of 5 years, still many plant species are not prese
 
 ```{r}
 # remove lichens and plants, not used any more
-rm(plants) ; rm(lichens); rm(lichenspecies)
+rm(plants) ; rm(lichens); rm(lichenspecies); rm(autotrophnew)
 # take out autotrophs from spdiv
 spdiv <- spdiv[!Trophic_level == "autotroph"]
 ```
@@ -265,43 +264,18 @@ consist of 4 groups ("Hemiptera"   "Coleoptera"  "Hymenoptera" "Orthoptera"), so
 # Arthropod herbivores consist of 3 Groups, 2 of them contain missing data, one not.
 # We can only take the plots present in all groups --> reduce the number of plots
 unique(herbivore[Trophic_level == "herbivore.arthropod", Group_fine])
-length(unique(herbivore[Trophic_level == "herbivore.arthropod" & Group_fine == "Hymenoptera", Plot]))
+length(unique(herbivore[Trophic_level == "herbivore.arthropod" & Group_fine == "Hemiptera", Species]))
 ```
 | Dataset    | Hemiptera | Coleoptera  | Hymenoptera | Orthoptera |
 | --------   | --------- |------------ |------------ |----------- |
-| no Plots   |  139      |     139     |  **145**    |  139       |
-| no Species |  197      |     182     |    6        |  16        |
-
-Special case for Hymenoptera species : 
-```{r, eval = F}
-aggregate(Plot ~ Species, herbivore[Group_fine == "Hymenoptera", ], length)
-```
-|            Species  | Plot |
-|-------------------- |------|
-| Ametastegia_tenera  | 139  |
-|   Dulophanes_morio  | 139  |
-|  Tenthredo_arcuata  | 113  |
-| Tenthredo_mioceras  | 139  |
-|    Tenthredo_notha  | 119  |
-|   Tenthredo_zonula  | 139  |
-
-*Tenthredo arcuata* and *Tenthredo notha* were measured on less than 139 plots (113 and 119). The remaining species were measured on 139 plots.
+| no Plots   |  139      |     139     |   139       |  139       |
+| no Species |  197      |     182     |    4        |  16        |
 
 ```{r, eval = F}
 testplotpresence <- unique(herbivore[Group_fine == "Hymenoptera", .(Species, Plot)])
 visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Species))
 rm(testplotpresence)
 ```
-The 2 species are removed. Reason : they were measured on a very different plot set than the other species. For the analysis, a complete dataset is required (as much overlap as possible). Loss of plots if they are included is inevitable (113 plots are present only, 127 plots could be used in previous analysis).
-```{r}
-herbivore <- herbivore[!Species %in% c("Tenthredo_arcuata", "Tenthredo_notha"), ]
-```
-updated species-plot table : 
-
-| Dataset    | Hemiptera | Coleoptera  | Hymenoptera | Orthoptera |
-| --------   | --------- |------------ |------------ |----------- |
-| no Plots   |  139      |     139     |  **139**    |  139       |
-| no Species |  197      |     182     |  **4**      |  16        |
 
 ```{r}
 # Get subset of plots (intersect) which is present in all arthropod groups (which plots contain full species data?)
@@ -320,8 +294,8 @@ sum(arthro_plotset != unique(herbivore[Year == "2008" & Group_fine == "Hemiptera
 sum(arthro_plotset != unique(herbivore[Year == "2008" & Group_fine == "Coleoptera", Plot])) # all the same
 
 # Exclude the plots which are to exclude from arthropods (only arthropods so snails can be checked independently, although this would not be necessary).
-herbivore <- herbivore[Plot %in% arthro_plotset & Trophic_level == "herbivore.arthropod" | Trophic_level == "herbivore.snail", ]
-rm(arthro_plotset)
+herbivore.arthropod <- herbivore[Plot %in% arthro_plotset & Trophic_level == "herbivore.arthropod" | Trophic_level == "herbivore.snail", ]
+rm(arthro_plotset); rm(herbivore)
 ```
 
 ### herbivore.snail
@@ -361,7 +335,7 @@ Too many missing plots in snails, and too few species. Take arthropod dataset on
 herbivore <- herbivore[Trophic_level == "herbivore.arthropod", .(Species, Plot, value)]
 nrow(herbivore) == 139 * 399 # 399 species in 139 plots present . If number is not correct, some species were not measured in all plots.
 # remove from spdiv
-spdiv <- spdiv[!Trophic_level == "herbivore"]
+spdiv <- spdiv[!Trophic_level == "herbivore.arthropod"]
 
 # summary : 399 species in 139 plots
 ```
@@ -407,11 +381,6 @@ abline(h = median(test$value), col = "green")
 print(test$Plot[which(test$value == 0)])
 rm(omnivore)
 ```
-```{r}
-#TODO : maybe better just exclude them from the beginning from trlevels.
-trlevels <- trlevels[-which(trlevels == "omnivore")]
-spdiv <- spdiv[!Trophic_level == "omnivore"]
-```
 
 
 ## Secondary consumers
@@ -419,7 +388,6 @@ arthropods (2008) and myriapods (2011)
 ```{r}
 secondary.consumer <- spdiv[Trophic_level %in% c("secondary.consumer.arthropod", "secondary.consumer.myriapod")]
 myria.sc <- spdiv[Trophic_level == "secondary.consumer.myriapod"]
-#TODO keep that? : trlevels <- trlevels[!trlevels == "secondary.consumer.myriapod"]
 
 testplotpresence <- unique(secondary.consumer[, .(Trophic_level, Plot)])
 # testplotpresence <- unique(secondary.consumer[Plot %in% plotNAset, .(Year, Plot)])
@@ -446,6 +414,8 @@ secondary.consumer <- secondary.consumer[Plot %in% sc_plotset, .(Species, Plot, 
 nrow(secondary.consumer) == 139 * 174  # expected number of rows present
 spdiv <- spdiv[!Trophic_level == "secondary.consumer.arthropod"]
 spdiv <- spdiv[!Trophic_level == "secondary.consumer.myriapod"]
+
+trlevels <- c(trlevels[-grep("secondary.consumer", trlevels)], "secondary.consumer", "secondary.consumer.arthropodsoillarvae")
 ```
 
 
@@ -518,6 +488,8 @@ rm(test)
 ```
 
 ```{r}
+#TODO trlevels
+trlevels[which(trlevels == "tertiary.consumer.birdbat")] <- "tertiary.consumer"
 spdiv <- spdiv[!Trophic_level == "tertiary.consumer.birdbat"]
 ```
 
@@ -595,9 +567,10 @@ length(unique(protist.bacterivore[, Species]))
 
 For BetaDivMultifun, only year 2011 is chosen : 
 ```{r}
-protist.bacterivore <- protist.bacterivore[Year == "2011", .(Species, Plot, value)]
-nrow(protist.bacterivore) == 149 * 886 # TRUE : The expected number of rows is present.
-spdiv <- spdiv[!Trophic_level == "protist.bacterivore"]
+bacterivore.protist <- protist.bacterivore[Year == "2011", .(Species, Plot, value)]
+nrow(bacterivore.protist) == 149 * 886 # TRUE : The expected number of rows is present.
+spdiv <- spdiv[!Trophic_level == "bacterivore.protist"]
+rm(protist.bacterivore)
 ```
 
 
@@ -624,9 +597,10 @@ length(unique(protist.eukaryvore[Year == "2017", Plot]))
 
 For BetaDivMultifun, only year 2011 is chosen : 
 ```{r}
-protist.eukaryvore <- protist.eukaryvore[Year == "2011", .(Species, Plot, value)]
-nrow(protist.eukaryvore) == 149 * 217 # TRUE : The expected number of rows is present.
+eukaryvore.protist <- protist.eukaryvore[Year == "2011", .(Species, Plot, value)]
+nrow(eukaryvore.protist) == 149 * 217 # TRUE : The expected number of rows is present.
 spdiv <- spdiv[!Trophic_level == "eukaryvore.protist"]
+rm(protist.eukaryvore)
 ```
 
 
@@ -635,7 +609,7 @@ spdiv <- spdiv[!Trophic_level == "eukaryvore.protist"]
 ```{r}
 protist.omnivore <- spdiv[Trophic_level == "omnivore.protist"]
 testplotpresence <- unique(protist.omnivore[, .(Year, Plot)])
-vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
+visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
 ```
 Only 1 plot missing, in 2011.
@@ -654,9 +628,10 @@ length(unique(protist.omnivore[, Plot]))
 
 Only Year 2011 is chosen.
 ```{r}
-protist.omnivore <- protist.omnivore[Year == "2011", .(Species, Plot, value)]
-nrow(protist.omnivore) == 149 * 444 # expected number of rows is present
+omnivore.protist <- protist.omnivore[Year == "2011", .(Species, Plot, value)]
+nrow(omnivore.protist) == 149 * 444 # expected number of rows is present
 spdiv <- spdiv[!Trophic_level == "omnivore.protist"]
+rm(protist.omnivore)
 ```
 
 
@@ -684,9 +659,10 @@ length(unique(protist.plant.parasite[Year == "2017", Species]))
 
 Only 2011 is chosen
 ```{r}
-protist.plant.parasite <- protist.plant.parasite[Year == "2011", .(Species, Plot, value)]
-nrow(protist.plant.parasite) == 149 * 96
+plantparasite.protist <- protist.plant.parasite[Year == "2011", .(Species, Plot, value)]
+nrow(plantparasite.protist) == 149 * 96
 spdiv <- spdiv[!Trophic_level == "plantparasite.protist"]
+rm(protist.plant.parasite)
 ```
 
 
@@ -717,10 +693,11 @@ Only year 2011 is chosen
 soilfungi.decomposer <- soilfungi.decomposer[Year == "2011", .(Species, Plot, value)]
 # adding the missing plot - species combinations . all species-plot combinations with 0 had been removed to store memory
 # reconstruct them (code from Caterina)
-soilfungi.decomposer <- data.table::setDT(soilfungi.decomposer)[data.table::CJ(Species = Species, Plot = Plot, unique = T), on=.(Species, Plot)]
-soilfungi.decomposer[is.na(value), value := 0 ]
-nrow(soilfungi.decomposer) == 150 * 2332 # TRUE : all expected rows are present
+decomposer.soilfungi <- data.table::setDT(soilfungi.decomposer)[data.table::CJ(Species = Species, Plot = Plot, unique = T), on=.(Species, Plot)]
+decomposer.soilfungi[is.na(value), value := 0 ]
+nrow(decomposer.soilfungi) == 150 * 2332 # TRUE : all expected rows are present
 spdiv <- spdiv[!Trophic_level == "decomposer.soilfungi"]
+rm(soilfungi.decomposer)
 ```
 
 
@@ -750,10 +727,11 @@ Only 2011 data is used here.
 ```{r}
 soilfungi.pathotroph <- soilfungi.pathotroph[Year == "2011", .(Species, Plot, value)]
 # all plot-species combinations with 0 had been removed to save memory. They are added back now. (code from Caterina)
-soilfungi.pathotroph <- data.table::setDT(soilfungi.pathotroph)[data.table::CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
-soilfungi.pathotroph[is.na(value), value := 0 ]
-nrow(soilfungi.pathotroph) == 150 * 285 # TRUE : all expected rows present
+pathotroph.soilfungi <- data.table::setDT(soilfungi.pathotroph)[data.table::CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
+pathotroph.soilfungi[is.na(value), value := 0 ]
+nrow(pathotroph.soilfungi) == 150 * 285 # TRUE : all expected rows present
 spdiv <- spdiv[!Trophic_level == "pathotroph.soilfungi"]
+rm(soilfungi.pathotroph)
 ```
 
 
@@ -781,12 +759,13 @@ length(intersect(intersect(unique(soilfungi.symbiont[Year == "2011", Species]), 
 
 Only 2011 is chosen.
 ```{r}
-soilfungi.symbiont <- soilfungi.symbiont[Year == "2011", .(Species, Plot, value)]
+symbiont.soilfungi <- soilfungi.symbiont[Year == "2011", .(Species, Plot, value)]
 # adding back missing plot-species combinations (code from Caterina)
-soilfungi.symbiont <- data.table::setDT(soilfungi.symbiont)[data.table::CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
-soilfungi.symbiont[is.na(value), value := 0 ]
-nrow(soilfungi.symbiont) == 142 * 385 # all expected combinations present
+symbiont.soilfungi <- data.table::setDT(symbiont.soilfungi)[data.table::CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
+symbiont.soilfungi[is.na(value), value := 0 ]
+nrow(symbiont.soilfungi) == 142 * 385 # all expected combinations present
 spdiv <- spdiv[!Trophic_level == "symbiont.soilfungi"]
+rm(soilfungi.symbiont)
 ```
 
 
@@ -806,7 +785,7 @@ All plots are present, only one year (simple situation - no plot is shown).
 ```{r, eval=F}
 hist(belowground.herbivore$value, main="Presence of belowground herbivores, 11 species", sub="The plot indicates that most species - Plot combinations are not present. This is a first indicator for relatively high (acceptable high) beta-diversity.", xlab = "")
 ```
-```{r, eval = F}
+```{r, eval = T}
 bh_overv <- aggregate(value ~ Plot, belowground.herbivore, sum)
 barplot(height = bh_overv$value)
 abline(h = mean(bh_overv$value), col = "red")
@@ -831,12 +810,15 @@ corrplot::corrplot(as.matrix(beta.belowground.herbivore$beta.sor),type="lower", 
 corrplot::corrplot(as.matrix(beta.belowground.herbivore$beta.sim),type="lower", method="color", diag=F, mar=c(1,0,1,0), number.cex=0.4, tl.srt = 45, tl.col = "black", tl.cex = 0.5)
 
 corrplot::corrplot(as.matrix(beta.belowground.herbivore$beta.sne),type="lower", method="color", diag=F, mar=c(1,0,1,0), number.cex=0.4, tl.srt = 45, tl.col = "black", tl.cex = 0.5)
+
+# cleaning
+rm(beta.belowground.herbivore)
 ```
 There is definitely some betadiversity among the plots.
 ```{r}
 nrow(belowground.herbivore) == 145 * 11 # expected number of plots present
-# cleaning
-rm(beta.belowground.herbivore)
+herbivore.arthropodsoillarvae <- data.table::copy(belowground.herbivore)
+rm(belowground.herbivore)
 spdiv <- spdiv[!Trophic_level == "herbivore.arthropodsoillarvae"]
 ```
 
@@ -847,7 +829,7 @@ spdiv <- spdiv[!Trophic_level == "herbivore.arthropodsoillarvae"]
 belowground.predator <- spdiv[Trophic_level == "secondary.consumer.arthropodsoillarvae"]
 nrow(belowground.predator) == 17 * 150 # expected number of plots present
 ```
-```{r, eval = F}
+```{r, eval = T}
 bp_overv <- aggregate(value ~ Plot, belowground.predator, sum)
 barplot(height = bp_overv$value)
 abline(h = mean(bp_overv$value), col = "red")
@@ -870,17 +852,20 @@ corrplot::corrplot(as.matrix(beta.belowground.predator$beta.sor),type="lower", m
 corrplot::corrplot(as.matrix(beta.belowground.predator$beta.sim),type="lower", method="color", diag=F, mar=c(1,0,1,0), number.cex=0.4, tl.srt = 45, tl.col = "black", tl.cex = 0.5)
 
 corrplot::corrplot(as.matrix(beta.belowground.predator$beta.sne),type="lower", method="color", diag=F, mar=c(1,0,1,0), number.cex=0.4, tl.srt = 45, tl.col = "black", tl.cex = 0.5)
+# cleaning
+rm(beta.belowground.predator)
 ```
 ```{r}
 nrow(belowground.predator) == 149 * 17 # expected number of rows present
-# cleaning
-rm(beta.belowground.predator)
+secondary.consumer.arthropodsoillarvae <- data.table::copy(belowground.predator)
 spdiv <- spdiv[!Trophic_level == "secondary.consumer.arthropodsoillarvae"]
+rm(belowground.predator)
 ```
 
 
 ## decomposer TAKEN OUT
 2008, 2011, 2019
+short reason : 2008 and 2011 are not complete enough, 2019 data is too young to include because youngest function is from 2017.
 ```{r, eval = F}
 decomposer <- spdiv[Trophic_level %in% c("decomposer.arthropod", "decomposer.myriapod"), .(Species, Plot, value, Trophic_level, Year)]
 ```
@@ -907,13 +892,12 @@ rm(bp_overv)
 # how many species were found in 2008 and 2019?
 intersect(unique(decomposer[Year == "2008", Species]), unique(decomposer[Year == "2019", Species])) # 0 species
 
-#TODO können ev. decomposer wieder benutzt werden? Wenn, dann only 2019.
 decomposer <- decomposer[Year == "2019"]
 decomposer <- decomposer[!Plot %in% zerospecies]# remove the plots without species
 
 rm(zerospecies)
 ```
-```{r}
+```{r, eval = F}
 spdiv <- spdiv[!Trophic_level == "decomposer.arthropod"]
 spdiv <- spdiv[!Trophic_level == "decomposer.myriapod"]
 ```
@@ -925,7 +909,7 @@ spdiv <- spdiv[!Trophic_level == "decomposer.myriapod"]
 plant.pathogen <- spdiv[Trophic_level == "plantpathogen.fungi"]
 ```
 ```{r}
-bp_overv <- data.table(aggregate(value ~ Plot, plant.pathogen, sum))
+bp_overv <- data.table::data.table(aggregate(value ~ Plot, plant.pathogen, sum))
 barplot(height = bp_overv$value)
 abline(h = mean(bp_overv$value), col = "red")
 abline(h = median(bp_overv$value), col = "green")
@@ -935,13 +919,14 @@ plant.pathogen <- plant.pathogen[!Plot %in% bp_overv[value == 0, Plot], ]
 84 species in 142 plots
 ```{r}
 # fill in missing combinations
-plant.pathogen <- data.table::setDT(plant.pathogen)[data.table::CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
-plant.pathogen[is.na(value), value := 0 ]
+plantpathogen.fungi <- data.table::setDT(plant.pathogen)[data.table::CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
+plantpathogen.fungi[is.na(value), value := 0 ]
 
-length(unique(plant.pathogen$Plot))
-nrow(plant.pathogen) == 84 * 142
+length(unique(plantpathogen.fungi$Plot))
+nrow(plantpathogen.fungi) == 84 * 142
 
 spdiv <- spdiv[!Trophic_level == "plantpathogen.fungi"]
+rm(plant.pathogen)
 ```
 
 
@@ -962,18 +947,18 @@ pollinator <- pollinator[!Plot %in% bp_overv$Plot[which(bp_overv$value == 0)]]
 pollinator <- data.table::setDT(pollinator)[data.table::CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
 pollinator[is.na(value), value := 0 ]
 length(unique(pollinator$Species))
-nrow(pollinator) == 705 * 144
+nrow(pollinator) == 707 * 144
 # cleaning
 rm(bp_overv)
 ```
-144 Plots with 705 species.
-```{r}
+144 Plots with 707 species.
+```{r, eval = F}
 spdiv <- spdiv[!Trophic_level == "pollinator.arthropod"]
 ```
 
-# acari
+# acari REMOVED
 decomposer.acari
-```{r}
+```{r, eval = F}
 decomp.acari <- spdiv[Trophic_level == "decomposer.acari"]
 length(unique(decomp.acari$Plot))
 
@@ -990,6 +975,14 @@ rm(bp_overv)
 
 # Find plot Selection
 Find subset of plots without missing diversity data and store.
+
+```{r}
+rm(spdiv); gc()
+#check names of trlevels
+names_trlevel <- names_trlevel$final_name
+all(names_trlevel[-which(names_trlevel == "")] %in% trlevels) & all(trlevels %in% names_trlevel[-which(names_trlevel == "")]) # same set of names in trlevels
+```
+
 
 Is there any plot with zero species?
 ```{r, eval=F}
@@ -1021,7 +1014,13 @@ for(t in trlevels){
 
 par(mar = c(10, 4.1, 4.1, 2.1))
 barplot(redplotset, ylim = c(0, 140), las = 3, cex.names = 0.8, main = "Does removal of given trophic level increase number of plots?")
-abline(h = 128, col = "darkgreen")
+abline(h = 114, col = "darkgreen")
+abline(h = 120, col = "red")
+#TODO HERE HIER STEcken geblieben: inspect the chosen plot set
+# altes plot set : 127 plots
+length(grep("AEG", common.plots))
+length(grep("HEG", common.plots))
+length(grep("SEG", common.plots))
 ```
 Inspect common plot set
 ```{r, eval=F}
