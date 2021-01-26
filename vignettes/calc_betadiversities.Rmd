@@ -459,14 +459,12 @@ rm(birds); gc()
 nrow(tertiary.consumer) == 150 * (67)
 rm(birds) #; rm(bats); rm(batspecies)
 
-# find plots with 0 species and remove them
-test <- data.table::data.table(aggregate(value ~ Plot, tertiary.consumer, sum))
-barplot(height = test$value)
-removeplots <- test[value == 0, Plot] # 5 plots with 0 species
-tertiary.consumer <- tertiary.consumer[!Plot %in% removeplots, ]
-rm(removeplots)
+# # find plots with 0 species, but don't remove
+# test <- data.table::data.table(aggregate(value ~ Plot, tertiary.consumer, sum))
+# barplot(height = test$value)
+# test[value == 0, Plot] # 5 plots with 0 species
 
-nrow(tertiary.consumer) == 145*67 # expected number of rows present
+nrow(tertiary.consumer) == 150*67 # expected number of rows present
 ```
 check betadiversity
 ```{r,eval = F}
@@ -488,7 +486,6 @@ rm(test)
 ```
 
 ```{r}
-#TODO trlevels
 trlevels[which(trlevels == "tertiary.consumer.birdbat")] <- "tertiary.consumer"
 spdiv <- spdiv[!Trophic_level == "tertiary.consumer.birdbat"]
 ```
@@ -698,7 +695,6 @@ decomposer.soilfungi <- add_back_missing_plots_species_combinations(decomposer.s
 #nrow(decomposer.soilfungi) # 349800
 nrow(decomposer.soilfungi) == 150 * 2332 # TRUE : all expected rows are present
 spdiv <- spdiv[!Trophic_level == "decomposer.soilfungi"]
-rm(decomposer.soilfungi)
 ```
 
 
@@ -791,14 +787,7 @@ barplot(height = bh_overv$value)
 abline(h = mean(bh_overv$value), col = "red")
 abline(h = median(bh_overv$value), col = "green")
 ```
-Most plots contain 3 species. 5 Plots do not contain ANY species! Need to be removed from the dataset.
-```{r}
-# exclude plots with zero species
-# Problem : betadiversity can't be calculated on plots without species.
-zeroplots <- bh_overv$Plot[which(bh_overv$value == 0)]
-belowground.herbivore <- belowground.herbivore[!Plot %in% zeroplots]
-rm(zeroplots) ; rm(bh_overv)
-```
+Most plots contain 3 species. 5 Plots do not contain any species. No need to remove them from analysis, beta-diversity will be set to 0 or 1 accordingly (see below).
 
 Calculate betadiversity to check wether plots differ in their species composition / turnover.
 ```{r, eval = F}
@@ -811,12 +800,14 @@ corrplot::corrplot(as.matrix(beta.belowground.herbivore$beta.sim),type="lower", 
 
 corrplot::corrplot(as.matrix(beta.belowground.herbivore$beta.sne),type="lower", method="color", diag=F, mar=c(1,0,1,0), number.cex=0.4, tl.srt = 45, tl.col = "black", tl.cex = 0.5)
 
+# note : betadiversity including plots without species produce NaN. They will be addressed later.
+
 # cleaning
 rm(beta.belowground.herbivore)
 ```
 There is definitely some betadiversity among the plots.
 ```{r}
-nrow(belowground.herbivore) == 145 * 11 # expected number of plots present
+nrow(belowground.herbivore) == 150 * 11 # expected number of plots present
 herbivore.arthropodsoillarvae <- data.table::copy(belowground.herbivore)
 rm(belowground.herbivore)
 spdiv <- spdiv[!Trophic_level == "herbivore.arthropodsoillarvae"]
@@ -836,12 +827,7 @@ abline(h = mean(bp_overv$value), col = "red")
 abline(h = median(bp_overv$value), col = "green")
 ```
 There is 1 plot in belowground predators which does not contain any species.
-```{r}
-# take out plot without species
-zeroplots <- bp_overv$Plot[which(bp_overv$value == 0)]
-belowground.predator <- belowground.predator[!Plot %in% zeroplots]
-rm(zeroplots); rm(bp_overv)
-```
+
 calc betadiversity and plot
 ```{r, eval = F}
 beta.belowground.predator <- prepare_for_betapair(belowground.predator)
@@ -856,7 +842,7 @@ corrplot::corrplot(as.matrix(beta.belowground.predator$beta.sne),type="lower", m
 rm(beta.belowground.predator)
 ```
 ```{r}
-nrow(belowground.predator) == 149 * 17 # expected number of rows present
+nrow(belowground.predator) == 150 * 17 # expected number of rows present
 secondary.consumer.arthropodsoillarvae <- data.table::copy(belowground.predator)
 spdiv <- spdiv[!Trophic_level == "secondary.consumer.arthropodsoillarvae"]
 rm(belowground.predator)
@@ -874,7 +860,7 @@ decomposer <- spdiv[Trophic_level %in% c("decomposer.arthropod", "decomposer.myr
 | -------- | ---------- | --------- | --------- |
 | #species |     40     |     64    |      6    |
 | #Plots   |    139     |    141*   |    150    |
-*it becomes clear later, that arthropods in 2019 have 9 plots with 0 species --> need to be removed.
+*it becomes clear later, that arthropods in 2019 have 9 plots with 0 species --> need to be removed. Edit : no need to remove them any more, set betadiversity to 0 or 1 accordingly.
 ```{r, eval = F}
 length(unique(decomposer[Year == "2019", Species]))
 
@@ -887,6 +873,7 @@ barplot(height = bp_overv$value, main = "species per plot")
 abline(h = mean(bp_overv$value), col = "red")
 abline(h = median(bp_overv$value), col = "green")
 zerospecies <- bp_overv[value == 0, Plot] # 9 plots with 0 species
+# Note : no need to take them out
 rm(bp_overv)
 
 # how many species were found in 2008 and 2019?
@@ -922,7 +909,6 @@ length(unique(plantpathogen.fungi$Plot))
 nrow(plantpathogen.fungi) == 84 * 144
 
 spdiv <- spdiv[!Trophic_level == "plantpathogen.fungi"]
-rm(plant.pathogen)
 ```
 
 
@@ -963,7 +949,6 @@ barplot(height = bp_overv$value, ylab = "number of pollinator species per plot")
 abline(h = mean(bp_overv$value), col = "red")
 abline(h = median(bp_overv$value), col = "green")
 decomp.acari <- decomp.acari[!Plot %in% bp_overv[value == 0, Plot], ]
-#TODO include or not?
 rm(bp_overv)
 ```
 46 species, 140 plots
@@ -978,18 +963,6 @@ rm(spdiv); gc()
 names_trlevel <- names_trlevel$final_name
 all(names_trlevel[-which(names_trlevel == "")] %in% trlevels) & all(trlevels %in% names_trlevel[-which(names_trlevel == "")]) # same set of names in trlevels
 ```
-
-
-Is there any plot with zero species?
-```{r, eval=F}
-for(t in trlevels){
-  print(t)
-  tr <- get(t)
-  test <- aggregate(value ~ Plot, tr, sum)
-  print(test$Plot[which(test$value == 0)])
-}
-```
-There is no more plot with zero species in the dataset.
 
 Select the plots without missing information and store. This chunk of code generates `plotNAset.rds`, the selected set of plots.
 ```{r, eval=F}
