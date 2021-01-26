@@ -15,10 +15,8 @@
 #' @return A data.table in the same format as diversity_dataset, but with the previously
 #' missing plots x species added back as 0. Note : Only the columns Plot, Species and value are
 #' considered, any other columns will be filled with NA.
-#' @fill_year To fill a given year with missing plot-species combinations AND year, the given year
-#' to be filled in needs to be provided. Default is "NA"
 #' @export
-add_back_missing_plots_species_combinations <- function(diversity_dataset, fill_year = NA){
+add_back_missing_plots_species_combinations <- function(diversity_dataset){
   # Control : check if there are any NA values, although none would be expected
   if(length(diversity_dataset[is.na(value), value]) > 0){
     stop("There are NA values in the dataset. Missing combinations can not be added.")
@@ -34,7 +32,6 @@ add_back_missing_plots_species_combinations <- function(diversity_dataset, fill_
   diversity_dataset <- diversity_dataset[is.na(value), value := 0 ][] # note about the ending [] :
       # this is a reported bug from data.table, if not added, the function will not return the data.table
       # at first attempt (only at the second). https://stackoverflow.com/questions/32988099/data-table-objects-assigned-with-from-within-function-not-printed
-  diversity_dataset[,Year := fill_year][]
   return(diversity_dataset)
 }
 NULL
