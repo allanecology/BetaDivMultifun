@@ -736,46 +736,36 @@ spdiv <- spdiv[!Trophic_level == "pathotroph.soilfungi"]
 ```
 
 
-## soilfungi.symbiont
+## symbiont.soilfungi
 
 2011, 2014, 2017
 ```{r}
-soilfungi.symbiont <- spdiv[Trophic_level == "symbiont.soilfungi"]
-testplotpresence <- unique(soilfungi.symbiont[, .(Year, Plot)])
+symbiont.soilfungi <- spdiv[Trophic_level == "symbiont.soilfungi"]
+symbiont.soilfungi <- add_back_missing_plots_species_combinations(symbiont.soilfungi)
+testplotpresence <- unique(symbiont.soilfungi[, .(Year, Plot)])
 visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
 ```
-several missing plots in all years
+several missing plots x species combinations in all years, but no NA values.
 ```{r, eval=F}
-length(unique(soilfungi.symbiont[Year == "2017", Species]))
+length(unique(symbiont.soilfungi[Year == "2017", Species]))
 
-length(setdiff(unique(soilfungi.symbiont[Year == "2011", Plot]), unique(soilfungi.symbiont[Year == "2014", Plot])))
+length(setdiff(unique(symbiont.soilfungi[Year == "2011", Plot]), unique(symbiont.soilfungi[Year == "2014", Plot])))
 
-length(intersect(intersect(unique(soilfungi.symbiont[Year == "2011", Species]), unique(soilfungi.symbiont[Year == "2017", Species])), unique(soilfungi.symbiont[Year == "2014", Species])))
+length(intersect(intersect(unique(symbiont.soilfungi[Year == "2011", Species]), unique(symbiont.soilfungi[Year == "2017", Species])), unique(symbiont.soilfungi[Year == "2014", Species])))
 ```
 |  Year    |  2011  |  2014  |  2017  |  11 14   | 11 17  | 14 17 | all  |
 | -------- | ------ | ------ | ------ | ---------| ------ | ------| ---- |
 | no Plots |  142   |  140   |  148   |   133    |  141   |  139  | 133  |
 | no OTUs  |  385   |  560   |  378   |   141    |  113   |  139  |  80  |
 
-if combined additively (plot present in 1 year is enough : 149 plots)
-
-alternative : years 11 and 14 chosen (common set of species : 141, 244 species are different)
-if soilfungi is present in one year, it is assumed to be present in all years
-```{r}
-symbiont.soilfungi <- unique(soilfungi.symbiont[Year %in% c("2011", "2014"), .(Species, Plot, value)])
-```
-
-
 Only 2011 is chosen.
 ```{r}
-# symbiont.soilfungi <- soilfungi.symbiont[Year == "2011", .(Species, Plot, value)]
+symbiont.soilfungi <- symbiont.soilfungi[Year == "2011", .(Species, Plot, value)]
 # adding back missing plot-species combinations (code from Caterina)
-symbiont.soilfungi <- data.table::setDT(symbiont.soilfungi)[data.table::CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
-symbiont.soilfungi[is.na(value), value := 0 ]
+symbiont.soilfungi <- add_back_missing_plots_species_combinations(symbiont.soilfungi)
 nrow(symbiont.soilfungi) == 142 * 385 # all expected combinations present
 spdiv <- spdiv[!Trophic_level == "symbiont.soilfungi"]
-rm(soilfungi.symbiont)
 ```
 
 
@@ -1088,7 +1078,7 @@ sum
 [1] "secondary.consumer" "174"                "species"           
 [1] "decomposer.soilfungi" "12342"                "species"             
 [1] "soilfungi.pathotroph" "4097"                 "species"             
-[1] "soilfungi.symbiont" "1416"               "species"   
+[1] "symbiont.soilfungi" "1416"               "species"   
 
 
 # Calculate betadiversities
