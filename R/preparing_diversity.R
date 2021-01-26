@@ -34,6 +34,24 @@ add_back_missing_plots_species_combinations <- function(diversity_dataset){
       # at first attempt (only at the second). https://stackoverflow.com/questions/32988099/data-table-objects-assigned-with-from-within-function-not-printed
   return(diversity_dataset)
 }
+
+#TODO : add this part to the adding plots
+#  note : needs all_plots, a vector containing the whole list of explo plots.
+length(unique(diversity_dataset$Plot)) # if > 0, not all plots included
+# adding rows with the missing plots : 
+# any random species
+# value is 0
+missing_plots <- all_plots[!all_plots %in% unique(diversity_dataset$Plot)]
+random_species <- diversity_dataset$Species[1]
+complementary_dataset <- data.table(Plot = missing_plots, Species = random_species, value = 0)
+
+# add the complementary dataset to the original one
+diversity_dataset <- rbindlist(list(diversity_dataset, complementary_dataset), fill = T, use.names = T)
+diversity_dataset <- add_back_missing_plots_species_combinations(diversity_dataset)
+
+length(unique(diversity_dataset$Plot))
+
+
 NULL
 
 
