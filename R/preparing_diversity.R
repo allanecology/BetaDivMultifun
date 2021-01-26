@@ -1,3 +1,42 @@
+#' Add back missing plots x species combinations
+#' 
+#' date of creation : 26.01.21
+#' In order to save storage, the diversity dataset for bacteria and soil fungi o not include all combinations
+#' of plots x species when a given species was not found in a given plot i.e. they do not contain zeros.
+#' They need to be added back in order to gain the complete set of studied plots (missing plots x
+#' species are not NA but measured, just the given species was not found).
+#' Code from Caterina Penone, for further explanations and rationale
+#' see https://github.com/biodiversity-exploratories-synthesis/Synthesis-dataset-manual/blob/main/Synthesis%20datasets%20%20How%20to%20use.md
+#' Note : Only the columns Plot and Species are considered, any other columns will be filled with NA.
+#' This can cause problems if the dataset is later filtered for e.g. Year.
+#' 
+#' @param diversity_dataset A data.table of soilfuni or bacteria in the format of the synthesis diversity 
+#' dataset, with at least the columns Plot, Species and value.
+#' @return A data.table in the same format as diversity_dataset, but with the previously
+#' missing plots x species added back as 0. Note : Only the columns Plot, Species and value are
+#' considered, any other columns will be filled with NA.
+#' @export
+add_back_missing_plots_species_combinations <- function(diversity_dataset){
+  # Control : check if there are any NA values, although none would be expected
+  if(length(diversity_dataset[is.na(value), value]) > 0){
+    stop("There are NA values in the dataset. Missing combinations can not be added.")
+  }
+  # Control : the provided dataset needs to be a data.table.
+  if(!data.table::is.data.table(diversity_dataset)){
+    stop("The provided dataset is not a data.table. Please first convert it to data.table with
+         data.table(diversity_dataset).")
+  }
+  # add back zeros
+  diversity_dataset <- data.table::setDT(diversity_dataset)[data.table::CJ(Species = Species, Plot = Plot, unique = T), on=.(Species, Plot)]
+  print(paste(nrow(diversity_dataset[is.na(value)]), "missing combinations were added."))
+  diversity_dataset <- diversity_dataset[is.na(value), value := 0 ][] # note about the ending [] :
+      # this is a reported bug from data.table, if not added, the function will not return the data.table
+      # at first attempt (only at the second). https://stackoverflow.com/questions/32988099/data-table-objects-assigned-with-from-within-function-not-printed
+  return(diversity_dataset)
+}
+NULL
+
+
 #' Prepare for beta.part
 #'
 #' This function prepares the diversity data stored in a data.table for calculation
