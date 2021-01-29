@@ -314,12 +314,6 @@ length(grep("SEG", unique(herbivore[Trophic_level == "herbivore.snail", Plot]), 
 length(grep("HEG", unique(herbivore[Trophic_level == "herbivore.snail", Plot]), value = T)) # 50
 ```
 
-```{r, eval = F}
-#TODO leave this chunk? depends on plotNAset and therefore circular.. maybe better use arthro_plotset or completely delete
-testplotpresence <- unique(herbivore[Plot %in% plotNAset, .(Year, Plot)])
-visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
-rm(testplotpresence)
-```
 Only 124 plots contain both arthropods and snails.
 ```{r, eval=F}
 length(unique(herbivore[Trophic_level == "herbivore.arthropod", Species])) # 399
@@ -460,7 +454,7 @@ rm(birds); gc()
 
 nrow(tertiary.consumer) == 150 * (67)
 
-# # find plots with 0 species, but don't remove
+# find plots with 0 species, but don't remove
 # test <- data.table::data.table(aggregate(value ~ Plot, tertiary.consumer, sum))
 # barplot(height = test$value)
 # test[value == 0, Plot] # 5 plots with 0 species
@@ -496,7 +490,7 @@ spdiv <- spdiv[!Trophic_level == "tertiary.consumer.birdbat"]
 
 ```{r}
 bacteria.RNA <- spdiv[Trophic_level == "bacteria.RNA"]
-# bacteria.RNA <- add_back_missing_plots_species_combinations(bacteria.RNA) # 23276560 missing combinations were added.
+# bacteria.RNA <- add_back_missing_plots_species_combinations(bacteria.RNA, all_plots) # 23276560 missing combinations were added.
 testplotpresence <- unique(bacteria.RNA[, .(Year, Plot)])
 visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~ Year))
 rm(testplotpresence)
@@ -531,7 +525,10 @@ Select 2011 dataset.
 bacteria.RNA <- bacteria.RNA[Year == "2011", .(Species, Plot, value)]
 # The bacteria RNA dataset had been reduced: all species-plot combinations with 0 were removed.
 # reconstruct them (code from Caterina, see https://github.com/biodiversity-exploratories-synthesis/Synthesis-dataset-manual/blob/main/Synthesis%20datasets%20%20How%20to%20use.md under "Missing" zeros)
-bacteria.RNA <- add_back_missing_plots_species_combinations(bacteria.RNA) # 19052152 missing combinations were added.
+# 2 plots are missing, exclude them (AEG33 and AEG34)
+bac_plots <- all_plots[-which(all_plots %in% c("AEG33", "AEG34"))]
+bacteria.RNA <- add_back_missing_plots_species_combinations(bacteria.RNA, bac_plots) # 19052152 missing combinations were added.
+rm(bac_plots)
 
 nrow(bacteria.RNA) == 148 * 140510 # expected number of plots present
 spdiv <- spdiv[!Trophic_level == "bacteria.RNA"]
@@ -668,7 +665,7 @@ Years 2011, 2014, 2017
 ```{r}
 decomposer.soilfungi <- spdiv[Trophic_level == "decomposer.soilfungi"]
 # adding back the missing plot - species combinations . all species-plot combinations with 0 had been removed to store memory. note : only temporarily, after filtering for years, needs to be done again because the function can not add the years to missing combinations.
-decomposer.soilfungi <- add_back_missing_plots_species_combinations(decomposer.soilfungi)
+decomposer.soilfungi <- add_back_missing_plots_species_combinations(decomposer.soilfungi, all_plots)
 
 testplotpresence <- unique(decomposer.soilfungi[, .(Year, Plot)])
 visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
@@ -692,7 +689,7 @@ Only year 2011 is chosen
 ```{r}
 decomposer.soilfungi <- decomposer.soilfungi[Year == "2011", .(Species, Plot, value)]
 # nrow(decomposer.soilfungi) # 8783
-decomposer.soilfungi <- add_back_missing_plots_species_combinations(decomposer.soilfungi)
+decomposer.soilfungi <- add_back_missing_plots_species_combinations(decomposer.soilfungi, all_plots)
 #nrow(decomposer.soilfungi) # 349800
 nrow(decomposer.soilfungi) == 150 * 2332 # TRUE : all expected rows are present
 spdiv <- spdiv[!Trophic_level == "decomposer.soilfungi"]
@@ -704,7 +701,7 @@ spdiv <- spdiv[!Trophic_level == "decomposer.soilfungi"]
 
 ```{r}
 pathotroph.soilfungi <- spdiv[Trophic_level == "pathotroph.soilfungi"]
-pathotroph.soilfungi <- add_back_missing_plots_species_combinations(pathotroph.soilfungi)
+pathotroph.soilfungi <- add_back_missing_plots_species_combinations(pathotroph.soilfungi, all_plots)
 testplotpresence <- unique(pathotroph.soilfungi[, .(Year, Plot)])
 visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
@@ -726,7 +723,7 @@ Only 2011 data is used here.
 ```{r}
 pathotroph.soilfungi <- pathotroph.soilfungi[Year == "2011", .(Species, Plot, value)]
 # after filtering for year, need to add missing plot x species combinations again
-pathotroph.soilfungi <- add_back_missing_plots_species_combinations(pathotroph.soilfungi)
+pathotroph.soilfungi <- add_back_missing_plots_species_combinations(pathotroph.soilfungi, all_plots = all_plots)
 nrow(pathotroph.soilfungi) == 150 * 285 # TRUE : all expected rows present
 spdiv <- spdiv[!Trophic_level == "pathotroph.soilfungi"]
 ```
@@ -737,7 +734,7 @@ spdiv <- spdiv[!Trophic_level == "pathotroph.soilfungi"]
 2011, 2014, 2017
 ```{r}
 symbiont.soilfungi <- spdiv[Trophic_level == "symbiont.soilfungi"]
-symbiont.soilfungi <- add_back_missing_plots_species_combinations(symbiont.soilfungi)
+symbiont.soilfungi <- add_back_missing_plots_species_combinations(symbiont.soilfungi, all_plots)
 testplotpresence <- unique(symbiont.soilfungi[, .(Year, Plot)])
 visdat::vis_miss(data.table::dcast(testplotpresence, Plot ~Year))
 rm(testplotpresence)
@@ -759,10 +756,10 @@ Only 2011 is chosen.
 ```{r}
 symbiont.soilfungi <- symbiont.soilfungi[Year == "2011", .(Species, Plot, value)]
 # adding back missing plot-species combinations (code from Caterina)
-symbiont.soilfungi <- add_back_missing_plots_species_combinations(symbiont.soilfungi)
-length(unique(symbiont.soilfungi$Plot))
+symbiont.soilfungi <- add_back_missing_plots_species_combinations(symbiont.soilfungi, all_plots)
+length(unique(symbiont.soilfungi$Plot)) == 150
 
-nrow(symbiont.soilfungi) == 142 * 385 # all expected combinations present
+nrow(symbiont.soilfungi) == 150 * 385 # all expected combinations present
 spdiv <- spdiv[!Trophic_level == "symbiont.soilfungi"]
 ```
 
@@ -897,7 +894,7 @@ spdiv <- spdiv[!Trophic_level == "decomposer.myriapod"]
 Year 2011
 ```{r}
 plantpathogen.fungi <- spdiv[Trophic_level == "plantpathogen.fungi"]
-plantpathogen.fungi <- add_back_missing_plots_species_combinations(plantpathogen.fungi)
+plantpathogen.fungi <- add_back_missing_plots_species_combinations(plantpathogen.fungi, all_plots)
 ```
 ```{r}
 bp_overv <- data.table::data.table(aggregate(value ~ Plot, plantpathogen.fungi, sum))
@@ -965,6 +962,7 @@ rm(spdiv); gc()
 #check names of trlevels
 names_trlevel <- names_trlevel$final_name
 all(names_trlevel[-which(names_trlevel == "")] %in% trlevels) & all(trlevels %in% names_trlevel[-which(names_trlevel == "")]) # same set of names in trlevels
+names_trlevel <- names_trlevel[-which(names_trlevel == "")]
 ```
 
 Select the plots without missing information and store. This chunk of code generates `plotNAset.rds`, the selected set of plots.
@@ -974,7 +972,7 @@ for(t in trlevels){
   tr <- get(t)
   plots[[t]] <- unique(tr$Plot)
 }
-common.plots <- Reduce(intersect,plots) #130 plots, new : 124 plots
+common.plots <- Reduce(intersect,plots) #130 plots, new : 136 plots
 # take out HEG31 because this is taken out in functions
 common.plots <- common.plots[-which(common.plots == "HEG31")]
 saveRDS(common.plots, file = "plotNAset.rds")
@@ -991,10 +989,9 @@ visdat::vis_miss(testplotpresence)
 
 par(mar = c(10, 4.1, 4.1, 2.1))
 barplot(redplotset, ylim = c(0, 140), las = 3, cex.names = 0.8, main = "Does removal of given trophic level increase number of plots?")
-abline(h = 114, col = "darkgreen")
-abline(h = 120, col = "red")
-#TODO HERE HIER STEcken geblieben: inspect the chosen plot set
-# altes plot set : 127 plots, neues : 114
+# abline(h = 114, col = "darkgreen")
+abline(h = 136, col = "red")
+
 length(grep("AEG", common.plots))
 length(grep("HEG", common.plots))
 length(grep("SEG", common.plots))
@@ -1005,17 +1002,16 @@ paste("AEG :", length(grep("A", common.plots)), "   HEG :", length(grep("H", com
 ```
 | region    | no. plots |
 | --------- | --------- |
-| all       |    129    |
-| AEG       |    40     |
-| HEG       |    43     |
-| SEG       |    46     |
+| all       |    135    |
+| AEG       |    42     |
+| HEG       |    46     |
+| SEG       |    47     |
 
 
 
 # Select Plots from diversity datasets
 Only keep the selected plots
 ```{r, eval = F}
-#TODO move that step below, to impute betadiverstiy data?
 if(!length(plotNAset) > 1){plotNAset <- common.plots}
 for(t in trlevels){
   tr <- get(t)
@@ -1031,31 +1027,54 @@ for(t in trlevels){
 sum <- 0
 for(t in trlevels){
   tr <- get(t)
-  print(c(t, length(unique(tr$Species)), "species"))
+  print(paste(t, ": ", length(unique(tr$Species)), "species"))
   sum <- sum + length(unique(tr$Species))
 }
 sum
 ```
-[1] "autotroph" "461"       "species"  
-[1] "bacteria.RNA" "140510"       "species"     
-[1] "belowground.herbivore" "11"                    "species"              
-[1] "belowground.predator" "17"                   "species"             
-[1] "herbivore" "401"       "species"  
-[1] "plantpathogen.fungi" "84"             "species"       
-[1] "protist.bacterivore" "886"                 "species"            
-[1] "protist.eukaryvore" "217"                "species"           
-[1] "protist.omnivore" "444"              "species"         
-[1] "protist.plant.parasite" "96"                     "species"               
-[1] "secondary.consumer" "174"                "species"           
-[1] "decomposer.soilfungi" "12342"                "species"             
-[1] "soilfungi.pathotroph" "4097"                 "species"             
-[1] "symbiont.soilfungi" "1416"               "species"   
+[1] "autotroph :  461 species"
+[1] "bacteria.RNA :  140'510 species"
+[1] "bacterivore.protist :  886 species"
+[1] "decomposer.soilfungi :  2332 species"
+[1] "eukaryvore.protist :  217 species"
+[1] "herbivore.arthropod :  399 species"
+[1] "herbivore.arthropodsoillarvae :  11 species"
+[1] "omnivore.protist :  444 species"
+[1] "pathotroph.soilfungi :  285 species"
+[1] "plantparasite.protist :  96 species"
+[1] "plantpathogen.fungi :  84 species"
+[1] "symbiont.soilfungi :  385 species"
+[1] "tertiary.consumer :  67 species"
+[1] "secondary.consumer :  174 species"
+[1] "secondary.consumer.arthropodsoillarvae :  17 species"
+Total : 146'368 species in the  dataset (5'858 species without bacteria)
 
 
 # Calculate betadiversities
+
+Set betadiversity to 0 or 1 in case plots do not contain any species, according to e.g. Carlo Ricotta https://doi.org/10.1002/ece3.2980
+e.g. Plot "P1" contains 3 species, "P2" and "P3" do not contain any species : 
+
+P1 : 1 1 1 0 0 0 0
+P2 : 0 0 0 0 0 0 0
+P3 : 0 0 0 0 0 0 0
+
+betadiversity(P1, P2) is set to beta.sne = 1, beta.sim = 0, beta.sor = 1
+betadiversity(P2, P3) is set to beta.sor = 0
 ```{r}
 #TODO : add function to replace the missing plot-species combinations of 0 with corresponding betadiversities!
 # gan maybe find out with NaN values.
+# -----------------
+# make example with soilfungi symbionts, there are 8 plots without species
+test <- data.table(aggregate(value ~ Plot, symbiont.soilfungi, function(x) sum(x)))
+barplot(test$value)
+zeroplots <- test[value == 0, Plot] # 8 plots witout species
+# prepare minimal example for re-coding betadiversity calculation and handling special cases
+tr <- symbiont.soilfungi[Plot %in% unique(c(plotNAset[1:4], zeroplots))]
+
+
+# ------------
+
 for(t in trlevels){
   tr <- get(t)
   b.tr <- prepare_for_betapair(tr)
