@@ -21,7 +21,7 @@
 #' missing plots x species added back as 0. Note : Only the columns Plot, Species and value are
 #' considered, any other columns will be filled with NA.
 #' @export
-add_back_missing_plots_species_combinations <- function(diversity_dataset){
+add_back_missing_plots_species_combinations <- function(diversity_dataset, all_plots){
   # Control : check if there are any NA values, although none would be expected
   if(length(diversity_dataset[is.na(value), value]) > 0){
     stop("There are NA values in the dataset. Missing combinations can not be added.")
@@ -32,7 +32,7 @@ add_back_missing_plots_species_combinations <- function(diversity_dataset){
          data.table(diversity_dataset).")
   }
   # check if the dataset contains all plots, or if plots need to be added manually
-  if(length(unique(diversity_dataset$Plot)) < 150){ 
+  if(length(unique(diversity_dataset$Plot)) < length(all_plots)){ 
     diversity_dataset <- find_and_supplement_missing_plots(diversity_dataset, all_plots)
   }
   
@@ -65,23 +65,23 @@ NULL
 #' as input, rbinded to a minimal data.table containing a random species and the 
 #' missing plots.
 find_and_supplement_missing_plots <- function(diversity_dataset, all_plots){
-  if(length(unique(diversity_dataset$Plot)) == 150){
-    stop("The dataset already contains 150 plots, no need to supplement missing ones.")
+  if(length(unique(diversity_dataset$Plot)) == length(all_plots)){
+    print("The dataset already contains the number of expected plots, no need to supplement missing ones.")
+  } else {
+    # find the set of missing plots and store to vector
+    # get random species to be supplemented (only 1 is needed, all missing combinations
+    # will be supplemented by add_back_missing_plots_species_combinations)
+    # create a supplement dataset
+    missing_plots <- all_plots[!all_plots %in% unique(diversity_dataset$Plot)]
+    random_species <- diversity_dataset$Species[1]
+    complementary_dataset <- data.table::data.table(Plot = missing_plots, Species = random_species, value = 0)
+    diversity_dataset <- rbindlist(list(diversity_dataset, complementary_dataset), fill = T, use.names = T)
+    # check if number of plots is the expected 150 now
+    if(length(unique(diversity_dataset$Plot)) != length(all_plots)){
+      stop("The number of plots is not the expected number. Check length of vector all_plots.")
+    }
+    return(diversity_dataset)
   }
-  # find the set of missing plots and store to vector
-  # get random species to be supplemented (only 1 is needed, all missing combinations
-  # will be supplemented by add_back_missing_plots_species_combinations)
-  # create a supplement dataset
-  missing_plots <- all_plots[!all_plots %in% unique(diversity_dataset$Plot)]
-  random_species <- diversity_dataset$Species[1]
-  complementary_dataset <- data.table::data.table(Plot = missing_plots, Species = random_species, value = 0)
-  
-  diversity_dataset <- rbindlist(list(diversity_dataset, complementary_dataset), fill = T, use.names = T)
-  # check if number of plots is the expected 150 now
-  if(length(unique(diversity_dataset$Plot)) != length(all_plots)){
-    stop("The number of plots is not the expected number. Check length of vector all_plots.")
-  }
-  return(diversity_dataset)
 }
 NULL
 
