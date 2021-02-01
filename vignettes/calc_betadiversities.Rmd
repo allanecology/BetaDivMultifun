@@ -1065,12 +1065,6 @@ betadiversity(P2, P3) is set to beta.sor = 0
 #TODO : add function to replace the missing plot-species combinations of 0 with corresponding betadiversities!
 # gan maybe find out with NaN values.
 # -----------------
-# make example with soilfungi symbionts, there are 8 plots without species
-test <- data.table(aggregate(value ~ Plot, symbiont.soilfungi, function(x) sum(x)))
-barplot(test$value)
-zeroplots <- test[value == 0, Plot] # 8 plots witout species
-# prepare minimal example for re-coding betadiversity calculation and handling special cases
-tr <- symbiont.soilfungi[Plot %in% unique(c(plotNAset[1:4], zeroplots))]
 
 
 # ------------
