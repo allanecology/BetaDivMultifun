@@ -32,6 +32,8 @@ x <- prepare_for_betapair(symbiont.soilfungi)
 # - two plots without species : set all betadiversities to 0.
 # - one plot without species : set beta nestedness to 1, beta turnover to 0 and beta.sor to 1 as well.
 
+# catch cases of plots without species in betapart::beta.pair() which are NaN by default and set to  0 or 1.
+
 beta.pair_zerospecies <- function (x, index.family = "sorensen") 
 {
   index.family <- match.arg(index.family, c("jaccard", "sorensen"))
