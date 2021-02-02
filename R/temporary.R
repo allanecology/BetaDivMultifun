@@ -11,6 +11,7 @@ tr <- tr[Species %in% a, ]# filter species
 b.tr <- prepare_for_betapair(tr)
 b.tr[1, 2] <- 1
 b.tr[1, 1] <- 1
+b.tr[2, 1] <- 1
 
 betapart::beta.pair(b.tr)
 
@@ -19,36 +20,46 @@ betapart::beta.pair(b.tr)
 # heg 7 vs. 11 : 000
 
 # sim = turnover
-
+require(betapart)
 
 
 x <- b.tr
-x[1, 1] <- 1
+x <- prepare_for_betapair(symbiont.soilfungi)
 
-
-# update of the function betapart
+# update of the function betapart, only sorensen part of formula
 #TODO next : check with larger datasets, check for bugs
+# change for plots without species : 
+# - two plots without species : set all betadiversities to 0.
+# - one plot without species : set beta nestedness to 1, beta turnover to 0 and beta.sor to 1 as well.
 
-function (x, index.family = "sorensen") 
+beta.pair_zerospecies <- function (x, index.family = "sorensen") 
 {
   index.family <- match.arg(index.family, c("jaccard", "sorensen"))
   if (!inherits(x, "betapart")) {
     x <- betapart.core(x)
   }
   switch(index.family, sorensen = {
-    double_zero <- x$min.not.shared == 0 & x$shared == 0
-        # no unshared species, no shared species --> both plots don't have species
+    # catch exceptions :
+    double_zero <- x$min.not.shared == 0 & x$shared == 0 & x$max.not.shared == 0 # no unshared species, no shared species --> both plots don't have species
+    one_zero <- x$shared == 0 & x$max.not.shared != 0 & x$min.not.shared == 0 # zero shared, something not shared : 1 plot without species
+    
     beta.sim <- x$min.not.shared/(x$min.not.shared + x$shared)
+    # EDIT special cases :
     beta.sim[double_zero] <- 0
-    # zero shared, zero not shared : plot without species
-    # zero shared, something not shared : 1 plot without species
-    one_zero <- x$shared == 0 & x$max.not.shared
+    beta.sim[one_zero] <- 0
     
     beta.sne <- ((x$max.not.shared - x$min.not.shared)/((2 * 
                                                            x$shared) + x$sum.not.shared)) * (x$shared/(x$min.not.shared + 
                                                                                                          x$shared))
+    # EDIT special cases
+    beta.sne[double_zero] <- 0
     beta.sne[one_zero] <- 1
+    
     beta.sor <- x$sum.not.shared/(2 * x$shared + x$sum.not.shared)
+    # EDIT special cases
+    beta.sor[double_zero] <- 0
+    # beta.sor[one_zero] <- 1 # formula can handle one plot without species and calculate beta.sor.
+
     pairwise <- list(beta.sim = as.dist(beta.sim), beta.sne = as.dist(beta.sne), 
                      beta.sor = as.dist(beta.sor))
   }, jaccard = {
@@ -63,3 +74,22 @@ function (x, index.family = "sorensen")
   })
   return(pairwise)
 }
+
+
+
+# TESTING
+# prepare test dataset
+test <- data.table(Species = rep(c("S1", "S2", "S3", "S4", "S5"), 4), 
+           Plot = paste("P", sort(rep(seq(1, 4), 5)), sep = ""),
+           value = c(rep(0, 5), 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, rep(0, 5)))
+test <- prepare_for_betapair(test)
+old_res <- betapart::beta.pair(test, index.family = "sorensen") # producin NaN s
+res <- beta.pair_zerospecies(test, index.family = "sorensen")
+
+# all tests need to be TRUE
+all(!any(is.nan(res$beta.sim)), !any(is.nan(res$beta.sne)), !any(is.nan(res$beta.sor))) # there are no more NaN values in the dataset any more.
+all(res$beta.sne[is.nan(old_res$beta.sne)] %in% c(0, 1)) # previously NaN are now 0 or 1
+all(res$beta.sor[is.nan(old_res$beta.sne)] %in% c(0, 1)) # previously NaN are now 0 or 1
+all(res$beta.sim[is.nan(old_res$beta.sne)] %in% c(0)) # previously NaN are now 0 or 1
+all(res$beta.sor[is.nan(old_res$beta.sne)]== res$beta.sne[is.nan(old_res$beta.sne)]) # beta.sor. and beta.sne are the same
+        
