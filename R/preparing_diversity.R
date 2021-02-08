@@ -109,3 +109,114 @@ prepare_for_betapair <- function(datatable){
   return(datatable)
 }
 NULL
+
+
+
+
+#' beta.pair handle plots without species
+#' 
+#' The function `betapart::beta.pair()` can not handle plot without species.
+#' The turnover and nestedness components are set to NaN due to division by 
+#' zero in the formula, in both cases that two plots are compared which both do not
+#' contain any species and if one plot contains species and one does not.
+#' This is mathematically correct, but these special cases can be handled 
+#' differently to correspond better to biological interpretation.
+#' 
+#' This function aims to add this feature to beta.pair() without changing the 
+#' overall behaviour of the function.
+#' 
+#' Betadiversity can be set to 0 or 1 in the described cases : 
+#' 
+#' If both plots do not contain any species, according to e.g. Carlo Ricotta
+#' https://doi.org/10.1002/ece3.2980 , this can be interpreted as the
+#' ultimate loss of betadiversity, and thus betadiversity can be set to 0.
+#' e.g. Plot "P1" contains 3 species, "P2" and "P3" do not contain any species : 
+#' P1 : 1 1 1 0 0 0 0
+#' P2 : 0 0 0 0 0 0 0
+#' P3 : 0 0 0 0 0 0 0
+#' 
+#' betadiversity(P2, P3) is set to beta.sor = 0 = beta.sne + beta.sim
+#' 
+#' If one plot contains species and the other not, the difference is 
+#' pure nestedness, i.e. the maximal possible amount of nestedness, because
+#' 100% of the difference among plots is nestedness.
+#' betadiversity(P1, P2) is set to beta.sne = 1, beta.sim = 0, beta.sor = 1
+#' 
+#' What is different compared to the beta.pair function?
+#' Cases of plots with zero species are catched by the output of betapart.core.
+#' The cases are set to 0 or 1, as described above.
+#' 
+#' 
+#' note that some tests of the function are provided as example.
+#' 
+#' @param x a data.set with same requirements as for beta.pair. *Note* for the project
+#' BetaDivMultifun, the function `prepare_for_betapair` can be used. For more 
+#' information, please read the documentation for beta.pair.
+#' @param index.family is "sorensen" as set by default. Originally, it could be either
+#' "sorensen" or "jaccard", but no special behaviour has been 
+#' implemented for the "jaccard" index.
+#' @return same as for function beta.pair. A list with three dissimilarity matrices,
+#' being beta.sim, beta.sne and beta.sor. For more information, please read the
+#' documentation for beta.pair.
+#' @example 
+#' TESTING
+#' prepare test dataset
+#' test <- data.table(Species = rep(c("S1", "S2", "S3", "S4", "S5"), 4), 
+#'                    Plot = paste("P", sort(rep(seq(1, 4), 5)), sep = ""),
+#'                    value = c(rep(0, 5), 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, rep(0, 5)))
+#' test <- prepare_for_betapair(test)
+#' old_res <- betapart::beta.pair(test, index.family = "sorensen") # producin NaN s
+#' res <- beta.pair_zerospecies(test, index.family = "sorensen")
+#' 
+#' # all tests need to be TRUE
+#' all(!any(is.nan(res$beta.sim)), !any(is.nan(res$beta.sne)), !any(is.nan(res$beta.sor))) # there are no more NaN values in the dataset any more.
+#' all(res$beta.sne[is.nan(old_res$beta.sne)] %in% c(0, 1)) # previously NaN are now 0 or 1
+#' all(res$beta.sor[is.nan(old_res$beta.sne)] %in% c(0, 1)) # previously NaN are now 0 or 1
+#' all(res$beta.sim[is.nan(old_res$beta.sne)] %in% c(0)) # previously NaN are now 0 or 1
+#' all(res$beta.sor[is.nan(old_res$beta.sne)]== res$beta.sne[is.nan(old_res$beta.sne)]) # beta.sor. and beta.sne are the same
+#' @export
+beta.pair_zerospecies <- function (x, index.family = "sorensen") 
+{
+  index.family <- match.arg(index.family, c("jaccard", "sorensen"))
+  if (!inherits(x, "betapart")) {
+    x <- betapart.core(x)
+  }
+  switch(index.family, sorensen = {
+    # catch exceptions :
+    double_zero <- x$min.not.shared == 0 & x$shared == 0 & x$max.not.shared == 0 # no unshared species, no shared species --> both plots don't have species
+    one_zero <- x$shared == 0 & x$max.not.shared != 0 & x$min.not.shared == 0 # zero shared, something not shared : 1 plot without species
+    
+    beta.sim <- x$min.not.shared/(x$min.not.shared + x$shared)
+    # EDIT special cases :
+    beta.sim[double_zero] <- 0
+    beta.sim[one_zero] <- 0
+    
+    beta.sne <- ((x$max.not.shared - x$min.not.shared)/((2 * 
+                                                           x$shared) + x$sum.not.shared)) * (x$shared/(x$min.not.shared + 
+                                                                                                         x$shared))
+    # EDIT special cases
+    beta.sne[double_zero] <- 0
+    beta.sne[one_zero] <- 1
+    
+    beta.sor <- x$sum.not.shared/(2 * x$shared + x$sum.not.shared)
+    # EDIT special cases
+    beta.sor[double_zero] <- 0
+    # beta.sor[one_zero] <- 1 # formula can handle one plot without species and calculate beta.sor.
+    
+    pairwise <- list(beta.sim = as.dist(beta.sim), beta.sne = as.dist(beta.sne), 
+                     beta.sor = as.dist(beta.sor))
+  }, jaccard = {
+    print("There is no special case handling for jaccard index yet. Please use the original function
+          beta.pair instead.")
+    beta.jtu <- (2 * x$min.not.shared)/((2 * x$min.not.shared) + 
+                                          x$shared)
+    beta.jne <- ((x$max.not.shared - x$min.not.shared)/(x$shared + 
+                                                          x$sum.not.shared)) * (x$shared/((2 * x$min.not.shared) + 
+                                                                                            x$shared))
+    beta.jac <- x$sum.not.shared/(x$shared + x$sum.not.shared)
+    pairwise <- list(beta.jtu = as.dist(beta.jtu), beta.jne = as.dist(beta.jne), 
+                     beta.jac = as.dist(beta.jac))
+  })
+  return(pairwise)
+}
+NULL
