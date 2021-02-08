@@ -1065,7 +1065,7 @@ betadiversity(P2, P3) is set to beta.sor = 0 = beta.sne + beta.sim
 #TODO : add function to replace the missing plot-species combinations of 0 with corresponding betadiversities!
 # gan maybe find out with NaN values.
 # -----------------
-
+#TODO use the function beta.pair_zerospecies() instead of beta.pair to handle plots without species.
 
 # ------------
 
