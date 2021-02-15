@@ -1111,7 +1111,6 @@ save betadiversity datasets
 # }
 saveRDS(trlevels, "trlevels_vector.rds")
 saveRDS(masterbeta, "master_beta.rds")
-
 ```
 
 # Calculate alpha diversities
