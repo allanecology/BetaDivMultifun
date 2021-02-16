@@ -18,6 +18,8 @@ From cleaning, getting numbers :
 - type = presenceabsence : plant pathogen, ant omnivore
 
 ```{r}
+require(betapart) # needed in order to run beta.pair_zerospecies()
+
 # delete Plot_bexis (old plot names)
 spdiv[, Plot_bexis := NULL]
 # spdiv[, c("Dataversion", "DataID") := NULL]
@@ -465,7 +467,7 @@ check betadiversity
 ```{r,eval = F}
 # check betadiversity
 beta.tertiary.consumer <- prepare_for_betapair(tertiary.consumer)
-beta.tertiary.consumer <- betapart::beta.pair(beta.tertiary.consumer, index.family = "sorensen")
+beta.tertiary.consumer <- BetaDivMultifun::beta.pair_zerospecies(beta.tertiary.consumer, index.family = "sorensen")
 test <- beta.tertiary.consumer$beta.sor
 test <- as.matrix(test)
 test[!lower.tri(test)] <- 1000
@@ -474,7 +476,7 @@ test <- data.table(test)
 test <- test[!tertiary.consumer == 1000, ]
 plot(test$tertiary.consumer)
 # check the betadiversiy = 0 cases
-test[tertiary.consumer == 0, ] # 23 such cases.
+test[tertiary.consumer == 0, ] # 33 such cases.
 all(tertiary.consumer[Plot %in% c("AEG06"), Species] == tertiary.consumer[Plot %in% c("AEG23"), Species])
 # plot comparisons with 0 betadiversity both contain all species
 rm(test)
@@ -792,7 +794,7 @@ Most plots contain 3 species. 5 Plots do not contain any species. No need to rem
 Calculate betadiversity to check wether plots differ in their species composition / turnover.
 ```{r, eval = F}
 beta.belowground.herbivore <- prepare_for_betapair(belowground.herbivore)
-beta.belowground.herbivore <- betapart::beta.pair(beta.belowground.herbivore, index.family = "sorensen")
+beta.belowground.herbivore <- beta.pair_zerospecies(beta.belowground.herbivore, index.family = "sorensen")
 
 corrplot::corrplot(as.matrix(beta.belowground.herbivore$beta.sor),type="lower", method="color", diag=F, mar=c(1,0,1,0), number.cex=0.4, tl.srt = 45, tl.col = "black", tl.cex = 0.5)
 
@@ -831,7 +833,7 @@ There is 1 plot in belowground predators which does not contain any species.
 calc betadiversity and plot
 ```{r, eval = F}
 beta.belowground.predator <- prepare_for_betapair(belowground.predator)
-beta.belowground.predator <- betapart::beta.pair(beta.belowground.predator, index.family = "sorensen")
+beta.belowground.predator <- beta.pair_zerospecies(beta.belowground.predator, index.family = "sorensen")
 
 corrplot::corrplot(as.matrix(beta.belowground.predator$beta.sor),type="lower", method="color", diag=F, mar=c(1,0,1,0), number.cex=0.4, tl.srt = 45, tl.col = "black", tl.cex = 0.5)
 
@@ -903,10 +905,10 @@ abline(h = mean(bp_overv$value), col = "red")
 abline(h = median(bp_overv$value), col = "green")
 # Note : keep plots without species.
 ```
-84 species in 144 plots
+84 species in 150 plots
 ```{r}
 length(unique(plantpathogen.fungi$Plot))
-nrow(plantpathogen.fungi) == 84 * 144
+nrow(plantpathogen.fungi) == 84 * 150
 
 spdiv <- spdiv[!Trophic_level == "plantpathogen.fungi"]
 ```
@@ -972,7 +974,7 @@ for(t in trlevels){
   tr <- get(t)
   plots[[t]] <- unique(tr$Plot)
 }
-common.plots <- Reduce(intersect,plots) #130 plots, new : 136 plots
+common.plots <- Reduce(intersect,plots) # 136 plots
 # take out HEG31 because this is taken out in functions
 common.plots <- common.plots[-which(common.plots == "HEG31")]
 saveRDS(common.plots, file = "plotNAset.rds")
@@ -995,6 +997,9 @@ abline(h = 136, col = "red")
 length(grep("AEG", common.plots))
 length(grep("HEG", common.plots))
 length(grep("SEG", common.plots))
+
+#TODO : assign plotNAset newly! for the moment : assign by hand : 
+plotNAset <- common.plots
 ```
 Inspect common plot set
 ```{r, eval=F}
@@ -1033,7 +1038,7 @@ for(t in trlevels){
 sum
 ```
 [1] "autotroph :  461 species"
-[1] "bacteria.RNA :  140'510 species"
+[1] "bacteria.RNA :  140510 species"
 [1] "bacterivore.protist :  886 species"
 [1] "decomposer.soilfungi :  2332 species"
 [1] "eukaryvore.protist :  217 species"
@@ -1061,18 +1066,13 @@ P3 : 0 0 0 0 0 0 0
 
 betadiversity(P1, P2) is set to beta.sne = 1, beta.sim = 0, beta.sor = 1
 betadiversity(P2, P3) is set to beta.sor = 0 = beta.sne + beta.sim
+
+This is done by the function `beta.pair_zerospecies()` from this package (`BetaDivMultifun` package)
 ```{r}
-#TODO : add function to replace the missing plot-species combinations of 0 with corresponding betadiversities!
-# gan maybe find out with NaN values.
-# -----------------
-#TODO use the function beta.pair_zerospecies() instead of beta.pair to handle plots without species.
-
-# ------------
-
 for(t in trlevels){
   tr <- get(t)
   b.tr <- prepare_for_betapair(tr)
-  b.tr <- betapart::beta.pair(b.tr, index.family = "sorensen")
+  b.tr <- beta.pair_zerospecies(b.tr, index.family = "sorensen")
   trsimname <- paste(t, ".beta.sim", sep = "")
   trnesname <- paste(t, ".beta.sne", sep = "")
   assign(trsimname, b.tr$beta.sim)
@@ -1086,9 +1086,8 @@ trlevels_components <- c(paste(trlevels, ".beta.sim", sep=""), paste(trlevels, "
 # create super-dataframe to store all betadiversities
 t <- trlevels_components[1] ; tr <- get(t) ; tr <- as.matrix(tr) ; tr[!lower.tri(tr)] <- 1000
 tr <- reshape2::melt(tr, value.name = t)
-tr <- tr[which(tr[,3] != 1000), ] 
-nrow(tr[which(tr[,3] != 1000), ]) ==  (150*150) - ((150*150 / 2) +150/2) # 11175 rows left
-# masterbeta <- tr[!is.na(tr[, 3]),] #TODO changed that : no removal of NA values, but of values = 1000
+tr <- tr[which(tr[,3] != 1000), ]
+nrow(tr[which(tr[,3] != 1000), ]) ==  (135*135) - ((135*135 / 2) +135/2) # 9045 rows left
 masterbeta <- tr
 
 for(t in trlevels_components[-1]){
@@ -1150,6 +1149,8 @@ saveRDS(masterdiversity, "master_diversity_alpha_beta.rds")
 # Cleaning
 ```{r}
 rm(spdiv); rm(test); rm(tr); rm(t); rm(redplotset); rm(plots)
+rm(alphaname); rm(sum); rm(exclude); rm(bh_overv); rm(bp_overv)
+rm(masteralpha); rm(masterdiversity)
 rm(list = trlevels)
 rm(list = trlevels_components)
 ```
