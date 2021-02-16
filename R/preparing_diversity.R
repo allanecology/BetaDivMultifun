@@ -179,7 +179,7 @@ beta.pair_zerospecies <- function (x, index.family = "sorensen")
 {
   index.family <- match.arg(index.family, c("jaccard", "sorensen"))
   if (!inherits(x, "betapart")) {
-    x <- betapart.core(x)
+    x <- betapart::betapart.core(x)
   }
   switch(index.family, sorensen = {
     # catch exceptions :
