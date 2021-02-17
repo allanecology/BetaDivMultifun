@@ -4,7 +4,7 @@ author: "Noelle Schenk"
 date: "June 18, 2019"
 output: html_document
 ---
-requires `analysis_nonpublic.R` to load soil covariates and raw functions for plot IDs
+requires `analysis_nonpublic.R` to load soil covariates
 
 # Clean and load soil covariates
 This scripts loads and cleans soil covariates (also selects the plots for analysis). The output is then used (by other scripts) for 
@@ -24,7 +24,7 @@ clean and merge covariate dataset
 plot.names <- names_gl[Landuse == "G",.(EP_PlotID,PlotID)]
 data.table::setnames(plot.names, old="EP_PlotID", new="Plot")
 # add useful plot IDs
-plot.names <- merge(plot.names, raw_grlfuns[, c("Plot", "Plotn")], by="Plot", all=T)
+plot.names <- merge(plot.names, usefulplotids, by="Plot", all=T)
 # merge main_glsoil with plot.names to get the wanted names
 data.table::setnames(main_glsoil, "plotid","PlotID")
 main_glsoil <- merge(main_glsoil, plot.names, by="PlotID", all=T)
