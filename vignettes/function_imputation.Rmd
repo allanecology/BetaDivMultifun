@@ -78,15 +78,15 @@ corrbefun <- befun[, !colnames(befun) %in% c("Explo", "Soil.type", "Plotn", "Plo
 M <- cor(corrbefun, use="pairwise.complete.obs")
 
 # raw_grlfun_corrplot1
-corrplot::corrplot(M,type="lower",addCoef.col = "black",method="color",diag=F, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.6)
+corrplot::corrplot(M,type="lower",addCoef.col = "black",method="color",diag=F, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.25, tl.cex = 0.3)
 
 # raw_grlfun_corrplot2
-corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F)
+corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F, tl.cex = 0.3)
 
 # only show high correlations
 tres <- 0.7
 M[which(M < tres & M > -tres)] <- 0
-corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F)
+corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F, tl.cex = 0.3)
 ```
 Network
 ```{r}
