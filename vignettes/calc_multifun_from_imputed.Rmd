@@ -85,15 +85,17 @@ Of the non-factor columns only
 M <- cor(imputed_grlfuns[, !colnames(imputed_grlfuns) %in% "Plotn", with=F], use="complete.obs")
 
 # imputed_grlfun_corrplot1
-corrplot::corrplot(M,type="lower",addCoef.col = "black",method="color",diag=T, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.6, order = "hclust")
+corrplot::corrplot(M,type="lower", addCoef.col = "black", method="color", diag=T, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.2, order = "hclust", tl.cex = 0.3)
 
 # imputed_grlfun_corrplot2
-corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F)
+corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F,
+                   tl.cex = 0.3, order = "hclust")
 
 # only show high correlations
 tres <- 0.7
 M[which(M < tres & M > -tres)] <- 0
-corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F, main = "B")
+corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F, main = "B",
+                   tl.cex = 0.3)
 ```
 
 # Dissimilarity of single functions
@@ -159,9 +161,11 @@ rownames(pc_grlfuns) <- imputed_grlfuns$Plotn
 
 pca_grlfuns <- stats::prcomp(pc_grlfuns, scale=F) 
 
+# par(mfrow = c(2, 2))
 plot(pca_grlfuns)
 biplot(pca_grlfuns)
 plot(ecdf(pca_grlfuns$sdev))
+# dev.off()
 ```
 Plotting first 5 axis
 ```{r, eval = F}
@@ -188,11 +192,12 @@ p5 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, co
 rm(p); rm(p1); rm(p2); rm(p3); rm(p4); rm(p5)
 ```
 **axis selection** : 
-first 5 axis explain 70 % of variance
+either first 3, 4 or 7 axes.
+explained var : either 48%, 53.3 % or 64.6%
 
-There are groups of three axis which have about the same amount of variance explained. 
 ```{r}
-pca_grlfuns <- pca_grlfuns$x[, 1:5]
+pca_grlfuns <- pca_grlfuns$x[, 1:7]
+#TODO : take first 4 or first 5 or first 7?
 # euclidean distance
 EFmaster <- vegan::vegdist(pca_grlfuns, method = "euclid")
 EFmaster <- as.matrix(EFmaster)
@@ -257,8 +262,9 @@ With threshold max 5 method
 ```{r}
 include <- names(nimputed_grlfuns)[!names(nimputed_grlfuns) %in% "Plotn"]
 pa_grlfuns <- data.table::copy(nimputed_grlfuns)  # dataset for max 5 functions
-threshold <- 0.9
+threshold <- 0.8
 ```
+Note : to make EF master for all thresholds : change manually above and run again and again the chunk below.
 ```{r}
 # CONVERT TO PRESENCE ABSENCE
 pa_grlfuns[, (include) := lapply(.SD, function(c) calc_presenceabsence(c, threshold = threshold, type = "max5")), .SDcols = include]
@@ -306,10 +312,10 @@ Plot components of EFbeta
 # rm(EFcheck)
 # TRUE : EFturnover + EFnestedness - EFbeta is always 0 (or very near 0)
 
-plotEFbeta <- reshape2::melt(EFmaster[, c("Var1", "Var2", "EFbeta", "EFturnover", "EFnestedness")], id = c("Var1", "Var2"))
+plotEFbeta <- reshape2::melt(EFmaster[, c("Var1", "Var2", "EFbeta_0.5", "EFturnover_0.5", "EFnestedness_0.5")], id = c("Var1", "Var2"))
 p <- ggplot2::ggplot(data = plotEFbeta, aes(x = variable, y = value)) +
   geom_violin() + geom_jitter(shape=".", position=position_jitter(0.2), color = "gray") + 
-  labs(title="Threshold-based dissimiliarity of Ecosystem Functions", xlab = "") + 
+  labs(title="Threshold-based dissimiliarity of Ecosystem Functions", subtitle = "threshold = 0.5", xlab = "") + 
   scale_x_discrete(labels=c("beta", "turnover", "nestedness")) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank())
