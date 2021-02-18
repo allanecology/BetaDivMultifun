@@ -184,7 +184,7 @@ Check imputation error
 ```{r}
 imperr <- do.call(rbind, imperr)
 mimperr <- data.table::as.data.table(aggregate(errors ~ columns, imperr, mean))
-mean(mimperr[,errors])
+mean(mimperr[,errors]) # 0.071
 
 # barplot(height=mimperr[,errors], names.arg = mimperr[, columns])
 library(cowplot)
@@ -198,6 +198,7 @@ The two variables Total pollinators and Parasitoid traps are removed, because th
 The other variables with imputation errors over 25% are left, because only 1-2 values are missing in those datasets.
 ```{r}
 dataset[, c("Total.pollinators", "Parasitoid.traps") := NULL]
+numcols <- numcols[-which(numcols %in% c("Total.pollinators", "Parasitoid.traps"))]
 ```
 
 ```{r, eval=F}
@@ -226,7 +227,7 @@ Compare imputed values with real values. Creates the pdf `imputed_values.pdf`
 pdf("imputed_values.pdf", paper="a4r")
 par(mfrow = c(2,7))
 for(i in 1:length(numcols)){
-  x <- rep(1, 127)
+  x <- rep(1, length(plotNAset))
   colname <- numcols[i]
   # length of the imputed value vector
   rowlocations <- naloc[, colname]
