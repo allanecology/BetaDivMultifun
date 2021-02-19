@@ -28,8 +28,8 @@ see `analysis_nonpublic.R` file.
 depending on the model intented to run, chose the appropriate variables below.
 ```{r}
 # ECOSYSTEM FUNCTION
-# funs <- "EFdistance"
-funs <- "soilAmmoniaflxs"
+funs <- "EFdistance"
+# funs <- "soilAmmoniaflxs"
 
 # LUI
 ## name of the chosen LUI
@@ -146,26 +146,43 @@ colorder_gdm_input <- append(colorder_gdm_input, "s2.geosphere_distgeo", after =
 ```
 
 ```{r}
-# --------- intermediate solution start
-#TODO change input file, fix this
-# adapt for LUi
-test <- read.csv("colord.csv", header = T)
-colorder_gdm_input <- as.vector(t(test))
-rm(test)
-#TODO maybe add tertiary consumers
-colorder_gdm_input[36]
-# grep("tertiary", colnames(gdminput), value = T)
-colorder_gdm_input <- append(colorder_gdm_input, c("s1.tertiary.consumer.beta.sne"), after = 36)
-colorder_gdm_input[22]
-colorder_gdm_input <- append(colorder_gdm_input, c("s1.tertiary.consumer.beta.sim"), after = 22)
-colorder_gdm_input[56]
-colorder_gdm_input <- append(colorder_gdm_input, "s2.tertiary.consumer.beta.sim", after = 56)
-colorder_gdm_input[71]
-colorder_gdm_input <- append(colorder_gdm_input, "s2.tertiary.consumer.beta.sne", after = 71)
-# --------- intermediate solution end
+# select respective LUI measures from colorder
+grep(lui[1], colorder_gdm_input)
+if(lui[1] == "LUI"){
+  colorder_gdm_input <- colorder_gdm_input[-grep(paste(c("Gstd", "Mstd", "Fstd"), collapse = "|"), colorder_gdm_input)]
+} else {
+  print("this still needs a test")
+  colorder_gdm_input <- colorder_gdm_input[-grep("LUI", colorder_gdm_input)]
+  #TODO test if this is working
+}
+
+```
+
+
+```{r}
+# # --------- intermediate solution start
+# #TODO change input file, fix this
+# # adapt for LUi
+# test <- read.csv("colord.csv", header = T)
+# colorder_gdm_input <- as.vector(t(test))
+# rm(test)
+# #TODO maybe add tertiary consumers
+# colorder_gdm_input[36]
+# # grep("tertiary", colnames(gdminput), value = T)
+# colorder_gdm_input <- append(colorder_gdm_input, c("s1.tertiary.consumer.beta.sne"), after = 36)
+# colorder_gdm_input[22]
+# colorder_gdm_input <- append(colorder_gdm_input, c("s1.tertiary.consumer.beta.sim"), after = 22)
+# colorder_gdm_input[56]
+# colorder_gdm_input <- append(colorder_gdm_input, "s2.tertiary.consumer.beta.sim", after = 56)
+# colorder_gdm_input[71]
+# colorder_gdm_input <- append(colorder_gdm_input, "s2.tertiary.consumer.beta.sne", after = 71)
+# # --------- intermediate solution end
+
+# check if all names of gdminput are in colorder_gdm_input and vice versa
+all(colnames(gdminput) %in% colorder_gdm_input)
+all(colorder_gdm_input %in% colnames(gdminput))
 
 gdminput <- data.table::setcolorder(gdminput, colorder_gdm_input)
-
 
 gdminput[, rown := paste(Var1, Var2, sep = ".")]
 gdminput[,c("Var1","Var2") := NULL]
