@@ -262,7 +262,7 @@ With threshold max 5 method
 ```{r}
 include <- names(nimputed_grlfuns)[!names(nimputed_grlfuns) %in% "Plotn"]
 pa_grlfuns <- data.table::copy(nimputed_grlfuns)  # dataset for max 5 functions
-threshold <- 0.8
+threshold <- 0.9
 ```
 Note : to make EF master for all thresholds : change manually above and run again and again the chunk below.
 ```{r}
