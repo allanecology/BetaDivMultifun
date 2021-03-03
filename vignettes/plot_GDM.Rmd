@@ -80,6 +80,8 @@ paste("percentage of null deviance \n explained by the fitted GDM model :", roun
 "3 splines used, knots at min, max and 50% (default). ",
 paste("LUI knots at :", paste(round(gdm_output$knots[1:3], 3), collapse = ", ")),
 sep = "\n")
+capture.output(print(model_specs), file = paste(pathtoout, "/", model_name, "_GDM_model_specs.txt", sep = ""))
+#TODO maybe remove capture output if done in other place
 
 ###########
 # define plot sequence
@@ -129,7 +131,8 @@ if(luiinput == "components"){
   luidat <- lineplot_data[names %in% c("Gstd", "Mstd", "Fstd")]
   deltaluidat <- lineplot_data[names %in% c("deltaGstd", "deltaMstd", "deltaFstd")]
 } else if(luiinput == "lui"){
-  #TODO add code for lui
+  luidat <- lineplot_data[names %in% c("LUI")]
+  deltaluidat <- lineplot_data[names %in% c("deltaLUI")]
 }
 l <- create_gdm_lineplot(luidat, legend = T, ymax = max(lineplot_data$value))
 dl <- create_gdm_lineplot(deltaluidat, legend = T, ymax = max(lineplot_data$value))
@@ -138,7 +141,8 @@ lgeo <- create_gdm_lineplot(lineplot_data[names %in% c("Geographic")], legend = 
 lsoil <- create_gdm_lineplot(lineplot_data[names %in% c("edis_soil")], legend = T, ymax = max(lineplot_data$value))
 lisol <- create_gdm_lineplot(lineplot_data[names %in% c("plot_isolation")], legend = T, ymax = max(lineplot_data$value))
 
-r <- create_gdm_lineplot(lineplot_data[names %in% c("Geographic", "edis_soil", "plot_isolation")], legend = T)
+# r <- create_gdm_lineplot(lineplot_data[names %in% c("Geographic", "edis_soil", "plot_isolation")], legend = T)
+#TODO outcomment this, because x axis don't match?
 
 ###########
 # create additional plots
@@ -155,16 +159,28 @@ abiotic_legend <- get_nice_legend(type = "abiotic")
 # add plots together
 ###########
 suppressWarnings(
-  lin <- plot_grid(p, biotic_legend, q, labsplot, l, abiotic_legend,  labels = c('A', '', 'B', '', 'C', ''), nrow = 3,
+  lin <- plot_grid(p, biotic_legend, q, labsplot, l, abiotic_legend,  
+                   labels = c('A', '', 'B', '', 'C', ''), nrow = 3,
                    rel_widths = c(0.7, 0.3, 0.7, 0.3, 0.7, 0.3))
   ) # suppresswarnings because of special characters
 
+suppressWarnings(
+lin <- plot_grid(p, labsplot, q, NULL, l, 
+                 labels = c('A', '', 'B', '', 'C', ''), nrow = 3,
+                 rel_widths = c(0.7, 0.3))
+)
+                   
+lin_abiotic <- plot_grid(dl, lgeo, lsoil, lisol, labels = c("D", "", "", ""))
+
+#TODO shuffle well the plots on a page. Ev. remove legend
 
 ###########
 # save
 ###########
 # `model_name` + "_lineplot_all_modelspec.pdf"
-cowplot::ggsave(plot = lin, filename = paste(model_name, "_lineplot_all_modelspec.pdf", sep = ""),
+cowplot::ggsave(plot = lin, filename = paste(pathtoout, "/", model_name, "_lineplot_all_modelspec.pdf", sep = ""),
+                device=cairo_pdf, width = 11.96, height = 8.27, units = "in", dpi = 900)
+cowplot::ggsave(plot = lin_abiotic, filename = paste(pathtoout, "/", model_name, "_lineplot_all_modelspec_abiotic.pdf", sep = ""),
                 device=cairo_pdf, width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 
@@ -187,14 +203,19 @@ cowplot::ggsave(plot = lin, filename = paste(model_name, "_lineplot_all_modelspe
 
 # require : 
 # model_results : the model results saved manually from the models
-setorder(model_results, cols = "EF")
+setorder(model_results, cols = "name")
 model_results[, EF := factor(EF, ordered = T, levels = c("distance", "singleEF", "abund", "beta", "turnover", "nestedness"))]
 str(model_results)
+model_results <- model_results[!is.na(dev_expl_by_GDM)]
 
-
-devexpl <- ggplot(model_results, aes(x = name, y = `% deviance explained`, fill = EF)) + 
+devexpl <- ggplot(model_results, aes(x = name, y = dev_expl_by_GDM, fill = EF)) + 
   geom_bar(stat = "identity") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+ggsave(filename = paste(pathtoout, "/plot_GDM_EFbeta_tresholds_var_expl.pdf", sep = ""), 
+       plot = devexpl, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
+
 #TODO can add nice names at some point
 ```
 
@@ -226,14 +247,14 @@ restab2 <- create_restab2()
 restab2 <- restab2[type %in% c("unscaled", "averaged_scaled")]
 df <- data.frame(restab2)
 ov1 <- create_overview_above_below_abiotic_barplot()
-ov1L <- create_overview_above_below_abiotic_barplot(legend = T) # legend only
+ov1L <- create_overview_above_below_abiotic_barplot(legend = T) # legend only, plot with plot_grid()
     # TURNOVER - NESTEDNESS - ABIOTIC
 restab3 <- create_restab_3()
 restab3 <- restab3[type %in% c("unscaled", "averaged_scaled")]
 df <- data.frame(restab3)
 ov2 <- create_overview_turnover_nestedness_abiotic_barplot()
-ov2L <- create_overview_turnover_nestedness_abiotic_barplot(legend = T) # only legend
-
+ov2L <- create_overview_turnover_nestedness_abiotic_barplot(legend = T) # only legend, plot with plot_grid()
+ov_legends <- plot_grid(ov1L, ov2L, nrow = 2)
 
 ###########
 # add plots together
@@ -243,10 +264,15 @@ ov2L <- create_overview_turnover_nestedness_abiotic_barplot(legend = T) # only l
 # annotated_multipanel_without_overviews <- ggdraw(multipanel_without_overviews) +
   # draw_plot(labsplot, .65, .65, .35, .35) 
 
-multipanel_with_overview_bars <- plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.27, 0.37, 0.13, 0.075, 0.075), align = "v") # 2 summary bars
+#TODO don't delete below, ev. nice for LUI components
+# multipanel_with_overview_bars <- plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.27, 0.37, 0.13, 0.075, 0.075), align = "v") # 2 summary bars
+
+# LUI
+multipanel_with_overview_bars <- plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.23, 0.37, 0.14, 0.1, 0.1), align = "v") # 2 summary bars
 
 annotated_multipanel_with_overview_bars <- ggdraw(multipanel_with_overview_bars) +
-  draw_plot(labsplot, .65, .65, .35, .35)
+  draw_plot(labsplot, .65, .65, .35, .35) +
+  draw_plot(ov_legends, 0.05, 0.1, .1, .2)
 
 
 ###########
@@ -261,7 +287,7 @@ annotated_multipanel_with_overview_bars <- ggdraw(multipanel_with_overview_bars)
     # ANNOTATED PLOTS
 # ggsave(filename=paste(model_name, "_multipanel_barplot_annotated.pdf", sep = ""), plot = annotated_multipanel_without_overviews, device=cairo_pdf,
        # width = 11.96, height = 8.27, units = "in", dpi = 900)
-ggsave(filename = paste(model_name, "_multipanel_barplot_overviewbars_annotated.pdf", sep = ""), plot = annotated_multipanel_with_overview_bars, device=cairo_pdf,
+ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars_annotated.pdf", sep = ""), plot = annotated_multipanel_with_overview_bars, device=cairo_pdf,
        width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 
@@ -277,7 +303,7 @@ abiotic_legend <- get_nice_legend(type = "abiotic")
 
 all_legends <- plot_grid(biotic_legend, abiotic_legend, ov1L, ov2L, nrow = 4, rel_heights = c(0.3, 0.3, 0.1, 0.1))
 all_legends <- plot_grid(NULL, NULL, NULL, NULL,  all_legends, NULL, NULL, NULL, nrow = 3, rel_heights = c(0.1, 0.8, 0.1))
-ggsave(filename = "all_legends_incl_overview.pdf", plot = all_legends, device=cairo_pdf,
+ggsave(filename = paste(pathtoout, "/", "all_legends_incl_overview.pdf", sep = ""), plot = all_legends, device=cairo_pdf,
        width = 8.27, height = 11.96, units = "in", dpi = 900)
 ```
 
