@@ -23,6 +23,7 @@ checkgdminput <- data.table::copy(gdminput)
 checkgdminput <- data.table(checkgdminput)
 
 # calc euclidean distance between each predictor pair of checkgdminput
+# diversity : take out s2. because they are all 0
 dists <- colnames(checkgdminput)[grep("beta", colnames(checkgdminput))]
 dists <- grep("s2.", dists, value = T)
 checkgdminput[, (dists) := NULL]
@@ -39,11 +40,17 @@ if(length(grep("Gstd", lui)) > 1){
   checkgdminput[, deltaMstd := s1.deltaMstd - s2.deltaMstd]
   checkgdminput[, deltaFstd := s1.deltaFstd - s2.deltaFstd]
   checkgdminput[, (luicols) := NULL]
+} else if(length(grep("LUI", lui)) > 1) {
+  print("LUI")
+  checkgdminput[, LUI := s1.LUI - s2.LUI]
+  checkgdminput[, deltaLUI := s1.deltaLUI - s2.deltaLUI]
+  checkgdminput[, (luicols) := NULL]
 }
-#TODO add if clause for LUI
 
-checkgdminput[, geosphere_distgeo := geosphere::distGeo(p1 = as.matrix(checkgdminput[, .(s1.yCoord, s1.xCoord)]), 
-                                                      p2 = as.matrix(checkgdminput[, .(s2.yCoord, s2.xCoord)]))]
+checkgdminput[, geosphere_distgeo := geosphere::distGeo(
+  p1 = as.matrix(checkgdminput[, .(s1.yCoord, s1.xCoord)]),
+  p2 = as.matrix(checkgdminput[, .(s2.yCoord, s2.xCoord)])
+  )]
 geocol <- grep("Coord", colnames(checkgdminput), value = T)
 checkgdminput[, (geocol) := NULL]
 checkgdminput[, s2.geosphere_distgeo := NULL]
@@ -54,14 +61,14 @@ checkgdminput[, plot_isolation := s1.plot_isolation - s2.plot_isolation]
 del <- c("s1.edis_soil", "s2.edis_soil", "s1.plot_isolation", "s2.plot_isolation")
 checkgdminput[, (del) := NULL]
 
-# rename s1
+# rename s1 from diversity columns
 colnames(checkgdminput) <- gsub("s1.", "", colnames(checkgdminput))
 
 ## correlation plot
 # name : modelname "_corrplot_before_gdm.pdf"
 m <- cor(checkgdminput)
 pdf(paste("vignettes/out/", modelname, "_corrplot_before_gdm.pdf", sep = ""), paper = "a4r")
-corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", diag = F, tl.srt = 50, tl.col = "black", order = "hclust", tl.cex = 0.4, cl.cex = 0.3, number.cex = 0.3)
+corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", diag = F, tl.srt = 50, tl.col = "black", order = "hclust", tl.cex = 0.4, cl.cex = 0.3, number.cex = 0.25)
 dev.off()
 
 m[m < 0.5 & m > -0.5] <- 0
@@ -74,16 +81,19 @@ mod <- paste("distance ~ " ,paste(colnames(checkgdminput)[!colnames(checkgdminpu
 m1 <- lm(formula = formula(mod), data = checkgdminput)
 # save linear model
 saveRDS(m1, file = paste("vignettes/out/", modelname, "_linear_model_before_gdm.Rds", sep = ""))
+# save linear model output
+capture.output(summary(m1),
+               file = paste("vignettes/out/", modelname, "_lm_summary.txt"))
 
 vif_output <- car::vif(m1)
 vif_output[which(vif_output > 5)]
 # vif_output[which(vif_output[, "GVIF"] > 5),]
-capture.output(mod,
-               vif_output[which(vif_output > 5)],
+capture.output(c(mod,
+               vif_output[which(vif_output > 5)]),
                file = paste("vignettes/out/", modelname, "_vif_before_gdm.txt", sep = ""))
 
 # plot linear model
-m1$coefficients
+# m1$coefficients
 test <- summary(m1)
 coefs <- test$coefficients
 coefs <- data.table(coefs)
