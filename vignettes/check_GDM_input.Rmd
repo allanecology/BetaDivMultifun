@@ -116,3 +116,5 @@ linplot <- ggplot(coefs, aes(x = names, y = Estimate)) +
 ggsave(linplot, filename = paste("vignettes/out/", modelname, "_linear_model_directions.pdf", sep = ""), dpi = 400,
        units = "cm", width = 29.7, height = 21)
 ```
+
+Next script is `plot_GDM.Rmd`.
