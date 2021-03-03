@@ -9,8 +9,8 @@ pollinator.beta.sim,pollinator βto,a,#7570B3,solid,pollinator
 pollinator.beta.sne,pollinator βnes,a,#7570B3,dashed,pollinator
 secondary.consumer.beta.sim,secondary consumer βto,a,#E6AB02,solid,secondary consumer
 secondary.consumer.beta.sne,secondary consumer βnes,a,#E6AB02,dashed,secondary consumer
-secondary.consumer.arthropodsoillarvae.beta.sim,secondary consumer arthropodsoillarvae βto,b,black,solid,secondary consumer arthropodsoillarvae
-secondary.consumer.arthropodsoillarvae.beta.sne,secondary consumer arthropodsoillarvae βnes,b,black,dashed,secondary consumer arthropodsoillarvae
+secondary.consumer.arthropodsoillarvae.beta.sim,secondary consumer\narthropodsoillarvae βto,b,#2F4F4F,solid,secondary consumer arthropodsoillarvae
+secondary.consumer.arthropodsoillarvae.beta.sne,secondary consumer\narthropodsoillarvae βnes,b,#2F4F4F,dashed,secondary consumer arthropodsoillarvae
 tertiary.consumer.beta.sim,tertiary consumer βto,a,#D95F02,solid,tertiary consumer
 tertiary.consumer.beta.sne,tertiary consumer βnes,a,#D95F02,dashed,tertiary consumer
 bacteria.RNA.beta.sim,bacteria RNA βto,b,#666666,solid,bacteria RNA
