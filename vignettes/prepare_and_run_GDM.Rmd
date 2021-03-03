@@ -28,8 +28,9 @@ see `analysis_nonpublic.R` file.
 depending on the model intented to run, chose the appropriate variables below.
 ```{r}
 # ECOSYSTEM FUNCTION
-funs <- "EFdistance"
+# funs <- "EFdistance"
 # funs <- "soilAmmoniaflxs"
+funs <- "EFnestedness_0.9"
 
 # LUI
 ## name of the chosen LUI
@@ -155,7 +156,6 @@ if(lui[1] == "LUI"){
   colorder_gdm_input <- colorder_gdm_input[-grep("LUI", colorder_gdm_input)]
   #TODO test if this is working
 }
-
 ```
 
 
@@ -190,7 +190,7 @@ gdminput <- as.data.frame(gdminput)
 rownames(gdminput) <- gdminput$rown
 gdminput$rown <- NULL
 
-gdminput <- gdm::formatsitepair(bioData=gdminput, bioFormat = 4, predData=gdminput) 
+gdminput <- gdm::formatsitepair(bioData = gdminput, bioFormat = 4, predData = gdminput)
 ```
 
 
