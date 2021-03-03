@@ -10,7 +10,7 @@ This script :
 - combine years
 - calculate functional dissimilarity
 ```{r}
-cols <- RColorBrewer::brewer.pal(8,"Dark2")
+cols <- RColorBrewer::brewer.pal(8, "Dark2")
 ```
 
 Requirements : 
@@ -160,12 +160,13 @@ pc_grlfuns <- as.data.frame(pc_grlfuns)
 rownames(pc_grlfuns) <- imputed_grlfuns$Plotn
 
 pca_grlfuns <- stats::prcomp(pc_grlfuns, scale=F) 
+summary(pca_grlfuns)
 
-# par(mfrow = c(2, 2))
+par(mfrow = c(2, 2))
 plot(pca_grlfuns)
 biplot(pca_grlfuns)
 plot(ecdf(pca_grlfuns$sdev))
-# dev.off()
+dev.off()
 ```
 Plotting first 5 axis
 ```{r, eval = F}
@@ -195,8 +196,12 @@ rm(p); rm(p1); rm(p2); rm(p3); rm(p4); rm(p5)
 either first 3, 4 or 7 axes.
 explained var : either 48%, 53.3 % or 64.6%
 
+edit 03.03.21 : 
+either first 1, 2 or 5 axes
+explained var : either 23.2%, 38.5% or 65.9%
+
 ```{r}
-pca_grlfuns <- pca_grlfuns$x[, 1:7]
+pca_grlfuns <- pca_grlfuns$x[, 1:5]
 #TODO : take first 4 or first 5 or first 7?
 # euclidean distance
 EFmaster <- vegan::vegdist(pca_grlfuns, method = "euclid")
@@ -217,7 +222,7 @@ Based on a 50% treshold, classify for each function and each plot presence or ab
 ```{r}
 # percentage of measured functions that exceed a given treshold of their maximum observed level across all study sites.
 # maximum observed level: average of the top five sites.
-threshold <- 0.5
+threshold <- 0.1
 # tresholds used in Solivieres paper :  0.25,0.5,0.75,0.9
 ```
 Plot for visualisation
@@ -262,7 +267,6 @@ With threshold max 5 method
 ```{r}
 include <- names(nimputed_grlfuns)[!names(nimputed_grlfuns) %in% "Plotn"]
 pa_grlfuns <- data.table::copy(nimputed_grlfuns)  # dataset for max 5 functions
-threshold <- 0.9
 ```
 Note : to make EF master for all thresholds : change manually above and run again and again the chunk below.
 ```{r}
@@ -320,6 +324,19 @@ p <- ggplot2::ggplot(data = plotEFbeta, aes(x = variable, y = value)) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank())
 ```
+Plot various thresholds
+```{r, eval = F}
+# only run if EFmaster contains various thresholds
+temp <- grep("turnover|nestedness", names(EFmaster), value = T)
+temp <- grep("turnover", names(EFmaster), value = T)
+pairs(EFmaster[, ..temp], upper.panel = NULL )
+
+m <- cor(EFmaster[, -c(1, 2)])
+pdf("calc_multifun_from_imputed_all_EFdistances_corrplot.pdf", paper = "a4r")
+corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", diag = F, tl.srt = 50, tl.col = "black", order = "hclus", tl.cex = 0.4, cl.cex = 0.4, number.cex = 0.4)
+dev.off()
+```
+
 
 
 With quantile method
