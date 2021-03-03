@@ -13,7 +13,7 @@ This script :
 # Data
 The dataset used for gap filling is larger than the dataset used for the analysis. More variables enhance the performance of gapfilling.
 
-Note : Only use variables which are not used in the analysis. Otherwise, data can be circular.
+Note : Only use variables which are not used in the analysis. Otherwise, data can be circular. (Note also that no soil data is used for imputation any more, but other measured functions which are not included in later analysis).
 ```{r, eval=F}
 #USER : insert path to grassland function file and read in as grlfuns (uncomment line below)
 # raw_grlfuns <- data.table::fread("<pathto_grl_functions.csv>", header=T)
@@ -46,7 +46,7 @@ visdat::vis_miss(befun, sort_miss = T)
 ```
 Values with over 21% missing data could be excluded here (mAMF hyphae, Parasitoid traps, Aggregation, PRI.2011 and NaHCO3.Pi).
 
-Here, values with too many missings are not taken out yet. Instead, the imputation is done and the variables are only removed in case their imputation error is too high.
+Here, values with too many missings are **not** taken out yet. Instead, the imputation is done and the variables are only removed in case their imputation error is too high.
 ```{r, eval=F}
 #USER : set treshold for missing values
 treshold <- 0.21
@@ -130,7 +130,7 @@ rm(negative)
 ```
 Log transformation of the numeric columns. The natural logartithm of values smaller than 1 is negative. Tehrefore, all values are shifted by 1 again to avoid any negative values in the log transformed dataset.
 ```{r}
-numcols <- colnames(befun)[!colnames(befun) %in% c("Explo", "Soil.type", "Plotn", "Plot")]
+numcols <- colnames(befun)[!colnames(befun) %in% c("Explo", "Plotn", "Plot")]
 befun[, (numcols) := lapply(.SD, as.numeric), .SDcols = numcols]
 # log transform the values + 1, later shift them back.
 befun[, (numcols) := lapply(.SD, function(x) log(x+1)), .SDcols = numcols]
