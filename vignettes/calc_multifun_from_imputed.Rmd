@@ -142,6 +142,11 @@ saveRDS(singleEFdist, "singleEFdist.rds")
 - *EFdistance* : calculate PCA, identify most important axis, take euclidean distance of them to get a single value for each plot. 
     - open question : weighting of the PCA axis. Weighting by var explained gives the correlated functions too much weight. Equal weighting? Is chosen until better option is available.
 
+```{r}
+#TODO : add new method for dissimilarity calculation
+#TODO : clarify weighting question from above
+```
+
 
 ## EFdistance calculation
 
