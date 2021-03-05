@@ -13,6 +13,8 @@ The devtools::install function also installs packages on which `BetaDivMultifun`
 setwd("<parent-directory-of-the-package>")
 devtools::install("BetaDivMultifun")
 ```
+Update all packages when you are asked for (type 1 to the console)
+#TODO write about package error in windows.
 
 Set wd *back* to the package
 ```{r}
