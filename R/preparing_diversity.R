@@ -75,7 +75,7 @@ find_and_supplement_missing_plots <- function(diversity_dataset, all_plots){
     missing_plots <- all_plots[!all_plots %in% unique(diversity_dataset$Plot)]
     random_species <- diversity_dataset$Species[1]
     complementary_dataset <- data.table::data.table(Plot = missing_plots, Species = random_species, value = 0)
-    diversity_dataset <- rbindlist(list(diversity_dataset, complementary_dataset), fill = T, use.names = T)
+    diversity_dataset <- data.table::rbindlist(list(diversity_dataset, complementary_dataset), fill = T, use.names = T)
     # check if number of plots is the expected 150 now
     if(length(unique(diversity_dataset$Plot)) != length(all_plots)){
       stop("The number of plots is not the expected number. Check length of vector all_plots.")
