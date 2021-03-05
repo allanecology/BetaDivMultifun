@@ -1114,6 +1114,9 @@ saveRDS(masterbeta, "master_beta.rds")
 
 # Calculate alpha diversities
 ```{r}
+#TODO rarefaction for bacteria and soilfungi 
+#TODO : loop below deletes the dataset (e.g. autotroph.alpha is there, autotroph not any more)
+#TODO 150 rows now, did I not select the plot set? not yet.
 for(t in trlevels){
   tr <- get(t)
   alpha <- aggregate(value ~ Plot, tr, function(x) sum(x))
