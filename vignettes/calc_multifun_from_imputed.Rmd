@@ -15,6 +15,7 @@ cols <- RColorBrewer::brewer.pal(8, "Dark2")
 
 Requirements : 
 - imputed_grlfuns : the imputed functions data
+- usedforBetadivMultifun, info_data 
 
 
 # Calculate mini-multifunctionalities
@@ -200,6 +201,7 @@ rm(p); rm(p1); rm(p2); rm(p3); rm(p4); rm(p5)
 **axis selection** : 
 either first 3, 4 or 7 axes.
 explained var : either 48%, 53.3 % or 64.6%
+#TODO take axes until reaching around 90%
 
 edit 03.03.21 : 
 either first 1, 2 or 5 axes
