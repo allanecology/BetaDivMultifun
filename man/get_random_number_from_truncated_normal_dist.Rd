@@ -4,8 +4,7 @@
 \alias{get_random_number_from_truncated_normal_dist}
 \title{Get random vector from a truncated normal distribution}
 \usage{
-get_random_number_from_truncated_normal_dist(length_of_vector, mean, max,
-  min)
+get_random_number_from_truncated_normal_dist(length_of_vector, mean, max, min)
 }
 \arguments{
 \item{length_of_vector}{number, length of returned vector}

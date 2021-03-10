@@ -4,8 +4,15 @@
 \alias{multidiv}
 \title{Calculate multifunctionality}
 \usage{
-multidiv(x, threshold = FALSE, sc = "max", mx = 1, cent = FALSE,
-  by = FALSE, weights = 1)
+multidiv(
+  x,
+  threshold = FALSE,
+  sc = "max",
+  mx = 1,
+  cent = FALSE,
+  by = FALSE,
+  weights = 1
+)
 }
 \arguments{
 \item{x}{Input data frame or matrix. Rows are different diversities/ functions for multifun/div calculation. Columns are

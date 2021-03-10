@@ -4,8 +4,11 @@
 \alias{setNonpublicVariables}
 \title{set nonpublic variables}
 \usage{
-setNonpublicVariables(accessBexispath = ".", pathtoRAWdata = ".",
-  pathtoASSEMBLEDdata = ".")
+setNonpublicVariables(
+  accessBexispath = ".",
+  pathtoRAWdata = ".",
+  pathtoASSEMBLEDdata = "."
+)
 }
 \arguments{
 \item{accessBexispath}{the path to the file "accesBexis.R".

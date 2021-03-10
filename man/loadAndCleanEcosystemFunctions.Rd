@@ -4,11 +4,13 @@
 \alias{loadAndCleanEcosystemFunctions}
 \title{load and clean functions dataset}
 \usage{
-
-  loadAndCleanEcosystemFunctions(dataset = "EP grass functions & services.txt",
-  path, remove = c("Total.flower.cover", "Charism.butterfly.Abund",
-  "Charism.butterfly.SR", "SR.birds", "forage.quality", "daily.temp.range",
-  "daily.moisture.range", "P_loss2015", "Soil.C.stock"))
+loadAndCleanEcosystemFunctions(
+  dataset = "EP grass functions & services.txt",
+  path,
+  remove = c("Total.flower.cover", "Charism.butterfly.Abund", "Charism.butterfly.SR",
+    "SR.birds", "forage.quality", "daily.temp.range", "daily.moisture.range",
+    "P_loss2015", "Soil.C.stock")
+)
 }
 \arguments{
 \item{dataset}{input file}

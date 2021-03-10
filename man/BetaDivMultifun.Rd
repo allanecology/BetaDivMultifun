@@ -4,7 +4,6 @@
 \docType{package}
 \name{BetaDivMultifun}
 \alias{BetaDivMultifun}
-\alias{BetaDivMultifun-package}
 \title{BetaDivMultifun}
 \description{
 BetaDivMultifun

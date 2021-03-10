@@ -4,7 +4,11 @@
 \alias{create_overview_above_below_abiotic_barplot}
 \title{create plot Overview : Aboveground - belowground - abiotic}
 \usage{
-create_overview_above_below_abiotic_barplot()
+create_overview_above_below_abiotic_barplot(legend = F)
+}
+\arguments{
+\item{legend}{boolean T or F. if T, a plot with legend is created.
+The legend can be exctracted with cowplot.}
 }
 \description{
 code to create overview

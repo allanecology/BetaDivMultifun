@@ -41,6 +41,6 @@ Imports:
     gdm,
     testthat,
     stringr
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1
 Suggests: 
     testthat (>= 2.1.0)
