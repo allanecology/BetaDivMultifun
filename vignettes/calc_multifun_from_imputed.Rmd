@@ -296,8 +296,9 @@ With threshold max 5 method
 ```{r}
 include <- names(nimputed_grlfuns)[!names(nimputed_grlfuns) %in% "Plotn"]
 pa_grlfuns <- data.table::copy(nimputed_grlfuns)  # dataset for max 5 functions
+threshold <- 0.9
 ```
-Note : to make EF master for all thresholds : change manually above and run again and again the chunk below.
+Note : to make EF master for all thresholds : change manually above and run again and again the chunk below AND above.
 ```{r}
 # CONVERT TO PRESENCE ABSENCE
 pa_grlfuns[, (include) := lapply(.SD, function(c) calc_presenceabsence(c, threshold = threshold, type = "max5")), .SDcols = include]
@@ -305,28 +306,28 @@ pa_grlfuns[, (include) := (.SD * 1), .SDcols = include]
 
 # CALC BETADIVERSITY
 pa_grlfuns <- data.frame(pa_grlfuns[, !"Plotn", with=F], row.names = pa_grlfuns$Plotn)
-pa_grlfuns <- betapart::beta.pair(pa_grlfuns, index.family = "sorensen")
+pa_grlfuns <- BetaDivMultifun::beta.pair_zerospecies(pa_grlfuns, index.family = "sorensen")
 
 EFbeta <- pa_grlfuns$beta.sor
 t <- as.matrix(EFbeta)
 t[!lower.tri(t)] <- NA
 t <- reshape2::melt(t, value.name = paste("EFbeta", threshold, sep = "_"))
-t <- t[!is.na(t[, 3]), ]
-EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
+EFbeta <- t[!is.na(t[, 3]), ]
+EFmaster <- merge(EFmaster, EFbeta, by = c("Var1", "Var2"), all = T)
 
 EFturnover <- pa_grlfuns$beta.sim
 t <- as.matrix(EFturnover)
 t[!lower.tri(t)] <- NA
 t <- reshape2::melt(t, value.name = paste("EFturnover", threshold, sep = "_"))
-t <- t[!is.na(t[, 3]), ]
-EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
+EFturnover <- t[!is.na(t[, 3]), ]
+EFmaster <- merge(EFmaster, EFturnover, by = c("Var1", "Var2"), all = T)
 
 EFnestedness <- pa_grlfuns$beta.sne
 t <- as.matrix(EFnestedness)
 t[!lower.tri(t)] <- NA
 t <- reshape2::melt(t, value.name = paste("EFnestedness", threshold, sep = "_"))
-t <- t[!is.na(t[, 3]), ]
-EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
+EFnestedness <- t[!is.na(t[, 3]), ]
+EFmaster <- merge(EFmaster, EFnestedness, by = c("Var1", "Var2"), all = T)
 ```
 standardise and save
 ```{r}
@@ -358,7 +359,8 @@ p <- ggplot2::ggplot(data = plotEFbeta, aes(x = variable, y = value)) +
 plotEFbeta <- reshape2::melt(EFmaster, id = c("Var1", "Var2"))
 plotEFbeta[, type := sub("_[0-9].[0-9]", "", variable)]
 
-p <- ggplot2::ggplot(data = plotEFbeta, aes(x = variable, y = value, fill = type)) +
+p1 <- ggplot2::ggplot(data = plotEFbeta[variable %in% unique(plotEFbeta$variable)[1:14]], 
+                      aes(x = variable, y = value, fill = type)) +
       geom_violin() +
   geom_jitter(shape=".", position=position_jitter(0.2), color = "gray", alpha = 0.2) +
   theme(axis.text.x = element_text(angle = 90)) +
@@ -366,6 +368,16 @@ p <- ggplot2::ggplot(data = plotEFbeta, aes(x = variable, y = value, fill = type
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank()) +
   scale_fill_brewer(palette="Dark2")
+p2 <- ggplot2::ggplot(data = plotEFbeta[variable %in% unique(plotEFbeta$variable)[14:28]], 
+                      aes(x = variable, y = value, fill = type)) +
+      geom_violin() +
+  geom_jitter(shape=".", position=position_jitter(0.2), color = "gray", alpha = 0.2) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(title="Threshold-based dissimiliarity of Ecosystem Functions", subtitle = "all thresholds", xlab = "") +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank()) +
+  scale_fill_brewer(palette="Dark2")
+plot_grid(p1, p2, nrow = 2)
 # save as : 21-03-09_calc_multifun_from_imputed_all_EFdistances_violinplot
 ```
 Plot various thresholds
@@ -379,7 +391,10 @@ m <- cor(EFmaster[, -c(1, 2)])
 pdf("calc_multifun_from_imputed_all_EFdistances_corrplot.pdf", paper = "a4r")
 corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", diag = F, tl.srt = 50, tl.col = "black", order = "hclus", tl.cex = 0.4, cl.cex = 0.4, number.cex = 0.4)
 dev.off()
-#TODO HERE : plot more
+```
+```{r, eval = F}
+# EFturnover and nestedness are additive
+plot(EFmaster$EFbeta_0.5, EFmaster$EFturnover_0.5 + EFmaster$EFnestedness_0.5)
 ```
 
 
@@ -456,7 +471,7 @@ t <- reshape2::melt(t, value.name = "EFabund_bray_gra")
 t <- t[!is.na(t[, 3]), ]
 EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
 
-saveRDS(EFmaster, "EFbeta_abund.rds")
+saveRDS(EFmaster[, .(Var1, Var2, EFabund_bray, EFabund_bray_bal, EFabund_bray_gra)], "EFbeta_abund.rds")
 ```
 
 
