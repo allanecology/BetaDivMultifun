@@ -54,7 +54,22 @@ rm(soilcov)
 
 # run the pca
 pca_from_glsoil <- prcomp(pc_glsoil[, !(names(pc_glsoil) %in% "Soil.type")], scale = F)
-plot(pca_from_glsoil) 
+plot(pca_from_glsoil)
+
+temp <- cbind(pc_glsoil, "region" = sub("[0-9][0-9]", "", rownames(pc_glsoil)))
+pcaplots <- list(autoplot(pca_from_glsoil, data = temp, colour = "region"),
+                 autoplot(pca_from_glsoil, data = temp, colour = "region", x = 3, y = 4),
+                 autoplot(pca_from_glsoil, data = temp, colour = "region", x = 5, y = 6),
+                 autoplot(pca_from_glsoil, data = temp, colour = "region", x = 7, y = 8))
+
+pcaplots2 <- list(autoplot(pca_from_glsoil, data = temp, colour = "pH"),
+                  autoplot(pca_from_glsoil, data = temp, colour = "pH", label = T, label.size = 2, shape = F, loadings = T),
+                 autoplot(pca_from_glsoil, data = temp, colour = "pH", loadings = T, loadings.label = T),
+                 autoplot(pca_from_glsoil, data = temp, colour = "pH", x =3, y = 4, loadings = T, loadings.label = T))
+plot_grid(plotlist = pcaplots, nrow = 2)
+plot_grid(plotlist = pcaplots2, nrow = 2)
+# save plots as : "<date>_calc_covariates_soil_pca1.pdf"
+rm(temp); rm(pcaplots); rm(pcaplots2)
 ```
 The first 4 axis would make sense if the dimensionality would need to be reduced a lot. 
 
