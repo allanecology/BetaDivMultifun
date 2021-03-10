@@ -6,3 +6,4 @@
 *.pdf
 *.png
 data
+*pca_summary.txt
