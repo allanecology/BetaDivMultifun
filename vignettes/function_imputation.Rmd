@@ -186,6 +186,7 @@ Check imputation error
 imperr <- do.call(rbind, imperr)
 mimperr <- data.table::as.data.table(aggregate(errors ~ columns, imperr, mean))
 mean(mimperr[,errors]) # 0.071
+mean(imperr[errors != 0, errors]) # 0.1352324 mean of only the imputed values
 
 # barplot(height=mimperr[,errors], names.arg = mimperr[, columns])
 library(cowplot)
