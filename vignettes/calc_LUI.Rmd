@@ -58,3 +58,17 @@ Save for analysis
 saveRDS(lui, "LUI.rds")
 ```
 
+Prepare LUI euclidean distance
+```{r}
+test <- as.matrix(lui[, .(LUI)])
+rownames(test) <- lui$Plotn
+test <- vegan::vegdist(test, method = "euclid")
+test <- as.matrix(test)
+test[!lower.tri(test)] <- NA
+test <- reshape2::melt(test, value.name = "distLUI")
+test <- test[!is.na(test[, 3]),]
+test <- data.table::data.table(test)
+
+saveRDS(test, "distLUI.rds")
+```
+
