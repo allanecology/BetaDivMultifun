@@ -7,6 +7,7 @@ output:
 
 This script : 
 - uses raw functions from the synthesis dataset (loaded with `analysis_nonpublic.R`)
+    - *note* if taken from bexis, first run the reformatting script 27708. TODO : new bexis2 : attached to dataset
 - performs gapfilling
 - saves the gapfilled dataset
 
