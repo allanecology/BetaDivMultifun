@@ -14,7 +14,8 @@ library(viridis)
 ```
 
 # all trophic levels
-```{r}
+alpha-alpha plots, coloured by betadiversity.
+```{r, eval = F}
 jitter <- position_jitter(width = 0.1, height = 0.1)
 
 for(t in trlevels){
@@ -52,5 +53,4 @@ for(t in trlevels){
 }
 rm(p); rm(plot_nestedness); rm(plot_turnover); rm(subset); rm(namesref); rm(t); rm(t_colnames); rm(plotname)
 ```
-
 
