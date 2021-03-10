@@ -1,0 +1,46 @@
+---
+title: "Introductory Plots"
+author: 'Noëlle Schenk'
+date: "3/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Requirements : 
+Load the following variables from `results_nonpublic.R`:
+- load package (as usual)
+- pathtodata
+- master_alpha
+- trlevels
+- plotNAset
+- LUI
+
+
+# Content
+- Diversity
+    - ... 
+
+
+
+Clean dataset
+```{r}
+merge(masterdiversity)
+
+
+
+master_alpha <- data.table::data.table(master_alpha)
+master_alpha <- master_alpha[Var1 %in% plotNAset]
+ggmaster_alpha <- melt(master_alpha, id.vars = "Var1")
+```
+
+# Diversity
+## Trophic levels
+```{r}
+ggplot(data = ggmaster_alpha[Var1 == "AEG01", .(variable, value)], aes(x = variable, y = value)) +
+  geom_bar(stat = "identity") +
+  ylim(c(0, 100))
+```
+
+
