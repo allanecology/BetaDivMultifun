@@ -86,17 +86,25 @@ Of the non-factor columns only
 M <- cor(imputed_grlfuns[, !colnames(imputed_grlfuns) %in% "Plotn", with=F], use="complete.obs")
 
 # imputed_grlfun_corrplot1
-corrplot::corrplot(M,type="lower", addCoef.col = "black", method="color", diag=T, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.2, order = "hclust", tl.cex = 0.3)
+corrplot::corrplot(M,type="lower", addCoef.col = "black", method="color", diag=F, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.4, order = "hclust", tl.cex = 0.6)
 
 # imputed_grlfun_corrplot2
 corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F,
                    tl.cex = 0.3, order = "hclust")
 
+# only show medium high correlations
+tres <- 0.5
+M[which(M < tres & M > -tres)] <- 0
+corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F,
+                   tl.cex = 0.6, order = "hclust")
+
 # only show high correlations
 tres <- 0.7
 M[which(M < tres & M > -tres)] <- 0
-corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F, main = "B",
-                   tl.cex = 0.3)
+corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F,
+                   tl.cex = 0.6, order = "hclust")
+
+rm(M)
 ```
 
 # Dissimilarity of single functions
@@ -141,19 +149,20 @@ saveRDS(singleEFdist, "singleEFdist.rds")
 2 ways of dissimilarity calculation : 
 - *EFturnover* and *EFnestedness* : calculate presence-absence of functions by 0.5 treshold, and then calculate betadiversity turnover and nestedness components of them.
 - *EFdistance* : calculate PCA, identify most important axis, take euclidean distance of them to get a single value for each plot. 
-    - open question : weighting of the PCA axis. Weighting by var explained gives the correlated functions too much weight. Equal weighting? Is chosen until better option is available.
-
-```{r}
-#TODO : add new method for dissimilarity calculation
-#TODO : clarify weighting question from above
-```
+    - weighting of the PCA axis: Weighting by var explained gives the correlated functions too much weight. Equal weighting is chosen. (soil axis should not get too much weight)
 
 
 ## EFdistance calculation
 
-From PCA of all functions, take most important axes and calculate euclidian distance of them (using equal weights). Note : not weighed by amount of variance explained or similar, because soil axis should not get too much weight. 
+From PCA of all functions, take most important axes and calculate euclidian distance of them (using equal weights).
 
-We expect that one of the important axis - possibly the first to represent soil. As we have many soil functions compared to aboveground functions, soil would otherwise get too much importance.
+We expect that one of the important axis - possibly the first to represent soil. As we have many soil functions compared to aboveground functions.
+
+Selection of relevant PC axes : 
+- check how many correlated functions there are
+    - 6 correlations > 0.5 (see corrplots above)
+- (number of selected axes) = (number of PCA) - (number of correlated functions)
+- check if this number corresponds to around 90% variance explained.
 ```{r}
 # STANDARDISATION
 nimputed_grlfuns <- data.table::copy(imputed_grlfuns) # save an unscaled version for EFturnover / nestedness
@@ -167,6 +176,7 @@ rownames(pc_grlfuns) <- imputed_grlfuns$Plotn
 
 pca_grlfuns <- stats::prcomp(pc_grlfuns, scale=F) 
 summary(pca_grlfuns)
+capture.output(summary(pca_grlfuns), file = "calc_multifun_from_imputed_pca_summary.txt")
 
 par(mfrow = c(2, 2))
 plot(pca_grlfuns)
@@ -176,6 +186,14 @@ dev.off()
 ```
 Plotting first 5 axis
 ```{r, eval = F}
+temp <- cbind(pc_grlfuns, "region" = sub("[0-9][0-9]", "", rownames(pc_grlfuns)))
+pcaplots <- list(autoplot(pca_grlfuns, data = temp, colour = "region"),
+     autoplot(pca_grlfuns, data = temp, colour = "region", x = 3, y = 4),
+     autoplot(pca_grlfuns, data = temp, colour = "region", x = 5, y = 6),
+     autoplot(pca_grlfuns, data = temp, colour = "region", x = 7, y = 8))
+plot_grid(plotlist = pcaplots, nrow = 2)
+rm(temp)
+
 p <- plot(pca_grlfuns)
 labelsize <- 3
 p1 <- ggplot2::autoplot(pca_grlfuns, loadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
@@ -199,17 +217,16 @@ p5 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, co
 rm(p); rm(p1); rm(p2); rm(p3); rm(p4); rm(p5)
 ```
 **axis selection** : 
-either first 3, 4 or 7 axes.
-explained var : either 48%, 53.3 % or 64.6%
-#TODO take axes until reaching around 90%
-
-edit 03.03.21 : 
-either first 1, 2 or 5 axes
-explained var : either 23.2%, 38.5% or 65.9%
+- 6 correlations > 0.5
+    - 3-4 clusters of inter-correlated functions
+- 17 PC axes (17 functions)
+- 17-3 = 14 axes
+- 14 axes explain 0.97373 % var
+- take first 14 axes
 
 ```{r}
-pca_grlfuns <- pca_grlfuns$x[, 1:5]
-#TODO : take first 4 or first 5 or first 7?
+pca_grlfuns <- pca_grlfuns$x[, 1:14]
+
 # euclidean distance
 EFmaster <- vegan::vegdist(pca_grlfuns, method = "euclid")
 EFmaster <- as.matrix(EFmaster)
@@ -224,12 +241,13 @@ rm(pca_grlfuns); rm(pc_grlfuns)
 ```
 
 
+
 ## EFturnover and EFnestedness
 Based on a 50% treshold, classify for each function and each plot presence or absence of the given function. Based on the scaled functions.
 ```{r}
 # percentage of measured functions that exceed a given treshold of their maximum observed level across all study sites.
 # maximum observed level: average of the top five sites.
-threshold <- 0.1
+threshold <- 0.7
 # tresholds used in Solivieres paper :  0.25,0.5,0.75,0.9
 ```
 Plot for visualisation
@@ -248,7 +266,7 @@ for(i in colnames(nimputed_grlfuns)[which(colnames(nimputed_grlfuns) != "Plotn")
   p <- ggplot2::ggplot(df, ggplot2::aes(y = len, x= rownames(df))) +
   ggplot2::geom_bar(stat="identity") +
   ggplot2::geom_abline(intercept = upper, slope = 0, color = "lightgray") +
-  ggplot2::geom_abline(intercept = upper*threshold, slope = 0, color =cols[1]) +
+  ggplot2::geom_abline(intercept = upper*threshold, slope = 0, color =cols[1]) + # turkis
   ggplot2::geom_abline(intercept = upperq, slope = 0, color = cols[2]) +
   theme(axis.text.x=element_blank()) + xlab("Plots") + ylab(i)
   plotname <- paste("plot", i, sep = "")
@@ -259,15 +277,19 @@ rm(i)
 
 plotnames <- paste("plot", colnames(nimputed_grlfuns)[which(colnames(nimputed_grlfuns) != "Plotn")], sep = "")
 
-plot_grid(plotlist = list(plotBiomass, plotdung.removal, plotGroundwater.recharge, plotherbivory.20172018, plotLitter.decomposition, plotN_leaching_risk2015, plotpathogen.infection, plotPhosphatase, plotPotential.nitrification, plotcaterpillars.predation, plotRoot.biomass, plotRoot.decomposition, plotseed.depletion, plotsoilCflxs, plotP_leaching_risk_comb, plotsoilNitrateflxs, plotsoilAmmoniaflxs),
+
+plot_grid(plotlist = list(plotBiomass, plotdung.removal, plotGroundwater.recharge, plotherbivory.20172018, plotLitter.decomposition, plotN_leaching_risk2015, plotpathogen.infection, plotPhosphatase, plotPotential.nitrification),
           align = T)
+plot_grid(plotlist = list( plotcaterpillars.predation, plotRoot.biomass, plotRoot.decomposition, plotseed.depletion, plotsoilCflxs, plotP_leaching_risk_comb, plotsoilNitrateflxs, plotsoilAmmoniaflxs),
+          align = T)
+# saved name : 21-03-09_calc_multifun_from_imputed_EFbeta_threshold_method_visual_tr01_part1 , change to tr = 0.7 etc, change part 1 and part2
 
 # barplot(x, main="Root Biomass", xlab="Plots")
 # abline(a=upper,b=0,col="lightgray")
 # abline(a = upperq, b = 0, col = "darkgreen")
 # abline(a=upper*threshold, b=0, col="orange")
 
-rm(df); rm(plotBiomass, plotdung.removal, plotGroundwater.recharge, plotherbivory.20172018, plotLitter.decomposition, plotN_leaching_risk2015, plotpathogen.infection, plotPhosphatase, plotPotential.nitrification, plotcaterpillars.predation, plotRoot.biomass, plotRoot.decomposition, plotseed.depletion, plotsoilCflxs, plotP_leaching_risk_comb, plotsoilNitrateflxs, plotsoilAmmoniaflxs)
+rm(df); rm(plotBiomass, plotdung.removal, plotGroundwater.recharge, plotherbivory.20172018, plotLitter.decomposition, plotN_leaching_risk2015, plotpathogen.infection, plotPhosphatase, plotPotential.nitrification, plotcaterpillars.predation, plotRoot.biomass, plotRoot.decomposition, plotseed.depletion, plotsoilCflxs, plotP_leaching_risk_comb, plotsoilNitrateflxs, plotsoilAmmoniaflxs); gc()
 ```
 
 With threshold max 5 method
@@ -310,6 +332,7 @@ standardise and save
 ```{r}
 # saveRDS(EFturnover, "EFturnover.rds")
 # saveRDS(EFnestedness, "EFnestedness.rds")
+# saveRDS(EFmaster, "EFmaster_all_thresholds.rds") # if all threshods were calculated and added to EFmaster
 saveRDS(EFmaster, "EFmaster.rds")
 ```
 
@@ -330,24 +353,40 @@ p <- ggplot2::ggplot(data = plotEFbeta, aes(x = variable, y = value)) +
   scale_x_discrete(labels=c("beta", "turnover", "nestedness")) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank())
+
+# Plot all thresholds
+plotEFbeta <- reshape2::melt(EFmaster, id = c("Var1", "Var2"))
+plotEFbeta[, type := sub("_[0-9].[0-9]", "", variable)]
+
+p <- ggplot2::ggplot(data = plotEFbeta, aes(x = variable, y = value, fill = type)) +
+      geom_violin() +
+  geom_jitter(shape=".", position=position_jitter(0.2), color = "gray", alpha = 0.2) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(title="Threshold-based dissimiliarity of Ecosystem Functions", subtitle = "all thresholds", xlab = "") +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank()) +
+  scale_fill_brewer(palette="Dark2")
+# save as : 21-03-09_calc_multifun_from_imputed_all_EFdistances_violinplot
 ```
 Plot various thresholds
 ```{r, eval = F}
 # only run if EFmaster contains various thresholds
 temp <- grep("turnover|nestedness", names(EFmaster), value = T)
 temp <- grep("turnover", names(EFmaster), value = T)
-pairs(EFmaster[, ..temp], upper.panel = NULL )
+# pairs(EFmaster[, ..temp], upper.panel = NULL )
 
 m <- cor(EFmaster[, -c(1, 2)])
 pdf("calc_multifun_from_imputed_all_EFdistances_corrplot.pdf", paper = "a4r")
 corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", diag = F, tl.srt = 50, tl.col = "black", order = "hclus", tl.cex = 0.4, cl.cex = 0.4, number.cex = 0.4)
 dev.off()
+#TODO HERE : plot more
 ```
 
 
 
 With quantile method
 ```{r, eval=F}
+threshold <- 0.5
 include <- names(nimputed_grlfuns)[!names(imputed_grlfuns) %in% "Plotn"]
 paq_grlfuns <- data.table::copy(nimputed_grlfuns) # dataset for quantile functions
 
