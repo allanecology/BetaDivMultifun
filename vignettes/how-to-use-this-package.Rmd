@@ -7,7 +7,9 @@ output: html_document
 
 # installing this package as a user
 1. Download the whole folder from [github](https://github.com/allanecology/BetaDivMultifun).
-2. set the R working directory to the parent folder of the downloaded package. (e.g. Downloads if you stored the package folder in Downloads.)
+    - from within RStudio (if you have installed git and have a git-plugin for RStudio):
+      Select (at the top right corner) new project > Version control > Git and in the field "Repository URL" give the link https://github.com/allanecology/BetaDivMultifun . chose a location where to store it.
+2. From within R, set the R working directory to the parent folder of the downloaded package. (e.g. Downloads if you stored the package folder in Downloads.)
 The devtools::install function also installs packages on which `BetaDivMultifun` depends on.
 ```{r, eval=F}
 setwd("<parent-directory-of-the-package>")
