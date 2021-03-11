@@ -16,31 +16,310 @@ Load the following variables from `results_nonpublic.R`:
 - trlevels
 - plotNAset
 - LUI
+- EFmastser
+- gdm_EFdistance_LUI_input
 
+from `results_nonpublic.R`
+- nicenames
 
 # Content
 - Diversity
     - ... 
 
 
-
-Clean dataset
+# Clean dataset
 ```{r}
-merge(masterdiversity)
+require(cowplot)
+# masterdiversity <- data.table::data.table(masterdiversity)
+masterbeta <- data.table::data.table(masterbeta)
+LUI <- data.table::data.table(LUI)
+
+
+# only selected plot set
+# masterdiversity <- masterdiversity[Var1 %in% plotNAset & Var2 %in% plotNAset, ]
+masterbeta <- masterbeta[Var1 %in% plotNAset & Var2 %in% plotNAset,]
+
+full_master <- merge(EFmaster, masterbeta, by = c("Var1", "Var2"))
+any(is.na(full_master))
+full_master <- merge(full_master, distLUI, by = c("Var1", "Var2"), all.x = T)
+any(is.na(full_master))
+temp <- data.table::copy(LUI)
+setnames(temp, old = "Plotn", new = "Var1")
+full_master <- merge(full_master, temp, by = "Var1")
+setnames(temp, old = "Var1", new = "Var2")
+full_master <- merge(full_master, temp, by = "Var2")
+rm(temp)
+
+# add mean LUI
+full_master[, meanLUI := rowMeans(full_master[, .(LUI.x, LUI.y)])]
+
+ggfull_master <- melt(full_master, id.vars = c("Var1", "Var2"))
+
+# get colours for trophic levels
+#TODO put right color for each level
+# longpallette <- unique(nicenames$color)
+#TODO nicenames are shown in a strange way...
+longpallette <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#F0E442", "#0072B2", "#D55E00", "#CC79A7","#000000", "#E69F00", "#56B4E9", "#009E73",
+          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+```
 
 
 
+# LUI distance
+```{r}
+ggplot(full_master, aes(x = LUI.x, y = LUI.y, colour = distLUI)) +
+  geom_point() +
+  scale_color_gradient(low="blue", high="red") +
+  labs(subtitle = c("distLUI is ambiguous, per distLUI value, two possible LUI values."))
+
+# EFdistance and LUI
+ggplot(full_master, aes(x = LUI.x, y = LUI.y, colour = EFdistance)) +
+  geom_point() + scale_color_gradient(low="blue", high="red")
+a <- ggplot(full_master, aes(x = distLUI, y = EFdistance, colour = LUI.y)) +
+  geom_point() + scale_color_gradient(low="blue", high="red")
+b <- ggplot(full_master, aes(x = distLUI, y = EFdistance, colour = LUI.x)) +
+  geom_point() + scale_color_gradient(low="blue", high="red")
+plot_grid(a, b, nrow = 1)
+
+
+# delta LUI vs. mean LUI
+ggplot(full_master, aes(x = meanLUI, y = distLUI)) +
+  geom_point()
+# there are many intermediate cases which we can not distinguish
+a <- ggplot(full_master, aes(x = meanLUI, y = distLUI, colour = LUI.y)) +
+  geom_point() + 
+  scale_color_gradient(low="blue", high="red")
+b <- ggplot(full_master, aes(x = meanLUI, y = distLUI, colour = LUI.x)) +
+  geom_point() + 
+  scale_color_gradient(low="blue", high="red")
+plot_grid(a, b, nrow = 2, align = T)
+# mit diesen 3 informationen sollte jeder Wert eindeutig zuordenbar sein
+# saved as data_assembly/plots/21-03-11_introductory_plots_meanLUI_distLUI_ambiguity.pdf
+```
+
+
+
+# Diversity
+
+```{r}
 master_alpha <- data.table::data.table(master_alpha)
 master_alpha <- master_alpha[Var1 %in% plotNAset]
 ggmaster_alpha <- melt(master_alpha, id.vars = "Var1")
 ```
 
-# Diversity
+
 ## Trophic levels
 ```{r}
-ggplot(data = ggmaster_alpha[Var1 == "AEG01", .(variable, value)], aes(x = variable, y = value)) +
-  geom_bar(stat = "identity") +
-  ylim(c(0, 100))
+# edit bacteria.RNA : divide by 100
+edit_ggmaster_alpha <- copy(ggmaster_alpha)
+edit_ggmaster_alpha[variable == "bacteria.RNA.alpha", value := value / 100]
+edit_ggmaster_alpha[variable == "bacteria.RNA.alpha", variable := "bacteria.RNA.alpha.div100"]
 ```
 
+
+Example plot AEG01
+```{r}
+# ultra-high number of bacteria
+# show 2 plots, one with all and one with just the small data
+plotname <- "AEG48"
+a <- ggplot(data = ggmaster_alpha[Var1 == plotname, .(variable, value)], 
+            aes(x = variable, y = value, fill = variable)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_blank()) +
+  scale_fill_manual(values = longpallette) +
+  labs(title = plotname, x = "", y = "alpha diversity") +
+  theme(legend.position = "none")
+legend <- cowplot::get_legend(a)
+b <- a + ylim(c(0, 480))+ labs(title = "") + theme(legend.position = "none")
+c <- a + ylim(c(0, 40)) + labs(title = "") + theme(legend.position = "none")
+plot_grid(a, NULL, b, plot_grid(legend), c, NULL, nrow = 3, align = T, rel_widths = c(0.5, 0.2))
+# saved as : 21-03-11_introductory_plots_alpha_diversity_plot_AEG01
+```
+
+Violin plot over all plots
+```{r}
+a <- ggplot(data = edit_ggmaster_alpha, aes(x = variable, y = value, fill = variable)) +
+  geom_violin() +
+  ylim(c(0, 540)) +
+  theme(axis.text.x = element_blank(), legend.position = "none") +
+  scale_fill_manual(values = longpallette) +
+  labs(title = "alpha diversity over all plots", x = "", y = "alpha diversity")
+legend <- cowplot::get_legend(a)
+b <- a + ylim(c(0, 100)) + labs(title = "")
+plot_grid(a, legend, b, NULL, rel_widths = c(0.6, 0.3))
+# saved as : 21-03-11_introductory_plots_alpha_diversity_over_all_plots
+```
+
+# Functions
+
+## single functions
+```{r}
+#TODO example plot like the one for alphadiversity for a given plot
+#    do the same with functions
+```
+
+Violin plot over all plots
+```{r}
+#TODO
+```
+
+EFturnover and EFnestedness
+```{r}
+ggplot(full_master, aes(x = EFturnover_0.7, y = EFnestedness_0.7, colour = EFbeta_0.7)) +
+  geom_point()
+```
+
+
+# LUI
+```{r}
+
+```
+
+
+# case descriptions
+
+## high betadiversity
+```{r}
+par(mfrow = c(2,1))
+plot(full_master$autotroph.beta.sim, 
+     main = "Autotroph betadiversity", sub = "turnover (above) and nestedness (below)", 
+     xlab = "pairwise comparisons of plots", ylab = "autotroph betadiversity")
+plot(full_master$autotroph.beta.sne,
+     xlab = "pairwise comparisons of plots", ylab = "autotroph betadiversity")
+
+ggplot(full_master, aes(x = autotroph.beta.sim, y = autotroph.beta.sne, colour = EFbeta_0.7)) +
+  scale_color_gradient(low="blue", high="red") +
+  geom_point()
+# saved as : 21-03-11_introductory_plots_autotroph_betadiversity_turnover_nestedness_EFdist
+```
+
+High autotroph betadiversity turnover
+```{r}
+test <- full_master[autotroph.beta.sim > 0.95, .(Var1, Var2, EFdistance, EFbeta_0.7, EFturnover_0.7, EFnestedness_0.7, distLUI, LUI.x, LUI.y, autotroph.beta.sim, autotroph.beta.sne, herbivore.arthropod.beta.sim, herbivore.arthropod.beta.sne, symbiont.soilfungi.beta.sim, symbiont.soilfungi.beta.sne)]
+test[, comparison := paste(Var1, Var2, sep = "_")]
+test[, Var1 := NULL]
+test[, Var2 := NULL]
+test <- melt(test, id.vars = "comparison")
+
+ggplot(test, aes(x = variable, y = value, colour = comparison, group = comparison)) +
+  geom_hline(yintercept = 1) +
+  geom_line() +
+  geom_point(aes(size = 3)) +
+  scale_colour_manual(values = longpallette) +
+  labs(title = "specific case descriptions", 
+       subtitle = "extraction from dataset \n8 comparisons, selected by highest autotroph beta turnover",
+       x = "", y = "distance or absolute value") +
+  theme(axis.text.x = element_text(angle = 90))
+# saved as : 21-03-11_introductory_plots_specific_case_high_autotroph_betadiversity_turnover_EFdist_LUI
+```
+
+High autotroph betadiversity nestedness
+```{r}
+test <- full_master[autotroph.beta.sne > 0.4, .(Var1, Var2, EFdistance, EFbeta_0.7, EFturnover_0.7, EFnestedness_0.7, distLUI, LUI.x, LUI.y, autotroph.beta.sim, autotroph.beta.sne, herbivore.arthropod.beta.sim, herbivore.arthropod.beta.sne, symbiont.soilfungi.beta.sim, symbiont.soilfungi.beta.sne)]
+test[, comparison := paste(Var1, Var2, sep = "_")]
+test[, Var1 := NULL]
+test[, Var2 := NULL]
+test <- melt(test, id.vars = "comparison")
+
+ggplot(test, aes(x = variable, y = value, colour = comparison, group = comparison)) +
+  geom_hline(yintercept = 1) +
+  geom_line() +
+  geom_point(aes(size = 3)) +
+  scale_colour_manual(values = longpallette) +
+  labs(title = "specific case descriptions", 
+       subtitle = "extraction from dataset \n8 comparisons, selected by highest autotroph beta nestedness",
+       x = "", y = "distance or absolute value") +
+  theme(axis.text.x = element_text(angle = 90))
+# saved as : 21-03-11_introductory_plots_specific_case_high_autotroph_betadiversity_nestedness_EFdist_LUI
+```
+
+
+
+## high EFdist
+```{r}
+plot(full_master$EFdistance)
+
+test <- full_master[EFdistance > 0.93, .(Var1, Var2, EFdistance, EFbeta_0.7, EFturnover_0.7, EFnestedness_0.7, distLUI, LUI.x, LUI.y, autotroph.beta.sim, autotroph.beta.sne, herbivore.arthropod.beta.sim, herbivore.arthropod.beta.sne, symbiont.soilfungi.beta.sim, symbiont.soilfungi.beta.sne)]
+test[, comparison := paste(Var1, Var2, sep = "_")]
+test[, Var1 := NULL]
+test[, Var2 := NULL]
+test <- melt(test, id.vars = "comparison")
+
+ggplot(test, aes(x = variable, y = value, colour = comparison, group = comparison)) +
+  geom_hline(yintercept = 1) +
+  geom_line() +
+  geom_point(aes(size = 3)) +
+  scale_colour_manual(values = longpallette) +
+  labs(title = "specific case descriptions", 
+       subtitle = "extraction from dataset \n8 comparisons, selected by highest EFdistance",
+       x = "", y = "distance or absolute value") +
+  theme(axis.text.x = element_text(angle = 90))
+# saved as : 21-03-11_introductory_plots_specific_case_high_EFdist_LUI_selected_beta
+```
+
+## high EFnestedness
+```{r}
+plot(full_master$EFnestedness_0.7)
+
+test <- full_master[EFnestedness_0.7 > 0.7, .(Var1, Var2, EFdistance, EFbeta_0.7, EFturnover_0.7, EFnestedness_0.7, distLUI, LUI.x, LUI.y, autotroph.beta.sim, autotroph.beta.sne, herbivore.arthropod.beta.sim, herbivore.arthropod.beta.sne, symbiont.soilfungi.beta.sim, symbiont.soilfungi.beta.sne)]
+test[, comparison := paste(Var1, Var2, sep = "_")]
+test[, Var1 := NULL]
+test[, Var2 := NULL]
+test <- test[sample(1:nrow(test), 8), ]
+test <- melt(test, id.vars = "comparison")
+
+ggplot(test, aes(x = variable, y = value, colour = comparison, group = comparison)) +
+  geom_hline(yintercept = 1) +
+  geom_line() +
+  geom_point(aes(size = 3)) +
+  scale_colour_manual(values = longpallette) +
+  labs(title = "specific case descriptions", 
+       subtitle = "extraction from dataset \n8 comparisons, selected by highest EFnestedness0.7",
+       x = "", y = "distance or absolute value") +
+  theme(axis.text.x = element_text(angle = 90))
+# saved as : 21-03-11_introductory_plots_specific_case_high_EFnestedness_LUI_selected_beta
+```
+
+
+
+
+# trying out
+```{r}
+ggplot(full_master, aes(x = distLUI, y = EFdistance, colour = autotroph.beta.sne)) +
+  geom_point()
+
+a <- ggplot(full_master, aes(x = distLUI, y = autotroph.beta.sne, colour = EFdistance)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = F)
+b <- ggplot(full_master, aes(x = distLUI, y = autotroph.beta.sim, colour = EFdistance)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = F)
+```
+
+moving window of EFdist for LUI autotroph beta connection
+```{r}
+a <- ggplot(full_master[EFdistance < 0.2], aes(x = distLUI, y = autotroph.beta.sim)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = F) +
+  labs(subtitle = "EFdist in {0, 0.2}")
+b <- ggplot(full_master[EFdistance > 0.2 & EFdistance < 0.4], aes(x = distLUI, y = autotroph.beta.sim)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = F) +
+  labs(subtitle = "EFdist in {0.2, 0.4}")
+c <- ggplot(full_master[EFdistance > 0.4 & EFdistance < 0.6], aes(x = distLUI, y = autotroph.beta.sim)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = F) +
+  labs(subtitle = "EFdist in {0.4, 0.6}")
+d <- ggplot(full_master[EFdistance > 0.6 & EFdistance < 0.75], aes(x = distLUI, y = autotroph.beta.sim)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = F) +
+  labs(subtitle = "EFdist in {0.6, 0.75}")
+e <- ggplot(full_master[EFdistance > 0.75], aes(x = distLUI, y = autotroph.beta.sim)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = F) +
+  labs(subtitle = "EFdist in {0.75, 1}")
+
+plot_grid(a, b, c, d, e, NULL, NULL, NULL, NULL, NULL, nrow = 2)
+```
 
