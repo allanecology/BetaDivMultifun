@@ -189,7 +189,7 @@ create_overview_above_below_abiotic_barplot <- function(legend = F){
     ldf[, testvals := 1]
     ov1L <- ggplot(ldf, aes(x = nicenames, y = testvals, fill = color)) +
       geom_bar(stat = "identity", color = "black") +
-      scale_fill_identity("", labels = ldf$nicenames, guide = "legend")
+      scale_fill_identity("", labels = ldf$nicenames, breaks = ldf$color, guide = "legend")
     ov1L <- cowplot::get_legend(ov1L)
     return(ov1L)
     
@@ -225,7 +225,7 @@ create_overview_turnover_nestedness_abiotic_barplot <- function(legend = F){
     ldf[, testvals := 1]
     ov1L <- ggplot(ldf, aes(x = nicenames, y = testvals, fill = color)) +
       geom_bar(stat = "identity", color = "black") +
-      scale_fill_identity("", labels = ldf$nicenames, guide = "legend")
+      scale_fill_identity("", labels = ldf$nicenames, breaks = ldf$color,  guide = "legend")
     ov1L <- cowplot::get_legend(ov1L)
     return(ov1L)
   } else {
