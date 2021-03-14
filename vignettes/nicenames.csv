@@ -17,8 +17,6 @@ bacteria.RNA.beta.sim,bacteria RNA βto,b,#666666,solid,bacteria RNA
 bacteria.RNA.beta.sne,bacteria RNA βnes,b,#666666,dashed,bacteria RNA
 herbivore.arthropodsoillarvae.beta.sim,herbivore arthropodsoillarvae βto,b,#A6761D,solid,herbivore arthropodsoillarvae
 herbivore.arthropodsoillarvae.beta.sne,herbivore arthropodsoillarvae βnes,b,#A6761D,dashed,herbivore arthropodsoillarvae
-belowground.predator.beta.sim,belowground predator βto,b,#A65628,solid,belowground predator
-belowground.predator.beta.sne,belowground predator βnes,b,#A65628,dashed,belowground predator
 bacterivore.protist.beta.sim,bacterivore protist βto,b,#FDC086,solid,bacterivore protist
 bacterivore.protist.beta.sne,bacterivore protist βnes,b,#FDC086,dashed,bacterivore protist
 eukaryvore.protist.beta.sim,eukaryvore protist βto,b,#F781BF,solid,eukaryvore protist
