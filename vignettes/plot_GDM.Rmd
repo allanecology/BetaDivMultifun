@@ -43,7 +43,7 @@ If F, `luiinput` and `model_name` need to be given manually.
 automaticrun <- F
     # only provide if automaticrun is F
 luiinput <- "lui" # lui or components
-model_name <- "gdm_EFdistance_LUI"
+model_name <- "gdm_EFnestedness_0.5_LUI"
 permut <- F # T or F, depending wether permutations are available or not
 ```
 
@@ -92,7 +92,7 @@ plotsequence_abio <- define_rownames_lui_or_components(luiinput = luiinput)
 
 
 
-
+  
 
 # line plots
 
@@ -158,29 +158,39 @@ abiotic_legend <- get_nice_legend(type = "abiotic")
 ###########
 # add plots together
 ###########
+# suppressWarnings(
+#   lin <- plot_grid(p, biotic_legend, q, labsplot, l, abiotic_legend,  
+#                    labels = c('A', '', 'B', '', 'C', ''), nrow = 3,
+#                    rel_widths = c(0.7, 0.3, 0.7, 0.3, 0.7, 0.3))
+#   ) # suppresswarnings because of special characters
+# 
+# suppressWarnings(
+# lin <- plot_grid(p, labsplot, q, NULL, l, 
+#                  labels = c('A', '', 'B', '', 'C', ''), nrow = 3,
+#                  rel_widths = c(0.7, 0.3))
+# )
+#TODO uncomment above, here just use quick solution for the seminar
 suppressWarnings(
-  lin <- plot_grid(p, biotic_legend, q, labsplot, l, abiotic_legend,  
-                   labels = c('A', '', 'B', '', 'C', ''), nrow = 3,
-                   rel_widths = c(0.7, 0.3, 0.7, 0.3, 0.7, 0.3))
-  ) # suppresswarnings because of special characters
-
-suppressWarnings(
-lin <- plot_grid(p, labsplot, q, NULL, l, 
-                 labels = c('A', '', 'B', '', 'C', ''), nrow = 3,
-                 rel_widths = c(0.7, 0.3))
+  lin <- plot_grid(p, q, l, labels = c("A", "B", "C"), nrow = 3,
+                   align = T)
 )
                    
-lin_abiotic <- plot_grid(dl, lgeo, lsoil, lisol, labels = c("D", "", "", ""))
+lin_abiotic <- plot_grid(dl, lgeo, lsoil, lisol, 
+                         labels = c("D", "", "", ""),
+                         align = T)
 
+# plot_grid(lin, lin_abiotic, nrow = 1)
 #TODO shuffle well the plots on a page. Ev. remove legend
 
 ###########
 # save
 ###########
 # `model_name` + "_lineplot_all_modelspec.pdf"
-cowplot::ggsave(plot = lin, filename = paste(pathtoout, "/", model_name, "_lineplot_all_modelspec.pdf", sep = ""),
+cowplot::ggsave(plot = lin, filename = paste(pathtoout, "/", model_name, "_lineplot_no_modelspec.pdf", sep = ""),
+                device=cairo_pdf, width = 8.27, height = 11.96, units = "in", dpi = 900)
+cowplot::ggsave(plot = lin_abiotic, filename = paste(pathtoout, "/", model_name, "_lineplot_no_modelspec_abiotic.pdf", sep = ""),
                 device=cairo_pdf, width = 11.96, height = 8.27, units = "in", dpi = 900)
-cowplot::ggsave(plot = lin_abiotic, filename = paste(pathtoout, "/", model_name, "_lineplot_all_modelspec_abiotic.pdf", sep = ""),
+cowplot::ggsave(plot = labsplot, filename = paste(pathtoout, "/", model_name, "_lineplot_only_modelspec_abiotic.pdf", sep = ""),
                 device=cairo_pdf, width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 
@@ -271,9 +281,10 @@ ov_legends <- plot_grid(ov1L, ov2L, nrow = 2)
 multipanel_with_overview_bars <- plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.23, 0.37, 0.14, 0.1, 0.1), align = "v") # 2 summary bars
 
 annotated_multipanel_with_overview_bars <- ggdraw(multipanel_with_overview_bars) +
-  draw_plot(labsplot, .65, .65, .35, .35) +
+  # draw_plot(labsplot, .65, .65, .35, .35) +
   draw_plot(ov_legends, 0.05, 0.1, .1, .2)
 
+extraplot <- plot_grid(labsplot, ov_legends)
 
 ###########
 # save
@@ -287,8 +298,11 @@ annotated_multipanel_with_overview_bars <- ggdraw(multipanel_with_overview_bars)
     # ANNOTATED PLOTS
 # ggsave(filename=paste(model_name, "_multipanel_barplot_annotated.pdf", sep = ""), plot = annotated_multipanel_without_overviews, device=cairo_pdf,
        # width = 11.96, height = 8.27, units = "in", dpi = 900)
-ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars_annotated.pdf", sep = ""), plot = annotated_multipanel_with_overview_bars, device=cairo_pdf,
+ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars_not_annotated.pdf", sep = ""), plot = annotated_multipanel_with_overview_bars, device=cairo_pdf,
        width = 11.96, height = 8.27, units = "in", dpi = 900)
+ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars_extraplot_annotations.pdf", sep = ""), plot = extraplot, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
+
 ```
 
 
@@ -317,10 +331,10 @@ ggsave(filename = paste(pathtoout, "/", "all_legends_incl_overview.pdf", sep = "
 ###########
 # load data
 ###########
-singleEFdist <- readRDS(paste(pathtodata, "/assembled_data/general/singleEFdist.rds", sep = "")) # already scaled
+singleEFdist <- readRDS(paste(pathtodata, "/data_assembly/output_data/singleEFdist.rds", sep = "")) # already scaled
 i <- 1
 ni <- colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")][i]
-i <- paste(pathtoout, "/cluster/gdm_", ni, "_LUI_input.Rds", sep = "")
+i <- paste(pathtoout, "/GDM/gdm_", ni, "_LUI_input.Rds", sep = "")
 gdmin <- readRDS(i)
 permut <- "F"
 
@@ -341,7 +355,7 @@ i <- 2
 for(i in 2:(length(colnames(singleEFdist))-2)){
   print(i)
   ni <- colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")][i]
-  i <- paste(pathtoout, "/cluster/gdm_", ni, "_LUI_input.Rds", sep = "")
+  i <- paste(pathtoout, "/GDM/gdm_", ni, "_LUI_input.Rds", sep = "")
   gdmin <- readRDS(i)
   permut <- "F"
   gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
@@ -359,23 +373,23 @@ for(i in 2:(length(colnames(singleEFdist))-2)){
 }
 restab2 <- data.table::data.table(restab2)
 
+```
 
-
-
+```{r, eval = F}
 # Create heatmap
 
 # pal <- RColorBrewer::brewer.pal(9, "YlOrRd")
-pal <- RColorBrewer::brewer.pal(9, "Greys")
+pal <- rev(RColorBrewer::brewer.pal(9, "RdYlBu"))
 include <- c("nicenames", colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")])
 
-df <- restab2[type == "bio" & ground == "a", ]
+df <- restab2[ground == "a", ]
 df <- data.table::melt(df[, ..include], id.vars = "nicenames")
 
 a <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
   geom_tile() +
   scale_fill_gradientn(colours = pal) +
   theme(axis.text.x = element_text(angle = 90, vjust = 1, 
-    size = 12, hjust = 1),
+    size = 9, hjust = 1),
     plot.margin = margin(l = 50),
     axis.line.x=element_blank(),
     axis.text.y = element_text(size=9, angle = 0),
@@ -385,7 +399,7 @@ a <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
     legend.position = "top") + 
   scale_x_discrete(position = "top") 
 
-df <- restab2[type == "bio" & ground == "b", ]
+df <- restab2[ground == "b", ]
 df <- data.table::melt(df[, ..include], id.vars = "nicenames")
 b <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
   geom_tile() +
@@ -400,7 +414,7 @@ b <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
         panel.grid.major.x = element_line(color = "grey"))
 
 
-df <- restab2[type == "abio", ]
+df <- restab2[ground == "x", ]
 df <- data.table::melt(df[, ..include], id.vars = "nicenames")
 c <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
   geom_tile() +
@@ -416,7 +430,7 @@ c <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
 
 
 # plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
-plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.43, 0.47, 0.11), align = "v")
+plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.5, 0.4, 0.07), align = "v")
 # plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.58, 0.44, 0.10), align = "v") # grayscale with legend
 
 # plot_grid(p, b, q, labels = c('aboveground', 'belowground', 'abiotic'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
