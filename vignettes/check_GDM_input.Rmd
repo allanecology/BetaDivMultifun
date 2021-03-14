@@ -53,7 +53,7 @@ checkgdminput[, geosphere_distgeo := geosphere::distGeo(
   )]
 geocol <- grep("Coord", colnames(checkgdminput), value = T)
 checkgdminput[, (geocol) := NULL]
-checkgdminput[, s2.geosphere_distgeo := NULL]
+# checkgdminput[, s2.geosphere_distgeo := NULL]
 
 # predictors
 checkgdminput[, edis_soil := s1.edis_soil - s2.edis_soil]
