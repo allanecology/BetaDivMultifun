@@ -16,8 +16,7 @@ see `analysis_nonpublic.R` file.
 
 ## packages
 - BetaDivMultifun (as usual)
-    - the pacakges used by betadivmultifun
-- (possibly incomplete) list of packages : data.table, gdm
+    - the pacakges used by betadivmultifun (see DESCRIPTION file)
 
 # output
 - gdm input .CSV and .Rds
@@ -27,10 +26,12 @@ see `analysis_nonpublic.R` file.
 # select input
 depending on the model intented to run, chose the appropriate variables below.
 ```{r}
+#TODO : write automatic input for all models
+#TODO : capture deviance explained from all models and store in table
 # ECOSYSTEM FUNCTION
 # funs <- "EFdistance"
-# funs <- "soilAmmoniaflxs"
-funs <- "EFnestedness_0.9"
+funs <- "soilNitrateflxs"
+# funs <- "EFbeta_0.9"
 
 # LUI
 ## name of the chosen LUI
