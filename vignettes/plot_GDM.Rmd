@@ -43,7 +43,8 @@ If F, `luiinput` and `model_name` need to be given manually.
 automaticrun <- F
     # only provide if automaticrun is F
 luiinput <- "lui" # lui or components
-model_name <- "gdm_EFnestedness_0.5_LUI"
+# model_name <- "gdm_EFnestedness_0.5_LUI"
+model_name <- "gdm_EFturnover_0.5_LUI"
 permut <- F # T or F, depending wether permutations are available or not
 ```
 
@@ -230,7 +231,7 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_EFbeta_tresholds_var_expl.pdf", se
 ```
 
 
-
+  
 
 # Barplots 
 ```{r}
