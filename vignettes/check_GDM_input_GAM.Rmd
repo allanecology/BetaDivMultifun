@@ -1,0 +1,64 @@
+---
+title: "check_GDM_input_GAM"
+author: 'Noëlle Schenk'
+date: "4/19/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Goal :
+- find negative and positive associations --> help interpretation
+- variance inflation
+
+Requirement : 
+- checkgdminput : calculated in previous script "check_GDM_input.Rmd"
+
+```{r}
+require(mgcv)
+```
+
+# GAM
+```{r}
+# test model
+mod1 <- mgcv::gam(distance ~ s(autotroph.beta.sim) + s(autotroph.beta.sne), data = checkgdminput)
+summary(mod1)
+plot(mod1)
+```
+```{r}
+# full model
+mod <- paste(paste("distance ~ s(", paste(colnames(checkgdminput)[!colnames(checkgdminput) %in% c("distance")], collapse = ") + s("), sep = ""), ")", sep = "")
+# check if model is running.
+#  mod1 : full model with all smooth terms
+mod1 <- mgcv::gam(distance ~ s(autotroph.beta.sim) + s(bacteria.RNA.beta.sim) + s(herbivore.arthropodsoillarvae.beta.sim) + s(herbivore.arthropod.beta.sim) + s(plantpathogen.fungi.beta.sim) + s(bacterivore.protist.beta.sim)+ s(eukaryvore.protist.beta.sim) + s(omnivore.protist.beta.sim) + s(plantparasite.protist.beta.sim) + s(secondary.consumer.beta.sim) + s(secondary.consumer.arthropodsoillarvae.beta.sim) + s(tertiary.consumer.beta.sim) + s(decomposer.soilfungi.beta.sim) + s(pathotroph.soilfungi.beta.sim) + s(symbiont.soilfungi.beta.sim) + s(autotroph.beta.sne) + s(bacteria.RNA.beta.sne) + s(herbivore.arthropodsoillarvae.beta.sne) + s(herbivore.arthropod.beta.sne) + s(plantpathogen.fungi.beta.sne) + s(bacterivore.protist.beta.sne) + s(eukaryvore.protist.beta.sne) + s(omnivore.protist.beta.sne) + s(plantparasite.protist.beta.sne) + s(secondary.consumer.beta.sne) + s(secondary.consumer.arthropodsoillarvae.beta.sne) + s(tertiary.consumer.beta.sne) + s(decomposer.soilfungi.beta.sne) + s(pathotroph.soilfungi.beta.sne) + s(symbiont.soilfungi.beta.sne) + s(geosphere_distgeo) + s(LUI) + s(deltaLUI) + s(edis_soil) + s(plot_isolation), data = checkgdminput)
+
+summary(mod1) # Rsq = 0.38, Devexpl = 39.2%, GCV = 0.01552
+# if predictor edf (effective degrees of freedom) = 1 : gam works with linear estimator --> can leave out the s() part for the
+#    given variable
+# no automatic model selection with "REML". Better : adjust manually
+#    some smooth terms can probably be removed.
+mod1B <- update(mod1, .~.-s(plantpathogen.fungi.beta.sim) + plantpathogen.fungi.beta.sim
+                -s(autotroph.beta.sne) + autotroph.beta.sne
+                -s(omnivore.protist.beta.sne) + omnivore.protist.beta.sne 
+                -s(secondary.consumer.beta.sne) + secondary.consumer.beta.sne
+                -s(symbiont.soilfungi.beta.sne) + symbiont.soilfungi.beta.sne
+                -s(pathotroph.soilfungi.beta.sne) + pathotroph.soilfungi.beta.sne)
+summary(mod1B) # Rsq = 0.38, Devexpl = 29.2%, GCV = 0.015521
+#TODO : discuss : omnivore protist still has negative effect
+#    also omnivore protist beta sim! (which is nonlinearly modelled)
+#    also plantparasite protist sim still has negative
+#        ! plantparasite protist beta sne could also be positive in GAM nonlinear
+#    ! decomposer soilfungi beta sim changed : had negative in linear model, now positive (hump-shaped)
+#        ! decomposer soilfungi sne definitely changed to positive in nonlinear case
+#
+#    distgeo : 3 regions visible? 
+plot(mod1B)
+
+#TODO : sollte ich lieber LUI betrag nemhen anstatt -?
+
+#TODO can not put "mod" as model input --> easier to have automatic input
+#TODO : interpred mgcv ouput
+```
+
