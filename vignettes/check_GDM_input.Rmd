@@ -10,14 +10,17 @@ Requirements :
 
 The script calculates euclidean distances (simple substraction) of the covariates and LUI as well as the geographic distance based on coordinates and forms a table with all distances. A correlation plot is produced and a linear model fitted and both are saved. Variance inflation of the linear model is calculated and saved.
 
+DEPRECIATED notice : linear model not done any more : assumption of independent observations not metand p-values not trustable. Also : nonlinearities exptected. Also, very strange results. --> try if GAM can solve some of the issues
+
 Output : 
 - correlation plot `vignettes/out/<modelname>_corrplot_before_gdm.pdf`
-- linear model output `vignettes/out/<modelname>_linear_model_before_gdm.Rds`
-- variance inflation `out/<modelname>_vif_before_gdm.txt`
-- linear model plot `vignettes/out/<modelname>_linear_model_directions.pdf`
+- DEPRECIATED linear model output `vignettes/out/<modelname>_linear_model_before_gdm.Rds`
+- DEPRECIATED variance inflation `out/<modelname>_vif_before_gdm.txt`
+- DEPRECIATED linear model plot `vignettes/out/<modelname>_linear_model_directions.pdf`
 
 ```{r}
 # first run prepare_and_run_GDM
+lui <- c("LUI", "deltaLUI")
 checkgdminput <- data.table::copy(gdminput)
 # checkgdminput$rown <- rownames(checkgdminput)
 checkgdminput <- data.table(checkgdminput)
@@ -33,17 +36,17 @@ checkgdminput[, weights := NULL]
 luicols <- grep(paste(lui, collapse="|"), colnames(checkgdminput), value=TRUE)
 if(length(grep("Gstd", lui)) > 1){
   print("lui components")
-  checkgdminput[, Gstd := s1.Gstd - s2.Gstd]
-  checkgdminput[, Mstd := s1.Mstd - s2.Mstd]
-  checkgdminput[, Fstd := s1.Fstd - s2.Fstd]
-  checkgdminput[, deltaGstd := s1.deltaGstd - s2.deltaGstd]
-  checkgdminput[, deltaMstd := s1.deltaMstd - s2.deltaMstd]
-  checkgdminput[, deltaFstd := s1.deltaFstd - s2.deltaFstd]
+  checkgdminput[, Gstd := abs(s1.Gstd - s2.Gstd)]
+  checkgdminput[, Mstd := abs(s1.Mstd - s2.Mstd)]
+  checkgdminput[, Fstd := abs(s1.Fstd - s2.Fstd)]
+  checkgdminput[, deltaGstd := abs(s1.deltaGstd - s2.deltaGstd)]
+  checkgdminput[, deltaMstd := abs(s1.deltaMstd - s2.deltaMstd)]
+  checkgdminput[, deltaFstd := abs(s1.deltaFstd - s2.deltaFstd)]
   checkgdminput[, (luicols) := NULL]
 } else if(length(grep("LUI", lui)) > 1) {
   print("LUI")
-  checkgdminput[, LUI := s1.LUI - s2.LUI]
-  checkgdminput[, deltaLUI := s1.deltaLUI - s2.deltaLUI]
+  checkgdminput[, LUI := abs(s1.LUI - s2.LUI)]
+  checkgdminput[, deltaLUI := abs(s1.deltaLUI - s2.deltaLUI)]
   checkgdminput[, (luicols) := NULL]
 }
 
@@ -56,9 +59,9 @@ checkgdminput[, (geocol) := NULL]
 # checkgdminput[, s2.geosphere_distgeo := NULL]
 
 # predictors
-checkgdminput[, edis_soil := s1.edis_soil - s2.edis_soil]
-checkgdminput[, plot_isolation := s1.plot_isolation - s2.plot_isolation]
-del <- c("s1.edis_soil", "s2.edis_soil", "s1.plot_isolation", "s2.plot_isolation")
+checkgdminput[, edis_soil := abs(s1.edis_soil - s2.edis_soil)]
+checkgdminput[, plot_isolation := abs(s1.plot_isolation - s2.plot_isolation)]
+del <- c("s1.edis_soil", "s2.edis_soil", "s1.plot_isolation", "s2.plot_isolation", "s1.geosphere_distgeo", "s2.geosphere_distgeo")
 checkgdminput[, (del) := NULL]
 
 # rename s1 from diversity columns
@@ -74,47 +77,51 @@ dev.off()
 m[m < 0.5 & m > -0.5] <- 0
 corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "circle", diag = F, tl.srt = 50, tl.col = "black", order = "hclust", tl.cex = 0.4, cl.cex = 0.3, number.cex = 0.3)
 
+#TODO save dataset checkgdminput?
 
-## variance inflation in linear model
-# generate model
-mod <- paste("distance ~ " ,paste(colnames(checkgdminput)[!colnames(checkgdminput) %in% c("distance")], collapse = " + "))
-m1 <- lm(formula = formula(mod), data = checkgdminput)
-# save linear model
-saveRDS(m1, file = paste("vignettes/out/", modelname, "_linear_model_before_gdm.Rds", sep = ""))
-# save linear model output
-capture.output(summary(m1),
-               file = paste("vignettes/out/", modelname, "_lm_summary.txt"))
 
-vif_output <- car::vif(m1)
-vif_output[which(vif_output > 5)]
-# vif_output[which(vif_output[, "GVIF"] > 5),]
-capture.output(c(mod,
-               vif_output[which(vif_output > 5)]),
-               file = paste("vignettes/out/", modelname, "_vif_before_gdm.txt", sep = ""))
-
-# plot linear model
-# m1$coefficients
-test <- summary(m1)
-coefs <- test$coefficients
-coefs <- data.table(coefs)
-coefs[, names := rownames(test$coefficients)]
-coefs[`Pr(>|t|)` < 0.05, pval_symbol := "*"]
-coefs[`Pr(>|t|)` > 0.05, pval_symbol := ""]
-
-linplot <- ggplot(coefs, aes(x = names, y = Estimate)) +
-  geom_bar(stat = "identity") +
-  coord_flip() +
-  geom_text(aes(label=pval_symbol), y=0.5, color="black", size=3.5) +
-  geom_errorbar(aes(ymin=Estimate-`Std. Error`, ymax=Estimate+`Std. Error`), width=.2, color = "red") +
-  background_grid() +
-  ggtitle(modelname) +
-  ylab("linear model estimates") +
-  xlab("") +
-  ylim(-0.4, 0.5) +
-  labs(caption = "error bars correspond to standard errors")
-
-ggsave(linplot, filename = paste("vignettes/out/", modelname, "_linear_model_directions.pdf", sep = ""), dpi = 400,
-       units = "cm", width = 29.7, height = 21)
+# ## variance inflation in linear model
+# # note : p-values are not trustable, because the assumption of independent observations is  not met! (matrix correlation)
+# #    DEPRECIATED --> new method needed
+# # generate model
+# mod <- paste("distance ~ " ,paste(colnames(checkgdminput)[!colnames(checkgdminput) %in% c("distance")], collapse = " + "))
+# m1 <- lm(formula = formula(mod), data = checkgdminput)
+# # save linear model
+# saveRDS(m1, file = paste("vignettes/out/", modelname, "_linear_model_before_gdm.Rds", sep = ""))
+# # save linear model output
+# capture.output(summary(m1),
+#                file = paste("vignettes/out/", modelname, "_lm_summary.txt"))
+# 
+# vif_output <- car::vif(m1)
+# vif_output[which(vif_output > 5)]
+# # vif_output[which(vif_output[, "GVIF"] > 5),]
+# capture.output(c(mod,
+#                vif_output[which(vif_output > 5)]),
+#                file = paste("vignettes/out/", modelname, "_vif_before_gdm.txt", sep = ""))
+# 
+# # plot linear model
+# # m1$coefficients
+# test <- summary(m1)
+# coefs <- test$coefficients
+# coefs <- data.table(coefs)
+# coefs[, names := rownames(test$coefficients)]
+# coefs[`Pr(>|t|)` < 0.05, pval_symbol := "*"]
+# coefs[`Pr(>|t|)` > 0.05, pval_symbol := ""]
+# 
+# linplot <- ggplot(coefs, aes(x = names, y = Estimate)) +
+#   geom_bar(stat = "identity") +
+#   coord_flip() +
+#   geom_text(aes(label=pval_symbol), y=0.5, color="black", size=3.5) +
+#   geom_errorbar(aes(ymin=Estimate-`Std. Error`, ymax=Estimate+`Std. Error`), width=.2, color = "red") +
+#   background_grid() +
+#   ggtitle(modelname) +
+#   ylab("linear model estimates") +
+#   xlab("") +
+#   ylim(-0.4, 0.5) +
+#   labs(caption = "error bars correspond to standard errors")
+# 
+# ggsave(linplot, filename = paste("vignettes/out/", modelname, "_linear_model_directions.pdf", sep = ""), dpi = 400,
+#        units = "cm", width = 29.7, height = 21)
 ```
 
 Next script is `plot_GDM.Rmd`.
