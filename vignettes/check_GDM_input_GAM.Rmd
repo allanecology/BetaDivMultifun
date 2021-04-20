@@ -22,12 +22,6 @@ require(mgcv)
 
 # GAM
 ```{r}
-# test model
-mod1 <- mgcv::gam(distance ~ s(autotroph.beta.sim) + s(autotroph.beta.sne), data = checkgdminput)
-summary(mod1)
-plot(mod1)
-```
-```{r}
 # full model
 mod <- paste(paste("distance ~ s(", paste(colnames(checkgdminput)[!colnames(checkgdminput) %in% c("distance")], collapse = ") + s("), sep = ""), ")", sep = "")
 # check if model is running.
@@ -54,11 +48,27 @@ summary(mod1B) # Rsq = 0.38, Devexpl = 29.2%, GCV = 0.015521
 #        ! decomposer soilfungi sne definitely changed to positive in nonlinear case
 #
 #    distgeo : 3 regions visible? 
-plot(mod1B)
+plot(mod1B, pages = 2)
+# gratia::draw(mod1B, residuals = T, pages = 2)  # gratia is useful to plot mgcv results
 
-#TODO : sollte ich lieber LUI betrag nemhen anstatt -?
+mgcv::gam.check(mod1B) # some significant terms! Problematic
+#TODO : why diagnostics not so good? because wrong assumption?
+```
 
-#TODO can not put "mod" as model input --> easier to have automatic input
-#TODO : interpred mgcv ouput
+
+# Exkurs
+What happens if I use mean LUI and delta LUI = sd(LUI1, LUI2) as predictors for EFdist?
+```{r}
+# NOTE : to construct the dataset checkgdminput : delete "lui" instead of "delcols" in the script "check_GDM_input.Rmd"
+#    in order to have mean and sd LUI instead of euclidean distance
+
+# linear model
+# run code from check_GDM_input.Rmd
+
+mod <- paste(paste("distance ~ s(", paste(colnames(checkgdminput)[!colnames(checkgdminput) %in% c("distance")], collapse = ") + s("), sep = ""), ")", sep = "")
+# check if model is running.
+#  mod1 : full model with all smooth terms
+mod1 <- mgcv::gam(distance ~ s(autotroph.beta.sim) + s(bacteria.RNA.beta.sim) + s(herbivore.arthropodsoillarvae.beta.sim) + s(herbivore.arthropod.beta.sim) + s(plantpathogen.fungi.beta.sim) + s(bacterivore.protist.beta.sim) + s(eukaryvore.protist.beta.sim) + s(omnivore.protist.beta.sim) + s(plantparasite.protist.beta.sim) + s(secondary.consumer.beta.sim) + s(secondary.consumer.arthropodsoillarvae.beta.sim) + s(tertiary.consumer.beta.sim) + s(decomposer.soilfungi.beta.sim) + s(pathotroph.soilfungi.beta.sim) + s(symbiont.soilfungi.beta.sim) + s(autotroph.beta.sne) + s(bacteria.RNA.beta.sne) + s(herbivore.arthropodsoillarvae.beta.sne) + s(herbivore.arthropod.beta.sne) + s(plantpathogen.fungi.beta.sne) + s(bacterivore.protist.beta.sne) + s(eukaryvore.protist.beta.sne) + s(omnivore.protist.beta.sne) + s(plantparasite.protist.beta.sne) + s(secondary.consumer.beta.sne) + s(secondary.consumer.arthropodsoillarvae.beta.sne) + s(tertiary.consumer.beta.sne) + s(decomposer.soilfungi.beta.sne) + s(pathotroph.soilfungi.beta.sne) + s(symbiont.soilfungi.beta.sne) + s(meanLUI) + s(sdLUI) + s(geosphere_distgeo) + s(edis_soil) + s(plot_isolation), data = checkgdminput)
+
 ```
 
