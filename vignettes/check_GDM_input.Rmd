@@ -8,7 +8,7 @@ Requirements :
 - script is runned right after `prepare_and_run_GDM.Rmd`. Requires its output `gdminput`.
     - note that `gdminput` is also saved as .csv and .Rds from the above mentioned script.
 
-The script calculates euclidean distances (simple substraction) of the covariates and LUI as well as the geographic distance based on coordinates and forms a table with all distances. A correlation plot is produced and a linear model fitted and both are saved. Variance inflation of the linear model is calculated and saved.
+The script calculates euclidean distances abs(simple substraction) of the covariates and LUI as well as the geographic distance based on coordinates and forms a table with all distances. A correlation plot is produced and a *linear model* fitted and both are saved. Variance inflation of the linear model is calculated and saved.
 
 DEPRECIATED notice : linear model not done any more : assumption of independent observations not metand p-values not trustable. Also : nonlinearities exptected. Also, very strange results. --> try if GAM can solve some of the issues
 
@@ -18,6 +18,7 @@ Output :
 - DEPRECIATED variance inflation `out/<modelname>_vif_before_gdm.txt`
 - DEPRECIATED linear model plot `vignettes/out/<modelname>_linear_model_directions.pdf`
 
+# creating dataset
 ```{r}
 # first run prepare_and_run_GDM
 lui <- c("LUI", "deltaLUI")
@@ -47,6 +48,8 @@ if(length(grep("Gstd", lui)) > 1){
   print("LUI")
   checkgdminput[, LUI := abs(s1.LUI - s2.LUI)]
   checkgdminput[, deltaLUI := abs(s1.deltaLUI - s2.deltaLUI)]
+  checkgdminput[, meanLUI := rowMeans(.SD), .SDcols = c("s1.LUI", "s2.LUI")]
+  checkgdminput[, sdLUI := apply(.SD, 1, sd), .SDcols = c("s1.LUI", "s2.LUI")]
   checkgdminput[, (luicols) := NULL]
 }
 
@@ -67,19 +70,34 @@ checkgdminput[, (del) := NULL]
 # rename s1 from diversity columns
 colnames(checkgdminput) <- gsub("s1.", "", colnames(checkgdminput))
 
+# take out meanLUI and sdLUI if necessary
+delcols <- c("meanLUI", "sdLUI")
+checkgdminput[, (delcols) := NULL]
+# # OR take out LUI and deltaLUI
+# checkgdminput[, (lui) := NULL]
+
+#TODO save dataset checkgdminput?
+```
+
+# correlation plot
+```{r}
 ## correlation plot
 # name : modelname "_corrplot_before_gdm.pdf"
 m <- cor(checkgdminput)
 pdf(paste("vignettes/out/", modelname, "_corrplot_before_gdm.pdf", sep = ""), paper = "a4r")
-corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", diag = F, tl.srt = 50, tl.col = "black", order = "hclust", tl.cex = 0.4, cl.cex = 0.3, number.cex = 0.25)
+corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", diag = F, tl.srt = 50, tl.col = "black", order = "hclust", tl.cex = 0.5, cl.cex = 0.3, number.cex = 0.25)
 dev.off()
 
 m[m < 0.5 & m > -0.5] <- 0
-corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "circle", diag = F, tl.srt = 50, tl.col = "black", order = "hclust", tl.cex = 0.4, cl.cex = 0.3, number.cex = 0.3)
+corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", diag = F, tl.srt = 10, tl.col = "black", order = "hclust", tl.cex = 0.5, cl.cex = 0.3, number.cex = 0.3)
+```
 
-#TODO save dataset checkgdminput?
+# plot raw data
+```{r}
 
+```
 
+```{r}
 # ## variance inflation in linear model
 # # note : p-values are not trustable, because the assumption of independent observations is  not met! (matrix correlation)
 # #    DEPRECIATED --> new method needed
@@ -123,5 +141,9 @@ corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "circle", 
 # ggsave(linplot, filename = paste("vignettes/out/", modelname, "_linear_model_directions.pdf", sep = ""), dpi = 400,
 #        units = "cm", width = 29.7, height = 21)
 ```
+
+
+
+
 
 Next script is `plot_GDM.Rmd`.
