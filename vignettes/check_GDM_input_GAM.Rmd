@@ -22,6 +22,10 @@ require(mgcv)
 
 # GAM
 ```{r}
+# test model
+testmod <- mgcv::gam(distance ~ autotroph.beta.sim + s(bacteria.RNA.beta.sim) + s(omnivore.protist.beta.sim) + s(plantparasite.protist.beta.sim) + s(geosphere_distgeo) + s(LUI), data = checkgdminput)
+plot(testmod, all.terms = T) # also plot linear terms
+
 # full model
 mod <- paste(paste("distance ~ s(", paste(colnames(checkgdminput)[!colnames(checkgdminput) %in% c("distance")], collapse = ") + s("), sep = ""), ")", sep = "")
 # check if model is running.
@@ -53,6 +57,15 @@ plot(mod1B, pages = 2)
 
 mgcv::gam.check(mod1B) # some significant terms! Problematic
 #TODO : why diagnostics not so good? because wrong assumption?
+
+# partial effects plot
+vis.gam(mod1B, view=c("LUI", "omnivore.protist.beta.sim"), 
+        plot.type='contour', color='topo', main='test')
+plot.gam(mod1B, select = 7, residuals = T)
+vis.gam(mod1B, view=c("LUI", "omnivore.protist.beta.sne"), 
+        plot.type='contour', color='topo', main='test')
+plot.gam(mod1B, all.terms = T, select = 32, residuals = T) # plot linear effect
+plot.gam(testmod, residuals = T, select = 1)
 ```
 
 
