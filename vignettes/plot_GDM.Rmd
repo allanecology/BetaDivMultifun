@@ -407,6 +407,9 @@ for(i in 2:(length(colnames(singleEFdist))-2)){
 restab2 <- data.table::data.table(restab2)
 
 
+# report the number of functions affected by each group / affected by above- belowground / abiotic
+singleEFnames <- names(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")]
+restab2[, n_affected_fun := apply(restab2[, ..singleEFnames], 1, function(x) sum(x > 0))]
 ```
 
 ```{r, eval = F}
