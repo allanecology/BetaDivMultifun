@@ -1,0 +1,95 @@
+---
+title: "GDM_sensitivity_indirect_effects"
+author: 'Noëlle Schenk'
+date: "5/11/2021"
+output: html_document
+---
+# Aim
+model with y~LUI+other abiotic and model with y~beta+LUI+other abiotic to see if beta "absorbs" effects (which would be an indication of indirect effects) - just look at how LUI and soil effects change with or without beta
+
+# Requirements
+- main model EFdistance_LUI input (`results_nonpublic.R`)
+- ...
+
+```{r}
+# take out by-hand geographic distance calculation
+gdminput <- gdminput[, -grep("geosphere", names(gdminput))]
+
+###
+# model with betadiversities
+gdm_output <- gdm::gdm(gdminput, geo = T)
+exSplines <- gdm::isplineExtract(gdm_output)
+# take maximum of each variable for barplot
+maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)
+
+model_specs <- paste(
+paste("with beta : deviance of the fitted GDM model :", round(gdm_output$gdmdeviance, 3)),
+paste("deviance of the null model : ", round(gdm_output$nulldeviance, 3)),
+paste("\npercentage of null deviance explained by the fitted GDM model :", round(gdm_output$explained, 3)),
+sep = ", ")
+
+###
+# model without betadiversities
+no_beta_names <- names(gdminput)[!names(gdminput) %in% grep("beta", names(gdminput), value = T)]
+gdm_output_nobeta <- gdm::gdm(gdminput[, no_beta_names], geo = T)
+exSplines_nobeta <- gdm::isplineExtract(gdm_output_nobeta)
+# take maximum of each variable for barplot
+maxsplines_nobeta <- apply(exSplines_nobeta$y, 2, max, na.rm = TRUE)
+
+model_specs_nobeta <- paste(
+paste(" no  beta : deviance of the fitted GDM model :", round(gdm_output_nobeta$gdmdeviance, 3)),
+paste("deviance of the null model : ", round(gdm_output_nobeta$nulldeviance, 3)),
+paste("\npercentage of null deviance explained by the fitted GDM model :", round(gdm_output_nobeta$explained, 3)),
+sep = ", ")
+
+###
+# compare results
+maxsplines[grep("beta", names(maxsplines), invert = T)]
+maxsplines_nobeta
+
+restab <- rbindlist(list(melt(data.table(names = names(maxsplines_nobeta), 
+                value = maxsplines_nobeta, 
+                variant = as.factor("nobeta")), 
+     measure.vars = "value"),
+melt(data.table(names = names(maxsplines[grep("beta", names(maxsplines), invert = T)]), 
+                value = maxsplines[grep("beta", names(maxsplines), invert = T)], 
+                variant = as.factor("beta")), 
+     measure.vars = "value")))
+
+
+gdm_with_without_beta <- ggplot(data = restab, aes(x = names, y = value, fill = variant)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  # coord_flip() +
+  scale_fill_brewer(palette="Paired") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1)) +
+  labs(caption = paste(model_specs, model_specs_nobeta, sep = "\n"),
+       title = "GDM with vs. without betadiversities",
+       subtitle = "How do non-beta effects change in presence/ absence of betadiversities?") +
+  xlab("") +
+  ylab("GDM effect size")
+
+ggsave(filename = paste(pathtoout, "/GDM_sensitivity_indirect_beta_effects.pdf", sep = ""), 
+       plot = gdm_with_without_beta, device=cairo_pdf,
+       width = 297, height = 210, units = "mm", dpi = 900)
+```
+
+
+# substract variance explained with/ without LUI
+```{r}
+###
+# model with LUI
+gdm_output <- gdm::gdm(gdminput, geo = T)
+gdm_output$explained
+
+###
+# model without LUI
+no_LUI_names <- names(gdminput)[!names(gdminput) %in% c("s1.LUI", "s2.LUI")]
+gdm_output_nolui <- gdm::gdm(gdminput[, no_LUI_names], geo = T)
+gdm_output_nolui$explained
+
+## substract var expl. of both models
+gdm_output$explained - gdm_output_nolui$explained
+
+# note : not recommended
+```
+
