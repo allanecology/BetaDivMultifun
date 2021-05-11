@@ -29,9 +29,9 @@ depending on the model intented to run, chose the appropriate variables below.
 #TODO : write automatic input for all models
 #TODO : capture deviance explained from all models and store in table
 # ECOSYSTEM FUNCTION
-# funs <- "EFdistance"
-funs <- "soilNitrateflxs"
-# funs <- "EFbeta_0.9"
+funs <- "EFdistance"
+# funs <- "soilNitrateflxs"
+# funs <- "EFturnover_0.9"
 
 # LUI
 ## name of the chosen LUI
@@ -153,9 +153,7 @@ grep(lui[1], colorder_gdm_input)
 if(lui[1] == "LUI"){
   colorder_gdm_input <- colorder_gdm_input[-grep(paste(c("Gstd", "Mstd", "Fstd"), collapse = "|"), colorder_gdm_input)]
 } else {
-  print("this still needs a test")
   colorder_gdm_input <- colorder_gdm_input[-grep("LUI", colorder_gdm_input)]
-  #TODO test if this is working
 }
 ```
 
