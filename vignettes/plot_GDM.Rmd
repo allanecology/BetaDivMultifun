@@ -16,11 +16,13 @@ suppressPackageStartupMessages(require(cowplot))
 
 
 requirements : 
-- user : connect to planteco and nsch to get input files
+- TODO user : connect to planteco and nsch to get input files
 - GDM output as .rds, e.g. gdm_EFnestedness_LUI_input.Rds
+    - find at planteco/.../BetaDivMultifun/analysis/output_datasets
 - cluster output as .rds, e.g. gdm_EFnestedness_LUI_permutation.Rds
-- run `results_nonpublic.R` : load pathtoout, nicenames and model_names
-  - pathtoout : path to location where gdm input of model is stored. points to a folder, where the folder cluster witht the model input is.
+    - TODO : not calculated yet (only for old)
+- run `results_nonpublic.R` : load pathtodata, nicenames and model_names
+  - pathtodata : path to location where gdm input of model is stored. points to a folder, where the folder cluster witht the model input is. *note : was pathtoout before.*
   - nicenames : helper file to get nice names of functions and trophic levels
   - model_names : helper file for automation. Contains 3 columns : `name`  contains the all model names for `model_name`, `luiinput` contains either "lui" or "components" as LUI input for `luiinput` and `permut` is either TRUE or FALSE.
 
@@ -66,7 +68,7 @@ if(permut == T){
 ###########
 # read input data
 ###########
-gdm_output <- readRDS(paste_gdm_input_path_together(pathtoout = pathtoout, name = model_name))
+gdm_output <- readRDS(paste_gdm_input_path_together(pathtoout = pathtodata, name = model_name))
 exSplines <- gdm::isplineExtract(gdm_output)
 
 ###########
