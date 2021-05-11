@@ -25,6 +25,7 @@ requirements :
   - pathtodata : path to location where gdm input of model is stored. points to a folder, where the folder cluster witht the model input is. *note : was pathtoout before.*
   - nicenames : helper file to get nice names of functions and trophic levels
   - model_names : helper file for automation. Contains 3 columns : `name`  contains the all model names for `model_name`, `luiinput` contains either "lui" or "components" as LUI input for `luiinput` and `permut` is either TRUE or FALSE.
+- for threshold selection : `analysis_nonpublic.R` loads `EFmaster_all_thresholds.Rds`
 
 
 ## Load data
@@ -202,7 +203,7 @@ cowplot::ggsave(plot = labsplot, filename = paste(pathtoout, "/", model_name, "_
 
 
 
-# create sensitivity comparison: deviance explained
+# create sensitivity comparison: deviance explained, sdev
 ```{r, eval = F}
 #############################
 #
@@ -212,8 +213,24 @@ cowplot::ggsave(plot = labsplot, filename = paste(pathtoout, "/", model_name, "_
 
 # models with function calculated with threshold : 
 # thresholds between 0.1 and 0.9.
-# need selection : by percent deviance explained.
+# need selection : by (new) : sdev of input. old : percent deviance explained.
 
+# VARIABILITY OF RESPONSE VARIABLE
+# require : input data : EFmaster_all_thresholds.Rds : load from script "analysis_nonpublic.R"
+EFmaster_sd <- apply(EFmaster[, -c("Var1", "Var2")], 2, function(x) sd(x, na.rm = F))
+EFmaster_var <- apply(EFmaster[, -c("Var1", "Var2")], 2, function(x) var(x, na.rm = F))
+EFmaster <- data.table(name = names(EFmaster), sd = EFmaster_sd, var = EFmaster_var)
+EFmaster[, type := "EFdistance"]
+EFmaster[grep("nestedness", EFmaster$name), type := "nestedness"]
+EFmaster[grep("turnover", EFmaster$name), type := "turnover"]
+EFmaster[grep("beta", EFmaster$name), type := "beta"]
+
+ggplot(EFmaster, aes(x = name, y = sd, fill = type)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+# PERCENT DEVIANCE EXPLAINED
 # require : 
 # model_results : the model results saved manually from the models
 setorder(model_results, cols = "name")
@@ -230,6 +247,19 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_EFbeta_tresholds_var_expl.pdf", se
        width = 11.96, height = 8.27, units = "in", dpi = 900)
 
 #TODO can add nice names at some point
+# STANDARD DEVIATION AND PERCENT DEVIANCE EXPLAINED
+model_results[, name := gsub("_LUI", "", model_results$name)]
+model_results[, name := gsub("gdm_", "", model_results$name)]
+model_results <- merge(model_results, EFmaster, by = "name")
+
+sdplot <- ggplot(model_results, aes(x = name, y = sd, fill = EF)) + 
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+threshold_selection <- plot_grid(sdplot, devexpl, nrow = 2)
+
+ggsave(filename = paste(pathtoout, "/plot_GDM_EFbeta_tresholds_var_expl_and_sd.pdf", sep = ""), 
+       plot = threshold_selection, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 
 
