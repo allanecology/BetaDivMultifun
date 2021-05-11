@@ -367,7 +367,7 @@ ggsave(filename = paste(pathtoout, "/", "all_legends_incl_overview.pdf", sep = "
 singleEFdist <- readRDS(paste(pathtodata, "/data_assembly/output_data/singleEFdist.rds", sep = "")) # already scaled
 i <- 1
 ni <- colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")][i]
-i <- paste(pathtoout, "/GDM/gdm_", ni, "_LUI_input.Rds", sep = "")
+i <- paste(pathtodata, "/analysis/output_datasets/gdm_", ni, "_LUI_input.Rds", sep = "")
 gdmin <- readRDS(i)
 permut <- "F"
 
@@ -388,7 +388,7 @@ i <- 2
 for(i in 2:(length(colnames(singleEFdist))-2)){
   print(i)
   ni <- colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")][i]
-  i <- paste(pathtoout, "/GDM/gdm_", ni, "_LUI_input.Rds", sep = "")
+  i <- paste(pathtodata, "/analysis/output_datasets/gdm_", ni, "_LUI_input.Rds", sep = "")
   gdmin <- readRDS(i)
   permut <- "F"
   gdm_output <- gdm::gdm(gdmin, geo = F, splines = NULL, knots = NULL)
@@ -405,6 +405,7 @@ for(i in 2:(length(colnames(singleEFdist))-2)){
   restab2 <- merge(restab2, restab[, ..include], by = "names", all.x = T)
 }
 restab2 <- data.table::data.table(restab2)
+
 
 ```
 
