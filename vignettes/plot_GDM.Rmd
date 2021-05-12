@@ -45,9 +45,9 @@ If F, `luiinput` and `model_name` need to be given manually.
 ```{r}
 automaticrun <- F
     # only provide if automaticrun is F
-luiinput <- "components" # lui or components
+luiinput <- "lui" # lui or components
 # model_name <- "gdm_EFnestedness_0.5_LUI"
-model_name <- "gdm_EFdistance_components"
+model_name <- "gdm_EFdistance_LUI"
 permut <- F # T or F, depending wether permutations are available or not
 ```
 
@@ -102,7 +102,7 @@ plotsequence_abio <- define_rownames_lui_or_components(luiinput = luiinput)
 naming convention : `model_name` + "_lineplot_all_modelspec.pdf"
 
 common y axis maximum is the maximum of the current model
-```{r}
+```{r, eval = F}
 ###########
 # creat plot table
 ###########
@@ -263,7 +263,7 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_EFbeta_tresholds_var_expl_and_sd.p
   
 
 # Barplots 
-```{r}
+```{r, eval = F}
 ###########
 # create table
 ###########
@@ -349,7 +349,7 @@ ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overvie
 
 
 # get all legends
-```{r, eval = T}
+```{r, eval = F}
 ###########
 # legends
 ###########
@@ -497,7 +497,7 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_singleEFdist_heatmap.pdf", sep = "
 
 # thresholds EF heatmap
 
-```{r}
+```{r, eval = F}
 #TODO HERE : leider habe ich geosphere_distgeo in den modellen drin --> ev. alle modelle nochmal neu?
 # schauen wo es drin ist und nochmal drüber!
 
