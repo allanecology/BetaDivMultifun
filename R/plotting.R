@@ -70,19 +70,22 @@ create_restab2 <- function(x=1){
   auto[, maxsplines := maxsplines / 2]
   restab <- rbindlist(list(auto, restab[legendnames != "autotroph",]))
   
+  lui_restab <- data.table::copy(restab)
+  lui_restab[names %in% c("LUI", "deltaLUI"), ground := "lui"]
+  
   # unscaled
-  unscaled <- data.table::data.table(aggregate(maxsplines ~ ground, restab, sum))
+  unscaled <- data.table::data.table(aggregate(maxsplines ~ ground, lui_restab, sum))
 
   unscaled[, type := "unscaled"]
   unscaled[, nicenames := "x"]
-  unscaled[ground == "a", nicenames := "aboveground"]; unscaled[ground == "b", nicenames := "belowground"]; unscaled[ground == "x", nicenames := "abiotic"]
+  unscaled[ground == "a", nicenames := "aboveground"]; unscaled[ground == "b", nicenames := "belowground"]; unscaled[ground == "lui", nicenames := "LUI"]; unscaled[ground == "x", nicenames := "abiotic"]
   
   unscaled[, color := "x"]
-  unscaled[nicenames == "aboveground", color := "#66A61E"]; unscaled[nicenames == "belowground", color := "#A65628"]; unscaled[nicenames == "abiotic", color := "#666666"]
+  unscaled[nicenames == "aboveground", color := "#66A61E"]; unscaled[nicenames == "belowground", color := "#A65628"]; unscaled[nicenames == "abiotic", color := "#666666"]; unscaled[nicenames == "LUI", color := "#D95F02"]
   restab2 <- data.table::copy(unscaled)
   
   # mean (average)
-  temp <- data.table(aggregate(maxsplines ~ ground, restab, mean)) # get means from original restab
+  temp <- data.table(aggregate(maxsplines ~ ground, lui_restab, mean)) # get means from original restab
   temp <- cbind(temp, unscaled[, .(type, nicenames, color)]) # add color and stuff
   temp[, type := "average"]
   restab2 <- rbindlist(list(restab2, temp)) # add to unscaled (rbind)
