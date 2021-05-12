@@ -495,14 +495,14 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_singleEFdist_heatmap.pdf", sep = "
 ```
 
 
+
+
+
 # thresholds EF heatmap
 
 ```{r, eval = F}
-#TODO HERE : leider habe ich geosphere_distgeo in den modellen drin --> ev. alle modelle nochmal neu?
-# schauen wo es drin ist und nochmal drüber!
-
 mod_names <- model_results[EF %in% c("distance", "nestedness", "turnover") & luiinput == "lui", name]
-
+mod_names <- mod_names[-grep("0.75", mod_names)]
 
 i <- mod_names[1]
 a <- paste(pathtodata, "/analysis/output_datasets/", i, "_output.Rds", sep = "")
@@ -522,11 +522,81 @@ for(i in mod_names[-1]){
   maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)
   restab_newline <- data.table(model = i, data.frame(as.list(maxsplines)))
   # append to restab
-  rbindlist(list(restab, restab_newline), use.names = T)
+  restab <- rbindlist(list(restab, restab_newline), use.names = T)
+  rm(restab_newline); rm(gdm_output)
 }
+rm(i); rm(exSplines); rm(a); rm(maxsplines)
+```
+create heatmap
+```{r}
+# make restab column names nice
+setnames(restab, old = as.character(nicenames$names),  new = as.character(nicenames$nicenames), skip_absent = T)
+# transpose data.table
+restab <- dcast(melt(restab, id.vars = "model"), variable ~ model)
+setnames(restab, old = "variable", new = "nicenames")
+restab <- merge(nicenames, restab, by = "nicenames")
 
-# append to restab
-rbindlist(restab, restab_newline)
+include <- c("nicenames", names(restab)[grep("gdm", names(restab))])
+# pal <- rev(RColorBrewer::brewer.pal(9, "RdYlBu"))
+pal <- RColorBrewer::brewer.pal(9, "YlOrRd")
+# pal <- c("white", RColorBrewer::brewer.pal(9, "YlOrRd"))[-2]
+# colgrad <- melt(restab2[, ..include], id.vars = c("nicenames", "n_affected_fun"))
+# colgrad <- colgrad$value
 
+df <- restab[ground == "a", ]
+df <- data.table::melt(df[, ..include], id.vars = c("nicenames"))
+df[value == 0, value := NA] # 0 values are set to NA to make them appear grey in the plot
+
+a <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
+  geom_tile() +
+  scale_fill_gradientn(colours = pal, na.value = "grey80") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, 
+    size = 9, hjust = 1),
+    plot.margin = margin(l = 50, r = 20),
+    axis.line.x=element_blank(),
+    axis.text.y = element_text(size=9, angle = 0),
+    axis.ticks.x = element_blank(),
+    panel.grid.major.x = element_line(color = "grey"),
+    axis.title = element_blank(),
+    legend.position = "top") +
+  scale_x_discrete(position = "top")
+
+df <- restab[ground == "b", ]
+df <- data.table::melt(df[, ..include], id.vars = c("nicenames"))
+df[value == 0, value := NA]
+b <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
+  geom_tile() +
+  scale_fill_gradientn(colours = pal, na.value = "grey80") +
+  theme(legend.position = "none", 
+        axis.title = element_blank(),
+        axis.text.y = element_text(size=9, angle = 0),
+        plot.margin = margin(l = 50, r = 20),
+        axis.text.x = element_blank(),
+        axis.line.x=element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major.x = element_line(color = "grey"))
+
+
+df <- restab[ground == "x", ]
+df <- data.table::melt(df[, ..include], id.vars = c("nicenames"))
+df[value == 0, value := NA]
+c <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
+  geom_tile() +
+  scale_fill_gradientn(colours = pal, na.value = "grey80") +
+  theme(legend.position = "none", 
+        axis.title = element_blank(),
+        axis.text.y = element_text(size=9, angle = 0),
+        plot.margin = margin(l = 50, r = 20),
+        axis.text.x = element_blank(),
+        axis.line.x=element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major.x = element_line(color = "grey"))
+
+
+heatmap <- plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, 
+                     nrow = 3, rel_heights = c(0.52, 0.39, 0.09), align = "v")
+
+ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap.pdf", sep = ""), plot = heatmap, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 
