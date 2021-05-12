@@ -46,8 +46,8 @@ If F, `luiinput` and `model_name` need to be given manually.
 automaticrun <- F
     # only provide if automaticrun is F
 luiinput <- "lui" # lui or components
-# model_name <- "gdm_EFnestedness_0.5_LUI"
-model_name <- "gdm_EFdistance_LUI"
+model_name <- "gdm_EFnestedness_0.5_LUI"
+# model_name <- "gdm_EFdistance_LUI"
 permut <- F # T or F, depending wether permutations are available or not
 ```
 

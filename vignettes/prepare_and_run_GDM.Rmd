@@ -30,9 +30,9 @@ depending on the model intented to run, chose the appropriate variables below.
 #TODO : write automatic input for all models
 #TODO : capture deviance explained from all models and store in table
 # ECOSYSTEM FUNCTION
-funs <- "EFdistance"
+# funs <- "EFdistance"
 # funs <- "soilNitrateflxs"
-# funs <- "EFturnover_0.9"
+funs <- "EFbeta_median"
 
 # LUI
 ## name of the chosen LUI
