@@ -81,7 +81,7 @@ create_restab2 <- function(x=1){
   unscaled[ground == "a", nicenames := "aboveground"]; unscaled[ground == "b", nicenames := "belowground"]; unscaled[ground == "lui", nicenames := "LUI"]; unscaled[ground == "x", nicenames := "abiotic"]
   
   unscaled[, color := "x"]
-  unscaled[nicenames == "aboveground", color := "#66A61E"]; unscaled[nicenames == "belowground", color := "#A65628"]; unscaled[nicenames == "abiotic", color := "#666666"]; unscaled[nicenames == "LUI", color := "#D95F02"]
+  unscaled[nicenames == "aboveground", color := "#66A61E"]; unscaled[nicenames == "belowground", color := "#A65628"]; unscaled[nicenames == "abiotic", color := "#666666"]; unscaled[nicenames == "LUI", color := "#7570B3"]
   restab2 <- data.table::copy(unscaled)
   
   # mean (average)
@@ -119,19 +119,21 @@ NULL
 #' 
 #' @export
 create_restab_3 <- function(x=1){
+  lui_restab <- data.table::copy(restab)
+  lui_restab[names %in% c("LUI", "deltaLUI"), component := "lui"]
   # unscaled
-  unscaled <- data.table(aggregate(maxsplines ~ component, restab, sum))
+  unscaled <- data.table(aggregate(maxsplines ~ component, lui_restab, sum))
   
   unscaled[, type := "unscaled"]
   unscaled[, nicenames := "x"]
-  unscaled[component == "turnover", nicenames := "turnover"]; unscaled[component == "nestedness", nicenames := "nestedness"]; unscaled[component == "abio", nicenames := "abiotic"]
+  unscaled[component == "turnover", nicenames := "turnover"]; unscaled[component == "nestedness", nicenames := "nestedness"]; unscaled[component == "abio", nicenames := "abiotic"]; unscaled[component == "lui", nicenames := "LUI"]
   
   unscaled[, color := "x"]
-  unscaled[nicenames == "turnover", color := "#E6AB02"]; unscaled[nicenames == "nestedness", color := "#984EA3"]; unscaled[nicenames == "abiotic", color := "#666666"]
+  unscaled[nicenames == "turnover", color := "#E6AB02"]; unscaled[nicenames == "nestedness", color := "#984EA3"]; unscaled[nicenames == "abiotic", color := "#666666"]; unscaled[nicenames == "LUI", color := "#7570B3"]
   restab3 <- data.table::copy(unscaled)
   
   # mean (average)
-  temp <- data.table(aggregate(maxsplines ~ component, restab, mean)) # get means from original restab
+  temp <- data.table(aggregate(maxsplines ~ component, lui_restab, mean)) # get means from original restab
   temp <- cbind(temp, unscaled[, .(type, nicenames, color)]) # add color and stuff
   temp[, type := "average"]
   restab3 <- rbindlist(list(restab3, temp)) # add to unscaled (rbind)

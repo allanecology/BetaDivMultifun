@@ -190,14 +190,14 @@ create_overview_above_below_abiotic_barplot <- function(legend = F){
     df <- as.data.table(df)
     ldf <- unique(df[, .(color, nicenames, ground)])
     ldf[, testvals := 1]
-    ov1L <- ggplot(ldf, aes(x = nicenames, y = testvals, fill = color)) +
+    ov1L <- ggplot(ldf, aes(x = nicenames, y = testvals, fill = factor(color, levels=c("#666666", "#7570B3", "#66A61E", "#A65628")))) +
       geom_bar(stat = "identity", color = "black") +
       scale_fill_identity("", labels = ldf$nicenames, breaks = ldf$color, guide = "legend")
     ov1L <- cowplot::get_legend(ov1L)
     return(ov1L)
     
   } else {
-    ov1 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = color)) +
+    ov1 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = factor(color, levels=c("#666666", "#7570B3", "#66A61E", "#A65628")))) +
       geom_bar(stat="identity", color = "black", linetype = "solid") +
       coord_flip() +
       scale_fill_identity() +
