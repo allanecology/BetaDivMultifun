@@ -10,7 +10,7 @@ suppressPackageStartupMessages(require(cowplot))
 ```
 
 ```{r}
-#TODO :  fill in code to work with significances
+#TODO :  fill in code to work with significances, e.g. take out the non-significant maxsplines
 #TODO : order of trophic groups :  once all models are read, use effect size sequence and not alphabetically
 ```
 
@@ -264,6 +264,10 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_EFbeta_tresholds_var_expl_and_sd.p
 
 # Barplots 
 ```{r, eval = F}
+# redo labsplot from lineplot section above
+labsplot <- ggplot(NULL) + #annotate("text", x = 0.8, y = 0.5, size=8, label = model_name) +
+  theme_void() + annotate("text", x = 0.4, y = 0.5, size = 4, label = model_specs)
+
 ###########
 # create table
 ###########
@@ -304,14 +308,10 @@ ov_legends <- plot_grid(ov1L, ov2L, nrow = 2)
 # annotated_multipanel_without_overviews <- ggdraw(multipanel_without_overviews) +
   # draw_plot(labsplot, .65, .65, .35, .35) 
 
-#TODO don't delete below, ev. nice for LUI components
-# multipanel_with_overview_bars <- plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5, rel_heights = c(0.27, 0.37, 0.13, 0.075, 0.075), align = "v") # 2 summary bars
-
-#TODO : chose either LUI OR components
 if(luiinput == "lui"){
   # LUI
   multipanel_with_overview_bars <- plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5,
-                                             rel_heights = c(0.23, 0.37, 0.14, 0.1, 0.1), align = "v") # 2 summary bars
+                                             rel_heights = c(0.23, 0.37, 0.14, 0.09, 0.09), align = "v") # 2 summary bars
 } else if(luiinput == "components"){
   # components
   multipanel_with_overview_bars <- plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5,

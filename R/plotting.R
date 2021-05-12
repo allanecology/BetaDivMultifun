@@ -81,7 +81,7 @@ create_restab2 <- function(x=1){
   unscaled[ground == "a", nicenames := "aboveground"]; unscaled[ground == "b", nicenames := "belowground"]; unscaled[ground == "lui", nicenames := "LUI"]; unscaled[ground == "x", nicenames := "abiotic"]
   
   unscaled[, color := "x"]
-  unscaled[nicenames == "aboveground", color := "#66A61E"]; unscaled[nicenames == "belowground", color := "#A65628"]; unscaled[nicenames == "abiotic", color := "#666666"]; unscaled[nicenames == "LUI", color := "#7570B3"]
+  unscaled[nicenames == "aboveground", color := "#66A61E"]; unscaled[nicenames == "belowground", color := "#A65628"]; unscaled[nicenames == "abiotic", color := "#666666"]; unscaled[nicenames == "LUI", color := "#0072B2"]
   restab2 <- data.table::copy(unscaled)
   
   # mean (average)
@@ -129,7 +129,7 @@ create_restab_3 <- function(x=1){
   unscaled[component == "turnover", nicenames := "turnover"]; unscaled[component == "nestedness", nicenames := "nestedness"]; unscaled[component == "abio", nicenames := "abiotic"]; unscaled[component == "lui", nicenames := "LUI"]
   
   unscaled[, color := "x"]
-  unscaled[nicenames == "turnover", color := "#E6AB02"]; unscaled[nicenames == "nestedness", color := "#984EA3"]; unscaled[nicenames == "abiotic", color := "#666666"]; unscaled[nicenames == "LUI", color := "#7570B3"]
+  unscaled[nicenames == "turnover", color := "#E6AB02"]; unscaled[nicenames == "nestedness", color := "#984EA3"]; unscaled[nicenames == "abiotic", color := "#666666"]; unscaled[nicenames == "LUI", color := "#0072B2"]
   restab3 <- data.table::copy(unscaled)
   
   # mean (average)
