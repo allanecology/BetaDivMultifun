@@ -12,6 +12,7 @@ output: html_document
 - masterbeta
 - LUI
 - predictors, predictors_soil
+- pathtoout
 see `analysis_nonpublic.R` file.
 
 ## packages
@@ -180,6 +181,9 @@ if(lui[1] == "LUI"){
 # check if all names of gdminput are in colorder_gdm_input and vice versa
 all(colnames(gdminput) %in% colorder_gdm_input)
 all(colorder_gdm_input %in% colnames(gdminput))
+length(grep("geosphere_distgeo", colorder_gdm_input)) == 0
+length(grep("geosphere_distgeo", colnames(gdminput))) == 0
+
 
 gdminput <- data.table::setcolorder(gdminput, colorder_gdm_input)
 
@@ -213,14 +217,14 @@ capture.output(summary(gdm_output), file = paste("vignettes/out/", outname, sep 
 
 # get model specifications
 model_specs <- paste(
-model_name,
+modelname,
 paste("deviance of the fitted GDM model :", round(gdm_output$gdmdeviance, 3)),
 paste("deviance of the null model : ", round(gdm_output$nulldeviance, 3)),
 paste("percentage of null deviance \n explained by the fitted GDM model :", round(gdm_output$explained, 3)),
 "3 splines used, knots at min, max and 50% (default). ",
 paste("LUI knots at :", paste(round(gdm_output$knots[1:3], 3), collapse = ", ")),
 sep = "\n")
-capture.output(print(model_specs), file = paste(pathtoout, "/", model_name, "_GDM_model_specs.txt", sep = ""))
+capture.output(print(model_specs), file = paste(pathtoout, "/", modelname, "_GDM_model_specs.txt", sep = ""))
 ```
 
 
