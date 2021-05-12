@@ -30,7 +30,7 @@ spdiv <- merge(spdiv, spinfo, by = "Species", all.x=T)
 spdiv <- spdiv[!is.na(value)]
 
 # Set to presence-absence
-spdiv[value != 0, value := 1]
+spdiv[value != 0, value := 1] # EDIT HERE for abundance-based betadiversity calculation
 
 # now I can remove the original datasets, so I save cpu:
 rm(spinfo); gc()
@@ -1056,6 +1056,7 @@ Total : 146'368 species in the  dataset (5'858 species without bacteria)
 
 
 # Calculate betadiversities
+Note : *abundance-based* betadiversity is calculated below, therefore this script needs to be run specifically for that purpose.
 
 Set betadiversity to 0 or 1 in case plots do not contain any species, according to e.g. Carlo Ricotta https://doi.org/10.1002/ece3.2980
 e.g. Plot "P1" contains 3 species, "P2" and "P3" do not contain any species : 
@@ -1147,6 +1148,58 @@ masterdiversity <- merge(masterdiversity, masteralpha, by = "Var2", all.x = T)
 saveRDS(masterdiversity, "master_diversity_alpha_beta.rds")
 ```
 
+
+
+# Calculate abundance-based betadiversity
+```{r, eval = F}
+#TODO only change above in script change to presence-absence!
+# Don't run beta- and alpha diverstiy calculation above
+
+for(t in trlevels){
+  tr <- get(t)
+  b.tr <- prepare_for_betapair(tr)
+  b.tr <- beta.pair.abund_zerospecies(b.tr, index.family = "bray")
+  trbalname <- paste(t, ".beta.bal", sep = "")
+  trgraname <- paste(t, ".beta.gra", sep = "")
+  assign(trbalname, b.tr$beta.bray.bal)
+  assign(trgraname, b.tr$beta.bray.gra)
+}
+rm(t); rm(tr); rm(b.tr); rm(trsimname); rm(trnesname)
+
+
+# prepare for formatesitepair
+# convert to long format
+trlevels_components <- c(paste(trlevels, ".beta.bal", sep=""), paste(trlevels, ".beta.gra", sep=""))
+# create super-dataframe to store all betadiversities
+t <- trlevels_components[1]
+tr <- get(t)
+tr <- as.matrix(tr)
+tr[!lower.tri(tr)] <- 1000
+tr <- reshape2::melt(tr, value.name = t)
+tr <- tr[which(tr[,3] != 1000), ]
+# select plots
+tr <- data.table(tr)
+tr <- tr[Var1 %in% plotNAset & Var2 %in% plotNAset, ]
+nrow(tr[which(tr[,3] != 1000), ]) ==  (135*135) - ((135*135 / 2) +135/2) # 9045 rows left
+masterbeta <- tr
+
+for(t in trlevels_components[-1]){
+  tr <- get(t)
+  tr <- as.matrix(tr)
+  tr[!lower.tri(tr)] <- 1000
+  tr <- reshape2::melt(tr, value.name = t)
+  # tr <- tr[!is.na(tr[, 3]),] #TODO removed 
+  tr <- tr[which(tr[,3] != 1000), ] 
+  # select plots
+  tr <- data.table(tr)
+  tr <- tr[Var1 %in% plotNAset & Var2 %in% plotNAset, ]
+  masterbeta <- merge(masterbeta, tr, by = c("Var1", "Var2"), all.x = T)
+}
+rm(tr); rm(t)
+
+# save
+saveRDS(masterbeta, "master_beta_abundance.rds")
+```
 
 
 # Cleaning

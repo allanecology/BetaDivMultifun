@@ -220,3 +220,60 @@ beta.pair_zerospecies <- function (x, index.family = "sorensen")
   return(pairwise)
 }
 NULL
+
+
+
+
+
+
+#' beta.pair.abund handle plots without species
+#' 
+#' Only minimal description is provided, More info in beta.pair_zerospecies. This function
+#' was generated similarly.
+#' Gradient corresponds to nestedness, balanced to turnover in respect of zeros.
+#' 
+#' @param x a data.set with same requirements as for beta.pair.abund *Note* for the project
+#' BetaDivMultifun, the function `prepare_for_betapair` can be used. For more 
+#' information, please read the documentation for beta.pair.
+#' @param index.family is "bray" as set by default. Not implemented for "ruzicka"
+#' @return same as for function beta.pair.abund A list with three dissimilarity matrices.
+#' For more information, please read the
+#' documentation for beta.pair.
+beta.pair.abund_zerospecies <- function (x, index.family = "bray") 
+{
+  index.family <- match.arg(index.family, c("bray", "ruzicka"))
+  if (!inherits(x, "betapart.abund")) {
+    x <- betapart.core.abund(x)
+  }
+  switch(index.family, bray = {
+    # EDIT catch exceptions :
+    double_zero <- x$pair.shared.abund == 0 & x$pair.sum.not.shared.abund == 0 & x$pair.max.not.shared.abund == 0 # no unshared species, no shared species --> both plots don't have species
+    one_zero <- x$pair.shared.abund == 0 & x$pair.max.not.shared.abund != 0 & x$pair.min.not.shared.abund == 0 # zero shared, something not shared : 1 plot without species
+    
+    beta.bray.bal <- x$pair.min.not.shared.abund/(x$pair.min.not.shared.abund + 
+                                                    x$pair.shared.abund)
+    # EDIT special cases :
+    beta.bray.bal[double_zero] <- 0
+    beta.bray.bal[one_zero] <- 0
+    
+    beta.bray.gra <- ((x$pair.max.not.shared.abund - x$pair.min.not.shared.abund)/((2 * 
+                                                                                      x$pair.shared.abund) + x$pair.sum.not.shared.abund)) * 
+      (x$pair.shared.abund/(x$pair.min.not.shared.abund + 
+                              x$pair.shared.abund))
+    # EDIT special cases
+    beta.bray.gra[double_zero] <- 0
+    beta.bray.gra[one_zero] <- 1
+    
+    beta.bray <- x$pair.sum.not.shared.abund/(2 * x$pair.shared.abund + 
+                                                x$pair.sum.not.shared.abund)
+    # EDIT special cases
+    beta.bray[double_zero] <- 0
+    # beta.bray[one_zero] # formula can handle one plot without species
+    
+    pairwise <- list(beta.bray.bal = as.dist(beta.bray.bal), 
+                     beta.bray.gra = as.dist(beta.bray.gra), beta.bray = as.dist(beta.bray))
+  }, ruzicka = {
+    print("not defined for zerospecies - please use original function")
+  })
+  return(pairwise)
+}
