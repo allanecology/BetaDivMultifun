@@ -30,9 +30,9 @@ depending on the model intented to run, chose the appropriate variables below.
 #TODO : write automatic input for all models
 #TODO : capture deviance explained from all models and store in table
 # ECOSYSTEM FUNCTION
-# funs <- "EFdistance"
+funs <- "EFdistance"
 # funs <- "soilNitrateflxs"
-funs <- "EFbeta_median"
+# funs <- "EFbeta_median"
 
 # LUI
 ## name of the chosen LUI
@@ -42,6 +42,11 @@ compon_lui <- "LUI"
 ## column titles of the chosen LUI
 lui <- c("LUI", "deltaLUI")
 # lui <- c("Gstd", "Mstd", "Fstd", "deltaGstd", "deltaMstd", "deltaFstd")
+
+## special case : ABUNDANCE-based betadiversity
+# model name : gdm_EFdistance_abundancebeta_LUI
+colorder_gdm_input <- gsub(pattern = ".beta.sim", replacement = ".beta.bal", colorder_gdm_input)
+colorder_gdm_input <- gsub(pattern = ".beta.sne", replacement = ".beta.gra", colorder_gdm_input)
 ```
 chose selected input from mastertables
 ```{r}
