@@ -501,6 +501,7 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_singleEFdist_heatmap.pdf", sep = "
 # thresholds EF heatmap
 
 ```{r, eval = F}
+# dataset is stored, next chunk reads it in
 mod_names <- model_results[EF %in% c("distance", "nestedness", "turnover") & luiinput == "lui", name]
 mod_names <- mod_names[-grep("0.75", mod_names)]
 
@@ -526,15 +527,20 @@ for(i in mod_names[-1]){
   rm(restab_newline); rm(gdm_output)
 }
 rm(i); rm(exSplines); rm(a); rm(maxsplines)
-```
-create heatmap
-```{r}
+
 # make restab column names nice
 setnames(restab, old = as.character(nicenames$names),  new = as.character(nicenames$nicenames), skip_absent = T)
 # transpose data.table
 restab <- dcast(melt(restab, id.vars = "model"), variable ~ model)
 setnames(restab, old = "variable", new = "nicenames")
 restab <- merge(nicenames, restab, by = "nicenames")
+
+# save
+saveRDS(restab, file = "vignettes/out/plot_GDM_results_EFthresholds.rds")
+```
+create heatmap
+```{r}
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
 
 include <- c("nicenames", names(restab)[grep("gdm", names(restab))])
 # pal <- rev(RColorBrewer::brewer.pal(9, "RdYlBu"))
@@ -598,5 +604,22 @@ heatmap <- plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12,
 
 ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap.pdf", sep = ""), plot = heatmap, device=cairo_pdf,
        width = 11.96, height = 8.27, units = "in", dpi = 900)
+```
+
+clustered heatmap
+```{r, eval = F}
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
+
+include <- c("nicenames", names(restab)[grep("gdm", names(restab))])
+include <- include[-which(include %in% c("gdm_EFdistance_LUI", "gdm_EFturnover_median_LUI", "gdm_EFnestedness_median_LUI"))]
+
+restab1 <- restab[, ..include]
+restab1 <- as.matrix(restab1[, -1])
+rownames(restab1) <- restab$nicenames
+colnames(restab1) <- gsub("EFnestedness_", "NES ", gsub("EFturnover_", "TO ", 
+                                                        gsub("gdm_", "", gsub("_LUI", "", colnames(restab1)))))
+
+heatmap(restab1, hclustfun = hclust)
+# manually saved as "plot_GDM_thresholds_heatmap_cluster.pdf
 ```
 
