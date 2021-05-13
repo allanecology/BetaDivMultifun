@@ -623,3 +623,37 @@ heatmap(restab1, hclustfun = hclust)
 # manually saved as "plot_GDM_thresholds_heatmap_cluster.pdf
 ```
 
+average effects
+```{r, eval = F}
+# created dataset which is read in in next chunk
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
+include <- c("nicenames", names(restab)[grep("gdm", names(restab))])
+include <- include[-which(include %in% c("gdm_EFdistance_LUI", "gdm_EFturnover_median_LUI", "gdm_EFnestedness_median_LUI"))]
+restab <- restab[, ..include]
+# long format for aggregate
+restab1 <- melt(restab, id.vars = "nicenames")
+restab1[grep("turnover", variable), component := "EFturnover"]
+restab1[grep("nestedness", variable), component := "EFnestedness"]
+
+# calculate average and sd
+EFmean <- data.table(aggregate(value ~ component + nicenames, restab1, mean))
+setnames(EFmean, old = "value", new = "mean")
+EFsd <- data.table(aggregate(value ~ component + nicenames, restab1, sd))
+setnames(EFsd, old = "value", new = "sd")
+# combine to new data table
+EFmean <- merge(EFmean, EFsd, by = c("component", "nicenames"))
+rm(EFsd)
+t1 <- EFmean[component == "EFturnover", -"component"]
+setnames(t1, old = c("mean", "sd"), new = c("EFturnover_mean", "EFturnover_sd"))
+t2 <- EFmean[component == "EFnestedness", -"component"]
+setnames(t2, old = c("mean", "sd"), new = c("EFnestedness_mean", "EFnestedness_sd"))
+EFmean <- merge(t1, t2, by = "nicenames")
+rm(t1); rm(t2)
+
+# add to threshold dataset
+restab <- merge(restab, EFmean, by = "nicenames")
+# save dataset
+saveRDS(restab, file = "vignettes/out/plot_GDM_results_EFthresholds_mean_sd.rds")
+```
+
+
