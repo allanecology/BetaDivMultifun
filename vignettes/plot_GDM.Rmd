@@ -623,7 +623,8 @@ heatmap(restab1, hclustfun = hclust)
 # manually saved as "plot_GDM_thresholds_heatmap_cluster.pdf
 ```
 
-average effects
+
+## average effects over all thresholds
 ```{r, eval = F}
 # created dataset which is read in in next chunk
 restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
@@ -640,6 +641,8 @@ EFmean <- data.table(aggregate(value ~ component + nicenames, restab1, mean))
 setnames(EFmean, old = "value", new = "mean")
 EFsd <- data.table(aggregate(value ~ component + nicenames, restab1, sd))
 setnames(EFsd, old = "value", new = "sd")
+#TODO add standard error?
+
 # combine to new data table
 EFmean <- merge(EFmean, EFsd, by = c("component", "nicenames"))
 rm(EFsd)
@@ -654,6 +657,156 @@ rm(t1); rm(t2)
 restab <- merge(restab, EFmean, by = "nicenames")
 # save dataset
 saveRDS(restab, file = "vignettes/out/plot_GDM_results_EFthresholds_mean_sd.rds")
+```
+plot
+```{r}
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds_mean_sd.rds", sep = ""))
+restab <- merge(nicenames[, .(nicenames, ground)], restab, by = "nicenames")
+# OPTION : select the variables to include in heatmap
+#    OPTION 2 : take out "white" from color pal
+include <- colnames(restab)[-which(colnames(restab) == "ground")]
+# include <- c("nicenames", "EFturnover_mean", "EFturnover_sd", "EFnestedness_mean", "EFnestedness_sd")
+
+# pal <- c("white", RColorBrewer::brewer.pal(9, "YlOrRd"))
+pal <- c(RColorBrewer::brewer.pal(9, "YlOrRd"))
+
+# below : code copied from heatmap above -----------------------------
+df <- restab[ground == "a", ]
+df <- data.table::melt(df[, ..include], id.vars = c("nicenames"))
+df[value == 0, value := NA] # 0 values are set to NA to make them appear grey in the plot
+
+a <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
+  geom_tile() +
+  scale_fill_gradientn(colours = pal, na.value = "grey80") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, 
+    size = 9, hjust = 1),
+    plot.margin = margin(l = 50, r = 20),
+    axis.line.x=element_blank(),
+    axis.text.y = element_text(size=9, angle = 0),
+    axis.ticks.x = element_blank(),
+    panel.grid.major.x = element_line(color = "grey"),
+    axis.title = element_blank(),
+    legend.position = "top") +
+  scale_x_discrete(position = "top")
+
+df <- restab[ground == "b", ]
+df <- data.table::melt(df[, ..include], id.vars = c("nicenames"))
+df[value == 0, value := NA]
+b <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
+  geom_tile() +
+  scale_fill_gradientn(colours = pal, na.value = "grey80") +
+  theme(legend.position = "none", 
+        axis.title = element_blank(),
+        axis.text.y = element_text(size=9, angle = 0),
+        plot.margin = margin(l = 50, r = 20),
+        axis.text.x = element_blank(),
+        axis.line.x=element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major.x = element_line(color = "grey"))
+
+
+df <- restab[ground == "x", ]
+df <- data.table::melt(df[, ..include], id.vars = c("nicenames"))
+df[value == 0, value := NA]
+c <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
+  geom_tile() +
+  scale_fill_gradientn(colours = pal, na.value = "grey80") +
+  theme(legend.position = "none", 
+        axis.title = element_blank(),
+        axis.text.y = element_text(size=9, angle = 0),
+        plot.margin = margin(l = 50, r = 20),
+        axis.text.x = element_blank(),
+        axis.line.x=element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major.x = element_line(color = "grey"))
+# above : code copied from heatmap above -----------------------------
+
+heatmap <- plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, 
+                     nrow = 3, rel_heights = c(0.48, 0.42, 0.1), align = "v")
+
+# manually saved small heatmap with only mean and sd (no other thesholds) 
+#    as : GDM_thresholds_heatmap_mean_sd_only
+ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap_mean_sd.pdf", sep = ""), plot = heatmap, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
+```
+
+### barplot average effects over all thresholds
+```{r}
+restab_efdist # from EFdistLUI
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds_mean_sd.rds", sep = ""))
+include <- c("nicenames", "EFturnover_mean", "EFturnover_sd", "EFnestedness_mean", "EFnestedness_sd")
+restab <- restab[, ..include]
+restab <- merge(nicenames, restab, by = "nicenames")
+
+# chose variable to plot
+setnames(restab, old = c("EFturnover_mean", "EFturnover_sd"), new = c("maxsplines", "sd"))
+model_name <- "EFturnover_mean_across_thresholds"
+
+###########
+# produce barplots
+###########
+p <- create_bio_aboveground_barplot()
+b <- create_bio_belowground_barplot()
+q <- create_abio_barplot()
+
+###########
+# add sd
+###########
+p <- p + geom_errorbar(aes(ymin = maxsplines - sd/2, ymax = maxsplines + sd/2), 
+                  linetype = "solid") +
+  ylim(-0.01, 0.45)
+b <- b + geom_errorbar(aes(ymin = maxsplines - sd/2, ymax = maxsplines + sd/2), 
+                  linetype = "solid") +
+  ylim(-0.01, 0.45)
+q <- q + geom_errorbar(aes(ymin = maxsplines - sd/2, ymax = maxsplines + sd/2), 
+                  linetype = "solid") +
+  ylim(-0.01, 0.45)
+
+#TODO okay to divide sd by two?
+#TODO HERE NO! better use standard error!
+#computation of the standard error of the mean
+# sem<-sd(x)/sqrt(length(x))
+
+# copied from barplot section above --------------------------------------------
+###########
+# produce overview bars
+###########
+    # ABOVE - BELOW - ABIOTIC
+restab2 <- create_restab2()
+restab2 <- restab2[type %in% c("unscaled", "averaged_scaled")]
+df <- data.frame(restab2)
+ov1 <- create_overview_above_below_abiotic_barplot()
+ov1L <- create_overview_above_below_abiotic_barplot(legend = T) # legend only, plot with plot_grid()
+    # TURNOVER - NESTEDNESS - ABIOTIC
+restab3 <- create_restab_3()
+restab3 <- restab3[type %in% c("unscaled", "averaged_scaled")]
+df <- data.frame(restab3)
+ov2 <- create_overview_turnover_nestedness_abiotic_barplot()
+ov2L <- create_overview_turnover_nestedness_abiotic_barplot(legend = T) # only legend, plot with plot_grid()
+ov_legends <- plot_grid(ov1L, ov2L, nrow = 2)
+
+###########
+# add plots together
+###########
+multipanel_with_overview_bars <- plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5,
+                                             rel_heights = c(0.25, 0.4, 0.16, 0.08, 0.08), align = "v") # 2 summary bars
+
+annotated_multipanel_with_overview_bars <- ggdraw(multipanel_with_overview_bars) +
+  # draw_plot(labsplot, .65, .65, .35, .35) +
+  draw_plot(ov_legends, 0.05, 0.1, .1, .2)
+
+# copied from barplot section above --------------------------------------------
+
+###########
+# save
+###########
+ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars_not_annotated.pdf", sep = ""), plot = annotated_multipanel_with_overview_bars, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
+ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars_extraplot_annotations.pdf", sep = ""), plot = extraplot, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
+
+
+
 ```
 
 
