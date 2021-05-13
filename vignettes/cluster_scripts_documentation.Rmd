@@ -5,8 +5,9 @@ date: "July 10, 2019"
 output: html_document
 ---
 # Cluster
-In order to run R code on the cluster, please follow the instructions on the [UBELIX help page](https://docs.id.unibe.ch/ubelix/). There is a great documentation (also about using R on the cluster).
+In order to run R code on the cluster, please follow the instructions on the [UBELIX help page](https://hpc-unibe-ch.github.io//). There is a great documentation (also about using R on the cluster).
 - get user profile
+    - log in with `ssh <username>@submit.unibe.ch`
 - install R and the required packages
 - run the examples
 ```{bash}
@@ -28,9 +29,9 @@ model results need to be uploaded : <modelname>_input.Rds files which contian si
 ```{bash}
 ssh <username>@submit.unibe.ch
 
-scp /path/to/file <username>@submit.unibe.ch:/path/to/target_dir/
+scp /path/to/file <username>@submit.unibe.ch:path/to/target_dir/
 
-scp <username>@submit.unibe.ch:/path/to/file /path/to/target_dir/
+scp <username>@submit.unibe.ch:path/to/file /path/to/target_dir/
 ```
 source : https://docs.id.unibe.ch/ubelix/getting-started
 
@@ -67,7 +68,6 @@ saveRDS(varimp_output, file = paste("out/", name, "_perm.Rds", sep = ""))
 
 #SBATCH --mem-per-cpu=8G
 #SBATCH --time=12:00:00
-#SBATCH --workdir=.
 #SBATCH --cpus-per-task=10
 #SBATCH --job-name="GDM"
 
@@ -81,6 +81,7 @@ module load R/latest
 
 R CMD BATCH --no-save -no-restore gdm.R
 ```
+Note : there is also the option `#SBATCH --workdir=.` which has been taken out, because it did not work. All relative paths of the script are relative to the location from where `sbatch` has been runned.
 
 To submit the job to the cluster (run both scripts).
 ```{bash}
