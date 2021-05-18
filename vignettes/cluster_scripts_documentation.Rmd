@@ -48,13 +48,13 @@ To run parallel, you need to give the number of cores in (1) the slurm script an
 name <- "gdm_Groundwater.recharge_LUI"
 gdm_model <- readRDS(paste("data/", name, "_input.Rds", sep = ""))
 
-# fullModelOnly = T : test only the full variable set
+# fullModelOnly = T : test only the full variable set, not model - 1 variable
 # fullModelOnly = F : estimate model significance and variable importance/ significance using m...
 # parallel = T
 # cores : number of cores to be registered for parralel processing
 # outFile : name of outfile
 
-varimp_output <- gdm::gdm.varImp(gdm_model, geo=T, parallel=T, nPerm =100, cores = 10)
+varimp_output <- gdm::gdm.varImp(gdm_model, geo=T, parallel=T, nPerm =100, cores = 10, fullModelOnly = T)
 
 saveRDS(varimp_output, file = paste("out/", name, "_perm.Rds", sep = ""))
 ```
@@ -69,11 +69,11 @@ saveRDS(varimp_output, file = paste("out/", name, "_perm.Rds", sep = ""))
 #SBATCH --mem-per-cpu=8G
 #SBATCH --time=12:00:00
 #SBATCH --cpus-per-task=10
-#SBATCH --job-name="GDM"
+#SBATCH --job-name="gdm_Groundwater.recharge_LUI"
 
 # change
-#SBATCH --output=R.out
-#SBATCH --error=R.err
+#SBATCH --output=gdm_Groundwater.recharge_LUI.out
+#SBATCH --error=gdm_Groundwater.recharge_LUI.err
 
 ############################# execute code here################################ 
 module load vital-it
@@ -101,9 +101,8 @@ cluster workflow
 
 automatically replace names
 ```{bash}
-sed -i 's/gdm_EFdistance_Gstd/gdm_EFdistance_Mstd/g' gdm.R Rbatch.sh
+sed -i 's/gdm_Root.decomposition_LUI/gdm_EFdistance_LUI/g' gdm.R Rbatch.sh
 ```
-
 
 
 outfiles : 
