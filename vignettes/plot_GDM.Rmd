@@ -46,9 +46,9 @@ If F, `luiinput` and `model_name` need to be given manually.
 automaticrun <- F
     # only provide if automaticrun is F
 luiinput <- "lui" # lui or components
-# model_name <- "gdm_EFnestedness_0.5_LUI"
-model_name <- "gdm_EFdistance_LUI"
-permut <- T # T or F, depending wether permutations are available or not
+model_name <- "gdm_EFnestedness_0.7_LUI"
+# model_name <- "gdm_EFdistance_LUI"
+permut <- F # T or F, depending wether permutations are available or not
 ```
 
 # preparation
@@ -96,7 +96,6 @@ plotsequence_abio <- define_rownames_lui_or_components(luiinput = luiinput)
 
 
 
-  
 
 # line plots
 
@@ -638,7 +637,7 @@ restab1[grep("turnover", variable), component := "EFturnover"]
 restab1[grep("nestedness", variable), component := "EFnestedness"]
 
 # calculate average and sd
-EFmean <- data.table(aggregate(value ~ component + nicenames, restab1, mean))
+EFmean <- data.table(aggregate(value ~ component + nicenames, restab1, function(x) mean(x, na.rm = T)))
 setnames(EFmean, old = "value", new = "mean")
 # EFsd <- data.table(aggregate(value ~ component + nicenames, restab1, sd))
 EFsd <- data.table(aggregate(value ~ component + nicenames, restab1, function(x) sd(x)/sqrt(length(x))))
@@ -734,14 +733,23 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap_mean_se.pdf", s
 
 ### barplot average effects over all thresholds
 ```{r}
+# Note : need to select the model below
+
 restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds_mean_se.rds", sep = "")) # Note : there is se.rds and sd.rds : standard error or standard deviation
 include <- c("nicenames", "EFturnover_mean", "EFturnover_sd", "EFnestedness_mean", "EFnestedness_sd")
 restab <- restab[, ..include]
 restab <- merge(nicenames, restab, by = "nicenames")
 
+####
+# SELECT MODEL
+####
 # chose variable to plot
-setnames(restab, old = c("EFturnover_mean", "EFturnover_sd"), new = c("maxsplines", "sd"))
-model_name <- "EFturnover_mean_across_thresholds"
+# # TURNOVER
+# setnames(restab, old = c("EFturnover_mean", "EFturnover_sd"), new = c("maxsplines", "sd"))
+# model_name <- "EFturnover_mean_across_thresholds"
+# NESTEDNESS
+setnames(restab, old = c("EFnestedness_mean", "EFnestedness_sd"), new = c("maxsplines", "sd"))
+model_name <- "EFnestedness_mean_across_thresholds"
 
 ###########
 # produce barplots
@@ -762,7 +770,6 @@ b <- b + geom_errorbar(aes(ymin = maxsplines - sd/2, ymax = maxsplines + sd/2),
 q <- q + geom_errorbar(aes(ymin = maxsplines - sd/2, ymax = maxsplines + sd/2), 
                   linetype = "solid") #+
   # ylim(-0.01, 0.45)
-
 
 
 # copied from barplot section above --------------------------------------------
@@ -800,10 +807,6 @@ annotated_multipanel_with_overview_bars <- ggdraw(multipanel_with_overview_bars)
 ###########
 ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars_not_annotated.pdf", sep = ""), plot = annotated_multipanel_with_overview_bars, device=cairo_pdf,
        width = 11.96, height = 8.27, units = "in", dpi = 900)
-ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars_extraplot_annotations.pdf", sep = ""), plot = extraplot, device=cairo_pdf,
-       width = 11.96, height = 8.27, units = "in", dpi = 900)
-
-
 
 ```
 
