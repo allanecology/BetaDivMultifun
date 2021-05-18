@@ -46,9 +46,9 @@ If F, `luiinput` and `model_name` need to be given manually.
 automaticrun <- F
     # only provide if automaticrun is F
 luiinput <- "lui" # lui or components
-model_name <- "gdm_EFnestedness_0.5_LUI"
-# model_name <- "gdm_EFdistance_LUI"
-permut <- F # T or F, depending wether permutations are available or not
+# model_name <- "gdm_EFnestedness_0.5_LUI"
+model_name <- "gdm_EFdistance_LUI"
+permut <- T # T or F, depending wether permutations are available or not
 ```
 
 # preparation
@@ -61,8 +61,9 @@ if(automaticrun){
   permut <- model_names$permut[i]
 }
 if(permut == T){
-  gdmperm <- readRDS(paste(pathtoout, "/cluster/gdm_EFnestedness_LUI_permutation.Rds", sep = ""))
+  gdmperm <- readRDS(paste(paste(paste(pathtodata, "/analysis/output_datasets/pvalue_calculation/", sep = ""), model_name, sep = ""), "_perm.Rds", sep = ""))
   sign <- gdmperm[[3]][,1]
+  sign <- data.table::data.table("names" = names(sign), "sign" = sign)
 }
 
 
@@ -639,9 +640,9 @@ restab1[grep("nestedness", variable), component := "EFnestedness"]
 # calculate average and sd
 EFmean <- data.table(aggregate(value ~ component + nicenames, restab1, mean))
 setnames(EFmean, old = "value", new = "mean")
-EFsd <- data.table(aggregate(value ~ component + nicenames, restab1, sd))
+# EFsd <- data.table(aggregate(value ~ component + nicenames, restab1, sd))
+EFsd <- data.table(aggregate(value ~ component + nicenames, restab1, function(x) sd(x)/sqrt(length(x))))
 setnames(EFsd, old = "value", new = "sd")
-#TODO add standard error?
 
 # combine to new data table
 EFmean <- merge(EFmean, EFsd, by = c("component", "nicenames"))
@@ -656,11 +657,12 @@ rm(t1); rm(t2)
 # add to threshold dataset
 restab <- merge(restab, EFmean, by = "nicenames")
 # save dataset
-saveRDS(restab, file = "vignettes/out/plot_GDM_results_EFthresholds_mean_sd.rds")
+saveRDS(restab, file = "vignettes/out/plot_GDM_results_EFthresholds_mean_se.rds")
+# note : there is also "vignettes/out/plot_GDM_results_EFthresholds_mean_sd.rds" with standard deviation
 ```
 plot
 ```{r}
-restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds_mean_sd.rds", sep = ""))
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds_mean_se.rds", sep = ""))
 restab <- merge(nicenames[, .(nicenames, ground)], restab, by = "nicenames")
 # OPTION : select the variables to include in heatmap
 #    OPTION 2 : take out "white" from color pal
@@ -726,14 +728,13 @@ heatmap <- plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12,
 
 # manually saved small heatmap with only mean and sd (no other thesholds) 
 #    as : GDM_thresholds_heatmap_mean_sd_only
-ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap_mean_sd.pdf", sep = ""), plot = heatmap, device=cairo_pdf,
+ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap_mean_se.pdf", sep = ""), plot = heatmap, device=cairo_pdf,
        width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 
 ### barplot average effects over all thresholds
 ```{r}
-restab_efdist # from EFdistLUI
-restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds_mean_sd.rds", sep = ""))
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds_mean_se.rds", sep = "")) # Note : there is se.rds and sd.rds : standard error or standard deviation
 include <- c("nicenames", "EFturnover_mean", "EFturnover_sd", "EFnestedness_mean", "EFnestedness_sd")
 restab <- restab[, ..include]
 restab <- merge(nicenames, restab, by = "nicenames")
@@ -752,20 +753,17 @@ q <- create_abio_barplot()
 ###########
 # add sd
 ###########
-p <- p + geom_errorbar(aes(ymin = maxsplines - sd/2, ymax = maxsplines + sd/2), 
-                  linetype = "solid") +
-  ylim(-0.01, 0.45)
+p <- p + geom_errorbar(aes(ymin = maxsplines - sd, ymax = maxsplines + sd), 
+                  linetype = "solid") 
+  # ylim(-0.01, 0.45)
 b <- b + geom_errorbar(aes(ymin = maxsplines - sd/2, ymax = maxsplines + sd/2), 
-                  linetype = "solid") +
-  ylim(-0.01, 0.45)
+                  linetype = "solid") #+
+  # ylim(-0.01, 0.45)
 q <- q + geom_errorbar(aes(ymin = maxsplines - sd/2, ymax = maxsplines + sd/2), 
-                  linetype = "solid") +
-  ylim(-0.01, 0.45)
+                  linetype = "solid") #+
+  # ylim(-0.01, 0.45)
 
-#TODO okay to divide sd by two?
-#TODO HERE NO! better use standard error!
-#computation of the standard error of the mean
-# sem<-sd(x)/sqrt(length(x))
+
 
 # copied from barplot section above --------------------------------------------
 ###########
