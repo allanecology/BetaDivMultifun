@@ -57,8 +57,7 @@ NULL
 create_restab0 <- function(){
   restab <- data.table::data.table("names" = names(maxsplines), "maxsplines" = maxsplines)
   if(permut == T){
-    del <- data.table::data.table("names" = names(sign), "sign" = sign)
-    restab <- data.table::data.table(merge(restab, del, by = "names")); rm(del)
+    restab <- data.table::data.table(merge(restab, sign, by = "names"))
   }
   # get bios
   bios <- grep(paste(plotsequence_bio, collapse = "|"), names(maxsplines), value = T)
@@ -66,6 +65,7 @@ create_restab0 <- function(){
   # get abios
   abios <- grep(paste(plotsequence_bio, collapse = "|"), names(maxsplines), value = T, invert = T)
   restab[names %in% abios, type := "abio"]
+  restab[, component := "abio"]
   # get nestedness
   sne <- grep("sne", names(maxsplines), value = T)
   restab[names %in% sne, component := "nestedness"]
@@ -73,18 +73,21 @@ create_restab0 <- function(){
   to <- grep("sim", names(maxsplines), value = T)
   restab[names %in% to, component := "turnover"]
   # get only significant
-  if(permut == T){restab[, maxsplines := (1-sign) * maxsplines]}
+  # if(permut == T){restab[sign > 0.05, maxsplines := 0]} # only keep 0.05 and smaller
+  #TODO take this back? remove non-significant?
   # add nice names
-  restab <- data.table::data.table(merge(nicenames, restab, by = "names"))
+  restab <- data.table::data.table(merge(nicenames, restab, by = c("names", "type", "component")))
   # order by above-belowground and alphabetically
   # set the levels of the factor in the wanted order
   data.table::setorder(restab, ground, names)
   # restab[, names := factor(names, levels = names)]
   # order <- restab[type == "bio", names]
   # bring colors into right format
+  if(permut == T){
+    print("setting non-significant colours to gray")
+    restab[sign > 0.05, color := "gray91"]
+  }
   restab[, color := as.character(color)]
-  
-  restab[type == "abio", component := "abio"]
   
   restab[component %in% c("turnover", "abio"), linetypet := "solid"]
   restab[component == "nestedness", linetypet := "dotted"]
@@ -160,10 +163,12 @@ NULL
 #' @export
 create_abio_barplot <- function(){
   df <- restab[ground == "x"]
-  q <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = names, linetype = linetypet)) +
+  q <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
     geom_bar(stat="identity", color = "black") +
     coord_flip() +
-    scale_fill_manual(values = as.character(df$color)) + scale_linetype_identity() +
+    # scale_fill_manual(values = as.character(df$color)) +
+    scale_fill_identity() +
+    scale_linetype_identity() +
     ylim(0, 0.44) +
     theme(legend.position = "none", axis.title = element_blank(),
           axis.text.y = element_text(size=9),
