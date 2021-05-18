@@ -63,6 +63,10 @@ NULL
 #' 
 #' @export
 create_restab2 <- function(x=1){
+  if(permut == T){
+    print("removing non-significant effects from summary ...")
+    restab[sign > 0.05 , maxsplines := 0]
+  }
   # divide plants by 2 and half to each overview bar above- and belowground
   auto <- restab[legendnames == "autotroph",]
   auto[ ,ground := "b"]
@@ -120,6 +124,10 @@ NULL
 #' @export
 create_restab_3 <- function(x=1){
   lui_restab <- data.table::copy(restab)
+  if(permut == T){
+    print("removing non-significant effects from summary ...")
+    lui_restab[sign > 0.05 , maxsplines := 0]
+  }
   lui_restab[names %in% c("LUI", "deltaLUI"), component := "lui"]
   # unscaled
   unscaled <- data.table(aggregate(maxsplines ~ component, lui_restab, sum))
