@@ -187,6 +187,41 @@ heatmap(mdat, scale = "none", Colv = NA, main = paste("threshold :", threshold),
 #    went through differen thresholds and combined the output pdfs to 1 : introductory_plots_heatmap_functions_along_LUI_gradient
 ```
 
+## single functions change at high EFdist
+Plot comparisons with high EFdist (> 0.8): 
+
+High EFdistance, high turnover and low nestedness
+SEG17 AEG02  1.0000000      0.8333333       0.01282051
+HEG38 AEG02  0.8628104      0.8000000       0.03333333
+
+High EFdistance, low turnover and high nestedness 
+(nes goes only until 0.55, so this is very high)
+SEG22 AEG49  0.8823974      0.3333333       0.26666667
+SEG22 HEG30  0.8545400      0.3333333       0.26666667
+
+Filter for high nestedness: 
+if nes is at its max, turnover is always 0!
+HEG11 AEG19  0.3787118              0        0.5555556
+SEG22 HEG20  0.7917539              0        0.5555556
+also if nestedness is > 0.4
+--> high nes cases are 0 turnover cases!
+```{r}
+# EFmastser : read in from analysis_nonpublic.R
+# find high distance comparisons
+highdist <- EFmaster[EFdistance > 0.85, .(Var1, Var2, EFdistance, EFturnover_0.6, EFnestedness_0.6)]
+highdist <- EFmaster[EFnestedness_0.6 > 0.5, .(Var1, Var2, EFdistance, EFturnover_0.6, EFnestedness_0.6)]
+highdist <- EFmaster[EFnestedness_0.6 > 0.4 & EFnestedness_0.6 < 0.55, .(Var1, Var2, EFdistance, EFturnover_0.6, EFnestedness_0.6)]
+unique(highdist$EFturnover_0.6)
+# HEG38 AEG02  : 0.8628104 (EFdistance), EFturnover > 0.8, EFnes : 0.03 (very low)
+
+
+data.table(readRDS(paste(pathtodata, "/data_assembly/output_data/LUI.rds", sep = "")))
+funs <- readRDS(paste(pathtodata, "/data_assembly/output_data/imputed_and_compound_grlfuns.rds", sep = ""))
+
+```
+
+
+
 Violin plot over all plots
 ```{r}
 #TODO
