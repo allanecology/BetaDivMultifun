@@ -46,9 +46,10 @@ If F, `luiinput` and `model_name` need to be given manually.
 automaticrun <- F
     # only provide if automaticrun is F
 luiinput <- "lui" # lui or components
-model_name <- "gdm_EFnestedness_0.7_LUI"
+# model_name <- "gdm_EFnestedness_0.7_LUI"
+model_name <- "gdm_EFdistance_LUI_NO_sc_arthropodsoillarvae"
 # model_name <- "gdm_EFdistance_LUI"
-permut <- F # T or F, depending wether permutations are available or not
+permut <- T # T or F, depending wether permutations are available or not
 ```
 
 # preparation
@@ -72,6 +73,8 @@ if(permut == T){
 ###########
 gdm_output <- readRDS(paste_gdm_input_path_together(pathtoout = pathtodata, name = model_name))
 exSplines <- gdm::isplineExtract(gdm_output)
+maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)
+
 
 ###########
 # get model specifications
@@ -271,7 +274,7 @@ labsplot <- ggplot(NULL) + #annotate("text", x = 0.8, y = 0.5, size=8, label = m
 ###########
 # create table
 ###########
-maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE) # take maximum of each variable for barplot
+# maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE) # take maximum of each variable for barplot # is created above
 restab <- create_restab0()
 
 
