@@ -108,7 +108,7 @@ rm(M)
 ```
 
 # Dissimilarity of single functions
-This part of the script prepares the single function dissimilarities for the GDM models. Each function is fitted individually.
+This part of the script prepares the *single* function dissimilarities for the GDM models. Each function is fitted individually.
 
 Dissimilarity between plots is the euclidean distance - which is just a substraction in the 1D case.
 
@@ -247,7 +247,7 @@ Based on a 50% treshold, classify for each function and each plot presence or ab
 ```{r}
 # percentage of measured functions that exceed a given treshold of their maximum observed level across all study sites.
 # maximum observed level: average of the top five sites.
-threshold <- 0.7
+threshold <- 0.1
 # tresholds used in Solivieres paper :  0.25,0.5,0.75,0.9
 ```
 Plot for visualisation
@@ -303,6 +303,9 @@ Note : to make EF master for all thresholds : change manually above and run agai
 # CONVERT TO PRESENCE ABSENCE
 pa_grlfuns[, (include) := lapply(.SD, function(c) calc_presenceabsence(c, threshold = threshold, type = "max5")), .SDcols = include]
 pa_grlfuns[, (include) := (.SD * 1), .SDcols = include]
+setcolorder(pa_grlfuns, neworder = c("Plotn", include))
+# saveRDS(pa_grlfuns, file = paste(pathtoout, paste(paste("/single_functions_passing_threshold_", threshold, sep = ""), "Rds", sep = "."), sep = ""))
+
 
 # CALC BETADIVERSITY
 pa_grlfuns <- data.frame(pa_grlfuns[, !"Plotn", with=F], row.names = pa_grlfuns$Plotn)
