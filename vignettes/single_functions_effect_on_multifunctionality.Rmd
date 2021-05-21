@@ -1,0 +1,58 @@
+---
+title: "NEW threshold analysis"
+author: 'Noëlle Schenk'
+date: "5/21/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# single function effects along thresholds
+
+Questions : 
+- which threshold to include?
+    - functions levels are not normally distributed. Therefore, when putting a threshold, the amount of plots passing the threshold varies per function. E.g. at threshold 0.6, most plots have high levels of N leaching but only few plots have high levels of herbivory.
+        - --> the multifuncitonality at threshold 0.6 is probably driven by the functions with intermediate number of plots that pass the threshold. 
+     - possibly, there is a threshold where no function has a high effect - which is too "full of functions" / "lacking any functions" that anything can have an effect. We can imagine such a situation at an extremely high threshold like e.g. 0.99 : barely any plot would pass it --> so few variance that we can not explain multifuncitonality with it --> should not be included because it would only add noise.
+
+- is beta-multifunctionality driven by the effect of only few functions, or the complementary effect of many functions?
+    - with this analysis, we can answer that at different thresholds and maybe in general
+
+
+
+## Analysis plan
+
+Correlate the single functions (binary, presence-absence) and multifunctionality.
+--> logistic regression-type correlation needed
+- **multiple model** like : multifun ~ f1{0, 1} + f2{0, 1} + f3{0, 1} + ... + f16{0, 1}
+    - pro : do everythin in one go
+        - functions are corrected for each other, so the correlated ones will be weaker than with just pairwise
+            - the group of functions with many plots passing the threshold are correlated. (also the group with barley any plot passing the threshold) --> will they have very weak effects because they will be corrected for each other?
+        - tell us which functions drive multifun for each threshold and help us interpret the results ad kind of "replace" the single functions analysis
+
+    - gives one value per function per threshold (all plots versus all plots)
+
+- alternative : **single correlations**, each function individually with beta-multifun at each threshold.
+  - pro : easier, could use Pearson or Spearman
+  - contra : more work, functions are not corrected for each other
+
+- chosing a multifunctionality : 
+    - EFturnover, because 1. we need a multifunctionality which was calculated on the thresholds and 2. because nestedness is less releveant
+
+
+# Analysis
+Read data
+
+need : 
+- single functions levels
+    - apply threshold
+      create dataset of sigle functions ? (Intermediate step in calc_multifun --> save it)
+- EFmaster for EFturnover at different thresholds
+```{r}
+
+```
+
+
+
