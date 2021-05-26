@@ -51,8 +51,22 @@ need :
       create dataset of sigle functions ? (Intermediate step in calc_multifun --> save it)
 - EFmaster for EFturnover at different thresholds
 ```{r}
-
+t01 <- readRDS(paste(pathtodata, "/data_assembly/output_data/single_functions_passing_threshold_0.1.Rds", sep = ""))
+t02 <- readRDS(paste(pathtodata, "/data_assembly/output_data/single_functions_passing_threshold_0.2.Rds", sep = ""))
+t03 <- readRDS(paste(pathtodata, "/data_assembly/output_data/single_functions_passing_threshold_0.3.Rds", sep = ""))
+t04 <- readRDS(paste(pathtodata, "/data_assembly/output_data/single_functions_passing_threshold_0.4.Rds", sep = ""))
+t05 <- readRDS(paste(pathtodata, "/data_assembly/output_data/single_functions_passing_threshold_0.5.Rds", sep = ""))
+t06 <- readRDS(paste(pathtodata, "/data_assembly/output_data/single_functions_passing_threshold_0.6.Rds", sep = ""))
+t07 <- readRDS(paste(pathtodata, "/data_assembly/output_data/single_functions_passing_threshold_0.7.Rds", sep = ""))
+t08 <- readRDS(paste(pathtodata, "/data_assembly/output_data/single_functions_passing_threshold_0.8.Rds", sep = ""))
+t09 <- readRDS(paste(pathtodata, "/data_assembly/output_data/single_functions_passing_threshold_0.9.Rds", sep = ""))
 ```
 
+- merge each treshold with EFmaster
+    - loop through all thresholds I guess, start with t06
+- apply model
+- save vector result to result data.table
+- do with other thresholds --> add result vector to result data.table
+- heatmap of result data.table
 
 
