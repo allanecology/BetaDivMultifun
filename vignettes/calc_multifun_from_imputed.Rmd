@@ -193,6 +193,7 @@ pcaplots <- list(autoplot(pca_grlfuns, data = temp, colour = "region"),
      autoplot(pca_grlfuns, data = temp, colour = "region", x = 7, y = 8))
 plot_grid(plotlist = pcaplots, nrow = 2)
 rm(temp)
+# saved as : "21-03-09_calc_multifun_from_imputed_pca_autoplot_axes_1_to_7.pdf"
 
 p <- plot(pca_grlfuns)
 labelsize <- 3
@@ -201,17 +202,29 @@ p1 <- ggplot2::autoplot(pca_grlfuns, loadings = T, loadings.label= T, colour = "
 p2 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
                loadings.label.colour = "black", loadings.label.repel = T, loadings.label.size = labelsize,
                x = 3, y = 2)
-p3 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "gray", 
+p3 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
                loadings.label.colour = "black", loadings.label.repel = T, loadings.label.size = labelsize,
                x = 4, y = 3)
 p4 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
                loadings.label.colour = "black", loadings.label.repel = T, loadings.label.size = labelsize,
                x = 4, y = 5)
 cowplot::plot_grid(plotlist = list(p1, p2, p3, p4), labels = c("A", "B", "C", "D"), align = T)
+# saved as : "calc_multifun_from_imputed_pca_axes_1_to_5.pdf"
 
 p5 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
                loadings.label.colour = "black", loadings.label.repel = T,
                x = 5, y = 6)
+p6 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
+               loadings.label.colour = "black", loadings.label.repel = T,
+               x = 6, y = 7)
+p7 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
+               loadings.label.colour = "black", loadings.label.repel = T,
+               x = 7, y = 8)
+p8 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
+               loadings.label.colour = "black", loadings.label.repel = T,
+               x = 8, y = 9)
+cowplot::plot_grid(plotlist = list(p5, p6, p7, p8), labels = c("E", "F", "G", "H"), align = T)
+# saved as : "calc_multifun_from_imputed_pca_axes_5_to_9.pdf"
 ```
 ```{r, eval = F}
 rm(p); rm(p1); rm(p2); rm(p3); rm(p4); rm(p5)
