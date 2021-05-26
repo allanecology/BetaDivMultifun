@@ -40,15 +40,15 @@ Correlate the single functions (binary, presence-absence) and multifunctionality
 
 - chosing a multifunctionality : 
     - EFturnover, because 1. we need a multifunctionality which was calculated on the thresholds and 2. because nestedness is less releveant
+        - TODO : EFturnover at which threshold?
+    - EFdistance : because it's only 1 measure
 
 
 # Analysis
 Read data
 
 need : 
-- single functions levels
-    - apply threshold
-      create dataset of sigle functions ? (Intermediate step in calc_multifun --> save it)
+- single functions levels after application of threshold : is read in below
 - EFmaster for EFturnover at different thresholds
 ```{r}
 t01 <- readRDS(paste(pathtodata, "/data_assembly/output_data/single_functions_passing_threshold_0.1.Rds", sep = ""))
@@ -62,11 +62,36 @@ t08 <- readRDS(paste(pathtodata, "/data_assembly/output_data/single_functions_pa
 t09 <- readRDS(paste(pathtodata, "/data_assembly/output_data/single_functions_passing_threshold_0.9.Rds", sep = ""))
 ```
 
+## Code draft
 - merge each treshold with EFmaster
     - loop through all thresholds I guess, start with t06
+- calculate the single functions turnover?
+    - turnover of just one species (here : one function) : either there is turnover, or there is no turnover
+      - if function is present in both plots : 1, 1 --> no turnover
+      - if function is present in no plot    : 0, 0 --> no turnover
+      - if function is present in only one of the two plots : 0, 1 --> turnover = 1
 - apply model
 - save vector result to result data.table
 - do with other thresholds --> add result vector to result data.table
 - heatmap of result data.table
 
+```{r}
+# start with t06
+d <- data.table::copy(t06)
+d <- as.data.frame(d)
+# calculate the turnover in single function
+rownames(d) <- t06$Plotn
+d <- d[, -which(names(d) %in% "Plotn")]
+
+column_name <- "Biomass"
+calc_beta_nes_and_transform <- function(d, column_name){
+  beta <- BetaDivMultifun::beta.pair_zerospecies(subset(d, select = column_name))
+  beta <- beta$beta.sne # take nestedness, because this is the measure defining if there is a change in the function
+  beta <- as.matrix(beta)
+  beta[!lower.tri(beta, diag = F)] <- NA
+  beta <- reshape2::melt(beta, value.name = "test")
+  beta <- beta[!is.na(beta[, 3]), ]
+}
+#TODO : would continue here if we wanted to do that analysis.
+```
 
