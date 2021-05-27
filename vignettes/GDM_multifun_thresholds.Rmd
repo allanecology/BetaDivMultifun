@@ -205,7 +205,7 @@ heatmap(restab1, hclustfun = hclust)
 
 
 
-# average effects over all thresholds
+# calc average effects over all thresholds
 ```{r, eval = F}
 # created dataset which is read in in next chunk
 restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
@@ -240,7 +240,8 @@ restab <- merge(restab, EFmean, by = "nicenames")
 saveRDS(restab, file = "vignettes/out/plot_GDM_results_EFthresholds_mean_se.rds")
 # note : there is also "vignettes/out/plot_GDM_results_EFthresholds_mean_sd.rds" with standard deviation
 ```
-plot
+
+## Heatmap
 ```{r}
 restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds_mean_se.rds", sep = ""))
 restab <- merge(nicenames[, .(nicenames, ground)], restab, by = "nicenames")
@@ -315,7 +316,6 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap_mean_se.pdf", s
 
 ## average effects over all thresholds weighted by model sd
 
-
 ```{r}
 # from Gossner 2016
 # We also calculated a bootstrapped P value
@@ -346,8 +346,8 @@ modres.abs <- unique(modres.abs, by=c("groups","response"))
 ```
 
 
-
 ## barplot average effects over all thresholds
+select dataset
 ```{r}
 # Note : need to select the model below
 
@@ -366,7 +366,9 @@ restab <- merge(nicenames, restab, by = "nicenames")
 # NESTEDNESS
 setnames(restab, old = c("EFnestedness_mean", "EFnestedness_sd"), new = c("maxsplines", "sd"))
 model_name <- "EFnestedness_mean_across_thresholds"
-
+```
+Plot
+```{r}
 ###########
 # produce barplots
 ###########
