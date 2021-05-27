@@ -82,19 +82,23 @@ plotUncertainty_getsd <- function (spTable, sampleSites, bsIters, geo = FALSE, s
     cl <- makeCluster(cores, outfile = "")
     registerDoParallel(cl)
     subSamps <- foreach(k = 1:length(lstSP), .verbose = F, 
-                        .packages = c("gdm")) %dopar% removeSitesFromSitePair(spTable[[k]], 
+                        .packages = c("gdm")) %dopar% gdm::removeSitesFromSitePair(spTable[[k]], 
                                                                               sampleSites = sampleSites)
     gdmMods <- foreach(k = 1:length(subSamps), .verbose = F, 
                        .packages = c("gdm")) %dopar% gdm(subSamps[[k]], 
                                                          geo = geo, splines = splines, knots = knots)
     stopCluster(cl)
   } else {
-    subSamps <- lapply(lstSP, removeSitesFromSitePair, sampleSites = sampleSites)
+    subSamps <- lapply(lstSP, gdm::removeSitesFromSitePair, sampleSites = sampleSites)
     gdmMods <- lapply(subSamps, gdm, geo = geo, splines = splines, 
                       knots = knots)
   }
   fullGDMmodel <- gdm(spTable, geo = geo, splines = splines, 
                       knots = knots)
+  #EDIT : here, an error is caused if the list gdmMods contains NULL models
+  if(length(which(sapply(gdmMods, is.null))) > 0){
+    gdmMods <- gdmMods[-which(sapply(gdmMods, is.null))] # risky - maybe it's enough to just remove the null.
+  }
   exUncertSplines <- lapply(gdmMods, isplineExtract)
   fullGDMsplines <- isplineExtract(fullGDMmodel)
   predVars <- colnames(exUncertSplines[[1]][[1]])
