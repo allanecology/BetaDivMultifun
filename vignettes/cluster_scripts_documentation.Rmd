@@ -124,3 +124,91 @@ gdmperm[[3]][,1]
 gdmperm[[4]][,1]
 ```
 
+
+
+
+
+
+
+
+# plot Uncertainty : get sd of max values
+
+use **Rbatch.sh** from above, and only modify last line and cpus per task: 
+```{bash}
+#!/bin/sh
+#SBATCH --mail-user=noelle.schenk@ips.unibe.ch
+#SBATCH --mail-type=end,fail
+
+#SBATCH --mem-per-cpu=8G
+#SBATCH --time=1:00:00
+#SBATCH --cpus-per-task=2
+#SBATCH --job-name="gdm_EFturnover_0.1_LUI"
+
+# change
+#SBATCH --output=gdm_EFturnover_0.1_LUI.out
+#SBATCH --error=gdm_EFturnover_0.1_LUI.err
+
+############################# execute code here################################
+module load vital-it
+module load R/latest
+
+R CMD BATCH --no-save -no-restore gdm_uncertainty.R
+```
+
+**gdm_uncertainty.R**
+```{r}
+require(gdm)
+name <- "gdm_EFturnover_0.1_LUI"
+gdm_model <- readRDS(paste("data/", name, "_input.Rds", sep = ""))
+# load the required function
+source("plotUncertainty_getsd_GDM.R")
+exists("plotUncertainty_getsd")
+
+plotuncertainty_output <- plotUncertainty_getsd(gdm_model, sampleSites = 0.3, bsIters = 100,
+    geo = T, splineCol = "black", cores = 2)
+
+saveRDS(plotuncertainty_output, file = paste("out/", name, "_uncertainty.Rds", sep = ""))
+```
+note : 2 cores, 50 iterations took 40 seconds
+
+
+running for EFturnover
+```{bash}
+sed -i 's/gdm_EFturnover_0.1_LUI/gdm_EFturnover_0.2_LUI/g' gdm_uncertainty.R Rbatch.sh
+sbatch Rbatch.sh
+sed -i 's/gdm_EFturnover_0.2_LUI/gdm_EFturnover_0.3_LUI/g' gdm_uncertainty.R Rbatch.sh
+sbatch Rbatch.sh
+sed -i 's/gdm_EFturnover_0.3_LUI/gdm_EFturnover_0.4_LUI/g' gdm_uncertainty.R Rbatch.sh
+sbatch Rbatch.sh
+sed -i 's/gdm_EFturnover_0.4_LUI/gdm_EFturnover_0.5_LUI/g' gdm_uncertainty.R Rbatch.sh
+sbatch Rbatch.sh
+sed -i 's/gdm_EFturnover_0.5_LUI/gdm_EFturnover_0.6_LUI/g' gdm_uncertainty.R Rbatch.sh
+sbatch Rbatch.sh
+sed -i 's/gdm_EFturnover_0.6_LUI/gdm_EFturnover_0.7_LUI/g' gdm_uncertainty.R Rbatch.sh
+sbatch Rbatch.sh
+sed -i 's/gdm_EFturnover_0.7_LUI/gdm_EFturnover_0.8_LUI/g' gdm_uncertainty.R Rbatch.sh
+sbatch Rbatch.sh
+sed -i 's/gdm_EFturnover_0.8_LUI/gdm_EFturnover_0.9_LUI/g' gdm_uncertainty.R Rbatch.sh
+sbatch Rbatch.sh
+```
+
+running for EFnestedness
+```{bash}
+sed -i 's/gdm_EFnestedness_0.1_LUI/gdm_EFnestedness_0.2_LUI/g' gdm_uncertainty.R Rbatch.sh
+sbatch Rbatch.sh
+sed -i 's/gdm_EFnestedness_0.2_LUI/gdm_EFnestedness_0.3_LUI/g' gdm_uncertainty.R Rbatch.sh
+sbatch Rbatch.sh
+sed -i 's/gdm_EFnestedness_0.3_LUI/gdm_EFnestedness_0.4_LUI/g' gdm_uncertainty.R Rbatch.sh
+sbatch Rbatch.sh
+sed -i 's/gdm_EFnestedness_0.4_LUI/gdm_EFnestedness_0.5_LUI/g' gdm_uncertainty.R Rbatch.sh
+sbatch Rbatch.sh
+sed -i 's/gdm_EFnestedness_0.5_LUI/gdm_EFnestedness_0.6_LUI/g' gdm_uncertainty.R Rbatch.sh
+sbatch Rbatch.sh
+sed -i 's/gdm_EFnestedness_0.6_LUI/gdm_EFnestedness_0.7_LUI/g' gdm_uncertainty.R Rbatch.sh
+sbatch Rbatch.sh
+sed -i 's/gdm_EFnestedness_0.7_LUI/gdm_EFnestedness_0.8_LUI/g' gdm_uncertainty.R Rbatch.sh
+sbatch Rbatch.sh
+sed -i 's/gdm_EFnestedness_0.8_LUI/gdm_EFnestedness_0.9_LUI/g' gdm_uncertainty.R Rbatch.sh
+```
+
+all permutation results are stored at BetaDivMultifun/analysis/output_datasets/uncertainty_calc
