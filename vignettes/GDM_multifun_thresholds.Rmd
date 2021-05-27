@@ -1,0 +1,427 @@
+---
+title: "GDM Threshold considerations"
+author: 'Noëlle Schenk'
+date: "5/27/2021"
+output: html_document
+---
+
+requirements : 
+- TODO user : connect to planteco and nsch to get input files
+- GDM output as .rds, e.g. gdm_EFnestedness_LUI_input.Rds
+    - find at planteco/.../BetaDivMultifun/analysis/output_datasets
+- cluster output as .rds, e.g. gdm_EFnestedness_LUI_permutation.Rds
+- run `results_nonpublic.R` : load pathtodata, nicenames and model_names
+  - pathtodata : path to location where gdm input of model is stored. points to a folder, where the folder cluster witht the model input is. *note : was pathtoout before.*
+  - nicenames : helper file to get nice names of functions and trophic levels
+  - model_names : helper file for automation. Contains 3 columns : `name`  contains the all model names for `model_name`, `luiinput` contains either "lui" or "components" as LUI input for `luiinput` and `permut` is either TRUE or FALSE.
+- `analysis_nonpublic.R` loads `EFmaster_all_thresholds.Rds`
+
+
+# create sensitivity comparison: deviance explained, sdev
+```{r, eval = F}
+#############################
+#
+# treshold selection
+#
+#############################
+
+# models with function calculated with threshold : 
+# thresholds between 0.1 and 0.9.
+# need selection : by (new) : sdev of input. old : percent deviance explained.
+
+# VARIABILITY OF RESPONSE VARIABLE
+# require : input data : EFmaster_all_thresholds.Rds : load from script "analysis_nonpublic.R"
+EFmaster_sd <- apply(EFmaster[, -c("Var1", "Var2")], 2, function(x) sd(x, na.rm = F))
+EFmaster_var <- apply(EFmaster[, -c("Var1", "Var2")], 2, function(x) var(x, na.rm = F))
+EFmaster <- data.table(name = names(EFmaster), sd = EFmaster_sd, var = EFmaster_var)
+EFmaster[, type := "EFdistance"]
+EFmaster[grep("nestedness", EFmaster$name), type := "nestedness"]
+EFmaster[grep("turnover", EFmaster$name), type := "turnover"]
+EFmaster[grep("beta", EFmaster$name), type := "beta"]
+
+ggplot(EFmaster, aes(x = name, y = sd, fill = type)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+# PERCENT DEVIANCE EXPLAINED
+# require : 
+# model_results : the model results saved manually from the models
+setorder(model_results, cols = "name")
+model_results[, EF := factor(EF, ordered = T, levels = c("distance", "singleEF", "abund", "beta", "turnover", "nestedness"))]
+str(model_results)
+model_results <- model_results[!is.na(dev_expl_by_GDM)]
+
+devexpl <- ggplot(model_results, aes(x = name, y = dev_expl_by_GDM, fill = EF)) + 
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+ggsave(filename = paste(pathtoout, "/plot_GDM_EFbeta_tresholds_var_expl.pdf", sep = ""), 
+       plot = devexpl, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
+
+#TODO can add nice names at some point
+# STANDARD DEVIATION AND PERCENT DEVIANCE EXPLAINED
+model_results[, name := gsub("_LUI", "", model_results$name)]
+model_results[, name := gsub("gdm_", "", model_results$name)]
+model_results <- merge(model_results, EFmaster, by = "name")
+
+sdplot <- ggplot(model_results, aes(x = name, y = sd, fill = EF)) + 
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+threshold_selection <- plot_grid(sdplot, devexpl, nrow = 2)
+
+ggsave(filename = paste(pathtoout, "/plot_GDM_EFbeta_tresholds_var_expl_and_sd.pdf", sep = ""), 
+       plot = threshold_selection, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
+```
+
+
+
+# thresholds EF heatmap
+
+```{r, eval = F}
+# dataset is stored, next chunk reads it in
+mod_names <- model_results[EF %in% c("distance", "nestedness", "turnover") & luiinput == "lui", name]
+mod_names <- mod_names[-grep("0.75", mod_names)]
+
+i <- mod_names[1]
+a <- paste(pathtodata, "/analysis/output_datasets/", i, "_output.Rds", sep = "")
+gdm_output <- readRDS(a)
+# get maxsplines
+exSplines <- gdm::isplineExtract(gdm_output)
+# take maximum of each variable for barplot
+maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)
+restab <- data.table(model = i, data.frame(as.list(maxsplines)))
+
+for(i in mod_names[-1]){
+  a <- paste(pathtodata, "/analysis/output_datasets/", i, "_output.Rds", sep = "")
+  gdm_output <- readRDS(a)
+  # get maxsplines
+  exSplines <- gdm::isplineExtract(gdm_output)
+  # take maximum of each variable for barplot
+  maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)
+  restab_newline <- data.table(model = i, data.frame(as.list(maxsplines)))
+  # append to restab
+  restab <- rbindlist(list(restab, restab_newline), use.names = T)
+  rm(restab_newline); rm(gdm_output)
+}
+rm(i); rm(exSplines); rm(a); rm(maxsplines)
+
+# make restab column names nice
+setnames(restab, old = as.character(nicenames$names),  new = as.character(nicenames$nicenames), skip_absent = T)
+# transpose data.table
+restab <- dcast(melt(restab, id.vars = "model"), variable ~ model)
+setnames(restab, old = "variable", new = "nicenames")
+restab <- merge(nicenames, restab, by = "nicenames")
+
+# save
+saveRDS(restab, file = "vignettes/out/plot_GDM_results_EFthresholds.rds")
+```
+create heatmap
+```{r}
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
+
+include <- c("nicenames", names(restab)[grep("gdm", names(restab))])
+# pal <- rev(RColorBrewer::brewer.pal(9, "RdYlBu"))
+pal <- RColorBrewer::brewer.pal(9, "YlOrRd")
+# pal <- c("white", RColorBrewer::brewer.pal(9, "YlOrRd"))[-2]
+# colgrad <- melt(restab2[, ..include], id.vars = c("nicenames", "n_affected_fun"))
+# colgrad <- colgrad$value
+
+df <- restab[ground == "a", ]
+df <- data.table::melt(df[, ..include], id.vars = c("nicenames"))
+df[value == 0, value := NA] # 0 values are set to NA to make them appear grey in the plot
+
+a <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
+  geom_tile() +
+  scale_fill_gradientn(colours = pal, na.value = "grey80") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, 
+    size = 9, hjust = 1),
+    plot.margin = margin(l = 50, r = 20),
+    axis.line.x=element_blank(),
+    axis.text.y = element_text(size=9, angle = 0),
+    axis.ticks.x = element_blank(),
+    panel.grid.major.x = element_line(color = "grey"),
+    axis.title = element_blank(),
+    legend.position = "top") +
+  scale_x_discrete(position = "top")
+
+df <- restab[ground == "b", ]
+df <- data.table::melt(df[, ..include], id.vars = c("nicenames"))
+df[value == 0, value := NA]
+b <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
+  geom_tile() +
+  scale_fill_gradientn(colours = pal, na.value = "grey80") +
+  theme(legend.position = "none", 
+        axis.title = element_blank(),
+        axis.text.y = element_text(size=9, angle = 0),
+        plot.margin = margin(l = 50, r = 20),
+        axis.text.x = element_blank(),
+        axis.line.x=element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major.x = element_line(color = "grey"))
+
+
+df <- restab[ground == "x", ]
+df <- data.table::melt(df[, ..include], id.vars = c("nicenames"))
+df[value == 0, value := NA]
+c <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
+  geom_tile() +
+  scale_fill_gradientn(colours = pal, na.value = "grey80") +
+  theme(legend.position = "none", 
+        axis.title = element_blank(),
+        axis.text.y = element_text(size=9, angle = 0),
+        plot.margin = margin(l = 50, r = 20),
+        axis.text.x = element_blank(),
+        axis.line.x=element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major.x = element_line(color = "grey"))
+
+
+heatmap <- plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, 
+                     nrow = 3, rel_heights = c(0.52, 0.39, 0.09), align = "v")
+
+ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap.pdf", sep = ""), plot = heatmap, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
+```
+
+clustered heatmap
+```{r, eval = F}
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
+
+include <- c("nicenames", names(restab)[grep("gdm", names(restab))])
+include <- include[-which(include %in% c("gdm_EFdistance_LUI", "gdm_EFturnover_median_LUI", "gdm_EFnestedness_median_LUI"))]
+
+restab1 <- restab[, ..include]
+restab1 <- as.matrix(restab1[, -1])
+rownames(restab1) <- restab$nicenames
+colnames(restab1) <- gsub("EFnestedness_", "NES ", gsub("EFturnover_", "TO ", 
+                                                        gsub("gdm_", "", gsub("_LUI", "", colnames(restab1)))))
+
+heatmap(restab1, hclustfun = hclust)
+# manually saved as "plot_GDM_thresholds_heatmap_cluster.pdf
+```
+
+
+
+# average effects over all thresholds
+```{r, eval = F}
+# created dataset which is read in in next chunk
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
+include <- c("nicenames", names(restab)[grep("gdm", names(restab))])
+include <- include[-which(include %in% c("gdm_EFdistance_LUI", "gdm_EFturnover_median_LUI", "gdm_EFnestedness_median_LUI"))]
+restab <- restab[, ..include]
+# long format for aggregate
+restab1 <- melt(restab, id.vars = "nicenames")
+restab1[grep("turnover", variable), component := "EFturnover"]
+restab1[grep("nestedness", variable), component := "EFnestedness"]
+
+# calculate average and sd
+EFmean <- data.table(aggregate(value ~ component + nicenames, restab1, function(x) mean(x, na.rm = T)))
+setnames(EFmean, old = "value", new = "mean")
+# EFsd <- data.table(aggregate(value ~ component + nicenames, restab1, sd))
+EFsd <- data.table(aggregate(value ~ component + nicenames, restab1, function(x) sd(x)/sqrt(length(x))))
+setnames(EFsd, old = "value", new = "sd")
+
+# combine to new data table
+EFmean <- merge(EFmean, EFsd, by = c("component", "nicenames"))
+rm(EFsd)
+t1 <- EFmean[component == "EFturnover", -"component"]
+setnames(t1, old = c("mean", "sd"), new = c("EFturnover_mean", "EFturnover_sd"))
+t2 <- EFmean[component == "EFnestedness", -"component"]
+setnames(t2, old = c("mean", "sd"), new = c("EFnestedness_mean", "EFnestedness_sd"))
+EFmean <- merge(t1, t2, by = "nicenames")
+rm(t1); rm(t2)
+
+# add to threshold dataset
+restab <- merge(restab, EFmean, by = "nicenames")
+# save dataset
+saveRDS(restab, file = "vignettes/out/plot_GDM_results_EFthresholds_mean_se.rds")
+# note : there is also "vignettes/out/plot_GDM_results_EFthresholds_mean_sd.rds" with standard deviation
+```
+plot
+```{r}
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds_mean_se.rds", sep = ""))
+restab <- merge(nicenames[, .(nicenames, ground)], restab, by = "nicenames")
+# OPTION : select the variables to include in heatmap
+#    OPTION 2 : take out "white" from color pal
+include <- colnames(restab)[-which(colnames(restab) == "ground")]
+# include <- c("nicenames", "EFturnover_mean", "EFturnover_sd", "EFnestedness_mean", "EFnestedness_sd")
+
+# pal <- c("white", RColorBrewer::brewer.pal(9, "YlOrRd"))
+pal <- c(RColorBrewer::brewer.pal(9, "YlOrRd"))
+
+# below : code copied from heatmap above -----------------------------
+df <- restab[ground == "a", ]
+df <- data.table::melt(df[, ..include], id.vars = c("nicenames"))
+df[value == 0, value := NA] # 0 values are set to NA to make them appear grey in the plot
+
+a <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
+  geom_tile() +
+  scale_fill_gradientn(colours = pal, na.value = "grey80") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, 
+    size = 9, hjust = 1),
+    plot.margin = margin(l = 50, r = 20),
+    axis.line.x=element_blank(),
+    axis.text.y = element_text(size=9, angle = 0),
+    axis.ticks.x = element_blank(),
+    panel.grid.major.x = element_line(color = "grey"),
+    axis.title = element_blank(),
+    legend.position = "top") +
+  scale_x_discrete(position = "top")
+
+df <- restab[ground == "b", ]
+df <- data.table::melt(df[, ..include], id.vars = c("nicenames"))
+df[value == 0, value := NA]
+b <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
+  geom_tile() +
+  scale_fill_gradientn(colours = pal, na.value = "grey80") +
+  theme(legend.position = "none", 
+        axis.title = element_blank(),
+        axis.text.y = element_text(size=9, angle = 0),
+        plot.margin = margin(l = 50, r = 20),
+        axis.text.x = element_blank(),
+        axis.line.x=element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major.x = element_line(color = "grey"))
+
+
+df <- restab[ground == "x", ]
+df <- data.table::melt(df[, ..include], id.vars = c("nicenames"))
+df[value == 0, value := NA]
+c <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
+  geom_tile() +
+  scale_fill_gradientn(colours = pal, na.value = "grey80") +
+  theme(legend.position = "none", 
+        axis.title = element_blank(),
+        axis.text.y = element_text(size=9, angle = 0),
+        plot.margin = margin(l = 50, r = 20),
+        axis.text.x = element_blank(),
+        axis.line.x=element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major.x = element_line(color = "grey"))
+# above : code copied from heatmap above -----------------------------
+
+heatmap <- plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, 
+                     nrow = 3, rel_heights = c(0.48, 0.42, 0.1), align = "v")
+
+# manually saved small heatmap with only mean and sd (no other thesholds) 
+#    as : GDM_thresholds_heatmap_mean_sd_only
+ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap_mean_se.pdf", sep = ""), plot = heatmap, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
+```
+
+
+## average effects over all thresholds weighted by model sd
+
+
+```{r}
+# from Gossner 2016
+# We also calculated a bootstrapped P value
+# for each term in the full GDM, using the gdm.varImp function in the gdm library
+# (Supplementary Table 5-2). Additionally we estimated uncertainty for the GDM
+# plots by using 100 bootstraps for each model, each time removing 30% of the plot
+# pairs and then fitting a GDM and extracting the predictions. We then calculated the
+# s.d. of the predictions and added this (±-) to the fitted line (Extended Data Fig. 6).
+
+
+pdf("test_gdm_plotuncertainty.pdf", paper = "a4r")
+gdm::plotUncertainty(gdminput, sampleSites = 0.3, bsIters = 5, geo=T, splineCol = "black")
+dev.off()
+
+test <- plotUncertainty_getsd(gdminput, sampleSites = 0.3, bsIters = 5, geo = T, splineCol = "black")
+# do for each threshold
+
+
+#calculate average positive/negative weighted effects 
+#a. multiply weights*estimates 
+modres$weightEstimate <- modres$Estimate/modres$Std.Error 
+modres.abs$weightEstimate<- abs(modres.abs$Estimate/modres.abs$Std.Error) 
+#b. sum weight
+# Estimate by group and divide by sum of weights, separately for positive and negative 
+modres[,w.avg:=sum(weightEstimate)/sum(1/Std.Error),by=list(groups,response,Estimate>0)] 
+modres.abs[,w.avg:=sum(weightEstimate)/sum(1/Std.Error),by=list(groups,response)] 
+modres.abs <- unique(modres.abs, by=c("groups","response")) 
+```
+
+
+
+## barplot average effects over all thresholds
+```{r}
+# Note : need to select the model below
+
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds_mean_se.rds", sep = "")) # Note : there is se.rds and sd.rds : standard error or standard deviation
+include <- c("nicenames", "EFturnover_mean", "EFturnover_sd", "EFnestedness_mean", "EFnestedness_sd")
+restab <- restab[, ..include]
+restab <- merge(nicenames, restab, by = "nicenames")
+
+####
+# SELECT MODEL
+####
+# chose variable to plot
+# # TURNOVER
+# setnames(restab, old = c("EFturnover_mean", "EFturnover_sd"), new = c("maxsplines", "sd"))
+# model_name <- "EFturnover_mean_across_thresholds"
+# NESTEDNESS
+setnames(restab, old = c("EFnestedness_mean", "EFnestedness_sd"), new = c("maxsplines", "sd"))
+model_name <- "EFnestedness_mean_across_thresholds"
+
+###########
+# produce barplots
+###########
+p <- create_bio_aboveground_barplot()
+b <- create_bio_belowground_barplot()
+q <- create_abio_barplot()
+
+###########
+# add sd
+###########
+p <- p + geom_errorbar(aes(ymin = maxsplines - sd, ymax = maxsplines + sd), 
+                  linetype = "solid") 
+  # ylim(-0.01, 0.45)
+b <- b + geom_errorbar(aes(ymin = maxsplines - sd/2, ymax = maxsplines + sd/2), 
+                  linetype = "solid") #+
+  # ylim(-0.01, 0.45)
+q <- q + geom_errorbar(aes(ymin = maxsplines - sd/2, ymax = maxsplines + sd/2), 
+                  linetype = "solid") #+
+  # ylim(-0.01, 0.45)
+
+
+# copied from barplot section above --------------------------------------------
+###########
+# produce overview bars
+###########
+    # ABOVE - BELOW - ABIOTIC
+restab2 <- create_restab2()
+restab2 <- restab2[type %in% c("unscaled", "averaged_scaled")]
+df <- data.frame(restab2)
+ov1 <- create_overview_above_below_abiotic_barplot()
+ov1L <- create_overview_above_below_abiotic_barplot(legend = T) # legend only, plot with plot_grid()
+    # TURNOVER - NESTEDNESS - ABIOTIC
+restab3 <- create_restab_3()
+restab3 <- restab3[type %in% c("unscaled", "averaged_scaled")]
+df <- data.frame(restab3)
+ov2 <- create_overview_turnover_nestedness_abiotic_barplot()
+ov2L <- create_overview_turnover_nestedness_abiotic_barplot(legend = T) # only legend, plot with plot_grid()
+ov_legends <- plot_grid(ov1L, ov2L, nrow = 2)
+
+###########
+# add plots together
+###########
+multipanel_with_overview_bars <- plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5,
+                                             rel_heights = c(0.25, 0.4, 0.16, 0.08, 0.08), align = "v") # 2 summary bars
+
+annotated_multipanel_with_overview_bars <- ggdraw(multipanel_with_overview_bars) +
+  # draw_plot(labsplot, .65, .65, .35, .35) +
+  draw_plot(ov_legends, 0.05, 0.1, .1, .2)
+
+# copied from barplot section above --------------------------------------------
+
+###########
+# save
+###########
+ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars_not_annotated.pdf", sep = ""), plot = annotated_multipanel_with_overview_bars, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
+
+```
