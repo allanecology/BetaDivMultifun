@@ -315,27 +315,41 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap_mean_se.pdf", s
 
 
 ## average effects over all thresholds weighted by model sd
+from Gossner 2016
+We also calculated a bootstrapped P value
+for each term in the full GDM, using the gdm.varImp function in the gdm library
+(Supplementary Table 5-2). Additionally we estimated uncertainty for the GDM
+plots by using 100 bootstraps for each model, each time removing 30% of the plot
+pairs and then fitting a GDM and extracting the predictions. We then calculated the
+s.d. of the predictions and added this (±-) to the fitted line (Extended Data Fig. 6).
+
+runned permutations on the cluster with following parameters :
+`plotUncertainty_getsd(gdm_model, sampleSites = 0.3, bsIters = 100, geo = T, splineCol = "black", cores = 2)`
+results are stored at :
+planteco/.../BetaDivMultifun/analysis/output_datasets/uncertainty_calc
+
+reading in data
+```{r}
+modnames <- paste(paste("gdm_EFturnover_", seq(0.1, 0.9, 0.1), sep = ""), "_LUI", sep = "")
+# i <- 8
+for(i in 1:9){
+  t <- readRDS(paste(paste(paste(pathtodata, "/analysis/output_datasets/uncertainty_calc/", sep = ""), modnames[i], sep = ""), "_uncertainty.Rds", sep = ""))
+  assign(modnames[i], t)
+}
+restab <- merge(gdm_EFturnover_0.1_LUI, gdm_EFturnover_0.2_LUI, by = "varname", suffixes = c("_to_0.1", "_to_0.2"))
+restab <- merge(restab,  gdm_EFturnover_0.3_LUI, by = "varname")
+restab <- merge(restab,  gdm_EFturnover_0.4_LUI, by = "varname", suffixes = c("_to_0.3", "_to_0.4"))
+restab <- merge(restab,  gdm_EFturnover_0.5_LUI, by = "varname")
+restab <- merge(restab,  gdm_EFturnover_0.6_LUI, by = "varname", suffixes = c("_to_0.5", "_to_0.6"))
+restab <- merge(restab,  gdm_EFturnover_0.7_LUI, by = "varname")
+restab <- merge(restab,  gdm_EFturnover_0.8_LUI, by = "varname", suffixes = c("_to_0.7", "_to_0.8"))
+restab <- merge(restab,  gdm_EFturnover_0.9_LUI, by = "varname")
+setnames(restab, old = c("yatmax", "sdy"), new = paste(c("yatmax", "sdy"), "_to_0.9", sep = ""))
+```
+
 
 ```{r}
-# from Gossner 2016
-# We also calculated a bootstrapped P value
-# for each term in the full GDM, using the gdm.varImp function in the gdm library
-# (Supplementary Table 5-2). Additionally we estimated uncertainty for the GDM
-# plots by using 100 bootstraps for each model, each time removing 30% of the plot
-# pairs and then fitting a GDM and extracting the predictions. We then calculated the
-# s.d. of the predictions and added this (±-) to the fitted line (Extended Data Fig. 6).
-
-
-pdf("test_gdm_plotuncertainty.pdf", paper = "a4r")
-gdm::plotUncertainty(gdminput, sampleSites = 0.3, bsIters = 4, geo=T, splineCol = "black", cores = 2)
-dev.off()
-
-test <- plotUncertainty_getsd(gdminput, sampleSites = 0.3, bsIters = 10, geo = T, splineCol = "black", cores = 2)
-# do for each threshold
-
-# /home/novalid/IPS_SYNCFILES_BetaDivMultifun/analysis/output_datasets/uncertainty_calc
-
-
+# code from CAterina
 #calculate average positive/negative weighted effects 
 #a. multiply weights*estimates 
 modres$weightEstimate <- modres$Estimate/modres$Std.Error 
