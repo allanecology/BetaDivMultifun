@@ -327,11 +327,13 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap_mean_se.pdf", s
 
 
 pdf("test_gdm_plotuncertainty.pdf", paper = "a4r")
-gdm::plotUncertainty(gdminput, sampleSites = 0.3, bsIters = 5, geo=T, splineCol = "black")
+gdm::plotUncertainty(gdminput, sampleSites = 0.3, bsIters = 4, geo=T, splineCol = "black", cores = 2)
 dev.off()
 
-test <- plotUncertainty_getsd(gdminput, sampleSites = 0.3, bsIters = 5, geo = T, splineCol = "black")
+test <- plotUncertainty_getsd(gdminput, sampleSites = 0.3, bsIters = 10, geo = T, splineCol = "black", cores = 2)
 # do for each threshold
+
+# /home/novalid/IPS_SYNCFILES_BetaDivMultifun/analysis/output_datasets/uncertainty_calc
 
 
 #calculate average positive/negative weighted effects 
