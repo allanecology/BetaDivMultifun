@@ -315,6 +315,7 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap_mean_se.pdf", s
 
 
 ## average effects over all thresholds weighted by model sd
+
 from Gossner 2016
 We also calculated a bootstrapped P value
 for each term in the full GDM, using the gdm.varImp function in the gdm library
@@ -330,36 +331,92 @@ planteco/.../BetaDivMultifun/analysis/output_datasets/uncertainty_calc
 
 reading in data
 ```{r}
-modnames <- paste(paste("gdm_EFturnover_", seq(0.1, 0.9, 0.1), sep = ""), "_LUI", sep = "")
-# i <- 8
-for(i in 1:9){
+# modnames <- paste(paste("gdm_EFturnover_", seq(0.1, 0.9, 0.1), sep = ""), "_LUI", sep = "")
+modnames <- paste(paste("gdm_EFnestedness_", seq(0.1, 0.9, 0.1), sep = ""), "_LUI", sep = "")
+i <- 1
+res <- readRDS(paste(paste(paste(pathtodata, "/analysis/output_datasets/uncertainty_calc/", sep = ""), modnames[i], sep = ""), "_uncertainty.Rds", sep = ""))
+res[, component := modnames[i]]
+
+for(i in 2:9){
   t <- readRDS(paste(paste(paste(pathtodata, "/analysis/output_datasets/uncertainty_calc/", sep = ""), modnames[i], sep = ""), "_uncertainty.Rds", sep = ""))
-  assign(modnames[i], t)
+  t[, component := modnames[i]]
+  res <- rbindlist(list(res, t))
 }
-restab <- merge(gdm_EFturnover_0.1_LUI, gdm_EFturnover_0.2_LUI, by = "varname", suffixes = c("_to_0.1", "_to_0.2"))
-restab <- merge(restab,  gdm_EFturnover_0.3_LUI, by = "varname")
-restab <- merge(restab,  gdm_EFturnover_0.4_LUI, by = "varname", suffixes = c("_to_0.3", "_to_0.4"))
-restab <- merge(restab,  gdm_EFturnover_0.5_LUI, by = "varname")
-restab <- merge(restab,  gdm_EFturnover_0.6_LUI, by = "varname", suffixes = c("_to_0.5", "_to_0.6"))
-restab <- merge(restab,  gdm_EFturnover_0.7_LUI, by = "varname")
-restab <- merge(restab,  gdm_EFturnover_0.8_LUI, by = "varname", suffixes = c("_to_0.7", "_to_0.8"))
-restab <- merge(restab,  gdm_EFturnover_0.9_LUI, by = "varname")
-setnames(restab, old = c("yatmax", "sdy"), new = paste(c("yatmax", "sdy"), "_to_0.9", sep = ""))
 ```
-
-
+plotting
+```{r, eval = F}
+a <- ggplot(res[varname %in% nicenames[ground == "a", names]], aes(x = varname, y = yatmax, fill = component)) +
+  geom_bar(stat = "identity", position="dodge") +
+  coord_flip() +
+  geom_errorbar(aes(ymin = yatmax - sdy, ymax = yatmax + sdy), 
+                  linetype = "solid",
+                position=position_dodge(width=0.9)) +
+  scale_fill_brewer(palette="Set3")
+b1 <- ggplot(res[varname %in% nicenames[ground == "b", names][1:10]], aes(x = varname, y = yatmax, fill = component)) +
+  geom_bar(stat = "identity", position="dodge") +
+  coord_flip() +
+  geom_errorbar(aes(ymin = yatmax - sdy, ymax = yatmax + sdy), 
+                  linetype = "solid",
+                position=position_dodge(width=0.9)) +
+  scale_fill_brewer(palette="Set3")
+b2 <- ggplot(res[varname %in% nicenames[ground == "b", names][11:20]], aes(x = varname, y = yatmax, fill = component)) +
+  geom_bar(stat = "identity", position="dodge") +
+  coord_flip() +
+  geom_errorbar(aes(ymin = yatmax - sdy, ymax = yatmax + sdy), 
+                  linetype = "solid",
+                position=position_dodge(width=0.9)) +
+  scale_fill_brewer(palette="Set3")
+x <- ggplot(res[varname %in% nicenames[ground == "x", names]], aes(x = varname, y = yatmax, fill = component)) +
+  geom_bar(stat = "identity", position="dodge") +
+  coord_flip() +
+  geom_errorbar(aes(ymin = yatmax - sdy, ymax = yatmax + sdy), 
+                  linetype = "solid",
+                position=position_dodge(width=0.9)) +
+  scale_fill_brewer(palette="Set3")
+# saved by hand and combined to 1 pdf with the name :
+#  "GDM_multifun_thresholds_weighted_avg_over_all_thresholds_plotUncertainty_test_intermediate.pdf"
+```
+Calculate weighted average
 ```{r}
-# code from CAterina
-#calculate average positive/negative weighted effects 
-#a. multiply weights*estimates 
-modres$weightEstimate <- modres$Estimate/modres$Std.Error 
-modres.abs$weightEstimate<- abs(modres.abs$Estimate/modres.abs$Std.Error) 
-#b. sum weight
-# Estimate by group and divide by sum of weights, separately for positive and negative 
-modres[,w.avg:=sum(weightEstimate)/sum(1/Std.Error),by=list(groups,response,Estimate>0)] 
-modres.abs[,w.avg:=sum(weightEstimate)/sum(1/Std.Error),by=list(groups,response)] 
-modres.abs <- unique(modres.abs, by=c("groups","response")) 
+######
+# calculate WEIGHTED AVERAGE
+res[, weights := sdy ^ (-1)]
+# if sdy is zero, set weight to 0
+res[sdy == 0, weights := 0]
+res[, weighted_yatmax := yatmax * weights]
+# every variable has its own weight - calculate sum of weights for each variable:
+sum_of_weights <- aggregate(weights ~ varname, res, sum)
+
+wres <- data.table(aggregate(weighted_yatmax ~ varname, res, sum))
+
+wres <- merge(wres, sum_of_weights, by = "varname")
+wres[, wres := weighted_yatmax / weights]
+
+# test one variable and check results
+i <-  "bacterivore.protist.beta.sim"
+sum(res[varname == i, yatmax] * (1 / res[varname == i, sdy])) / sum((1 / res[varname == i, sdy]))
+# True for Geographic, autotroph.beta.sim, bacterivore.protist.beta.sim
+
+# merge with nicenames to get stuff for barplots
+setnames(wres, old = "varname", new = "names")
+wres <- merge(wres[, .(names, wres)], nicenames, by = "names")
+
+# saveRDS(wres, file = "vignettes/out/weighted_avg_over_all_thresholds_EFturnover.Rds")
+# saveRDS(wres, file = "vignettes/out/weighted_avg_over_all_thresholds_EFnestedness.Rds")
+
+# restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFturnover.Rds", sep = ""))
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFnestedness.Rds", sep = ""))
+setnames(restab, old = c("wres"), new = c("maxsplines"))
+# model_name <- "EFturnover_WEIGTHED_mean_across_thresholds"
+model_name <- "EFnestedness_WEIGTHED_mean_across_thresholds"
+luiinput <- "lui"
+permut <- F
+#TODO need to define more basic variables
+# go to plot_GDM, and run the part under "# Barplots ". Start with section "produce barplots" (leave out the upper part)
+# reset the ylims : for EFnestedness : + ylim(c(0, 0.1)), for EFturnover : + ylim(c(0, 0.15))
+#TODO Then change for EFnestedness
 ```
+
 
 
 ## barplot average effects over all thresholds
@@ -367,11 +424,13 @@ select dataset
 ```{r}
 # Note : need to select the model below
 
+################################
+# EFthresholds mean se
+################################
 restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds_mean_se.rds", sep = "")) # Note : there is se.rds and sd.rds : standard error or standard deviation
 include <- c("nicenames", "EFturnover_mean", "EFturnover_sd", "EFnestedness_mean", "EFnestedness_sd")
 restab <- restab[, ..include]
 restab <- merge(nicenames, restab, by = "nicenames")
-
 ####
 # SELECT MODEL
 ####
