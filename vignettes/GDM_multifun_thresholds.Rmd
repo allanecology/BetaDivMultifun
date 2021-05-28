@@ -331,6 +331,8 @@ planteco/.../BetaDivMultifun/analysis/output_datasets/uncertainty_calc
 
 reading in data
 ```{r}
+# Note : go through code and either chose to work with EFnestedness, or EFturnover. (by outcommenting respective lines)
+
 # modnames <- paste(paste("gdm_EFturnover_", seq(0.1, 0.9, 0.1), sep = ""), "_LUI", sep = "")
 modnames <- paste(paste("gdm_EFnestedness_", seq(0.1, 0.9, 0.1), sep = ""), "_LUI", sep = "")
 i <- 1
@@ -411,10 +413,8 @@ setnames(restab, old = c("wres"), new = c("maxsplines"))
 model_name <- "EFnestedness_WEIGTHED_mean_across_thresholds"
 luiinput <- "lui"
 permut <- F
-#TODO need to define more basic variables
 # go to plot_GDM, and run the part under "# Barplots ". Start with section "produce barplots" (leave out the upper part)
 # reset the ylims : for EFnestedness : + ylim(c(0, 0.1)), for EFturnover : + ylim(c(0, 0.15))
-#TODO Then change for EFnestedness
 ```
 
 
