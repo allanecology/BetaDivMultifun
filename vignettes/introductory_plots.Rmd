@@ -172,7 +172,7 @@ heatmap(mdat, scale = "row", Colv = NA, main = "Function levels along the LUI gr
 # FUNCTION PRESENCE-ABSENCE
 # calc presence-absence based on given threshold
 funs_pa <- data.table::copy(funs)
-threshold <- 0.9
+threshold <- 0.2
 include <- names(funs_pa)[!names(funs_pa) %in% "Plotn"]
 funs_pa[, (include) := lapply(.SD, function(c) calc_presenceabsence(c, threshold = threshold, type = "max5")), .SDcols = include]
 funs_pa[, (include) := (.SD * 1), .SDcols = include]
