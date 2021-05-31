@@ -9,13 +9,14 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 Requirements : 
-Load the following variables from `results_nonpublic.R`:
+Load the following variables from `analysis_nonpublic.R`:
 - load package (as usual)
 - pathtodata
 - master_alpha
 - trlevels
 - plotNAset
 - LUI
+- distLUI
 - EFmastser
 - gdm_EFdistance_LUI_input
 
@@ -152,6 +153,84 @@ plot_grid(a, legend, b, NULL, rel_widths = c(0.6, 0.3))
 ```
 
 # Functions
+
+## Violin plot overview all functions
+```{r}
+# summary stats over EFmaster
+a <- apply(EFmaster, 2, max)
+data.frame(a[3:30])
+
+
+# % turnover and nestedness
+restab_percent_to_nes <- EFmaster[, .(Var1, Var2)]
+for(t in seq(0.1, 0.9, 0.1)){
+  i <- grep(t, names(EFmaster), value = T)
+  subset <- EFmaster[, ..i]
+  setnames(subset, old = i, new = sub("_", "", sub(t, "", i)))
+  subset[, paste("percent_turnover", t, sep = "_") := 100 / EFbeta * EFturnover]
+  subset[, paste("percent_nestedness", t, sep = "_") := 100 / EFbeta * EFnestedness]
+  subset[apply(subset, 2, is.nan)] <- 0
+  # check
+  subset[, check := 100 / EFbeta * EFturnover + 100 / EFbeta * EFnestedness]
+  plot(subset$check) # all values are 100
+  # rename and add to new dataset
+  i <- c("EFbeta", "EFturnover", "EFnestedness", "check")
+  subset[, (i) := NULL]
+  restab_percent_to_nes <- cbind(restab_percent_to_nes, subset)
+  rm(subset)
+}
+# summary stats
+summary(restab_percent_to_nes)
+
+# visualise results
+ggplot(restab_percent_to_nes, aes(x = percent_turnover_0.1, y = percent_nestedness_0.1)) +
+  geom_jitter(width = 8, shape = 1) +
+  xlim(c(0, 100)) +
+  ggtitle(label = "threshold = 0.1")
+
+ggplot(restab_percent_to_nes, aes(x = percent_turnover_0.9, y = percent_nestedness_0.9)) +
+  geom_jitter(width = 8, shape = 1) +
+  xlim(c(0, 100)) +
+  ggtitle(label = "threshold = 0.9")
+
+plot(restab_percent_to_nes$percent_turnover_0.2, restab_percent_to_nes$percent_nestedness_0.2)
+plot(restab_percent_to_nes$percent_turnover_0.1, restab_percent_to_nes$percent_nestedness_0.1)
+
+
+restab_melted <- melt(restab_percent_to_nes, id.vars = c("Var1", "Var2"))
+p <- ggplot(restab_melted, aes(x=variable, y=value)) + 
+  geom_violin(fill = "#A4A4A4") +
+  coord_flip()
+
+
+restab_melted[, component := "nestedness"]
+restab_melted[grep("turnover", restab_melted$variable), component := "turnover"]
+table(restab_melted$component) # quick check
+aggregate(value ~ component, restab_melted, mean)
+aggregate(value ~ component, restab_melted, sd)
+```
+
+## correlations among beta-multifunctionalities
+```{r}
+a <- ggplot(EFmaster, aes(x = EFturnover_0.8, y = EFnestedness_0.8, colour = EFbeta_0.8)) +
+  geom_jitter(aes(size = EFbeta_0.8)) +
+  scale_color_gradient(low="lightseagreen", high="orangered3")
+
+b <- ggplot(EFmaster, aes(x = EFturnover_0.8, y = EFnestedness_0.8, colour = EFdistance)) +
+  geom_jitter(aes(size = EFdistance)) +
+  scale_color_gradient(low="lightseagreen", high="orangered3")
+
+plot_grid(a, b)
+```
+
+```{r}
+M <- cor(EFmaster[, -"Var1"][, -"Var2"])
+corrplot::corrplot(M,type="lower", addCoef.col = "black", method="color", diag=F, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.4, order = "hclust", tl.cex = 0.6)
+
+corrplot::corrplot(M,type="lower", addCoef.col = "black", method="color", diag=F, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.4, tl.cex = 0.6)
+```
+
+
 
 ## single functions present/ absent along LUI level
 ```{r}
