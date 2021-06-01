@@ -242,9 +242,10 @@ funs <- readRDS(paste(pathtodata, "/data_assembly/output_data/imputed_and_compou
 # create heatmap
 dat <- merge(lui[, .(Plotn, LUI)], funs, by = "Plotn")
 setorder(dat, LUI) # sort by LUI
+dat <- cbind(dat[, 1], apply(dat[, -"Plotn"], 2, scale01))
 mdat <- as.matrix(t(dat[, -"Plotn"]))
 colnames(mdat) <- dat$Plotn
-heatmap(mdat, scale = "row", Colv = NA, main = "Function levels along the LUI gradient")# , Rowv = NA)
+heatmap(mdat, scale = "none", Colv = NA, main = "Function levels along the LUI gradient")# , Rowv = NA)
 # saved as : introductory_plots_heatmap_function_levels_along_LUI_gradient.pdf
 #    went through differen thresholds and combined the output pdfs to 1 : introductory_plots_heatmap_functions_along_LUI_gradient
 
