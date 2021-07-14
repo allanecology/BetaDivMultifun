@@ -1148,6 +1148,46 @@ masterdiversity <- merge(masterdiversity, masteralpha, by = "Var2", all.x = T)
 saveRDS(masterdiversity, "master_diversity_alpha_beta.rds")
 ```
 
+# Calculate gamma diversity
+```{r, eval = F}
+# create results table with same format as masterbeta
+mastergamma <- data.table(masterbeta)
+mastergamma <- mastergamma[, .(Var1, Var2)]
+# mastergamma <- mastergamma[, (trlevels) := NA] #TODO add ".gamma" suffix
+
+for(t in trlevels){
+  print(t)
+  tr <- get(t)
+  # preparing input for designdist
+  tr <- dcast(tr, Plot ~ Species, fill = NA, value.var = "value")
+  rownames(tr) <- tr$Plot
+  plot_names <- tr$Plot
+  tr$Plot <- NULL
+  tr <- as.matrix(tr)
+  # calculate gamma diversity with designdist
+  tr <- as.matrix(vegan::designdist(tr, method = "A+B-J", alphagamma = F))
+  # reshaping the result matrix
+  colnames(tr) <- plot_names
+  rownames(tr) <- plot_names
+  tr[!lower.tri(tr)] <- 1000
+  tr <- reshape2::melt(tr, value.name = paste(t, ".gamma", sep = ""))
+  tr <- tr[which(tr[,3] != 1000), ] 
+  # add to results data.table
+  mastergamma <- merge(mastergamma, tr, by = c("Var1", "Var2"))
+}
+rm(t); rm(tr)
+
+# save gammadiversity
+saveRDS(mastergamma, "master_gamma.rds")
+ add to masterdiversity
+masterdiversity <- merge(masterdiversity, mastergamma, by = c("Var1", "Var2"), all.x = T)
+saveRDS(masterdiversity, "master_diversity_alpha_beta_gamma.rds")
+
+# quick and dirty, just for autotrophs
+setnames(mastergamma, old = "autotroph.beta.sim", new = "autotroph.gamma")
+mastergamma <- mastergamma[, .(Var1, Var2, autotroph.gamma)]
+```
+
 
 
 # Calculate abundance-based betadiversity
