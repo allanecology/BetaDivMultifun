@@ -54,3 +54,50 @@ for(t in trlevels){
 rm(p); rm(plot_nestedness); rm(plot_turnover); rm(subset); rm(namesref); rm(t); rm(t_colnames); rm(plotname)
 ```
 
+
+# calc pairwise richness dist
+
+```{r}
+richness_diff_beta <- data.table::copy(data.table(masterdiversity))
+is.data.table(richness_diff_beta)
+
+for(t in trlevels){
+  t_colnames <- grep(t, colnames(richness_diff_beta), value = T)
+  namesref <- c(
+    "alpha" = paste(t, ".alpha", sep = ""),
+    "alpha2" = paste(t, ".alpha.2", sep = ""),
+    "beta.sim" = paste(t, ".beta.sim", sep = ""),
+    "beta.sne" = paste(t, ".beta.sne", sep = ""),
+    "alpha.diff" = paste(t, ".alpha.diff", sep = "")
+  )
+  richness_diff_beta[, namesref["alpha.diff"] := abs(get(namesref[["alpha"]]) - get(namesref[["alpha2"]]))]
+  # deleteme <- c(namesref[["alpha"]], namesref[["alpha2"]])
+  # richness_diff_beta[, (deleteme) := NULL]
+}
+```
+```{r}
+plot(richness_diff_beta$autotroph.beta.sne, richness_diff_beta$autotroph.alpha.diff)
+plot(richness_diff_beta$autotroph.beta.sim, richness_diff_beta$autotroph.alpha.diff)
+plot(richness_diff_beta$autotroph.beta.sim + richness_diff_beta$autotroph.beta.sne, richness_diff_beta$autotroph.alpha.diff)
+
+plot(richness_diff_beta$secondary.consumer.beta.sne, richness_diff_beta$secondary.consumer.alpha.diff)
+plot(richness_diff_beta$secondary.consumer.beta.sne + richness_diff_beta$secondary.consumer.beta.sim, richness_diff_beta$secondary.consumer.alpha.diff)
+plot(richness_diff_beta$secondary.consumer.alpha.2, richness_diff_beta$secondary.consumer.alpha.diff)
+
+```
+
+The difference is species which are in common.
+
+Quick and dirty
+```{r}
+#TODO : ins Reine schreiben 
+
+plot(richness_diff_beta$autotroph.beta.sne, richness_diff_beta$autotroph.alpha.diff / richness_diff_beta$autotroph.gamma, main = "nestedness weighted by gamma") # because alpha.diff includes both nestedness and turnover. Take gamma away from alpha diff --> more correlation?
+plot(richness_diff_beta$autotroph.beta.sne + richness_diff_beta$autotroph.beta.sim, richness_diff_beta$autotroph.alpha.diff / richness_diff_beta$autotroph.gamma, main = "alpha weighted by gamma, full betadiversity") 
+plot(gamma$autotroph.beta.sne/ gamma$autotroph.gamma, gamma$autotroph.alpha.diff)
+plot(gamma$autotroph.beta.sne, gamma$autotroph.gamma)
+
+# beta = gamma + alpha oder so
+#TODO nachschauen!
+```
+
