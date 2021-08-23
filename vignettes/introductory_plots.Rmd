@@ -109,6 +109,16 @@ master_alpha <- master_alpha[Var1 %in% plotNAset]
 ggmaster_alpha <- melt(master_alpha, id.vars = "Var1")
 ```
 
+## correlations alpha and betadiversity
+How do differences in alphadiversity (richness) correspond to betadiversity?
+
+Prepare alphadiversity dataset : calculating pairwise differences in richness
+```{r}
+richness_diff <- masterbeta[, .(Var1, Var2)]
+richness_diff <- merge(richness_diff, master_alpha, by = "Var1", all = T)
+
+```
+
 
 ## Trophic levels
 ```{r}
