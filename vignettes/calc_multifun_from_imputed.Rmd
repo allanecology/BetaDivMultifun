@@ -154,7 +154,7 @@ saveRDS(singleEFdist, "singleEFdist.rds")
 
 ## EFdistance calculation
 
-From PCA of all functions, take most important axes and calculate euclidian distance of them (using equal weights).
+From PCA of all functions, take most important axes and calculate euclidean distance of them (using equal weights).
 
 We expect that one of the important axis - possibly the first to represent soil. As we have many soil functions compared to aboveground functions.
 
