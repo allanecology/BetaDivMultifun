@@ -33,7 +33,7 @@ spdiv <- spdiv[!is.na(value)]
 spdiv[value != 0, value := 1] # EDIT HERE for abundance-based betadiversity calculation
 
 # now I can remove the original datasets, so I save cpu:
-rm(spinfo); gc()
+# rm(spinfo); gc()
 ```
 
 
@@ -331,6 +331,7 @@ length(intersect(herbivore[Trophic_level == "herbivore.arthropod", Plot], herbiv
 Too many missing plots in snails, and too few species. Take arthropod dataset only.
 ```{r}
 herbivore.arthropod <- herbivore[Trophic_level == "herbivore.arthropod", .(Species, Plot, value)]
+rm(herbivore)
 nrow(herbivore.arthropod) == 139 * 399 # 399 species in 139 plots present . If number is not correct, some species were not measured in all plots.
 # remove from spdiv
 spdiv <- spdiv[!Trophic_level == "herbivore.arthropod"]
@@ -385,7 +386,7 @@ rm(omnivore)
 arthropods (2008) and myriapods (2011)
 ```{r}
 secondary.consumer <- spdiv[Trophic_level %in% c("secondary.consumer.arthropod", "secondary.consumer.myriapod")]
-myria.sc <- spdiv[Trophic_level == "secondary.consumer.myriapod"]
+# myria.sc <- spdiv[Trophic_level == "secondary.consumer.myriapod"]
 
 testplotpresence <- unique(secondary.consumer[, .(Trophic_level, Plot)])
 # testplotpresence <- unique(secondary.consumer[Plot %in% plotNAset, .(Year, Plot)])
@@ -810,7 +811,7 @@ rm(beta.belowground.herbivore)
 There is definitely some betadiversity among the plots.
 ```{r}
 nrow(belowground.herbivore) == 150 * 11 # expected number of plots present
-herbivore.arthropodsoillarvae <- data.table::copy(belowground.herbivore)
+herbivore.arthropodsoillarvae <- data.table::copy(belowground.herbivore[, .(Species, Plot, value)])
 rm(belowground.herbivore)
 spdiv <- spdiv[!Trophic_level == "herbivore.arthropodsoillarvae"]
 ```
@@ -845,7 +846,7 @@ rm(beta.belowground.predator)
 ```
 ```{r}
 nrow(belowground.predator) == 150 * 17 # expected number of rows present
-secondary.consumer.arthropodsoillarvae <- data.table::copy(belowground.predator)
+secondary.consumer.arthropodsoillarvae <- data.table::copy(belowground.predator[, .(Species, Plot, value)])
 spdiv <- spdiv[!Trophic_level == "secondary.consumer.arthropodsoillarvae"]
 rm(belowground.predator)
 ```
@@ -910,6 +911,7 @@ abline(h = median(bp_overv$value), col = "green")
 length(unique(plantpathogen.fungi$Plot))
 nrow(plantpathogen.fungi) == 84 * 150
 
+plantpathogen.fungi <- plantpathogen.fungi[, .(Species, Plot, value)]
 spdiv <- spdiv[!Trophic_level == "plantpathogen.fungi"]
 ```
 
@@ -1030,29 +1032,54 @@ for(t in trlevels){
 # overvievs
 ```{r, eval = F}
 sum <- 0
+gb <- c()
 for(t in trlevels){
-  tr <- get(t)
-  print(paste(t, ": ", length(unique(tr$Species)), "species"))
+  tr <- data.table::copy(get(t))
+  # find number of group_broad
+  tr <- merge(tr, spinfo, by = "Species", all.x = T, all.y = F)
+  print(paste(t, ": ", length(unique(tr$Species)), "species."))
+  print(paste("    Number of group broad : ", length(unique(tr$Group_broad)), " groups : ", paste(unique(tr$Group_broad), collapse = ", ")))
+  
   sum <- sum + length(unique(tr$Species))
+  gb <- c(gb, unique(tr$Group_broad))
 }
 sum
+unique(gb)
+length(unique(gb))
+rm(tr); rm(t)
 ```
-[1] "autotroph :  461 species"
-[1] "bacteria.RNA :  140510 species"
-[1] "bacterivore.protist :  886 species"
-[1] "decomposer.soilfungi :  2332 species"
-[1] "eukaryvore.protist :  217 species"
-[1] "herbivore.arthropod :  399 species"
-[1] "herbivore.arthropodsoillarvae :  11 species"
-[1] "omnivore.protist :  444 species"
-[1] "pathotroph.soilfungi :  285 species"
-[1] "plantparasite.protist :  96 species"
-[1] "plantpathogen.fungi :  84 species"
-[1] "symbiont.soilfungi :  385 species"
-[1] "tertiary.consumer :  67 species"
-[1] "secondary.consumer :  174 species"
-[1] "secondary.consumer.arthropodsoillarvae :  17 species"
-Total : 146'368 species in the  dataset (5'858 species without bacteria)
+[1] "autotroph :  461 species."
+[1] "    Number of group broad :  3  groups :  Lichen, Plant, Moss"
+[1] "bacteria.RNA :  140510 species."
+[1] "    Number of group broad :  1  groups :  bacteria.RNA"
+[1] "bacterivore.protist :  886 species."
+[1] "    Number of group broad :  1  groups :  Protists"
+[1] "decomposer.soilfungi :  2332 species."
+[1] "    Number of group broad :  1  groups :  soilfungi"
+[1] "eukaryvore.protist :  217 species."
+[1] "    Number of group broad :  1  groups :  Protists"
+[1] "herbivore.arthropod :  399 species."
+[1] "    Number of group broad :  4  groups :  Hemiptera, Coleoptera, Hymenoptera, Orthoptera"
+[1] "herbivore.arthropodsoillarvae :  11 species."
+[1] "    Number of group broad :  1  groups :  Insect.larvae"
+[1] "omnivore.protist :  444 species."
+[1] "    Number of group broad :  1  groups :  Protists"
+[1] "pathotroph.soilfungi :  285 species."
+[1] "    Number of group broad :  1  groups :  soilfungi"
+[1] "plantparasite.protist :  96 species."
+[1] "    Number of group broad :  1  groups :  Protists"
+[1] "plantpathogen.fungi :  84 species."
+[1] "    Number of group broad :  1  groups :  Plant.pathogen"
+[1] "symbiont.soilfungi :  385 species."
+[1] "    Number of group broad :  1  groups :  soilfungi"
+[1] "tertiary.consumer :  67 species."
+[1] "    Number of group broad :  1  groups :  Birds"
+[1] "secondary.consumer :  174 species."
+[1] "    Number of group broad :  6  groups :  Coleoptera, Araneae, Hemiptera, Neuroptera, Orthoptera, Myriapoda"
+[1] "secondary.consumer.arthropodsoillarvae :  17 species."
+[1] "    Number of group broad :  1  groups :  Insect.larvae"
+
+Total : 146'368 species in the  dataset (5'858 species without bacteria) belonging to 16 broad taxonomic groups
 
 
 # Calculate betadiversities
