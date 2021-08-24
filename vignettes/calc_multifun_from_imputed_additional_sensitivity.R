@@ -6,9 +6,9 @@
 # Does it matter if I take different number of PCs?
 # here, comparison of first 11, 13 and 14 axes.
 #
-# also contains useful paris function.
+# also contains useful pairs() function.
 #
-readRDS(file = "21-03-10_calc_multifun_from_imputed_sensitivity_pca_axes_selection_impact_of_number_of_axes_on_EFdistance.RDS")
+comparison <- readRDS(paste(pathtodata, "/data_assembly/output_data/21-03-10_calc_multifun_from_imputed_sensitivity_pca_axes_selection_impact_of_number_of_axes_on_EFdistance.RDS", sep = ""))
 
 plot(comparison$EFdistance_11_axes, comparison$EFdistance_14_axes,
      main = "EFdist calculated on first 11 and first 14 axes")
@@ -36,4 +36,3 @@ panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
 pairs(comparison[, .(EFdistance_11_axes, EFdistance_13_axes, EFdistance_14_axes)],
       diag.panel = panel.hist,
       upper.panel = panel.cor)
-      
