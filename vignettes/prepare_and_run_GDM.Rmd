@@ -4,6 +4,7 @@ author: "Noelle Schenk"
 date: "1/24/2020"
 output: html_document
 ---
+This script runs the GDM models. In the first code section, the desired GDM model is chosen manually. The script writes the GDM input and ouput files and the summary output.
 
 # Dependencies
 ## Data
