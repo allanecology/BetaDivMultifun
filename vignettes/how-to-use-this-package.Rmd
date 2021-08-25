@@ -12,6 +12,7 @@ output: html_document
 2. From within R, set the R working directory to the parent folder of the downloaded package. (e.g. Downloads if you stored the package folder in Downloads.)
 The devtools::install function also installs packages on which `BetaDivMultifun` depends on.
 ```{r, eval=F}
+# install.packages("devtools")
 setwd("<parent-directory-of-the-package>")
 devtools::install("BetaDivMultifun")
 ```
