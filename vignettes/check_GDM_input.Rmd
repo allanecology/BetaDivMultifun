@@ -10,7 +10,10 @@ Requirements :
 
 The script calculates euclidean distances abs(simple substraction) of the covariates and LUI as well as the geographic distance based on coordinates and forms a table with all distances. A correlation plot is produced and a *linear model* fitted and both are saved. Variance inflation of the linear model is calculated and saved.
 
-DEPRECIATED notice : linear model not done any more : assumption of independent observations not metand p-values not trustable. Also : nonlinearities exptected. Also, very strange results. --> try if GAM can solve some of the issues
+DEPRECIATED notice : linear model not done any more : assumption of independent observations (i.i.d. assumption) not met and therefore p-values not trustable. Also : nonlinearities are exptected.
+GAM used to check, but it also violates the i.i.d. assumption.
+Individual associations (correlation plot) does not correct for other predictors.
+--> all methods violate important assumptions --> compare the 3 methods and make the best of it.
 
 Output : 
 - correlation plot `vignettes/out/<modelname>_corrplot_before_gdm.pdf`
