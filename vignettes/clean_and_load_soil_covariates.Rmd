@@ -4,7 +4,7 @@ author: "Noelle Schenk"
 date: "June 18, 2019"
 output: html_document
 ---
-requires `analysis_nonpublic.R` to load soil covariates
+requires `analysis_nonpublic.R` to load soil covariates `small_glsoil`, `main_glsoil`, `names_gl`, `plt.sur`, `geodist`.
 
 # Clean and load soil covariates
 This scripts loads and cleans soil covariates (also selects the plots for analysis). The output is then used (by other scripts) for 
