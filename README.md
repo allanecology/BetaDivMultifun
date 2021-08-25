@@ -1,5 +1,5 @@
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
+<!-- README.md is generated from README.Rmd by devtools::build_readme(). Please edit that file -->
 
 # BetaDivMultifun
 
@@ -13,12 +13,17 @@ The goal of BetaDivMultifun is to …
 For installation, please consider the vignette
 `how-to-use-this-package.Rmd`.
 
-And the development version from [GitHub](https://github.com/) with:
+Install the development version from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
 devtools::install_github("allanecology/BetaDivMultifun")
 ```
+
+## Content
+
+\#TODO : - add a content description (TOC) - add the script overview
+image
 
 ## Example
 
