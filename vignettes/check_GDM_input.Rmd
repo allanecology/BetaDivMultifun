@@ -13,6 +13,7 @@ The script calculates euclidean distances abs(simple substraction) of the covari
 DEPRECIATED notice : linear model not done any more : assumption of independent observations (i.i.d. assumption) not met and therefore p-values not trustable. Also : nonlinearities are exptected.
 GAM used to check, but it also violates the i.i.d. assumption.
 Individual associations (correlation plot) does not correct for other predictors.
+Need to check associations among variables and GDM assumption of monotonic increase.
 --> all methods violate important assumptions --> compare the 3 methods and make the best of it.
 
 Output : 
