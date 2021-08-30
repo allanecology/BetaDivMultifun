@@ -6,33 +6,26 @@ output:
 ---
 
 This script : 
-- uses raw functions from the synthesis dataset (loaded with `analysis_nonpublic.R`)
-    - *note* if taken from bexis, first run the reformatting script 27708. TODO : new bexis2 : attached to dataset
-- performs gapfilling
-- saves the gapfilled dataset
-
-# Data
-The dataset used for gap filling is larger than the dataset used for the analysis. More variables enhance the performance of gapfilling.
-
-Note : Only use variables which are not used in the analysis. Otherwise, data can be circular. (Note also that no soil data is used for imputation any more, but other measured functions which are not included in later analysis).
-```{r, eval=F}
-#USER : insert path to grassland function file and read in as grlfuns (uncomment line below)
-# raw_grlfuns <- data.table::fread("<pathto_grl_functions.csv>", header=T)
-source("analysis_nonpublic.R")
-```
-Grassland functions data used for gapfilling is stored in `raw_grlfuns`, selected variables according to info data. `raw_grlfuns` is loaded by `analysis_nonpublic.R`.
-
-Requires the plot set defined by diversity dataset with the final set of included plots for analysis. *Note* that this script removes an additional plot from the plot set. However, this does not matter for the performance of this imputation script.
+- uses raw functions from the synthesis dataset (loaded with `analysis_nonpublic.R`, variable `raw_grlfuns`)
+    - *note* if taken from bexis, first run the reformatting script `bexis_to_wide_format.R` attached to the dataset.
+    - The grassland functions data used for gapfilling is stored in `raw_grlfuns`, selected variables according to info data. `raw_grlfuns` is loaded by `analysis_nonpublic.R`. Make sure you also run the selection of functions for gapfilling!
+- performs gap-filling
+- saves the gap-filled dataset
+- required input : `info_data`, `raw_grlfuns`, `plotNAset` (the plot set defined by diversity data in `calc_betadiversities.Rmd` with the final set of included plots for analysis)*
+- output : generates gap-filled dataset `impdat`, and `imp_err` contianing the imputation error. Two variables are produced, `impdat` which contains the gapfilled dataset which will be used in further analysis as well as `imp_err`, which contains the imputation error automatically estimated by `missForest`. The imputed dataset is stored as .rds file.
 
 
-# Gap filling
-A Gap-filling of the functions dataset is performed, because many values are missing (NA).
+The dataset used for gap-filling is larger than the dataset used for the analysis. More variables enhance the performance of the gap-filling. Note : Only use additional variables which are not used in the analysis. Otherwise, data can be circular. (This means that e.g. no soil data is used for imputation, but additional functions which are not included in the later analysis).
 
-Two variables are produced, `impdat` which contains the gapfilled dataset which will be used in further analysis as well as `imp_err`, which contains the imputation error automatically estimated by `missForest`. The imputed dataset is stored as .rds file.
+* *Note* that this script removes an additional plot from the plot set. However, this does not matter for the performance of this imputation script.
+
 
 ## Data preparation
 
 ```{r}
+#USER : insert path to grassland function file and read in as grlfuns (uncomment line below)
+# raw_grlfuns <- data.table::fread("<pathto_grl_functions.csv>", header=T)
+source("analysis_nonpublic.R")
 befun <- data.table::copy(raw_grlfuns)
 ```
 
@@ -82,7 +75,7 @@ M <- cor(corrbefun, use="pairwise.complete.obs")
 corrplot::corrplot(M,type="lower",addCoef.col = "black",method="color",diag=F, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.25, tl.cex = 0.3)
 
 # raw_grlfun_corrplot2
-corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F, tl.cex = 0.3)
+corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=90, diag = F, tl.cex = 0.5, mar = c(2, 0, 0, 0))
 
 # only show high correlations
 tres <- 0.7
