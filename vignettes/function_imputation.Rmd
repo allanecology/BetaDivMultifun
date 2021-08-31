@@ -75,7 +75,7 @@ M <- cor(corrbefun, use="pairwise.complete.obs")
 corrplot::corrplot(M,type="lower",addCoef.col = "black",method="color",diag=F, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.25, tl.cex = 0.3)
 
 # raw_grlfun_corrplot2
-corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=90, diag = F, tl.cex = 0.5, mar = c(2, 0, 0, 0))
+corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=90, diag = F, tl.cex = 0.5, mar = c(2, 0, 0, 0)) # Supplementary figure XY
 
 # only show high correlations
 tres <- 0.7
@@ -122,7 +122,7 @@ befun$dung.removal <- befun$dung.removal + abs(mindung)
 
 rm(negative)
 ```
-Log transformation of the numeric columns. The natural logartithm of values smaller than 1 is negative. Tehrefore, all values are shifted by 1 again to avoid any negative values in the log transformed dataset.
+Log transformation of the numeric columns. The natural logartithm of values smaller than 1 is negative. Therefore, all values are shifted by 1 again to avoid any negative values in the log transformed dataset.
 ```{r}
 numcols <- colnames(befun)[!colnames(befun) %in% c("Explo", "Plotn", "Plot")]
 befun[, (numcols) := lapply(.SD, as.numeric), .SDcols = numcols]
@@ -169,8 +169,8 @@ saveRDS(imperr, file = "raw_imputed_function_errors_complete.rds")
 ```
 
 ```{r}
-impvals <- readRDS("raw_imputed_function_values_complete.rds")
-imperr <- readRDS("raw_imputed_function_errors_complete.rds")
+impvals <- readRDS(paste(pathtodata, "/data_assembly/output_data/raw_imputed_function_values_complete.rds", sep = ""))
+imperr <- readRDS(paste(pathtodata, "/data_assembly/output_data/raw_imputed_function_errors_complete.rds", sep = ""))
 ```
 
 
@@ -183,11 +183,13 @@ mean(imperr[errors != 0, errors]) # 0.1352324 mean of only the imputed values
 
 # barplot(height=mimperr[,errors], names.arg = mimperr[, columns])
 library(cowplot)
-p<-ggplot2::ggplot(data=mimperr, ggplot2::aes(x=columns, y=errors)) +
+p <- ggplot2::ggplot(data=mimperr, ggplot2::aes(x=columns, y=errors)) +
   ggplot2::geom_bar(stat="identity") +
   theme(axis.text.x=element_text(color = "black", size=6, angle=30, vjust=.8, hjust=0.8)) +
-  geom_hline(yintercept=0.25, linetype="dashed", color = "gray")
-cowplot::plot_grid(naniar::vis_miss(dataset, sort_miss = T), p, nrow = 2)
+  geom_hline(yintercept=0.25, linetype="dashed", color = "gray") +
+  ylab("OOB imputation error")
+q <- ggdraw() + draw_plot(test, width = 0.9, height = 1)
+cowplot::plot_grid(q, p, nrow = 2)
 ```
 The two variables Total pollinators and Parasitoid traps are removed, because the imputation error is too high and because they rely on diversity data (which is hard / not possible to impute).
 The other variables with imputation errors over 25% are left, because only 1-2 values are missing in those datasets.
