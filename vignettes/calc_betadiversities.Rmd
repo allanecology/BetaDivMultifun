@@ -157,7 +157,7 @@ Combine years if possible, check presence of species and if a given group of spe
 
 ## autotrophs
 Years 2008 to 2016.
-Lichens and Bryophytes only 2009 (119 species, 137 plots)
+Lichens and Bryophytes only 2009 (119 species, 137 plots). *Note : this dataset is referred to as "lichens" in this script, but it always includes mosses, too.*
 
 year   |  no. species | no. Plots |
 -------| ------------ | --------- |
@@ -176,7 +176,7 @@ year   |  no. species | no. Plots |
 ```{r}
 autotroph <- spdiv[Trophic_level == "autotroph"]
 autotroph <- autotroph[Year %in% c("2009", "2008", "2010", "2011", "2012", "2013", "2014", "2015", "2016")]
-autotrophnew <- spdiv[Trophic_level == "autotroph" & Year %in% c("2017", "2018")]
+# autotrophnew <- spdiv[Trophic_level == "autotroph" & Year %in% c("2017", "2018")]
 # find the species in autotroph which are never present in the years
 test <- data.table::data.table(aggregate(value ~ Species, autotroph, sum))
 exclude <- test[value == 0, Species]
@@ -222,6 +222,7 @@ Assessing presence of plant species in all years. Lichen and Bryophyte species a
 autotroph <- autotroph[Year %in% c("2009", "2010", "2011", "2015", "2016")]
 plants <- autotroph[!Species %in% lichenspecies, ]
 lichens <- autotroph[Species %in% lichenspecies,]
+
 # if a species is present in at least one year, it is considered to be present
 # calculate the mean of all value (species presence/ absence). If it is not zero, the species was present in at least one year and the value can be set to 1.
 plants <- aggregate(value ~ Species + Plot, plants, function(x) mean(x, na.rm=T))
@@ -237,7 +238,9 @@ plants[value != 0, value := 1]
 autotroph <- rbind(plants, lichens[, .(Species, Plot, value)])
 nrow(autotroph) == 150 * 342 + 150 * 119 # TRUE : there are 119 lichen and 342 plant species in all 150 plots.
 ```
-
+Dataset IDs : 27386 5522 4140
+Years : "2009" "2010" "2011" "2015" "2016"
+Plots : 150
 ```{r}
 hist(autotroph$value)
 hist(lichens$value)
@@ -416,6 +419,11 @@ spdiv <- spdiv[!Trophic_level == "secondary.consumer.myriapod"]
 
 trlevels <- c(trlevels[-grep("secondary.consumer", trlevels)], "secondary.consumer", "secondary.consumer.arthropodsoillarvae")
 ```
+Dataset IDs : 16871 16894 16893 16897 16895 20146
+Years : 2008, 2011
+Plots : 139
+Species : 174
+Groups : "Coleoptera" "Araneae"    "Hemiptera"  "Neuroptera" "Orthoptera" "Myriapoda" 
 
 
 ## Tertiary consumer
@@ -443,6 +451,10 @@ no Species |  67    | 78= 67+11  | 78= 67+11  |  67     |  67      |
 The Bird and Bat species of the different years are the same.
 
 Take average of Species occurrence and check how often species occur. We assume that birds and bats are difficult to measure, therefore having a large time window makes sense. A species is considered to be present in a plot, if it is present at least in one year.
+
+Dataset ID : 21446 21447 21448 21449 24690 25306
+Years : "2008" "2009" "2010" "2011" "2012" "2018"
+Plots : 150
 ```{r, eval = T}
 birds <- aggregate(value ~ Species + Plot, tertiary.consumer[Group_fine == "Birds"], function(x) mean(x, na.rm=T)) # combine years
 birds <- data.table::data.table(birds)
@@ -536,6 +548,9 @@ rm(bac_plots)
 nrow(bacteria.RNA) == 148 * 140510 # expected number of plots present
 spdiv <- spdiv[!Trophic_level == "bacteria.RNA"]
 ```
+Data ID : 24866
+Year : 2011
+Plots : 148
 
 
 ## protist.bacterivore
@@ -569,7 +584,9 @@ nrow(bacterivore.protist) == 149 * 886 # TRUE : The expected number of rows is p
 spdiv <- spdiv[!Trophic_level == "bacterivore.protist"]
 rm(protist.bacterivore)
 ```
-
+Dataset ID : 24426
+Year : 2011
+Plots : 149
 
 
 ## protist.eukaryvore
@@ -599,6 +616,10 @@ nrow(eukaryvore.protist) == 149 * 217 # TRUE : The expected number of rows is pr
 spdiv <- spdiv[!Trophic_level == "eukaryvore.protist"]
 rm(protist.eukaryvore)
 ```
+Dataset ID : 24426
+Year : 2011
+Plots : 149
+Species : 217
 
 
 ## protist.omnivore
@@ -630,7 +651,9 @@ nrow(omnivore.protist) == 149 * 444 # expected number of rows is present
 spdiv <- spdiv[!Trophic_level == "omnivore.protist"]
 rm(protist.omnivore)
 ```
-
+Dataset ID : 24426
+Plots : 149
+Year : 2011
 
 
 ## protist.plant.parasite
@@ -661,7 +684,9 @@ nrow(plantparasite.protist) == 149 * 96
 spdiv <- spdiv[!Trophic_level == "plantparasite.protist"]
 rm(protist.plant.parasite)
 ```
-
+Dataset ID : 24426
+Plots : 149
+Year : 2011
 
 ## decomposer.soilfungi
 Years 2011, 2014, 2017
@@ -697,7 +722,9 @@ decomposer.soilfungi <- add_back_missing_plots_species_combinations(decomposer.s
 nrow(decomposer.soilfungi) == 150 * 2332 # TRUE : all expected rows are present
 spdiv <- spdiv[!Trophic_level == "decomposer.soilfungi"]
 ```
-
+Data ID : 26470
+Plots : 150
+Year : 2011
 
 ## pathotroph.soilfungi
 2011, 2014, 2017
@@ -730,6 +757,9 @@ pathotroph.soilfungi <- add_back_missing_plots_species_combinations(pathotroph.s
 nrow(pathotroph.soilfungi) == 150 * 285 # TRUE : all expected rows present
 spdiv <- spdiv[!Trophic_level == "pathotroph.soilfungi"]
 ```
+Dataset ID : 26470
+Year : 2011
+Plots : 150
 
 
 ## symbiont.soilfungi
@@ -759,13 +789,15 @@ Only 2011 is chosen.
 ```{r}
 symbiont.soilfungi <- symbiont.soilfungi[Year == "2011", .(Species, Plot, value)]
 # adding back missing plot-species combinations (code from Caterina)
-symbiont.soilfungi <- add_back_missing_plots_species_combinations(symbiont.soilfungi, all_plots)
+symbiont.soilfungi <- add_back_missing_plots_species_combinations(symbiont.soilfungi, all_plots) #57094 missing combinations were added.
 length(unique(symbiont.soilfungi$Plot)) == 150
 
 nrow(symbiont.soilfungi) == 150 * 385 # all expected combinations present
 spdiv <- spdiv[!Trophic_level == "symbiont.soilfungi"]
 ```
-
+Data ID : 26470
+Year : 2011
+Plot : 150
 
 
 # check and select trophic levels with only one year
@@ -815,7 +847,10 @@ herbivore.arthropodsoillarvae <- data.table::copy(belowground.herbivore[, .(Spec
 rm(belowground.herbivore)
 spdiv <- spdiv[!Trophic_level == "herbivore.arthropodsoillarvae"]
 ```
-
+Data ID : 16746
+Year : 2011
+Plots : 150
+Species : 11
 
 ## belowground predator
 
@@ -850,6 +885,10 @@ secondary.consumer.arthropodsoillarvae <- data.table::copy(belowground.predator[
 spdiv <- spdiv[!Trophic_level == "secondary.consumer.arthropodsoillarvae"]
 rm(belowground.predator)
 ```
+Data ID : 16746
+Year : 2011
+Plots : 150
+Species : 17
 
 
 ## decomposer TAKEN OUT
@@ -914,7 +953,9 @@ nrow(plantpathogen.fungi) == 84 * 150
 plantpathogen.fungi <- plantpathogen.fungi[, .(Species, Plot, value)]
 spdiv <- spdiv[!Trophic_level == "plantpathogen.fungi"]
 ```
-
+Dataset ID : 18548
+Year : 2011
+Plots : 150
 
 ## pollinator REMOVED
 
