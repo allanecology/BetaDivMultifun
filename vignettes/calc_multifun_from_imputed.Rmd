@@ -83,7 +83,7 @@ imputed_grlfuns <- imputed_grlfuns[, ..usedforBetadivMultifun]
 Of the non-factor columns only
 ```{r}
 # the dataset is complete now, use "complete.obs" for the cor() function now
-M <- cor(imputed_grlfuns[, !colnames(imputed_grlfuns) %in% "Plotn", with=F], use="complete.obs")
+M <- cor(imputed_grlfuns[, !colnames(imputed_grlfuns) %in% "Plotn", with=F], use="complete.obs", method = "spearman")
 
 # imputed_grlfun_corrplot1
 corrplot::corrplot(M,type="lower", addCoef.col = "black", method="color", diag=F, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.4, order = "hclust", tl.cex = 0.6)
