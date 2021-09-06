@@ -403,7 +403,7 @@ temp <- grep("turnover|nestedness", names(EFmaster), value = T)
 temp <- grep("turnover", names(EFmaster), value = T)
 # pairs(EFmaster[, ..temp], upper.panel = NULL )
 
-m <- cor(EFmaster[, -c(1, 2)])
+m <- cor(EFmaster[, -c(1, 2)]) #TODO : better take spearman?
 pdf("calc_multifun_from_imputed_all_EFdistances_corrplot.pdf", paper = "a4r")
 corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", diag = F, tl.srt = 50, tl.col = "black", order = "hclus", tl.cex = 0.4, cl.cex = 0.4, number.cex = 0.4)
 dev.off()
