@@ -7,6 +7,7 @@ output: html_document
 Requirements : 
 - script is runned right after `prepare_and_run_GDM.Rmd`. Requires its output `gdminput`.
     - note that `gdminput` is also saved as .csv and .Rds from the above mentioned script.
+    - `nicenames` for nice correlation plot
 
 The script calculates euclidean distances abs(simple substraction) of the covariates and LUI as well as the geographic distance based on coordinates and forms a table with all distances. A correlation plot is produced and a *linear model* fitted and both are saved. Variance inflation of the linear model is calculated and saved.
 
@@ -81,19 +82,39 @@ checkgdminput[, (delcols) := NULL]
 # checkgdminput[, (lui) := NULL]
 
 #TODO save dataset checkgdminput?
+# saveRDS(checkgdminput, file = paste(pathtodata, "/analysis/output_datasets/gdm_input_TEST.Rds", sep = ""))
 ```
 
 # correlation plot
 ```{r}
+# read in prepared set of variables for full overview
+checkgdminput <- readRDS(paste(pathtodata, "/analysis/output_datasets/gdm_input_distances_main_models.Rds", sep = ""))
+
 ## correlation plot
+# use nice names for plotting, only those which are available
+c <- nicenames$nicenames
+names(c) <- nicenames$names
+c <- c[names(checkgdminput)]
+names(checkgdminput)[!is.na(c)] <- c[!is.na(c)]
+# names(checkgdminput)[is.na(c)] <- c("EFdist", "geographic distance")
+names(checkgdminput) <- gsub("\\\\narthropodsoillarvae", " a. larvae", names(checkgdminput))
+
 # name : modelname "_corrplot_before_gdm.pdf"
-m <- cor(checkgdminput)
-pdf(paste("vignettes/out/", modelname, "_corrplot_before_gdm.pdf", sep = ""), paper = "a4r")
+m <- cor(checkgdminput, method = "spearman")
+cairo_pdf(paste("vignettes/out/", modelname, "_corrplot_before_gdm_main_models.pdf", sep = ""), width = 11.7, height = 8.3)
 corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", diag = F, tl.srt = 50, tl.col = "black", order = "hclust", tl.cex = 0.5, cl.cex = 0.3, number.cex = 0.25)
 dev.off()
 
 m[m < 0.5 & m > -0.5] <- 0
 corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", diag = F, tl.srt = 10, tl.col = "black", order = "hclust", tl.cex = 0.5, cl.cex = 0.3, number.cex = 0.3)
+
+# output high correlations as a table
+h <- as.matrix(m)
+h[!lower.tri(h)] <- 1000
+h <- reshape2::melt(h, value.name = "correlation")
+h <- data.table(h)
+h <- h[!correlation == 1000, ]
+h[correlation > 0.7 | correlation < -0.7, ][order(correlation)]
 ```
 
 # plot raw data
