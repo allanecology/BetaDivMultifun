@@ -6,6 +6,7 @@ output: html_document
 ---
 requirements : `masterdiversity` in the file "master_diversity_alpha_beta.rds", see file analysis_nonpublic.R
 - `trlevels`
+- `master_alpha`
 ```{r}
 masterdiversity <- data.table(masterdiversity)
 require(cowplot)
@@ -14,6 +15,27 @@ library(viridis)
 ```
 
 # all trophic levels
+
+number of species in plots
+```{r}
+master_alpha <- data.table::data.table(master_alpha)
+master_alpha <- master_alpha[Var1 %in% plotNAset, ]
+# transform bacteria to 1/1000 [k#]
+gmaster_alpha <- master_alpha[, bacteria.RNA.alpha.k := bacteria.RNA.alpha / 1000]
+gmaster_alpha[, bacteria.RNA.alpha := NULL]
+
+gmaster_alpha <- melt(gmaster_alpha, id.vars = "Var1")
+gtrlevel_names <- unique(gmaster_alpha$variable)
+
+# ggplot(gmaster_alpha, aes(x = variable, y = value)) +
+  # geom_point()
+i <- gtrlevel_names[2]
+ggplot(gmaster_alpha[variable == i], aes(x = variable, y = value)) +
+  geom_point() +
+  xlab("") + ylab("alpha diversity")
+```
+
+
 alpha-alpha plots, coloured by betadiversity.
 ```{r, eval = F}
 jitter <- position_jitter(width = 0.1, height = 0.1)
