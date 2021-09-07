@@ -46,8 +46,8 @@ lui <- c("LUI", "deltaLUI")
 
 ## special case : ABUNDANCE-based betadiversity
 # model name : gdm_EFdistance_abundancebeta_LUI
-colorder_gdm_input <- gsub(pattern = ".beta.sim", replacement = ".beta.bal", colorder_gdm_input)
-colorder_gdm_input <- gsub(pattern = ".beta.sne", replacement = ".beta.gra", colorder_gdm_input)
+# colorder_gdm_input <- gsub(pattern = ".beta.sim", replacement = ".beta.bal", colorder_gdm_input)
+# colorder_gdm_input <- gsub(pattern = ".beta.sne", replacement = ".beta.gra", colorder_gdm_input)
 ```
 chose selected input from mastertables
 ```{r}
