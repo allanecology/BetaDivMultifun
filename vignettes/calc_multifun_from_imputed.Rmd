@@ -280,7 +280,7 @@ for(i in colnames(nimputed_grlfuns)[which(colnames(nimputed_grlfuns) != "Plotn")
   ggplot2::geom_bar(stat="identity") +
   ggplot2::geom_abline(intercept = upper, slope = 0, color = "lightgray") +
   ggplot2::geom_abline(intercept = upper*threshold, slope = 0, color =cols[1]) + # turkis
-  ggplot2::geom_abline(intercept = upperq, slope = 0, color = cols[2]) +
+  ggplot2::geom_abline(intercept = upperq, slope = 0, color = cols[2]) + # orange
   theme(axis.text.x=element_blank()) + xlab("Plots") + ylab(i)
   plotname <- paste("plot", i, sep = "")
   assign(plotname, p)
@@ -399,13 +399,13 @@ plot_grid(p1, p2, nrow = 2)
 Plot various thresholds
 ```{r, eval = F}
 # only run if EFmaster contains various thresholds
-temp <- grep("turnover|nestedness", names(EFmaster), value = T)
+temp <- c("EFdistance", grep("turnover|nestedness", names(EFmaster), value = T))
 temp <- grep("turnover", names(EFmaster), value = T)
 # pairs(EFmaster[, ..temp], upper.panel = NULL )
 
-m <- cor(EFmaster[, -c(1, 2)]) #TODO : better take spearman?
+m <- cor(EFmaster[, ..temp], method = "spearman")
 pdf("calc_multifun_from_imputed_all_EFdistances_corrplot.pdf", paper = "a4r")
-corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", diag = F, tl.srt = 50, tl.col = "black", order = "hclus", tl.cex = 0.4, cl.cex = 0.4, number.cex = 0.4)
+corrplot::corrplot(m, type = "lower", addCoef.col = "black", method = "color", diag = F, tl.srt = 50, tl.col = "black", order = "hclus", tl.cex = 0.5, cl.cex = 0.4, number.cex = 0.4)
 dev.off()
 ```
 ```{r, eval = F}
