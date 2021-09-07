@@ -88,7 +88,7 @@ checkgdminput[, (delcols) := NULL]
 # correlation plot
 ```{r}
 # read in prepared set of variables for full overview
-checkgdminput <- readRDS(paste(pathtodata, "/analysis/output_datasets/gdm_input_distances_main_models.Rds", sep = ""))
+# checkgdminput <- readRDS(paste(pathtodata, "/analysis/output_datasets/gdm_input_distances_main_models.Rds", sep = ""))
 
 ## correlation plot
 # use nice names for plotting, only those which are available
@@ -117,10 +117,6 @@ h <- h[!correlation == 1000, ]
 h[correlation > 0.7 | correlation < -0.7, ][order(correlation)]
 ```
 
-# plot raw data
-```{r}
-
-```
 
 ```{r}
 # ## variance inflation in linear model
