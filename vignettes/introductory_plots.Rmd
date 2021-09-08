@@ -35,11 +35,13 @@ require(cowplot)
 masterbeta <- data.table::data.table(masterbeta)
 LUI <- data.table::data.table(LUI)
 
-
 # only selected plot set
-# masterdiversity <- masterdiversity[Var1 %in% plotNAset & Var2 %in% plotNAset, ]
+masterdiversity <- masterdiversity[Var1 %in% plotNAset & Var2 %in% plotNAset, ]
 masterbeta <- masterbeta[Var1 %in% plotNAset & Var2 %in% plotNAset,]
+```
 
+Create dataset with all predictors
+```{r}
 full_master <- merge(EFmaster, masterbeta, by = c("Var1", "Var2"))
 any(is.na(full_master))
 full_master <- merge(full_master, distLUI, by = c("Var1", "Var2"), all.x = T)
@@ -103,11 +105,40 @@ plot_grid(a, b, nrow = 2, align = T)
 
 # Diversity
 
+preparing alpha-diversity
 ```{r}
 master_alpha <- data.table::data.table(master_alpha)
 master_alpha <- master_alpha[Var1 %in% plotNAset]
 ggmaster_alpha <- melt(master_alpha, id.vars = "Var1")
 ```
+preparing beta-diversity
+```{r}
+# clean dataset (copied from above)
+masterdiversity <- data.table::data.table(masterdiversity)
+masterdiversity <- masterdiversity[Var1 %in% plotNAset & Var2 %in% plotNAset, ]
+
+betacols <- c("Var1", "Var2", grep("beta", names(masterdiversity), value = T))
+masterbeta <- masterdiversity[, ..betacols]
+masterbeta[, plot := paste(Var1, Var2, sep = "_")]
+masterbeta[, Var1 := NULL]
+masterbeta[, Var2 := NULL]
+# prepare ggplot dataset
+gmasterbeta <- melt(masterbeta, id.vars = "plot", value.name = "betadiversity", variable.name = "names")
+# get colors for plotting
+gmasterbeta <- merge(nicenames[, .(names, nicenames, color)], gmasterbeta, by = "names", all.y = T)
+```
+
+
+## betadiversity among plots
+```{r}
+ggplot(gmasterbeta, aes(x = nicenames, y = betadiversity, fill = color)) +
+  geom_jitter(size = 0.5, position = position_jitter(0.3)) + 
+  geom_violin() +
+  theme_cowplot() +
+  scale_fill_identity() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
 
 ## correlations alpha and betadiversity
 How do differences in alphadiversity (richness) correspond to betadiversity?
