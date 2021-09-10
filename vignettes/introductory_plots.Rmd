@@ -24,8 +24,24 @@ from `results_nonpublic.R`
 - nicenames
 
 # Content
+- Clean dataset
+	- LUI distance
 - Diversity
-    - ... 
+	- preparing alpha- and betadiversity
+	- betadiversity among plots
+	- correlations alpha- and betadiversity
+	- Trophic levels
+- Functions
+	- Violin plot overview all functions
+	- correlations among beta-multifunctionalities
+	- single functions present / absent along LUI level
+	- single functions change at high EFdist
+	- Violin plot over all plots
+	- EFturnover and EFnestedness
+- LUI
+	- high betadiversity
+	- high autotroph betadiversity turnover/ nestedness
+	- high EFdist/ EFnes
 
 
 # Clean dataset
@@ -69,7 +85,7 @@ longpallette <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
 
 
 
-# LUI distance
+## LUI distance
 ```{r}
 ggplot(full_master, aes(x = LUI.x, y = LUI.y, colour = distLUI)) +
   geom_point() +
@@ -141,9 +157,9 @@ ggplot(gmasterbeta, aes(x = nicenames, y = betadiversity, fill = color)) +
 
 
 ## correlations alpha and betadiversity
-How do differences in alphadiversity (richness) correspond to betadiversity?
+How do differences in alpha-diversity (richness) correspond to betadiversity?
 
-Prepare alphadiversity dataset : calculating pairwise differences in richness
+Prepare alpha-diversity dataset : calculating pairwise differences in richness
 ```{r}
 richness_diff <- masterbeta[, .(Var1, Var2)]
 richness_diff <- merge(richness_diff, master_alpha, by = "Var1", all = T)
@@ -362,12 +378,12 @@ funs <- readRDS(paste(pathtodata, "/data_assembly/output_data/imputed_and_compou
 
 
 
-Violin plot over all plots
+## Violin plot over all plots
 ```{r}
 #TODO
 ```
 
-EFturnover and EFnestedness
+## EFturnover and EFnestedness
 ```{r}
 ggplot(full_master, aes(x = EFturnover_0.7, y = EFnestedness_0.7, colour = EFbeta_0.7)) +
   geom_point()
@@ -397,7 +413,7 @@ ggplot(full_master, aes(x = autotroph.beta.sim, y = autotroph.beta.sne, colour =
 # saved as : 21-03-11_introductory_plots_autotroph_betadiversity_turnover_nestedness_EFdist
 ```
 
-High autotroph betadiversity turnover
+## High autotroph betadiversity turnover
 ```{r}
 test <- full_master[autotroph.beta.sim > 0.95, .(Var1, Var2, EFdistance, EFbeta_0.7, EFturnover_0.7, EFnestedness_0.7, distLUI, LUI.x, LUI.y, autotroph.beta.sim, autotroph.beta.sne, herbivore.arthropod.beta.sim, herbivore.arthropod.beta.sne, symbiont.soilfungi.beta.sim, symbiont.soilfungi.beta.sne)]
 test[, comparison := paste(Var1, Var2, sep = "_")]
@@ -417,7 +433,7 @@ ggplot(test, aes(x = variable, y = value, colour = comparison, group = compariso
 # saved as : 21-03-11_introductory_plots_specific_case_high_autotroph_betadiversity_turnover_EFdist_LUI
 ```
 
-High autotroph betadiversity nestedness
+## High autotroph betadiversity nestedness
 ```{r}
 test <- full_master[autotroph.beta.sne > 0.4, .(Var1, Var2, EFdistance, EFbeta_0.7, EFturnover_0.7, EFnestedness_0.7, distLUI, LUI.x, LUI.y, autotroph.beta.sim, autotroph.beta.sne, herbivore.arthropod.beta.sim, herbivore.arthropod.beta.sne, symbiont.soilfungi.beta.sim, symbiont.soilfungi.beta.sne)]
 test[, comparison := paste(Var1, Var2, sep = "_")]
