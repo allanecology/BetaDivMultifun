@@ -189,7 +189,8 @@ lin_abiotic <- plot_grid(dl, lgeo, lsoil, lisol,
 # save
 ###########
 # `model_name` + "_lineplot_all_modelspec.pdf"
-cowplot::ggsave(plot = lin, filename = paste(pathtoout, "/", model_name, "_lineplot_no_modelspec.pdf", sep = ""),
+cowplot::ggsave(plot = lin, 
+                filename = paste(pathtoout, "/", model_name, "_lineplot_no_modelspec.pdf", sep = ""),
                 device=cairo_pdf, width = 8.27, height = 11.96, units = "in", dpi = 900)
 cowplot::ggsave(plot = lin_abiotic, filename = paste(pathtoout, "/", model_name, "_lineplot_no_modelspec_abiotic.pdf", sep = ""),
                 device=cairo_pdf, width = 11.96, height = 8.27, units = "in", dpi = 900)
