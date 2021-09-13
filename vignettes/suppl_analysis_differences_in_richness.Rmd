@@ -1,0 +1,143 @@
+---
+title: 'Supplementary analysis : differences in richness'
+author: 'Noëlle Schenk'
+date: "9/13/2021"
+output: html_document
+---
+Goal : 
+- (1) Visualise that the betadiversity nestedness component is not the same as differences in richness. 
+- (2) Do we miss much if we do not include richness in the analysis?
+
+Approach : A GDM including alphadiversity and differences in richness, as well as beta turnover, beta nestedness, LUI and covariates. With EFdistance and only for autotrophs (keep the model small)
+
+Requirements : 
+- from file `analysis_nonpublic.R` : masterdiversity (for alphadiversities)
+
+Set plotting theme
+```{r}
+theme_set(theme_cowplot())
+```
+
+
+Prepare the dataset
+```{r}
+model_name <- "gdm_EFdistance_LUI"
+gdmin <- readRDS(paste(pathtodata, "/analysis/output_datasets/", model_name, "_input.Rds", sep = ""))
+# save rownames to column
+gdmin <- data.table::data.table(cbind("rownames" = rownames(gdmin), gdmin))
+# split rownames to Var1 and Var2
+gdmin[, "Var1" := sapply(strsplit(gdmin$rownames, "\\."), "[", 1)]
+gdmin[, "Var2" := sapply(strsplit(gdmin$rownames, "\\."), "[", 2)]
+gdmin[, rownames := NULL]
+
+# add alphadiversity columns
+masterdiversity <- data.table::data.table(masterdiversity)
+masterdiversity <- masterdiversity[, .(Var1, Var2, autotroph.alpha, autotroph.alpha.2)]
+setnames(masterdiversity, old = c("autotroph.alpha", "autotroph.alpha.2"),
+         new = c("s1.autotroph.alpha", "s2.autotroph.alpha"))
+gdmin <- merge(gdmin, masterdiversity, by = c("Var1", "Var2"))
+
+# select the required columns
+gdmin <- gdmin[, .(Var1, Var2, distance, weights, s1.xCoord, s1.yCoord, s2.xCoord, s2.yCoord, s1.autotroph.beta.sim, s1.autotroph.beta.sne, s1.autotroph.alpha, s1.LUI, s1.edis_soil, s1.plot_isolation, s2.autotroph.beta.sim, s2.autotroph.beta.sne, s2.autotroph.alpha, s2.LUI, s2.edis_soil, s2.plot_isolation)]
+
+# prepare for GDM
+gdmin[, rown := paste(Var1, Var2, sep = ".")]
+gdmin[,c("Var1","Var2") := NULL]
+gdmin <- as.data.frame(gdmin)
+rownames(gdmin) <- gdmin$rown
+gdmin$rown <- NULL
+gdmin <- gdm::formatsitepair(bioData = gdmin, bioFormat = 4, predData = gdmin)
+```
+
+
+Run GDM
+```{r}
+gdm_output <- gdm::gdm(gdmin, geo = T)
+plot(gdm_output)
+```
+
+Collect output
+```{r}
+alphaname <- "autotroph"
+modname <- paste("gdm_alpha_", alphaname, "_EFdistance_LUI", sep = "")
+
+# save input and output
+saveRDS(gdmin, file = paste("vignettes/out/", paste(modname, "input.Rds", sep = "_"), sep = ""))
+write.csv(gdmin, file = paste("vignettes/out/", paste(modname, "input.CSV", sep = "_"), sep = ""))
+saveRDS(gdm_output, paste("vignettes/out/", modname, "_output.Rds", sep = ""))
+capture.output(summary(gdm_output), file = paste("vignettes/out/", modname, ".txt", sep = ""))
+
+# get model specifications
+model_specs <- paste(modname,
+                     paste("deviance of the fitted GDM model :", round(gdm_output$gdmdeviance, 3)),
+                     paste("deviance of the null model : ", round(gdm_output$nulldeviance, 3)),
+                     paste("percentage of null deviance \n explained by the fitted GDM model :", round(gdm_output$explained, 3)),
+                     "3 splines used, knots at min, max and 50% (default). ",
+                     paste("LUI knots at :", paste(round(gdm_output$knots[1:3], 3), collapse = ", ")),
+sep = "\n")
+
+capture.output(print(model_specs), file = paste(pathtoout, "/", modname, "_GDM_model_specs.txt", sep = ""))
+```
+
+Plot
+```{r}
+model_name <- paste("gdm_alpha_", alphaname, "_EFdistance_LUI", sep = "")
+gdm_output <- readRDS(paste_gdm_input_path_together(pathtoout = pathtodata, name = model_name))
+exSplines <- gdm::isplineExtract(gdm_output)
+maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)
+
+# ---- chunk copied from plot_gdm.Rmd
+x <- data.table(exSplines$x)
+x[, ids := as.numeric(seq(1, nrow(x)))] # ids are required for later matching with y
+y <- data.table(exSplines$y)
+y[, ids := as.numeric(seq(1, nrow(y)))]
+x <- melt(x, measure.vars = colnames(x), value.name = "xaxis", id.vars = "ids", variable.name = "names") # get to long format
+y <- melt(y, measure.vars = colnames(y), value.name = "value", id.vars = "ids", variable.name = "names")
+    # add x and y values
+lineplot_data <- merge(x, y, by = c("ids", "names"))
+lineplot_data[, ids := NULL]
+lineplot_data <- lineplot_data[names != "ids",]
+lineplot_data[, names := as.character(names)] # somehow required for merging
+lineplot_data <- merge(lineplot_data, nicenames, by = "names", all.x = T)
+# ----
+
+# adapted to alpha results by adding autotroph.alpha to nicenames
+# need to divide alpha by 100 to reach same xaxis range
+lineplot_data[names == "autotroph.alpha", xaxis := xaxis / 100]
+```
+
+Lineplot
+```{r}
+###########
+# create lineplots
+###########
+# above, below and abiotic subplots
+p <- create_gdm_lineplot(lineplot_data[ground == "a"], 
+                         legend = T, ymax = max(lineplot_data$value)) + theme_cowplot()
+
+# abiotic is splitted into several plots due to x axes
+# LUI
+l <- create_gdm_lineplot(lineplot_data[names %in% c("LUI")], 
+                         legend = T, ymax = max(lineplot_data$value)) + theme_cowplot()
+# geo dist
+lgeo <- create_gdm_lineplot(lineplot_data[names %in% c("Geographic")], 
+                            legend = T, ymax = max(lineplot_data$value)) + theme_cowplot()
+# soil
+lsoil <- create_gdm_lineplot(lineplot_data[names %in% c("edis_soil")], 
+                             legend = T, ymax = max(lineplot_data$value)) + theme_cowplot()
+# plot isolation
+lisol <- create_gdm_lineplot(lineplot_data[names %in% c("plot_isolation")], 
+                             legend = T, ymax = max(lineplot_data$value)) + theme_cowplot()
+labsplot <- ggplot(NULL) + #annotate("text", x = 0.8, y = 0.5, size=8, label = model_name) +
+  theme_void() + annotate("text", x = 0.4, y = 0.5, size = 4, label = model_specs)
+
+suppressWarnings(
+  lin <- plot_grid(p, l, lgeo, lsoil, lisol, labsplot, labels = c("A", "B", "C", "D", "E", "F"), nrow = 3,
+                   align = T)
+)
+
+ggsave(plot = lin, 
+                filename = paste(pathtoout, "/", model_name, "_lineplot_no_modelspec.pdf", sep = ""),
+                device=cairo_pdf, width = 11.96, height = 8.27, units = "in", dpi = 900)
+```
+
