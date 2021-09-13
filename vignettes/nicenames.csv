@@ -34,3 +34,4 @@ symbiont.soilfungi.beta.sim,symbiont soilfungi βto,b,#BEAED4,solid,symbiont soi
 symbiont.soilfungi.beta.sne,symbiont soilfungi βnes,b,#BEAED4,dashed,symbiont soilfungi,bio,nestedness,dotted
 tertiary.consumer.beta.sim,tertiary consumer βto,a,#D95F02,solid,tertiary consumer,bio,turnover,solid
 tertiary.consumer.beta.sne,tertiary consumer βnes,a,#D95F02,dashed,tertiary consumer,bio,nestedness,dotted
+autotroph.alpha,autotroph richness,a,#D95F02,solid,autotroph richness,bio,alpha,solid
