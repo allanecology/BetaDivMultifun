@@ -33,6 +33,15 @@ gdmin[, rownames := NULL]
 # add alphadiversity columns
 masterdiversity <- data.table::data.table(masterdiversity)
 masterdiversity <- masterdiversity[, .(Var1, Var2, autotroph.alpha, autotroph.alpha.2)]
+
+# ######### uncomment if wanted
+# # variation : standardise differences in richness between 0 and 1
+# masterdiversity[, autotrophsd.alpha := scale01(abs(autotroph.alpha - autotroph.alpha.2))]
+# masterdiversity[, autotroph.alpha := autotrophsd.alpha]
+# masterdiversity[, autotroph.alpha.2 := 0]
+# masterdiversity[, autotrophsd.alpha := NULL]
+# #########
+
 setnames(masterdiversity, old = c("autotroph.alpha", "autotroph.alpha.2"),
          new = c("s1.autotroph.alpha", "s2.autotroph.alpha"))
 gdmin <- merge(gdmin, masterdiversity, by = c("Var1", "Var2"))
