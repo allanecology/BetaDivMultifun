@@ -154,6 +154,9 @@ ggplot(gmasterbeta, aes(x = nicenames, y = betadiversity, fill = color)) +
   scale_fill_identity() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
+Why are some betadiversities discrete?
+- groups with few species, e.g. arthropodsoillarvae can not take so many beta values
+- groups with low alpha per plot (can also happen for groups with high overall richness, which have high dissimilarity across plots --> only a small subset of overall richenss colonizes a plot)
 
 
 ## correlations alpha and betadiversity
