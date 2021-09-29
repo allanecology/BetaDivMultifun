@@ -18,8 +18,24 @@ library(viridis)
 
 number of species in plots
 ```{r}
+# load master_alpha from `analysis_nonpublic.R`
 master_alpha <- data.table::data.table(master_alpha)
 master_alpha <- master_alpha[Var1 %in% plotNAset, ]
+```
+Create table :Number of species per plot
+How many species are there on average per plot?
+```{r}
+a <- data.frame(summary(master_alpha))
+a <- a[-(1:6),-1]
+a <-data.table(a)
+a[, "type" := trimws(sub(":.*", "", a$Freq))]
+a[, "Value" := as.numeric(trimws(sub(".*:", "", a$Freq)))]
+a[, Freq := NULL]
+a <- dcast(a, Var2 ~ type, value.var = "Value")
+write.csv(a, file = "table_alphadiversities_per_plot.csv", quote = F, row.names = F)
+```
+
+```{r}
 # transform bacteria to 1/1000 [k#]
 gmaster_alpha <- master_alpha[, bacteria.RNA.alpha.k := bacteria.RNA.alpha / 1000]
 gmaster_alpha[, bacteria.RNA.alpha := NULL]
@@ -36,7 +52,8 @@ ggplot(gmaster_alpha[variable == i], aes(x = variable, y = value)) +
 ```
 
 
-alpha-alpha plots, coloured by betadiversity.
+
+## alpha-alpha plots, coloured by betadiversity.
 ```{r, eval = F}
 jitter <- position_jitter(width = 0.1, height = 0.1)
 
