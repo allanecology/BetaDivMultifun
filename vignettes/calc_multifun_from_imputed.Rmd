@@ -163,7 +163,7 @@ We expect that one of the important axis - possibly the first to represent soil.
 
 Selection of relevant PC axes : 
 - check how many correlated functions there are
-    - 6 correlations > 0.5 (see corrplots above)
+    - 9 correlations > 0.5 (see corrplots above)
 - (number of selected axes) = (number of PCA) - (number of correlated functions)
 - check if this number corresponds to around 90% variance explained.
 ```{r}
@@ -234,15 +234,15 @@ cowplot::plot_grid(plotlist = list(p5, p6, p7, p8), labels = c("E", "F", "G", "H
 rm(p); rm(p1); rm(p2); rm(p3); rm(p4); rm(p5)
 ```
 **axis selection** : 
-- 6 correlations > 0.5
-    - 3-4 clusters of inter-correlated functions
+- 9 correlations > 0.5
+    - 6 clusters of inter-correlated functions
 - 17 PC axes (17 functions)
-- 17-3 = 14 axes
-- 14 axes explain 0.97373 % var
-- take first 14 axes
+- 17-6 = 11 axes
+- 11 axes explain 0.91620 % var
+- take first 11 axes
 
 ```{r}
-pca_grlfuns <- pca_grlfuns$x[, 1:14]
+pca_grlfuns <- pca_grlfuns$x[, 1:11]
 
 # euclidean distance
 EFmaster <- vegan::vegdist(pca_grlfuns, method = "euclid")
@@ -376,7 +376,7 @@ p <- ggplot2::ggplot(data = plotEFbeta, aes(x = variable, y = value)) +
         axis.title.y = element_blank())
 
 # Plot all thresholds
-plotEFbeta <- reshape2::melt(EFmaster, id = c("Var1", "Var2"))
+plotEFbeta <- data.table(reshape2::melt(EFmaster, id = c("Var1", "Var2")))
 plotEFbeta[, type := sub("_[0-9].[0-9]", "", variable)]
 
 p1 <- ggplot2::ggplot(data = plotEFbeta[variable %in% unique(plotEFbeta$variable)[1:14]], 
