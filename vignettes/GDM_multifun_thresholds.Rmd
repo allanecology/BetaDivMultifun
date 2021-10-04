@@ -33,13 +33,13 @@ requirements :
 # require : input data : EFmaster_all_thresholds.Rds : load from script "analysis_nonpublic.R"
 EFmaster_sd <- apply(EFmaster[, -c("Var1", "Var2")], 2, function(x) sd(x, na.rm = F))
 EFmaster_var <- apply(EFmaster[, -c("Var1", "Var2")], 2, function(x) var(x, na.rm = F))
-EFmaster <- data.table(name = names(EFmaster), sd = EFmaster_sd, var = EFmaster_var)
+EFmaster <- data.table(name = names(EFmaster)[-(1:2)], sd = EFmaster_sd, var = EFmaster_var)
 EFmaster[, type := "EFdistance"]
 EFmaster[grep("nestedness", EFmaster$name), type := "nestedness"]
 EFmaster[grep("turnover", EFmaster$name), type := "turnover"]
 EFmaster[grep("beta", EFmaster$name), type := "beta"]
 
-ggplot(EFmaster, aes(x = name, y = sd, fill = type)) +
+ggplot(EFmaster[type != "beta"], aes(x = name, y = sd, fill = type)) +
   geom_bar(stat = "identity") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
