@@ -387,7 +387,8 @@ p1 <- ggplot2::ggplot(data = plotEFbeta[variable %in% unique(plotEFbeta$variable
   labs(title="Threshold-based dissimiliarity of Ecosystem Functions", subtitle = "all thresholds", xlab = "") +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank()) +
-  scale_fill_brewer(palette="Dark2")
+  # scale_fill_brewer(palette="Dark2")
+  scale_fill_manual(values = c("#1B9E77", "#D95F02", "#7570B3", "#E7298A"))
 p2 <- ggplot2::ggplot(data = plotEFbeta[variable %in% unique(plotEFbeta$variable)[14:28]], 
                       aes(x = variable, y = value, fill = type)) +
       geom_violin() +
@@ -396,9 +397,10 @@ p2 <- ggplot2::ggplot(data = plotEFbeta[variable %in% unique(plotEFbeta$variable
   labs(title="Threshold-based dissimiliarity of Ecosystem Functions", subtitle = "all thresholds", xlab = "") +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank()) +
-  scale_fill_brewer(palette="Dark2")
+  # scale_fill_brewer(palette="Dark2")
+  scale_fill_manual(values = c("#1B9E77", "#7570B3", "#E7298A"))
 plot_grid(p1, p2, nrow = 2)
-# save as : 21-03-09_calc_multifun_from_imputed_all_EFdistances_violinplot
+# save as : 21-10-04_calc_multifun_from_imputed_all_EFdistances_violinplot
 ```
 Plot various thresholds
 ```{r, eval = F}
