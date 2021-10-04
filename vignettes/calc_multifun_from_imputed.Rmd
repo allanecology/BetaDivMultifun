@@ -406,7 +406,7 @@ Plot various thresholds
 ```{r, eval = F}
 # only run if EFmaster contains various thresholds
 temp <- c("EFdistance", grep("turnover|nestedness", names(EFmaster), value = T))
-temp <- grep("turnover", names(EFmaster), value = T)
+# temp <- grep("turnover", names(EFmaster), value = T)
 # pairs(EFmaster[, ..temp], upper.panel = NULL )
 
 m <- cor(EFmaster[, ..temp], method = "spearman")

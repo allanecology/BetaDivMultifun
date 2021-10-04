@@ -6,6 +6,7 @@ output: html_document
 ---
 ```{r, eval = T}
 suppressPackageStartupMessages(require(ggplot2))
+theme_set(theme_half_open())
 suppressPackageStartupMessages(require(cowplot))
 ```
 
@@ -46,9 +47,9 @@ automaticrun <- F
     # only provide if automaticrun is F
 luiinput <- "lui" # lui or components
 # model_name <- "gdm_EFnestedness_0.7_LUI"
-model_name <- "gdm_EFdistance_LUI_NO_sc_arthropodsoillarvae"
-# model_name <- "gdm_EFdistance_LUI"
-permut <- T # T or F, depending wether permutations are available or not
+# model_name <- "gdm_EFdistance_LUI_NO_sc_arthropodsoillarvae"
+model_name <- "gdm_EFdistance_LUI"
+permut <- F # T or F, depending wether permutations are available or not
 ```
 
 # preparation
@@ -106,7 +107,7 @@ naming convention : `model_name` + "_lineplot_all_modelspec.pdf"
 common y axis maximum is the maximum of the current model
 ```{r, eval = F}
 ###########
-# creat plot table
+# create plot table
 ###########
     # one column with xaxis values and one column with yaxis values, and one column
     # containing names
@@ -189,12 +190,12 @@ lin_abiotic <- plot_grid(dl, lgeo, lsoil, lisol,
 # save
 ###########
 # `model_name` + "_lineplot_all_modelspec.pdf"
-cowplot::ggsave(plot = lin, 
+ggplot2::ggsave(plot = lin, 
                 filename = paste(pathtoout, "/", model_name, "_lineplot_no_modelspec.pdf", sep = ""),
                 device=cairo_pdf, width = 8.27, height = 11.96, units = "in", dpi = 900)
-cowplot::ggsave(plot = lin_abiotic, filename = paste(pathtoout, "/", model_name, "_lineplot_no_modelspec_abiotic.pdf", sep = ""),
+ggplot2::ggsave(plot = lin_abiotic, filename = paste(pathtoout, "/", model_name, "_lineplot_no_modelspec_abiotic.pdf", sep = ""),
                 device=cairo_pdf, width = 11.96, height = 8.27, units = "in", dpi = 900)
-cowplot::ggsave(plot = labsplot, filename = paste(pathtoout, "/", model_name, "_lineplot_only_modelspec_abiotic.pdf", sep = ""),
+ggplot2::ggsave(plot = labsplot, filename = paste(pathtoout, "/", model_name, "_lineplot_only_modelspec_abiotic.pdf", sep = ""),
                 device=cairo_pdf, width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 
