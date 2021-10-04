@@ -87,6 +87,7 @@ M <- cor(imputed_grlfuns[, !colnames(imputed_grlfuns) %in% "Plotn", with=F], use
 
 # imputed_grlfun_corrplot1
 corrplot::corrplot(M,type="lower", addCoef.col = "black", method="color", diag=F, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.4, order = "hclust", tl.cex = 0.6)
+# saved as : 21-09-06_calc_multifun_from_imputed_corrplot_spearman.pdf
 
 # imputed_grlfun_corrplot2
 corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F,
@@ -97,12 +98,14 @@ tres <- 0.5
 M[which(M < tres & M > -tres)] <- 0
 corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F,
                    tl.cex = 0.6, order = "hclust")
+# saved as : 21-09-06_calc_multifun_from_imputed_corrplot_spearman_05.pdf
 
 # only show high correlations
 tres <- 0.7
 M[which(M < tres & M > -tres)] <- 0
 corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F,
                    tl.cex = 0.6, order = "hclust")
+# saved as : 21-09-06_calc_multifun_from_imputed_corrplot_spearman_07.pdf
 
 rm(M)
 ```
@@ -209,6 +212,7 @@ p4 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, co
                loadings.label.colour = "black", loadings.label.repel = T, loadings.label.size = labelsize,
                x = 4, y = 5)
 cowplot::plot_grid(plotlist = list(p1, p2, p3, p4), labels = c("A", "B", "C", "D"), align = T)
+cowplot::plot_grid(plotlist = list(p1, p2), labels = c("A", "B"), align = T)
 # saved as : "calc_multifun_from_imputed_pca_axes_1_to_5.pdf"
 
 p5 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
