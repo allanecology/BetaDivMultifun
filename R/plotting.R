@@ -161,3 +161,74 @@ create_restab_3 <- function(x=1){
   return(restab3)
 }
 NULL
+
+
+#' Create the overview table for single functions models
+#'
+#' create overview bars of single functions, above- belowground and turnover/ nestedness
+#' instead of maxsplines as for single models, here we work with all functions. names of all
+#' functions are stored in vector `singleEFnames`
+#' 
+#' @return A list with 2 data.tables ready for plotting
+#' @param restab2 the input table, created in chunk for single functions heatmap
+#' @examples
+#' blabla TODO
+#' 
+#' @import data.table
+#' 
+#' @export
+### FUNCTION
+create_single_funs_overviewbars <- function(restab2){
+  restab <- data.table::copy(restab2)
+  # divide plants by 2 and half to each overview bar above- and belowground
+  auto <- restab[legendnames == "autotroph", ]
+  auto[, ground := "b"]
+  auto <- rbind(restab[legendnames == "autotroph"], auto)
+  # divide all effects by 2
+  auto[, (singleEFnames) := lapply(.SD, FUN = function(x) x / 2), .SDcols = singleEFnames]
+  restab <- rbindlist(list(auto, restab[legendnames != "autotroph",]))
+  
+  backup <- data.table::copy(restab)
+  
+  ###
+  # ABOVE- BELOWGROUND
+  # get scaled effects
+  f <- singleEFnames[1]
+  d <- data.table::data.table(aggregate(get(f) ~ ground, restab, sum))
+  d[, `get(f)` := `get(f)`/ sum(d$`get(f)`)] # scale to 0 1
+  setnames(d, old = "get(f)", new = f)
+  ov_ab_singleEFmods <- data.table::copy(d)
+  for(f in singleEFnames[-1]){
+    d <- data.table::data.table(aggregate(get(f) ~ ground, restab, mean))
+    d[, `get(f)` := `get(f)`/ sum(d$`get(f)`)] # scale to 0 1
+    setnames(d, old = "get(f)", new = f)
+    ov_ab_singleEFmods <- merge(ov_ab_singleEFmods, d, by = "ground")
+  }
+  rm(d); rm(f)
+  
+  ###
+  # TURNOVER NESTEDNESS
+  # get scaled effects
+  f <- singleEFnames[1]
+  d <- data.table::data.table(aggregate(get(f) ~ component, restab, sum))
+  d[, `get(f)` := `get(f)`/ sum(d$`get(f)`)] # scale to 0 1
+  setnames(d, old = "get(f)", new = f)
+  ov_tn_singleEFmods <- data.table::copy(d)
+  for(f in singleEFnames[-1]){
+    d <- data.table::data.table(aggregate(get(f) ~ component, restab, mean))
+    d[, `get(f)` := `get(f)`/ sum(d$`get(f)`)] # scale to 0 1
+    setnames(d, old = "get(f)", new = f)
+    ov_tn_singleEFmods <- merge(ov_tn_singleEFmods, d, by = "component")
+  }
+  rm(d); rm(f)
+  
+  # check
+  test <- all(all(apply(ov_ab_singleEFmods[, -1], 2, sum) -1 <= 0.001), 
+              all(apply(ov_tn_singleEFmods[, -1], 2, sum) -1 <= 0.001))
+  if(!test){
+    stop('simple check not passed, please check the function again')
+  }
+  return(list("above_below" = ov_ab_singleEFmods, 
+              "turnover_nestedess" = ov_tn_singleEFmods))
+}
+NULL
