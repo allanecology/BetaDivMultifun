@@ -180,6 +180,11 @@ NULL
 ### FUNCTION
 create_single_funs_overviewbars <- function(restab2){
   restab <- data.table::copy(restab2)
+  
+  # add LUI as ground and as component
+  restab[names %in% c("LUI", "deltaLUI"), ground := "lui"]
+  restab[names %in% c("LUI", "deltaLUI"), compnent := "lui"]
+  
   # divide plants by 2 and half to each overview bar above- and belowground
   auto <- restab[legendnames == "autotroph", ]
   auto[, ground := "b"]
@@ -188,7 +193,7 @@ create_single_funs_overviewbars <- function(restab2){
   auto[, (singleEFnames) := lapply(.SD, FUN = function(x) x / 2), .SDcols = singleEFnames]
   restab <- rbindlist(list(auto, restab[legendnames != "autotroph",]))
   
-  backup <- data.table::copy(restab)
+  # backup <- data.table::copy(restab)
   
   ###
   # ABOVE- BELOWGROUND
@@ -198,6 +203,12 @@ create_single_funs_overviewbars <- function(restab2){
   d[, `get(f)` := `get(f)`/ sum(d$`get(f)`)] # scale to 0 1
   setnames(d, old = "get(f)", new = f)
   ov_ab_singleEFmods <- data.table::copy(d)
+  # add colors for plotting
+  ov_ab_singleEFmods[ground == "a", color := "#66A61E"]
+  ov_ab_singleEFmods[ground == "b", color := "#A65628"]
+  ov_ab_singleEFmods[ground == "x", color := "#666666"]
+  ov_ab_singleEFmods[ground == "lui", color := "#984EA3"]
+  
   for(f in singleEFnames[-1]){
     d <- data.table::data.table(aggregate(get(f) ~ ground, restab, mean))
     d[, `get(f)` := `get(f)`/ sum(d$`get(f)`)] # scale to 0 1
@@ -214,6 +225,12 @@ create_single_funs_overviewbars <- function(restab2){
   d[, `get(f)` := `get(f)`/ sum(d$`get(f)`)] # scale to 0 1
   setnames(d, old = "get(f)", new = f)
   ov_tn_singleEFmods <- data.table::copy(d)
+  # add colors for plotting
+  ov_tn_singleEFmods[component == "abio", color := "#666666"]
+  ov_tn_singleEFmods[component == "turnover", color := "#E6AB02"]
+  ov_tn_singleEFmods[component == "nestedness", color := "#984EA3"]
+  ov_tn_singleEFmods[component == "lui", color := "#984EA3"]
+  
   for(f in singleEFnames[-1]){
     d <- data.table::data.table(aggregate(get(f) ~ component, restab, mean))
     d[, `get(f)` := `get(f)`/ sum(d$`get(f)`)] # scale to 0 1
@@ -223,8 +240,8 @@ create_single_funs_overviewbars <- function(restab2){
   rm(d); rm(f)
   
   # check
-  test <- all(all(apply(ov_ab_singleEFmods[, -1], 2, sum) -1 <= 0.001), 
-              all(apply(ov_tn_singleEFmods[, -1], 2, sum) -1 <= 0.001))
+  test <- all(all(apply(ov_ab_singleEFmods[, -c("ground", "color"), with = F], 2, sum) -1 <= 0.001), 
+              all(apply(ov_ab_singleEFmods[, -c("ground", "color"), with = F], 2, sum) -1 <= 0.001))
   if(!test){
     stop('simple check not passed, please check the function again')
   }
