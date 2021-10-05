@@ -39,7 +39,7 @@ create_restab <- function(x=1){
   # get only significant
   if(permut == T){restab[, maxsplines := (1-sign) * maxsplines]}
   # add nice names
-  restab <- data.table::data.table(merge(nicenames, restab, by = "names"))
+  restab <- data.table::data.table(merge(nicenames, restab[, .(names, maxsplines)], by = "names"))
   # order by above-belowground and alphabetically
   # set the levels of the factor in the wanted order
   data.table::setorder(restab, ground, names)
@@ -62,7 +62,7 @@ NULL
 #' @import data.table
 #' 
 #' @export
-create_restab2 <- function(x=1){
+create_restab2 <- function(x=1, restab = restab){
   if(permut == T){
     print("removing non-significant effects from summary ...")
     restab[sign > 0.05 , maxsplines := 0]
