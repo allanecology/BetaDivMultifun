@@ -433,3 +433,18 @@ heatmap <- plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, nrow = 
 ggsave(filename = paste(pathtoout, "/plot_GDM_singleEFdist_heatmap.pdf", sep = ""), plot = heatmap, device=cairo_pdf,
        width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
+
+Create overview bars
+```{r}
+# requires : restab2, created in chunk 1 under "# single EFs heatmap"
+a <- create_single_funs_overviewbars(restab2 = restab2)
+
+
+ov_ab_singleEFmods <- melt(a$above_below, id.vars = c("ground", "color"))
+ov_tn_singleEFmods <- melt(a$turnover_nestedess, id.vars = c("component", "color"))
+
+ggplot(ov_ab_singleEFmods, aes(x = variable, y = value, fill = ground)) +
+  geom_bar(stat = "identity") 
+  # scale_fill_identity()
+#TODO HERE : make plot nice :)
+```
