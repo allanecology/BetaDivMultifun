@@ -21,6 +21,8 @@ number of species in plots
 # load master_alpha from `analysis_nonpublic.R`
 master_alpha <- data.table::data.table(master_alpha)
 master_alpha <- master_alpha[Var1 %in% plotNAset, ]
+masterdiversity <- masterdiversity[Var1 %in% plotNAset,]
+masterdiversity <- masterdiversity[Var2 %in% plotNAset,]
 ```
 Create table :Number of species per plot
 How many species are there on average per plot?
@@ -107,36 +109,109 @@ for(t in trlevels){
     "alpha2" = paste(t, ".alpha.2", sep = ""),
     "beta.sim" = paste(t, ".beta.sim", sep = ""),
     "beta.sne" = paste(t, ".beta.sne", sep = ""),
-    "alpha.diff" = paste(t, ".alpha.diff", sep = "")
+    "alpha.diff" = paste(t, ".alpha.diff", sep = ""),
+    "alpha.shared" = paste(t, ".alpha.shared", sep = ""),
+    "gamma" = paste(t, ".gamma", sep = "")
   )
   richness_diff_beta[, namesref["alpha.diff"] := abs(get(namesref[["alpha"]]) - get(namesref[["alpha2"]]))]
+  richness_diff_beta[, namesref["alpha.shared"] := abs(get(namesref[["gamma"]]) - get(namesref[["alpha.diff"]]))]
   # deleteme <- c(namesref[["alpha"]], namesref[["alpha2"]])
   # richness_diff_beta[, (deleteme) := NULL]
 }
 ```
+
+## Associations among beta nestedness and richness
+
 ```{r}
-plot(richness_diff_beta$autotroph.beta.sne, richness_diff_beta$autotroph.alpha.diff)
-plot(richness_diff_beta$autotroph.beta.sim, richness_diff_beta$autotroph.alpha.diff)
-plot(richness_diff_beta$autotroph.beta.sim + richness_diff_beta$autotroph.beta.sne, richness_diff_beta$autotroph.alpha.diff)
+# turnover and nestedness
+plot(richness_diff_beta$autotroph.beta.sim, richness_diff_beta$autotroph.beta.sne,
+     main = "autotroph", xlab = "beta turnover", ylab = "beta nestedness")
 
-plot(richness_diff_beta$secondary.consumer.beta.sne, richness_diff_beta$secondary.consumer.alpha.diff)
-plot(richness_diff_beta$secondary.consumer.beta.sne + richness_diff_beta$secondary.consumer.beta.sim, richness_diff_beta$secondary.consumer.alpha.diff)
-plot(richness_diff_beta$secondary.consumer.alpha.2, richness_diff_beta$secondary.consumer.alpha.diff)
+pdf(file = "alpha_plots_association_beta_nes_richness.pdf",
+    paper = "a4r")
+par(mfrow = c(4, 3))
+# autotrophs
+plot(richness_diff_beta$autotroph.beta.sne, richness_diff_beta$autotroph.alpha.diff,
+     main = "autotroph", xlab = "beta nestedness", ylab = "diff in richness")
+plot(richness_diff_beta$autotroph.beta.sim, richness_diff_beta$autotroph.alpha.diff, 
+     main = "autotroph", xlab = "beta turnover", ylab = "diff in richness")
+plot(richness_diff_beta$autotroph.beta.sim + richness_diff_beta$autotroph.beta.sne, richness_diff_beta$autotroph.alpha.diff, 
+     main = "autotroph", xlab = "beta = beta sim + beta sne", ylab = "diff in richness")
 
+# secnodary consumers
+plot(richness_diff_beta$secondary.consumer.beta.sne, richness_diff_beta$secondary.consumer.alpha.diff,
+     main = "secondary.consumer", xlab = "beta.sne", ylab = "diff in richness")
+plot(richness_diff_beta$secondary.consumer.beta.sim, richness_diff_beta$secondary.consumer.alpha.diff,
+     main = "secondary.consumer", xlab = "beta.sim", ylab = "diff in richness")
+plot(richness_diff_beta$secondary.consumer.beta.sne + richness_diff_beta$secondary.consumer.beta.sim, richness_diff_beta$secondary.consumer.alpha.diff,
+     main = "secondary.consumer", xlab = "beta sim + beta sne", ylab = "diff in richness")
+
+# omnivore protist
+plot(richness_diff_beta$omnivore.protist.beta.sne, richness_diff_beta$omnivore.protist.alpha.diff,
+     main = "omnivore protist", xlab = "beta.sne", ylab = "diff in richness")
+plot(richness_diff_beta$omnivore.protist.beta.sim, richness_diff_beta$omnivore.protist.alpha.diff,
+     main = "omnivore protist", xlab = "beta.sim", ylab = "diff in richness")
+plot(richness_diff_beta$omnivore.protist.beta.sim + richness_diff_beta$omnivore.protist.beta.sne, richness_diff_beta$omnivore.protist.alpha.diff,
+     main = "omnivore protist", xlab = "beta turnover + beta nestedness", ylab = "diff in richness")
+
+# herbivore arthropod
+plot(richness_diff_beta$herbivore.arthropod.beta.sne, richness_diff_beta$herbivore.arthropod.alpha.diff,
+     main = "herbivore.arthropod", xlab = "beta.sne", ylab = "diff in richness")
+plot(richness_diff_beta$herbivore.arthropod.beta.sim, richness_diff_beta$herbivore.arthropod.alpha.diff,
+     main = "herbivore.arthropod", xlab = "beta.sim", ylab = "diff in richness")
+plot(richness_diff_beta$herbivore.arthropod.beta.sim + richness_diff_beta$herbivore.arthropod.beta.sne, richness_diff_beta$herbivore.arthropod.alpha.diff,
+     main = "herbivore.arthropod", xlab = "beta turnover + beta nestedness", ylab = "diff in richness")
+dev.off()
 ```
+```{r}
+# Correlation plot
+gcols <- grep("beta.s", colnames(richness_diff_beta), value = T)
+gcols <- c(gcols, grep("alpha.di", colnames(richness_diff_beta), value = T))
+gcols <- c(gcols, grep("alpha.sha", colnames(richness_diff_beta), value = T))
 
+M <- cor(richness_diff_beta[, ..gcols], use="complete.obs", method = "spearman")
+
+pdf("testalpha_plots_association_beta_nes_richness_corrplot.pdf", paper = "a4r")
+corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=90, diag = F,
+                   tl.cex = 0.4, order = "hclust")
+dev.off()
+rm(gcols)
+```
+In many cases, beta.sim is highly correlated with alpha diff.
+
+linear model
+```{r}
+# beta sim, beta sne, alpha diff, alpha shared
+lmrich <- data.table::copy(richness_diff_beta)
+lmrich[, "comparison" := paste(Var1, Var2, sep = ".")]
+lmcols <- c("comparison", gcols)
+lmrich <- lmrich[, ..lmcols]
+lmrich <- melt(lmrich, measure.vars = gcols)
+lmrich[grep("beta.sim", lmrich$variable), "type" := "beta.sim"]
+lmrich[grep("beta.sne", lmrich$variable), "type" := "beta.sne"]
+lmrich[grep("alpha.diff", lmrich$variable), "type" := "alpha.diff"]
+lmrich[grep("alpha.shared", lmrich$variable), "type" := "alpha.shared"]
+# add trophic levels
+for(t in trlevels){
+  lmrich[grep(t, lmrich$variable), "trlevel" := t]
+}
+
+lmrich <- dcast(lmrich, trlevel + comparison ~ type)
+summary(lm(beta.sne ~ alpha.diff + alpha.shared + beta.sim, data = lmrich))
+summary(lm(beta.sne ~ alpha.diff + alpha.shared + beta.sim + trlevel, data = lmrich))
+# beta.sne is mostly driven by beta.sim
+# but also by alpha.diff and alpha.shared
+# rather by alpha.diff than by alpha.shared
+# and this association strongly depends on the trophic level
+# --> secondary consumers are not having an effect --> they are driven by something else!
+```
 The difference is species which are in common.
 
-Quick and dirty
+Further considerations with gamma
 ```{r}
-#TODO : ins Reine schreiben 
-
 plot(richness_diff_beta$autotroph.beta.sne, richness_diff_beta$autotroph.alpha.diff / richness_diff_beta$autotroph.gamma, main = "nestedness weighted by gamma") # because alpha.diff includes both nestedness and turnover. Take gamma away from alpha diff --> more correlation?
 plot(richness_diff_beta$autotroph.beta.sne + richness_diff_beta$autotroph.beta.sim, richness_diff_beta$autotroph.alpha.diff / richness_diff_beta$autotroph.gamma, main = "alpha weighted by gamma, full betadiversity") 
-plot(gamma$autotroph.beta.sne/ gamma$autotroph.gamma, gamma$autotroph.alpha.diff)
-plot(gamma$autotroph.beta.sne, gamma$autotroph.gamma)
-
-# beta = gamma + alpha oder so
-#TODO nachschauen!
+plot(richness_diff_beta$autotroph.beta.sne/ richness_diff_beta$autotroph.gamma, richness_diff_beta$autotroph.alpha.diff)
+plot(richness_diff_beta$autotroph.beta.sne, richness_diff_beta$autotroph.gamma)
 ```
 
