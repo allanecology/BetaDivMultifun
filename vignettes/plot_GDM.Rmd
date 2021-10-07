@@ -226,13 +226,13 @@ q <- create_abio_barplot()
 ###########
     # ABOVE - BELOW - ABIOTIC
 restab2 <- create_restab2()
-restab2 <- restab2[type %in% c("unscaled", "averaged_scaled")]
+restab2 <- restab2[type %in% c("averaged_scaled")]
 df <- data.frame(restab2)
 ov1 <- create_overview_above_below_abiotic_barplot()
 ov1L <- create_overview_above_below_abiotic_barplot(legend = T) # legend only, plot with plot_grid()
     # TURNOVER - NESTEDNESS - ABIOTIC
 restab3 <- create_restab_3()
-restab3 <- restab3[type %in% c("unscaled", "averaged_scaled")]
+restab3 <- restab3[type %in% c("averaged_scaled")]
 df <- data.frame(restab3)
 ov2 <- create_overview_turnover_nestedness_abiotic_barplot()
 ov2L <- create_overview_turnover_nestedness_abiotic_barplot(legend = T) # only legend, plot with plot_grid()
@@ -437,7 +437,7 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_singleEFdist_heatmap.pdf", sep = "
 Create overview bars
 ```{r}
 # requires : restab2, created in chunk 1 under "# single EFs heatmap"
-a <- create_single_funs_overviewbars(restab2 = restab2)
+a <- create_single_funs_overviewbars(restab2 = restab2, rel_colnames = singleEFnames)
 
 # bring to ggplot format
 ov_ab_singleEFmods <- melt(a$above_below, id.vars = c("ground", "color"))
