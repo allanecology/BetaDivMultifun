@@ -183,7 +183,7 @@ create_single_funs_overviewbars <- function(restab2){
   
   # add LUI as ground and as component
   restab[names %in% c("LUI", "deltaLUI"), ground := "lui"]
-  restab[names %in% c("LUI", "deltaLUI"), compnent := "lui"]
+  restab[names %in% c("LUI", "deltaLUI"), component := "lui"]
   
   # divide plants by 2 and half to each overview bar above- and belowground
   auto <- restab[legendnames == "autotroph", ]
@@ -207,7 +207,7 @@ create_single_funs_overviewbars <- function(restab2){
   ov_ab_singleEFmods[ground == "a", color := "#66A61E"]
   ov_ab_singleEFmods[ground == "b", color := "#A65628"]
   ov_ab_singleEFmods[ground == "x", color := "#666666"]
-  ov_ab_singleEFmods[ground == "lui", color := "#984EA3"]
+  ov_ab_singleEFmods[ground == "lui", color := "#0072B2"]
   
   for(f in singleEFnames[-1]){
     d <- data.table::data.table(aggregate(get(f) ~ ground, restab, mean))
@@ -216,6 +216,9 @@ create_single_funs_overviewbars <- function(restab2){
     ov_ab_singleEFmods <- merge(ov_ab_singleEFmods, d, by = "ground")
   }
   rm(d); rm(f)
+  # create sequence in barplot with ordered levels : below - above - lui - abiotic
+  ov_ab_singleEFmods$color <- factor(ov_ab_singleEFmods$color, 
+                                     levels = rev(c("#A65628", "#66A61E", "#0072B2", "#666666")))
   
   ###
   # TURNOVER NESTEDNESS
@@ -229,7 +232,7 @@ create_single_funs_overviewbars <- function(restab2){
   ov_tn_singleEFmods[component == "abio", color := "#666666"]
   ov_tn_singleEFmods[component == "turnover", color := "#E6AB02"]
   ov_tn_singleEFmods[component == "nestedness", color := "#984EA3"]
-  ov_tn_singleEFmods[component == "lui", color := "#984EA3"]
+  ov_tn_singleEFmods[component == "lui", color := "#0072B2"]
   
   for(f in singleEFnames[-1]){
     d <- data.table::data.table(aggregate(get(f) ~ component, restab, mean))
@@ -238,6 +241,9 @@ create_single_funs_overviewbars <- function(restab2){
     ov_tn_singleEFmods <- merge(ov_tn_singleEFmods, d, by = "component")
   }
   rm(d); rm(f)
+  # create sequence in barplot with ordered levels : turnover - nestedness - lui - abiotic
+  ov_tn_singleEFmods$color <- factor(ov_tn_singleEFmods$color, 
+                                     levels = rev(c("#E6AB02", "#984EA3", "#0072B2", "#666666")))
   
   # check
   test <- all(all(apply(ov_ab_singleEFmods[, -c("ground", "color"), with = F], 2, sum) -1 <= 0.001), 
@@ -249,3 +255,35 @@ create_single_funs_overviewbars <- function(restab2){
               "turnover_nestedess" = ov_tn_singleEFmods))
 }
 NULL
+
+
+#' Create the overview plots for single functions models
+#'
+#' create overview barplot of single functions, above- belowground and turnover/ nestedness
+#' 
+#' @return a ggplot element containing the plot
+#' @param singleF_restab the input table, created with `create_single_funs_overviewbars`
+#' 
+#' @import data.table
+#' @import ggplot2
+#' 
+#' @export
+### FUNCTION
+create_single_funs_overviewbar_plot <- function(singleF_restab, legend = F){
+  if(legend){
+  # return a plot with legend
+    print("not implemented yet.")
+  } else {
+    sf_ov <- ggplot(singleF_restab, aes(x = variable, y = value, fill = color)) +
+      geom_bar(stat = "identity", color = "black") +
+      scale_fill_identity("", labels = singleF_restab$ground, 
+                          breaks = singleF_restab$color,  guide = "legend") +
+      # coord_flip() +
+      scale_y_reverse() +
+      theme(axis.title.x=element_blank(),
+            axis.title.y=element_blank(),
+            axis.text.x = element_text(angle = 90),
+            legend.position = "none")
+  }
+  return(sf_ov)
+}

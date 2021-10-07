@@ -439,12 +439,13 @@ Create overview bars
 # requires : restab2, created in chunk 1 under "# single EFs heatmap"
 a <- create_single_funs_overviewbars(restab2 = restab2)
 
-
+# bring to ggplot format
 ov_ab_singleEFmods <- melt(a$above_below, id.vars = c("ground", "color"))
 ov_tn_singleEFmods <- melt(a$turnover_nestedess, id.vars = c("component", "color"))
+# create plots
+p_ov_ab <- create_single_funs_overviewbar_plot(singleF_restab = ov_ab_singleEFmods)
+p_ov_tn <- create_single_funs_overviewbar_plot(singleF_restab = ov_tn_singleEFmods)
 
-ggplot(ov_ab_singleEFmods, aes(x = variable, y = value, fill = ground)) +
-  geom_bar(stat = "identity") 
-  # scale_fill_identity()
-#TODO HERE : make plot nice :) and do same for thresholds!
+p_ov_abtn <- plot_grid(p_ov_ab, p_ov_tn, labels = c("A", "B"))
+# saved as : <date>_plot_GDM_singleEFdist_overview_bars
 ```
