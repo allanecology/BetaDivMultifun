@@ -33,6 +33,8 @@ devtools::install_github("allanecology/BetaDivMultifun")
 
 ## Content
 
+- The scripts you need are in the folder vignettes
+
 #TODO : 
 - add a content description (TOC)
 - add the script overview image
@@ -41,7 +43,7 @@ devtools::install_github("allanecology/BetaDivMultifun")
 
 This is a basic example which shows you how to solve a common problem:
 
-```{r example}
+```{r example, eval = F}
 library(BetaDivMultifun)
 ## basic example code
 ```

@@ -22,6 +22,8 @@ devtools::install_github("allanecology/BetaDivMultifun")
 
 ## Content
 
+-   The scripts you need are in the folder vignettes
+
 \#TODO : - add a content description (TOC) - add the script overview
 image
 
