@@ -264,19 +264,21 @@ NULL
 #' 
 #' @return a ggplot element containing the plot
 #' @param singleF_restab the input table, created with `create_single_funs_overviewbars`
+#' @param pos defines the bar position, either stack for bars on top of each other (stacked bars)
+#' or "dodge" for bars next to each other
 #' 
 #' @import data.table
 #' @import ggplot2
 #' 
 #' @export
 ### FUNCTION
-create_single_funs_overviewbar_plot <- function(singleF_restab, legend = F){
+create_single_funs_overviewbar_plot <- function(singleF_restab, legend = F, pos = "stack"){
   if(legend){
   # return a plot with legend
     print("not implemented yet.")
   } else {
     sf_ov <- ggplot(singleF_restab, aes(x = variable, y = value, fill = color)) +
-      geom_bar(stat = "identity", color = "black") +
+      geom_bar(stat = "identity", color = "black", position = pos) +
       scale_fill_identity("", labels = singleF_restab$ground, 
                           breaks = singleF_restab$color,  guide = "legend") +
       # coord_flip() +

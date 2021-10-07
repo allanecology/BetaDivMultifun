@@ -226,11 +226,11 @@ a <- create_single_funs_overviewbars(restab2 = restab,
 ov_ab_allthresholds <- melt(a$above_below, id.vars = c("ground", "color"))
 ov_tn_allthresholds <- melt(a$turnover_nestedess, id.vars = c("component", "color"))
 # create plots
-p_ov_ab_thres <- create_single_funs_overviewbar_plot(singleF_restab = ov_ab_allthresholds)
-p_ov_tn_thres <- create_single_funs_overviewbar_plot(singleF_restab = ov_tn_allthresholds)
+p_ov_ab_thres <- create_single_funs_overviewbar_plot(singleF_restab = ov_ab_allthresholds, pos = "dodge")
+p_ov_tn_thres <- create_single_funs_overviewbar_plot(singleF_restab = ov_tn_allthresholds, pos = "dodge")
 
 p_ov_abtn_thres <- plot_grid(p_ov_ab_thres, p_ov_tn_thres, labels = c("A", "B"))
-# saved as : <date>_GDM_multifun_thresholds_allthresholds_overview_bars
+# saved as : <date>_GDM_multifun_thresholds_allthresholds_overview_bars<_dodge>
 ```
 
 
