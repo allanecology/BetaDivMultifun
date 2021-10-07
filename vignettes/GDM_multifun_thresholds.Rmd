@@ -118,10 +118,16 @@ restab <- merge(nicenames, restab, by = "nicenames")
 # save
 saveRDS(restab, file = "vignettes/out/plot_GDM_results_EFthresholds.rds")
 ```
+```{r}
+# Load data :
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
+# need to add component column
+restab <- merge(restab, nicenames[, .(names, nicenames, ground, component)], by = c("names", "nicenames", "ground"))
+```
+
+
 create heatmap
 ```{r}
-restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
-
 include <- c("nicenames", names(restab)[grep("gdm", names(restab))])
 # pal <- rev(RColorBrewer::brewer.pal(9, "RdYlBu"))
 pal <- RColorBrewer::brewer.pal(9, "YlOrRd")
@@ -201,6 +207,20 @@ colnames(restab1) <- gsub("EFnestedness_", "NES ", gsub("EFturnover_", "TO ",
 
 heatmap(restab1, hclustfun = hclust)
 # manually saved as "plot_GDM_thresholds_heatmap_cluster.pdf
+```
+Create overviewbars
+```{r}
+a <- create_single_funs_overviewbars(restab2 = restab, 
+                                     rel_colnames = grep("gdm_", names(restab), value = T))
+# bring to ggplot format
+ov_ab_allthresholds <- melt(a$above_below, id.vars = c("ground", "color"))
+ov_tn_allthresholds <- melt(a$turnover_nestedess, id.vars = c("component", "color"))
+# create plots
+p_ov_ab_thres <- create_single_funs_overviewbar_plot(singleF_restab = ov_ab_allthresholds)
+p_ov_tn_thres <- create_single_funs_overviewbar_plot(singleF_restab = ov_tn_allthresholds)
+
+p_ov_abtn_thres <- plot_grid(p_ov_ab_thres, p_ov_tn_thres, labels = c("A", "B"))
+# saved as : <date>_plot_GDM_allthresholds_overview_bars
 ```
 
 

@@ -171,6 +171,7 @@ NULL
 #' 
 #' @return A list with 2 data.tables ready for plotting
 #' @param restab2 the input table, created in chunk for single functions heatmap
+#' @param rel_colnames the names of the columns containing GDM results, for single functions e.g. `singleEFnames`
 #' @examples
 #' blabla TODO
 #' 
@@ -178,7 +179,7 @@ NULL
 #' 
 #' @export
 ### FUNCTION
-create_single_funs_overviewbars <- function(restab2){
+create_single_funs_overviewbars <- function(restab2, rel_colnames){
   restab <- data.table::copy(restab2)
   
   # add LUI as ground and as component
@@ -190,7 +191,7 @@ create_single_funs_overviewbars <- function(restab2){
   auto[, ground := "b"]
   auto <- rbind(restab[legendnames == "autotroph"], auto)
   # divide all effects by 2
-  auto[, (singleEFnames) := lapply(.SD, FUN = function(x) x / 2), .SDcols = singleEFnames]
+  auto[, (rel_colnames) := lapply(.SD, FUN = function(x) x / 2), .SDcols = rel_colnames]
   restab <- rbindlist(list(auto, restab[legendnames != "autotroph",]))
   
   # backup <- data.table::copy(restab)
@@ -198,7 +199,7 @@ create_single_funs_overviewbars <- function(restab2){
   ###
   # ABOVE- BELOWGROUND
   # get scaled effects
-  f <- singleEFnames[1]
+  f <- rel_colnames[1]
   d <- data.table::data.table(aggregate(get(f) ~ ground, restab, sum))
   d[, `get(f)` := `get(f)`/ sum(d$`get(f)`)] # scale to 0 1
   setnames(d, old = "get(f)", new = f)
@@ -209,7 +210,7 @@ create_single_funs_overviewbars <- function(restab2){
   ov_ab_singleEFmods[ground == "x", color := "#666666"]
   ov_ab_singleEFmods[ground == "lui", color := "#0072B2"]
   
-  for(f in singleEFnames[-1]){
+  for(f in rel_colnames[-1]){
     d <- data.table::data.table(aggregate(get(f) ~ ground, restab, mean))
     d[, `get(f)` := `get(f)`/ sum(d$`get(f)`)] # scale to 0 1
     setnames(d, old = "get(f)", new = f)
@@ -223,7 +224,7 @@ create_single_funs_overviewbars <- function(restab2){
   ###
   # TURNOVER NESTEDNESS
   # get scaled effects
-  f <- singleEFnames[1]
+  f <- rel_colnames[1]
   d <- data.table::data.table(aggregate(get(f) ~ component, restab, sum))
   d[, `get(f)` := `get(f)`/ sum(d$`get(f)`)] # scale to 0 1
   setnames(d, old = "get(f)", new = f)
@@ -234,7 +235,7 @@ create_single_funs_overviewbars <- function(restab2){
   ov_tn_singleEFmods[component == "nestedness", color := "#984EA3"]
   ov_tn_singleEFmods[component == "lui", color := "#0072B2"]
   
-  for(f in singleEFnames[-1]){
+  for(f in rel_colnames[-1]){
     d <- data.table::data.table(aggregate(get(f) ~ component, restab, mean))
     d[, `get(f)` := `get(f)`/ sum(d$`get(f)`)] # scale to 0 1
     setnames(d, old = "get(f)", new = f)
