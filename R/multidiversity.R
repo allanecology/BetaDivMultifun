@@ -116,5 +116,3 @@ multidiv <- function(x, threshold=FALSE, sc = "max", mx = 1, cent = FALSE, by =F
 }
 NULL
 
-
-
