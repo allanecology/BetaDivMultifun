@@ -128,7 +128,7 @@ restab <- merge(restab, nicenames[, .(names, nicenames, ground, component)], by 
 
 
 create heatmap
-```{r}
+```{r, eval = F}
 include <- c("nicenames", names(restab)[grep("gdm", names(restab))])
 # pal <- rev(RColorBrewer::brewer.pal(9, "RdYlBu"))
 pal <- RColorBrewer::brewer.pal(9, "YlOrRd")
@@ -210,7 +210,7 @@ heatmap(restab1, hclustfun = hclust)
 # manually saved as "plot_GDM_thresholds_heatmap_cluster.pdf
 ```
 Create overviewbars
-```{r}
+```{r, eval = F}
 # Load data :
 restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
 # need to add component column
@@ -272,7 +272,7 @@ saveRDS(restab, file = "vignettes/out/plot_GDM_results_EFthresholds_mean_se.rds"
 ```
 
 ## Heatmap
-```{r}
+```{r, eval = F}
 restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds_mean_se.rds", sep = ""))
 restab <- merge(nicenames[, .(nicenames, ground)], restab, by = "nicenames")
 # OPTION : select the variables to include in heatmap
@@ -344,6 +344,8 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap_mean_se.pdf", s
 ```
 
 
+
+
 ## average effects over all thresholds weighted by model sd
 
 from Gossner 2016
@@ -409,6 +411,8 @@ x <- ggplot(res[varname %in% nicenames[ground == "x", names]], aes(x = varname, 
 #  "GDM_multifun_thresholds_weighted_avg_over_all_thresholds_plotUncertainty_test_intermediate.pdf"
 ```
 Calculate weighted average
+$$wa = \frac{e_{1}*w_{1} + e_{2}*w_{2} + ... + e_{9}*w_{9}}{w_{1}+w_{2} + ... + w_{9}} = \frac{\sum_{i=1}^{n} e_{n}+\frac{1}{sd_{n}}}{\sum_{i=1}^{n} \frac{1}{sd_{n}}} ;  w_{n} = \frac{1}{sd_{n}} $$
+uncertainty-weighted average effect size.
 ```{r}
 ######
 # calculate WEIGHTED AVERAGE
@@ -445,6 +449,7 @@ luiinput <- "lui"
 permut <- F
 # go to plot_GDM, and run the part under "# Barplots ". Start with section "produce barplots" (leave out the upper part)
 # reset the ylims : for EFnestedness : + ylim(c(0, 0.1)), for EFturnover : + ylim(c(0, 0.15))
+#TODO ERROR plotting does not work any more --> make sure it can be plotted normally with plot_GDM. At the moment, create_restab2() is not working.
 ```
 
 
