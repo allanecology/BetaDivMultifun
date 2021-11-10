@@ -8,12 +8,14 @@ output: html_document
 model with y~LUI+other abiotic and model with y~beta+LUI+other abiotic to see if beta "absorbs" effects (which would be an indication of indirect effects) - just look at how LUI and soil effects change with or without beta
 
 # Requirements
+- usual stuff from results_nonpublic: pathtoout, pathtodata, nicenames
 - main model EFdistance_LUI input (`results_nonpublic.R`)
-- ...
 
 ```{r}
-# take out by-hand geographic distance calculation
-gdminput <- gdminput[, -grep("geosphere", names(gdminput))]
+# take out by-hand geographic distance calculation if this is in the input dataset
+if(length(grep("geosphere", names(gdminput))) > 0){
+  gdminput <- gdminput[, -grep("geosphere", names(gdminput))]
+}
 
 ###
 # model with betadiversities
@@ -71,6 +73,13 @@ gdm_with_without_beta <- ggplot(data = restab, aes(x = names, y = value, fill = 
 ggsave(filename = paste(pathtoout, "/GDM_sensitivity_indirect_beta_effects.pdf", sep = ""), 
        plot = gdm_with_without_beta, device=cairo_pdf,
        width = 297, height = 210, units = "mm", dpi = 900)
+
+
+# Calculate % increase when leaving out beta
+# -- how much of the abiotic effects are absorbed by biotic effect?
+restab <- dcast(restab, names ~ variant)
+restab[, perc_decrease := 1 - (beta / nobeta)] # e.g. 30% of the original Geo effect go indirect, we only see 60%
+sum(restab[names %in% c("LUI", "deltaLUI"), perc_decrease])
 ```
 
 
