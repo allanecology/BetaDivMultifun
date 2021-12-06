@@ -1,6 +1,6 @@
 names,nicenames,ground,color,linetypeto,legendnames,type,component,linetypet
 Geographic,geographic distance,x,#377EB8,solid,geographic distance,abio,abio,solid
-LUI,LUI,x,#7570B3,solid,LUI,abio,abio,solid
+LUI,LUI,lui,#7570B3,solid,LUI,abio,lui,solid
 autotroph.beta.sim,autotroph βto,a,#66A61E,solid,autotroph,bio,turnover,solid
 autotroph.beta.sne,autotroph βnes,a,#66A61E,dashed,autotroph,bio,nestedness,dotted
 bacteria.RNA.beta.sim,bacteria RNA βto,b,#666666,solid,bacteria RNA,bio,turnover,solid
@@ -9,7 +9,7 @@ bacterivore.protist.beta.sim,bacterivore protist βto,b,#FDC086,solid,bacterivor
 bacterivore.protist.beta.sne,bacterivore protist βnes,b,#FDC086,dashed,bacterivore protist,bio,nestedness,dotted
 decomposer.soilfungi.beta.sim,decomposer soilfungi βto,b,#984EA3,solid,decomposer soilfungi,bio,turnover,solid
 decomposer.soilfungi.beta.sne,decomposer soilfungi βnes,b,#984EA3,dashed,decomposer soilfungi,bio,nestedness,dotted
-deltaLUI,ΔLUI,x,#BEAED4,solid,ΔLUI,abio,abio,solid
+deltaLUI,ΔLUI,lui,#BEAED4,solid,ΔLUI,abio,lui,solid
 edis_soil,soil,x,#A6761D,solid,soil,abio,abio,solid
 eukaryvore.protist.beta.sim,eukaryvore protist βto,b,#F781BF,solid,eukaryvore protist,bio,turnover,solid
 eukaryvore.protist.beta.sne,eukaryvore protist βnes,b,#F781BF,dashed,eukaryvore protist,bio,nestedness,dotted
