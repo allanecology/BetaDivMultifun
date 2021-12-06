@@ -449,3 +449,28 @@ p_ov_tn <- create_single_funs_overviewbar_plot(singleF_restab = ov_tn_singleEFmo
 p_ov_abtn <- plot_grid(p_ov_ab, p_ov_tn, labels = c("A", "B"))
 # saved as : <date>_plot_GDM_singleEFdist_overview_bars
 ```
+
+Summary numbers about number of aboveground/belowground/LUI/abiotic and turnover/nestedness/LUI/abiotic drivers of single functions
+```{r}
+# use vector "singleEFnames" to get names of single functions to address each column separately
+
+###
+# ABOVEGROUND BELOWGROUND ABIOTIC ####
+
+###
+# TURNOVER NESTEDNESS AND LUI ####
+# create summary result for first single function "Biomass" which is first element in vector singleEFnames
+i <- 1
+summary_n_of_drivers_per_singlefun <- data.table(table(restab2[, .(component, get(singleEFnames[i]))][V2 > 0, .(component)]))
+colnames(summary_n_of_drivers_per_singlefun) <- c("component", singleEFnames[i])
+# create summary result for all other single functions
+for(i in 1:(length(singleEFnames)-1)){
+  res <- data.table(table(restab2[, .(component, get(singleEFnames[i]))][V2 > 0, component]))
+  colnames(res) <- c("component", singleEFnames[i])
+  summary_n_of_drivers_per_singlefun <- merge(summary_n_of_drivers_per_singlefun, res, by = "component")
+}
+rm(i); rm(res)
+# calculate mean number of drivers per single function to report in results
+data.table("component" = summary_n_of_drivers_per_singlefun$component, "mean number of drivers per function" = rowMeans(summary_n_of_drivers_per_singlefun[, -1]))
+```
+
