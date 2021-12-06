@@ -1,37 +1,37 @@
-names,nicenames,ground,color,linetypeto,legendnames,type,component,linetypet
-Geographic,geographic distance,x,#377EB8,solid,geographic distance,abio,abio,solid
-LUI,LUI,x,#7570B3,solid,LUI,abio,abio,solid
-autotroph.beta.sim,autotroph βto,a,#66A61E,solid,autotroph,bio,turnover,solid
-autotroph.beta.sne,autotroph βnes,a,#66A61E,dashed,autotroph,bio,nestedness,dotted
-bacteria.RNA.beta.sim,bacteria RNA βto,b,#666666,solid,bacteria RNA,bio,turnover,solid
-bacteria.RNA.beta.sne,bacteria RNA βnes,b,#666666,dashed,bacteria RNA,bio,nestedness,dotted
-bacterivore.protist.beta.sim,bacterivore protist βto,b,#FDC086,solid,bacterivore protist,bio,turnover,solid
-bacterivore.protist.beta.sne,bacterivore protist βnes,b,#FDC086,dashed,bacterivore protist,bio,nestedness,dotted
-decomposer.soilfungi.beta.sim,decomposer soilfungi βto,b,#984EA3,solid,decomposer soilfungi,bio,turnover,solid
-decomposer.soilfungi.beta.sne,decomposer soilfungi βnes,b,#984EA3,dashed,decomposer soilfungi,bio,nestedness,dotted
-deltaLUI,ΔLUI,x,#BEAED4,solid,ΔLUI,abio,abio,solid
-edis_soil,soil,x,#A6761D,solid,soil,abio,abio,solid
-eukaryvore.protist.beta.sim,eukaryvore protist βto,b,#F781BF,solid,eukaryvore protist,bio,turnover,solid
-eukaryvore.protist.beta.sne,eukaryvore protist βnes,b,#F781BF,dashed,eukaryvore protist,bio,nestedness,dotted
-herbivore.arthropod.beta.sim,herbivore arthropod βto,a,#1B9E77,solid,herbivore arthropod,bio,turnover,solid
-herbivore.arthropod.beta.sne,herbivore arthropod βnes,a,#1B9E77,dashed,herbivore arthropod,bio,nestedness,dotted
-herbivore.arthropodsoillarvae.beta.sim,herbivore arthropodsoillarvae βto,b,#A6761D,solid,herbivore arthropodsoillarvae,bio,turnover,solid
-herbivore.arthropodsoillarvae.beta.sne,herbivore arthropodsoillarvae βnes,b,#A6761D,dashed,herbivore arthropodsoillarvae,bio,nestedness,dotted
-omnivore.protist.beta.sim,omnivore protist βto,b,#FFFF99,solid,omnivore protist,bio,turnover,solid
-omnivore.protist.beta.sne,omnivore protist βnes,b,#FFFF99,dashed,omnivore protist,bio,nestedness,dotted
-pathotroph.soilfungi.beta.sim,pathotroph soilfungi βto,b,#E7298A,solid,pathotroph soilfungi,bio,turnover,solid
-pathotroph.soilfungi.beta.sne,pathotroph soilfungi βnes,b,#E7298A,dashed,pathotroph soilfungi,bio,nestedness,dotted
-plantparasite.protist.beta.sim,plantparasite protist βto,b,#7FC97F,solid,plantparasite protist,bio,turnover,solid
-plantparasite.protist.beta.sne,plantparasite protist βnes,b,#7FC97F,dashed,plantparasite protist,bio,nestedness,dotted
-plantpathogen.fungi.beta.sim,plantpathogen fungi βto,a,#377EB8,solid,plantpathogen fungi,bio,turnover,solid
-plantpathogen.fungi.beta.sne,plantpathogen fungi βnes,a,#377EB8,dashed,plantpathogen fungi,bio,nestedness,dotted
-plot_isolation,plot isolation,x,#66A61E,solid,plot isolation,abio,abio,solid
-secondary.consumer.arthropodsoillarvae.beta.sim,secondary consumer\narthropodsoillarvae βto,b,#2F4F4F,solid,secondary consumer arthropodsoillarvae,bio,turnover,solid
-secondary.consumer.arthropodsoillarvae.beta.sne,secondary consumer\narthropodsoillarvae βnes,b,#2F4F4F,dashed,secondary consumer arthropodsoillarvae,bio,nestedness,dotted
-secondary.consumer.beta.sim,secondary consumer βto,a,#E6AB02,solid,secondary consumer,bio,turnover,solid
-secondary.consumer.beta.sne,secondary consumer βnes,a,#E6AB02,dashed,secondary consumer,bio,nestedness,dotted
-symbiont.soilfungi.beta.sim,symbiont soilfungi βto,b,#BEAED4,solid,symbiont soilfungi,bio,turnover,solid
-symbiont.soilfungi.beta.sne,symbiont soilfungi βnes,b,#BEAED4,dashed,symbiont soilfungi,bio,nestedness,dotted
-tertiary.consumer.beta.sim,tertiary consumer βto,a,#D95F02,solid,tertiary consumer,bio,turnover,solid
-tertiary.consumer.beta.sne,tertiary consumer βnes,a,#D95F02,dashed,tertiary consumer,bio,nestedness,dotted
-autotroph.alpha,autotroph richness,a,#D95F02,solid,autotroph richness,bio,alpha,solid
+names,nicenames,lui_ground,ground,color,linetypeto,legendnames,type,lui_component,component,linetypet
+Geographic,geographic distance,x,x,#377EB8,solid,geographic distance,abio,abio,abio,solid
+LUI,LUI,lui,x,#7570B3,solid,LUI,abio,lui,abio,solid
+autotroph.beta.sim,autotroph βto,a,a,#66A61E,solid,autotroph,bio,turnover,turnover,solid
+autotroph.beta.sne,autotroph βnes,a,a,#66A61E,dashed,autotroph,bio,nestedness,nestedness,dotted
+bacteria.RNA.beta.sim,bacteria RNA βto,b,b,#666666,solid,bacteria RNA,bio,turnover,turnover,solid
+bacteria.RNA.beta.sne,bacteria RNA βnes,b,b,#666666,dashed,bacteria RNA,bio,nestedness,nestedness,dotted
+bacterivore.protist.beta.sim,bacterivore protist βto,b,b,#FDC086,solid,bacterivore protist,bio,turnover,turnover,solid
+bacterivore.protist.beta.sne,bacterivore protist βnes,b,b,#FDC086,dashed,bacterivore protist,bio,nestedness,nestedness,dotted
+decomposer.soilfungi.beta.sim,decomposer soilfungi βto,b,b,#984EA3,solid,decomposer soilfungi,bio,turnover,turnover,solid
+decomposer.soilfungi.beta.sne,decomposer soilfungi βnes,b,b,#984EA3,dashed,decomposer soilfungi,bio,nestedness,nestedness,dotted
+deltaLUI,ΔLUI,lui,x,#BEAED4,solid,ΔLUI,abio,lui,abio,solid
+edis_soil,soil,x,x,#A6761D,solid,soil,abio,abio,abio,solid
+eukaryvore.protist.beta.sim,eukaryvore protist βto,b,b,#F781BF,solid,eukaryvore protist,bio,turnover,turnover,solid
+eukaryvore.protist.beta.sne,eukaryvore protist βnes,b,b,#F781BF,dashed,eukaryvore protist,bio,nestedness,nestedness,dotted
+herbivore.arthropod.beta.sim,herbivore arthropod βto,a,a,#1B9E77,solid,herbivore arthropod,bio,turnover,turnover,solid
+herbivore.arthropod.beta.sne,herbivore arthropod βnes,a,a,#1B9E77,dashed,herbivore arthropod,bio,nestedness,nestedness,dotted
+herbivore.arthropodsoillarvae.beta.sim,herbivore arthropodsoillarvae βto,b,b,#A6761D,solid,herbivore arthropodsoillarvae,bio,turnover,turnover,solid
+herbivore.arthropodsoillarvae.beta.sne,herbivore arthropodsoillarvae βnes,b,b,#A6761D,dashed,herbivore arthropodsoillarvae,bio,nestedness,nestedness,dotted
+omnivore.protist.beta.sim,omnivore protist βto,b,b,#FFFF99,solid,omnivore protist,bio,turnover,turnover,solid
+omnivore.protist.beta.sne,omnivore protist βnes,b,b,#FFFF99,dashed,omnivore protist,bio,nestedness,nestedness,dotted
+pathotroph.soilfungi.beta.sim,pathotroph soilfungi βto,b,b,#E7298A,solid,pathotroph soilfungi,bio,turnover,turnover,solid
+pathotroph.soilfungi.beta.sne,pathotroph soilfungi βnes,b,b,#E7298A,dashed,pathotroph soilfungi,bio,nestedness,nestedness,dotted
+plantparasite.protist.beta.sim,plantparasite protist βto,b,b,#7FC97F,solid,plantparasite protist,bio,turnover,turnover,solid
+plantparasite.protist.beta.sne,plantparasite protist βnes,b,b,#7FC97F,dashed,plantparasite protist,bio,nestedness,nestedness,dotted
+plantpathogen.fungi.beta.sim,plantpathogen fungi βto,a,a,#377EB8,solid,plantpathogen fungi,bio,turnover,turnover,solid
+plantpathogen.fungi.beta.sne,plantpathogen fungi βnes,a,a,#377EB8,dashed,plantpathogen fungi,bio,nestedness,nestedness,dotted
+plot_isolation,plot isolation,x,x,#66A61E,solid,plot isolation,abio,abio,abio,solid
+secondary.consumer.arthropodsoillarvae.beta.sim,secondary consumer\narthropodsoillarvae βto,b,b,#2F4F4F,solid,secondary consumer arthropodsoillarvae,bio,turnover,turnover,solid
+secondary.consumer.arthropodsoillarvae.beta.sne,secondary consumer\narthropodsoillarvae βnes,b,b,#2F4F4F,dashed,secondary consumer arthropodsoillarvae,bio,nestedness,nestedness,dotted
+secondary.consumer.beta.sim,secondary consumer βto,a,a,#E6AB02,solid,secondary consumer,bio,turnover,turnover,solid
+secondary.consumer.beta.sne,secondary consumer βnes,a,a,#E6AB02,dashed,secondary consumer,bio,nestedness,nestedness,dotted
+symbiont.soilfungi.beta.sim,symbiont soilfungi βto,b,b,#BEAED4,solid,symbiont soilfungi,bio,turnover,turnover,solid
+symbiont.soilfungi.beta.sne,symbiont soilfungi βnes,b,b,#BEAED4,dashed,symbiont soilfungi,bio,nestedness,nestedness,dotted
+tertiary.consumer.beta.sim,tertiary consumer βto,a,a,#D95F02,solid,tertiary consumer,bio,turnover,turnover,solid
+tertiary.consumer.beta.sne,tertiary consumer βnes,a,a,#D95F02,dashed,tertiary consumer,bio,nestedness,nestedness,dotted
+autotroph.alpha,autotroph richness,a,a,#D95F02,solid,autotroph richness,bio,alpha,alpha,solid
