@@ -331,3 +331,47 @@ create_gdm_lineplot <- function(data, legend = F, ymax = 1){
 }
 NULL
 
+
+#' calculate average number of biotic/abiotic drivers of single functions
+#' 
+#' calculate the following average numbers to report from analysis :
+#' Number of aboveground/belowground/LUI/abiotic and 
+#' turnover/nestedness/LUI/abiotic drivers of single functions.
+#' To answer e.g. the following question : "How many aboveground groups do
+#' affect the function Biomass on average?"
+#' 
+#' @param restab2
+#' @param singleEFnames
+#' @param name_of_summary is either "lui_component" or "lui_ground", depending on
+#' which summary numbers are desired. "lui_component" gives average number of turnover/
+#' nestedness/lui/abiotic drivers, and "lui_ground" gives average number of aboveground/
+#' belowground/lui/abiotic drivers per single function.
+calc_avg_number_of_biotic_abiotic_drivers_of_single_functions <- function(restab2, singleEFnames, name_of_summary){
+  # basic input check
+  if(!name_of_summary %in% c("lui_component", "lui_ground")){
+    stop('name of summary not one of the expected arguments. Did you gave either "lui_component" or "lui_ground" as vector?')
+  }
+  
+  # create summary result for first single function "Biomass" which is first element in vector singleEFnames
+  i <- 1
+  summary_n_of_drivers_per_singlefun <- data.table(
+    table(
+      restab2[, .(get(name_of_summary), get(singleEFnames[i]))][V2 > 0, .(V1)]))
+  
+  colnames(summary_n_of_drivers_per_singlefun) <- c(name_of_summary, singleEFnames[i])
+  
+  # create summary result for all other single functions
+  for(i in 1:(length(singleEFnames)-1)){
+    res <- data.table(table(
+      restab2[, .(get(name_of_summary), get(singleEFnames[i]))][V2 > 0, .(V1)]))
+    colnames(res) <- c(name_of_summary, singleEFnames[i])
+    summary_n_of_drivers_per_singlefun <- merge(summary_n_of_drivers_per_singlefun, 
+                                                res, 
+                                                by = name_of_summary, all = T)
+  }
+  rm(i); rm(res)
+  # calculate mean number of drivers per single function to report in results
+  res <- data.table("category" = summary_n_of_drivers_per_singlefun[, get(name_of_summary)], 
+                    "mean number of drivers per function" = rowMeans(summary_n_of_drivers_per_singlefun[, -1], na.rm = T))
+  return(res)
+}
