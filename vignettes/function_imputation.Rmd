@@ -68,7 +68,7 @@ saveRDS(plotNAset, "plotNAset.rds")
 ## Check Correlations
 Of the non-factor columns only
 ```{r}
-corrbefun <- befun[, !colnames(befun) %in% c("Explo", "Soil.type", "Plotn", "Plot"), with=F]
+corrbefun <- befun[, !colnames(befun) %in% c("Explo", "Plotn", "Plot"), with=F]
 M <- cor(corrbefun, use="pairwise.complete.obs")
 
 # raw_grlfun_corrplot1
@@ -143,6 +143,45 @@ imperr <- list()
 # based on one-time imputation, take out : "amoA_AOA.2016" ,"amoA_AOB.2016",  "nxrA_NS", "16S_NB"
 numcols <- numcols[which(!numcols %in% c("Plotn", "Plot"))]
 dataset <- befun[, !colnames(befun) %in% c("Plotn", "Plot", "Explo"), with=F]
+# ----------------------------------------------
+#TODO : why did I take out Explo??
+# --> I can just redefine it as a factor and just use it for the imputation!!
+test <- data.table::copy(befun)
+test[, Explo := as.factor(Explo)]
+test_with_region <- missForest::missForest(test[, !colnames(test) %in% c("Plotn", "Plot"), with=F], variablewise = T)
+test_no_region <- missForest::missForest(test[, !colnames(test) %in% c("Plotn", "Plot", "Explo"), with=F], variablewise = T)
+
+oob_test_with_region <- test_with_region$OOBerror
+names(oob_test_with_region) <- names(test_with_region$ximp)
+oob_test_with_region <- data.table("function" = names(oob_test_with_region), "oob_with_region" = oob_test_with_region)
+
+oob_test_no_region <- test_no_region$OOBerror
+names(oob_test_no_region) <- names(test_no_region$ximp)
+oob_test_no_region <- data.table("function" = names(oob_test_no_region), "oob_no_region" = oob_test_no_region)
+
+oob_compare <- merge(oob_test_no_region, oob_test_with_region, by = "function", fill = NA, all = T)
+oob_compare[, oob_diff := oob_with_region - oob_no_region]
+oob_compare[abs(oob_diff) > 0.01, ]
+
+barplot(oob_compare$oob_with_region)
+
+png("test.png")
+barplot(oob_compare$oob_diff,
+        main = "OOB with region - without region",
+        sub = "Errors are lower with region. Largest difference : 0.06",
+        ylim = c(-0.08, 0.08))
+dev.off()
+
+plot(test_with_region$ximp$Parasitoid.traps, test_no_region$ximp$Parasitoid.traps,
+     main = "Parasitoid traps",
+     sub = "imputation error high (1.02 with region and 1.04 without region)")
+
+par(mfrow = c(2, 2))
+plot(test_with_region$ximp$Aggregation, test_no_region$ximp$Aggregation)
+plot(test_with_region$ximp$mAMFhyphae, test_no_region$ximp$mAMFhyphae)
+plot(test_with_region$ximp$seed.depletion, test_no_region$ximp$seed.depletion)
+plot(test_with_region$ximp$caterpillars.predation, test_no_region$ximp$caterpillars.predation)
+# ----------------------------------------------
 ```
 
 ```{r imputation, results="hide", eval=F}
