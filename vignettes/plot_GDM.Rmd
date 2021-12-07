@@ -359,6 +359,7 @@ restab2[, n_affected_fun := x]
 rm(x)
 ```
 
+Create heatmap
 ```{r, eval = F}
 # Create heatmap
 include <- c("nicenames", colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")], "n_affected_fun")
@@ -450,20 +451,18 @@ p_ov_abtn <- plot_grid(p_ov_ab, p_ov_tn, labels = c("A", "B"))
 # saved as : <date>_plot_GDM_singleEFdist_overview_bars
 ```
 
-Summary numbers about number of aboveground/belowground/LUI/abiotic and turnover/nestedness/LUI/abiotic drivers of single functions
+Summary numbers about number of average biotic/ abiotic/ LUI drivers driving
+single functions
 ```{r}
 # use vector "singleEFnames" to get names of single functions to address each column separately
 
-###
-# ABOVEGROUND BELOWGROUND ABIOTIC ####
-calc_avg_number_of_biotic_abiotic_drivers_of_single_functions(restab2 = restab2, 
-                                                              name_of_summary = "lui_ground",
-                                                              singleEFnames = singleEFnames)
-###
-# TURNOVER NESTEDNESS AND LUI ####
-calc_avg_number_of_biotic_abiotic_drivers_of_single_functions(restab2 = restab2, 
-                                                              name_of_summary = "lui_component",
-                                                              singleEFnames = singleEFnames)
+# add column to restab2 with needed categories
+restab2[, bio_abio_lui := lui_ground]
+restab2[bio_abio_lui == "a", bio_abio_lui := "b"]
 
+calc_avg_number_of_biotic_abiotic_drivers_of_single_functions(restab2 = restab2,
+                                                              singleEFnames = singleEFnames)
+# total available categories
+table(restab2$bio_abio_lui)
 ```
 
