@@ -332,24 +332,28 @@ create_gdm_lineplot <- function(data, legend = F, ymax = 1){
 NULL
 
 
-#' calculate average number of biotic/abiotic drivers of single functions
+#' calculate average number of biotic/abiotic/LUI drivers of single functions
 #' 
 #' calculate the following average numbers to report from analysis :
-#' Number of aboveground/belowground/LUI/abiotic and 
-#' turnover/nestedness/LUI/abiotic drivers of single functions.
-#' To answer e.g. the following question : "How many aboveground groups do
-#' affect the function Biomass on average?"
+#' Number of biotic/LUI/abiotic drivers of each single function separately.
+#' Subsequently take average of all single functions, in order to get average
+#' number of drivers per function per category.
+#' To answer e.g. the following question : "How many biotic groups do
+#' affect a single function on average?"
+#' Note that all parameters have very specific arguments, which are produced in the
+#' script `plot_GDM.Rmd`.
 #' 
-#' @param restab2
-#' @param singleEFnames
-#' @param name_of_summary is either "lui_component" or "lui_ground", depending on
-#' which summary numbers are desired. "lui_component" gives average number of turnover/
-#' nestedness/lui/abiotic drivers, and "lui_ground" gives average number of aboveground/
-#' belowground/lui/abiotic drivers per single function.
-calc_avg_number_of_biotic_abiotic_drivers_of_single_functions <- function(restab2, singleEFnames, name_of_summary){
+#' @param restab2 a data.table created in `plot_GDM.Rmd` creating a summary table of 
+#' all maxspline effects for single functions.
+#' @param singleEFnames a vector created in `plot_GDM.Rmd` containing the names of 
+#' single functions.
+#' @param name_of_summary is "bio_abio_lui", no other argument is accepted
+calc_avg_number_of_biotic_abiotic_drivers_of_single_functions <- function(restab2, 
+                                                                          singleEFnames, 
+                                                                          name_of_summary = "bio_abio_lui"){
   # basic input check
-  if(!name_of_summary %in% c("lui_component", "lui_ground")){
-    stop('name of summary not one of the expected arguments. Did you gave either "lui_component" or "lui_ground" as vector?')
+  if(!name_of_summary %in% c("bio_abio_lui")){
+    stop('name of summary not the expected argument "bio_abio_lui". Any new argument needs to be programmed newly.')
   }
   
   # create summary result for first single function "Biomass" which is first element in vector singleEFnames
@@ -371,7 +375,8 @@ calc_avg_number_of_biotic_abiotic_drivers_of_single_functions <- function(restab
   }
   rm(i); rm(res)
   # calculate mean number of drivers per single function to report in results
-  res <- data.table("category" = summary_n_of_drivers_per_singlefun[, get(name_of_summary)], 
+  res <- data.table("category" = summary_n_of_drivers_per_singlefun[, get(name_of_summary)],
                     "mean number of drivers per function" = rowMeans(summary_n_of_drivers_per_singlefun[, -1], na.rm = T))
   return(res)
 }
+NULL
