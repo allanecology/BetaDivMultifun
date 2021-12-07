@@ -413,7 +413,7 @@ x <- ggplot(res[varname %in% nicenames[ground == "x", names]], aes(x = varname, 
 Calculate weighted average
 $$wa = \frac{e_{1}*w_{1} + e_{2}*w_{2} + ... + e_{9}*w_{9}}{w_{1}+w_{2} + ... + w_{9}} = \frac{\sum_{i=1}^{n} e_{n}+\frac{1}{sd_{n}}}{\sum_{i=1}^{n} \frac{1}{sd_{n}}} ;  w_{n} = \frac{1}{sd_{n}} $$
 uncertainty-weighted average effect size.
-```{r}
+```{r, eval = F}
 ######
 # calculate WEIGHTED AVERAGE
 res[, weights := sdy ^ (-1)]
@@ -439,24 +439,34 @@ wres <- merge(wres[, .(names, wres)], nicenames, by = "names")
 
 # saveRDS(wres, file = "vignettes/out/weighted_avg_over_all_thresholds_EFturnover.Rds")
 # saveRDS(wres, file = "vignettes/out/weighted_avg_over_all_thresholds_EFnestedness.Rds")
-
-# restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFturnover.Rds", sep = ""))
-restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFnestedness.Rds", sep = ""))
+```
+prepare for plotting
+```{r}
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFturnover.Rds", sep = ""))
+# restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFnestedness.Rds", sep = ""))
 setnames(restab, old = c("wres"), new = c("maxsplines"))
-# model_name <- "EFturnover_WEIGTHED_mean_across_thresholds"
-model_name <- "EFnestedness_WEIGTHED_mean_across_thresholds"
+model_name <- "EFturnover_WEIGTHED_mean_across_thresholds"
+# model_name <- "EFnestedness_WEIGTHED_mean_across_thresholds"
 luiinput <- "lui"
 permut <- F
-# go to plot_GDM, and run the part under "# Barplots ". Start with section "produce barplots" (leave out the upper part)
+
+p <- create_bio_aboveground_barplot() + ylim(c(0, 0.15))
+b <- create_bio_belowground_barplot() + ylim(c(0, 0.15))
+q <- create_abio_barplot() + ylim(c(0, 0.15))
+
+# go to plot_GDM, and run the part under "# Barplots ". Start with section "produce overview bars" (leave out the upper part)
 # reset the ylims : for EFnestedness : + ylim(c(0, 0.1)), for EFturnover : + ylim(c(0, 0.15))
 #TODO ERROR plotting does not work any more --> make sure it can be plotted normally with plot_GDM. At the moment, create_restab2() is not working.
 ```
 
 
 
-## barplot average effects over all thresholds
+## barplot average effects over all thresholds DEPRECIATED
+*Note : *The preferred dataset is weighted average over all thresholds, so don't run the below piece of code.
+#TODO : delete this part of the script
+
 select dataset
-```{r}
+```{r, eval = F}
 # Note : need to select the model below
 
 ################################
@@ -471,14 +481,14 @@ restab <- merge(nicenames, restab, by = "nicenames")
 ####
 # chose variable to plot
 # # TURNOVER
-# setnames(restab, old = c("EFturnover_mean", "EFturnover_sd"), new = c("maxsplines", "sd"))
-# model_name <- "EFturnover_mean_across_thresholds"
+setnames(restab, old = c("EFturnover_mean", "EFturnover_sd"), new = c("maxsplines", "sd"))
+model_name <- "EFturnover_mean_across_thresholds"
 # NESTEDNESS
-setnames(restab, old = c("EFnestedness_mean", "EFnestedness_sd"), new = c("maxsplines", "sd"))
-model_name <- "EFnestedness_mean_across_thresholds"
+# setnames(restab, old = c("EFnestedness_mean", "EFnestedness_sd"), new = c("maxsplines", "sd"))
+# model_name <- "EFnestedness_mean_across_thresholds"
 ```
 Plot
-```{r}
+```{r, eval = F}
 ###########
 # produce barplots
 ###########
@@ -505,7 +515,8 @@ q <- q + geom_errorbar(aes(ymin = maxsplines - sd/2, ymax = maxsplines + sd/2),
 # produce overview bars
 ###########
     # ABOVE - BELOW - ABIOTIC
-restab2 <- create_restab2()
+permut = "F"
+restab2 <- create_restab2(restab = restab)
 restab2 <- restab2[type %in% c("averaged_scaled")]
 df <- data.frame(restab2)
 ov1 <- create_overview_above_below_abiotic_barplot()
@@ -533,7 +544,7 @@ annotated_multipanel_with_overview_bars <- ggdraw(multipanel_with_overview_bars)
 ###########
 # save
 ###########
-ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars_not_annotated.pdf", sep = ""), plot = annotated_multipanel_with_overview_bars, device=cairo_pdf,
+ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars_not_annotated.pdf", sep = ""), plot = multipanel_with_overview_bars, device=cairo_pdf,
        width = 11.96, height = 8.27, units = "in", dpi = 900)
 
 ```
