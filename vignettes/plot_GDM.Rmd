@@ -283,7 +283,7 @@ ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overvie
        width = 11.96, height = 8.27, units = "in", dpi = 900)
 
 ```
-
+Note : the barplot of weighted average is done in the script `GDM_multifun_thresholds.Rmd`, together with pieces of code from this script.
 
 
 # get all legends
