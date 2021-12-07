@@ -62,14 +62,14 @@ NULL
 #' @import data.table
 #' 
 #' @export
-create_restab2 <- function(x=1, restab = restab){
+create_restab2 <- function(x=1, restab){
   if(permut == T){
     print("removing non-significant effects from summary ...")
     restab[sign > 0.05 , maxsplines := 0]
   }
   # divide plants by 2 and half to each overview bar above- and belowground
   auto <- restab[legendnames == "autotroph",]
-  auto[ ,ground := "b"]
+  auto[, ground := "b"]
   auto <- rbind(restab[legendnames == "autotroph"], auto)
   auto[, maxsplines := maxsplines / 2]
   restab <- rbindlist(list(auto, restab[legendnames != "autotroph",]))

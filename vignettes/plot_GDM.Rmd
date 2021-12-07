@@ -225,7 +225,7 @@ q <- create_abio_barplot()
 # produce overview bars
 ###########
     # ABOVE - BELOW - ABIOTIC
-restab2 <- create_restab2()
+restab2 <- create_restab2(restab = restab)
 restab2 <- restab2[type %in% c("averaged_scaled")]
 df <- data.frame(restab2)
 ov1 <- create_overview_above_below_abiotic_barplot()
