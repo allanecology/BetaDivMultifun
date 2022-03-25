@@ -42,7 +42,8 @@ Imports:
     testthat,
     stringr,
     mgcv,
-    markdown
+    markdown,
+    rmarkdown
 RoxygenNote: 7.1.1
 Suggests: 
     testthat (>= 2.1.0)
