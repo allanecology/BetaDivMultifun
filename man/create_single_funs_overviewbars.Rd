@@ -4,10 +4,12 @@
 \alias{create_single_funs_overviewbars}
 \title{Create the overview table for single functions models}
 \usage{
-create_single_funs_overviewbars(restab2)
+create_single_funs_overviewbars(restab2, rel_colnames)
 }
 \arguments{
 \item{restab2}{the input table, created in chunk for single functions heatmap}
+
+\item{rel_colnames}{the names of the columns containing GDM results, for single functions e.g. `singleEFnames`}
 }
 \value{
 A list with 2 data.tables ready for plotting

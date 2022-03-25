@@ -1,6 +1,8 @@
 
 <!-- README.md is generated from README.Rmd by devtools::build_readme(). Please edit that file -->
 
+create random conflict from desktop
+
 # BetaDivMultifun
 
 <!-- badges: start -->

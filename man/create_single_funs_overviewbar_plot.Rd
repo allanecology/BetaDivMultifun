@@ -4,10 +4,13 @@
 \alias{create_single_funs_overviewbar_plot}
 \title{Create the overview plots for single functions models}
 \usage{
-create_single_funs_overviewbar_plot(singleF_restab, legend = F)
+create_single_funs_overviewbar_plot(singleF_restab, legend = F, pos = "stack")
 }
 \arguments{
 \item{singleF_restab}{the input table, created with `create_single_funs_overviewbars`}
+
+\item{pos}{defines the bar position, either stack for bars on top of each other (stacked bars)
+or "dodge" for bars next to each other}
 }
 \value{
 a ggplot element containing the plot

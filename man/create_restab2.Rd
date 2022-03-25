@@ -4,7 +4,7 @@
 \alias{create_restab2}
 \title{Create the table 2 for plotting}
 \usage{
-create_restab2(x = 1, restab = restab)
+create_restab2(x = 1, restab)
 }
 \value{
 A data.table ready for plotting
