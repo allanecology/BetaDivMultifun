@@ -2,11 +2,7 @@
 title: "how to use this package"
 author: "noelle"
 date: "May, 2022"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Vignette Title}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+output: html_document
 ---
 
 # installing this package
@@ -110,3 +106,4 @@ rmarkdown::render('<pathtothisdocument>/1read_raw_dataset.Rmd')
 rmarkdown::render('vignettes/function_imputation.Rmd', output_format = "html_document")
 ```
 
+Note : knit will produce a .html file in a temporal directory (e.g. tmp/) to not clutter the "vignettes" folder with html files. To get a html file output, use the code above.
