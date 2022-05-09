@@ -1,7 +1,7 @@
 ---
 title: "how to use this package"
 author: "noelle"
-date: "November 8, 2018"
+date: "May, 2022"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Vignette Title}
@@ -9,14 +9,16 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-# installing this package as a user
+# installing this package
+
+## as a user
 This is the way to go if you want to reproduce the work.
 
 - Where to install the package? (In which folder?)
   The scripts you need are stored within the package. Therefore store it where you want to have the code.
   In this tutorial, the place to store is "/home/noelleschenk/Desktop/BetaDivMultifun/"
 
-## If you do not have a ".tar.gz" file
+### If you do not have a ".tar.gz" file
 Or if you don't know what this is.
 1. Download the whole folder from [github](https://github.com/allanecology/BetaDivMultifun).
     - If you use git within RStudio : Download from within RStudio:
@@ -34,29 +36,31 @@ Note for above code section:
 - The devtools::install function also installs packages on which `BetaDivMultifun` depends on.
 - Update all packages when you are asked for by R (type 1 to the console)
 
-#TODO Noelle write about package error in windows.
+TODO Noelle write about package error in windows.
 
 Set wd *back* to the package
 ```{r, eval = F}
 setwd("/home/noelleschenk/Desktop/BetaDivMultifun/")
 ```
+If you do not with to further develop the package, but e.g. just reproduce the analysis, you are done now.
 
-## If you do have a ".tar.gz" file
+
+### If you do have a ".tar.gz" file
 If you have a ".tar.gz" file with the BetaDivMultifun package on it, you can install directly from that file.
 The ".tar.gz" file is called a "source"-type file.
 ```{r, eval = F}
 install.packages("/home/noelleschenk/Desktop/BetaDivMultifun_0.1.tar.gz", type = "source", repos = NULL)
 ```
 
+If you do not with to further develop the package, but e.g. just reproduce the analysis, you are done now.
 
-
-# install the package as a developer
+## install the package as a developer
 This is the way to go if you want to further develop this analysis.
 
-## Literature
+### Literature
 To create the package, I used the blogposts of: [Hilary Parker](https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/), [the book "R packages"](http://r-pkgs.had.co.nz/) and the idea of using `R packages` for an analysis is coming from Robert M. Flight's blogposts, where he explains [why](http://rmflight.github.io/post/analyses-as-packages/) and [how](http://rmflight.github.io/post/vignette-analysis/) to use `R package` for an analysis.
 
-## Setup
+### Setup
 Only if you like to work on the package (change it). I worked with following packages and RStudio, which is extremely well suited for package development.
 
 If you are linux user, install the following packages with `sudo apt-get install <packagename>`
@@ -76,7 +80,7 @@ library(roxygen2)
 ```
 
 
-## changing code
+### changing code
 After you generated/changed code of the package, the newly generated code needs to be loaded. (E.g. if you add a function and later want to use it.) Therefore, the function code as well as the functions documentation needs to be loaded as described below. 
 
 - create *documentation*
@@ -92,27 +96,12 @@ devtools::document()
 
 - to *rebuild the source package* .tar.gz file newly : RStudio : Build > Build Source Package `devtools::build()`
 
-### check code
+#### check code
 RStudio : Build > Check
 --> note : don't confuse with "test", this is something else.
 
-### test code
+#### test code
 develop your own tests to prevent introducing bugs.
-
-
-
-# creating `assembled_functions` dataset
-is described in 3 scripts in another github folder : 
-https://github.com/biodiversity-exploratories-synthesis/2019_grassland_functions
-
-In this package, the required dataset is just read in and an analysis is performed. As the dataset was constructed from within this directory, the commits can be looked up here.
-
-After installing the package and being connected to the "planteco" drive at IPS:
-* find the file `nonpublic.R`, it is stored at the "planteco" drive where the data is.
-* run `nonpublic.R`
-* run `1read_raw_datasets.Rmd` then `2calc_raw_dataset.R`
-* the file `"~/Desktop/december2018_assembled_functions_dataset.csv"` will be written on your Desktop.
-
 
 # knit to html
 By hand
