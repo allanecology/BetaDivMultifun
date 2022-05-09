@@ -2,7 +2,7 @@
 output: github_document
 ---
 
-<!-- README.md is generated from README.Rmd by devtools::build_readme(). Please edit that file -->
+<!-- README.md is generated from README.Rmd by devtools::build_readme(). Please edit the .Rmd file -->
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
@@ -59,3 +59,17 @@ plot(pressure)
 ```
 
 In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.
+
+
+# creating `assembled_functions` dataset
+is described in 3 scripts in another github folder : 
+https://github.com/biodiversity-exploratories-synthesis/2019_grassland_functions
+
+In this package, the required dataset is just read in and an analysis is performed. As the dataset was constructed from within this directory, the commits can be looked up here.
+
+After installing the package and being connected to the "planteco" drive at IPS:
+* find the file `nonpublic.R`, it is stored at the "planteco" drive where the data is.
+* run `nonpublic.R`
+* run `1read_raw_datasets.Rmd` then `2calc_raw_dataset.R`
+* the file `"~/Desktop/december2018_assembled_functions_dataset.csv"` will be written on your Desktop.
+
