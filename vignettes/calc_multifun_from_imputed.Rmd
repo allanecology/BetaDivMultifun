@@ -15,7 +15,12 @@ cols <- RColorBrewer::brewer.pal(8, "Dark2")
 
 Requirements : 
 - imputed_grlfuns : the imputed functions data
-- usedforBetadivMultifun, info_data 
+- usedforBetadivMultifun, info_data
+```{r}
+sections_to_be_loaded <- c("imputed_functions")
+# source("analysis_nonpublic.R")
+```
+
 
 
 # Calculate mini-multifunctionalities
@@ -184,9 +189,22 @@ capture.output(summary(pca_grlfuns), file = "calc_multifun_from_imputed_pca_summ
 par(mfrow = c(2, 2))
 plot(pca_grlfuns)
 biplot(pca_grlfuns)
-plot(ecdf(pca_grlfuns$sdev))
+
+# plot cumulative prop of variance explained (same as output by pca summary)
+plot(cumsum(pca_grlfuns$sdev^2 / sum(pca_grlfuns$sdev^2)), pch = 16, 
+     xlab = "PCA axes", ylab = "Cumulative Proportion of Variance", xaxt = "n", yaxt = "n")
+axis(1, at = seq(1, 17, 2))
+# axis(2, at = c(seq(0, 0.8, 0.2), 0.9161965, 1), labels = T)
+axis(2, at = seq(0, 1, 0.2))
+axis(2, at = 0.9161965, labels = "0.92", las = 2, cex = 0.04)
+abline(v = 11, lty = 2)
+abline(h = 0.9161965, lty = 2)
+# save as : "22-05-16_calc_multifun_from_imputed_pca_output_cumvar.pdf"
+
 dev.off()
 ```
+
+
 Plotting first 5 axis
 ```{r, eval = F}
 temp <- cbind(pc_grlfuns, "region" = sub("[0-9][0-9]", "", rownames(pc_grlfuns)))
