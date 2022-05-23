@@ -166,6 +166,8 @@ geodist[, c("PlotID", "Plot") := NULL]
 # remove two duplicated rows
 # geodist[which(duplicated(geodist$Plotn)), ]
 # geodist[Plotn %in% c("AEG29", "AEG10"), ] # there is only very little difference - remove one of them
+# note : in the newest dataset BExIS ID 1000, plot coordinates are given as selected here. 
+#    (48.38/9.21 for AEG10 and 48.42/9.36 for AEG29)
 geodist <- geodist <- geodist[!which(duplicated(geodist$Plotn)),]
 # select plot set
 geodist <- geodist[Plotn %in% plotNAset]
