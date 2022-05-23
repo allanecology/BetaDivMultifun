@@ -16,6 +16,12 @@ This script runs the GDM models. In the first code section, the desired GDM mode
 - pathtoout
 see `analysis_nonpublic.R` file.
 
+```{r}
+sections_to_be_loaded <- c("functions_dissimilarity", "betadiversity", "LUI", "prepared_covariates")
+source("vignettes/analysis_nonpublic.R")
+```
+
+
 ## packages
 - BetaDivMultifun (as usual)
     - the pacakges used by betadivmultifun (see DESCRIPTION file)
