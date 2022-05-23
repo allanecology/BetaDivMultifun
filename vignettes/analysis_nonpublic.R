@@ -26,7 +26,7 @@ devtools::load_all()
 # LOCAL ABSOLUTE PATHS
 # note : for IPS Computer : "/run/user/1001/...", but for laptop : "/run/user/1000/..."
 pathtoexplosynthesis <- "/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Data"
-pathtodata <- "/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/"
+pathtodata <- "/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun"
 pathtoout <- "~/Documents/github/BetaDivMultifun/vignettes/out"
 
 # GENERAL
