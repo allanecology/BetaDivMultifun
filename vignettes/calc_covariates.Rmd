@@ -9,6 +9,11 @@ output: html_document
 - prepare covariates for analysis 
 
 Depends on `clean_and_load_soil_covariates.Rmd` and `analysis_nonpublic.R`.
+```{r}
+sections_to_be_loaded <- c("assemble_covariates")
+source("vignettes/analysis_nonpublic.R")
+```
+
 
 # Soil
 ```{r}
