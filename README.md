@@ -66,3 +66,13 @@ drive where the data is. \* run `nonpublic.R` \* run
 `1read_raw_datasets.Rmd` then `2calc_raw_dataset.R` \* the file
 `"~/Desktop/december2018_assembled_functions_dataset.csv"` will be
 written on your Desktop.
+
+# Betadiversity formulae
+
+After Baselga 2010, Global Ecology and Biogeography
+
+![\\beta\_{sor} = \\frac{a + b}{a + b + 2c}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cbeta_%7Bsor%7D%20%3D%20%5Cfrac%7Ba%20%2B%20b%7D%7Ba%20%2B%20b%20%2B%202c%7D "\beta_{sor} = \frac{a + b}{a + b + 2c}")
+
+![\\beta\_{sim} = \\frac{min(a, b)}{min(a, b) + c}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cbeta_%7Bsim%7D%20%3D%20%5Cfrac%7Bmin%28a%2C%20b%29%7D%7Bmin%28a%2C%20b%29%20%2B%20c%7D "\beta_{sim} = \frac{min(a, b)}{min(a, b) + c}")
+
+![\\beta\_{nes} = \\frac{max(a, b) - min(a, b)}{min(a, b) + max(a, b) + 2c} \* \\frac{c}{c + min(a, b)}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cbeta_%7Bnes%7D%20%3D%20%5Cfrac%7Bmax%28a%2C%20b%29%20-%20min%28a%2C%20b%29%7D%7Bmin%28a%2C%20b%29%20%2B%20max%28a%2C%20b%29%20%2B%202c%7D%20%2A%20%5Cfrac%7Bc%7D%7Bc%20%2B%20min%28a%2C%20b%29%7D "\beta_{nes} = \frac{max(a, b) - min(a, b)}{min(a, b) + max(a, b) + 2c} * \frac{c}{c + min(a, b)}")
