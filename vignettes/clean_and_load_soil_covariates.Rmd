@@ -7,7 +7,7 @@ output: html_document
 requires `analysis_nonpublic.R` to load soil covariates `small_glsoil`, `main_glsoil`, `names_gl`, `plt.sur`, `geodist`.
 ```{r}
 sections_to_be_loaded <- c("assemble_covariates")
-# source("analysis_nonpublic.R")
+source("analysis_nonpublic.R")
 ```
 
 
