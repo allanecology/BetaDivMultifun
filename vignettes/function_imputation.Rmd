@@ -14,6 +14,11 @@ This script :
 - required input : `info_data`, `raw_grlfuns`, `plotNAset` (the plot set defined by diversity data in `calc_betadiversities.Rmd` with the final set of included plots for analysis)*
 - output : generates gap-filled dataset `impdat`, and `imp_err` contianing the imputation error. Two variables are produced, `impdat` which contains the gapfilled dataset which will be used in further analysis as well as `imp_err`, which contains the imputation error automatically estimated by `missForest`. The imputed dataset is stored as .rds file.
 
+```{r}
+sections_to_be_loaded <- c("assemble_functions")
+source("vignettes/analysis_nonpublic.R")
+```
+
 
 The dataset used for gap-filling is larger than the dataset used for the analysis. More variables enhance the performance of the gap-filling. Note : Only use additional variables which are not used in the analysis. Otherwise, data can be circular. (This means that e.g. no soil data is used for imputation, but additional functions which are not included in the later analysis).
 
@@ -23,9 +28,6 @@ The dataset used for gap-filling is larger than the dataset used for the analysi
 ## Data preparation
 
 ```{r}
-#USER : insert path to grassland function file and read in as grlfuns (uncomment line below)
-# raw_grlfuns <- data.table::fread("<pathto_grl_functions.csv>", header=T)
-source("analysis_nonpublic.R")
 befun <- data.table::copy(raw_grlfuns)
 ```
 
@@ -70,6 +72,7 @@ Of the non-factor columns only
 ```{r}
 corrbefun <- befun[, !colnames(befun) %in% c("Explo", "Plotn", "Plot"), with=F]
 M <- cor(corrbefun, use="pairwise.complete.obs")
+M_before <- M # save for later comparison with M_after
 
 # raw_grlfun_corrplot1
 corrplot::corrplot(M,type="lower",addCoef.col = "black",method="color",diag=F, tl.srt=1, tl.col="black", mar=c(0,0,0,0), number.cex=0.25, tl.cex = 0.3)
@@ -89,7 +92,7 @@ network <- igraph::graph_from_adjacency_matrix(M, weighted=T, mode="undirected",
 plot(network)
 ```
 There is no variable which is not connected with at least one line to another variable. Lines represent correlations > threshold.
-```{r}
+```{r, eval = T}
 rm(M); rm(network)
 ```
 
@@ -240,15 +243,33 @@ dev.off()
 Check correlations after imputation
 ```{r}
 corrbefun <- Y[, !colnames(Y) %in% c("Plotn", "Explos"), with=F]
-M <- cor(corrbefun, use="pairwise.complete.obs")
+M_after <- cor(corrbefun, use="pairwise.complete.obs", )
 
 # 21-12-07_function_imputation_correlations_among_numeric_variables_after_imputation
-corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=90, diag = F, tl.cex = 0.5, mar = c(2, 0, 0, 0)) # Potential Supplementary figure XY (compare with before imputation)
+corrplot::corrplot(M_after, type = "upper", tl.col="black", tl.srt=90, diag = F, tl.cex = 0.5, mar = c(2, 0, 0, 0)) # Potential Supplementary figure XY (compare with before imputation)
 
 # only show high correlations
 tres <- 0.7
-M[which(M < tres & M > -tres)] <- 0
-corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F, tl.cex = 0.3)
+M_after[which(M_after < tres & M_after > -tres)] <- 0
+corrplot::corrplot(M_after, type = "upper", tl.col="black", tl.srt=40, diag = F, tl.cex = 0.3)
+
+# compare correlations before and after
+# filter M by columns which are still there in M_after
+h <- as.matrix(M_before)
+h[!lower.tri(h)] <- 1000; h <- reshape2::melt(h, value.name = "correlation"); h <- data.table(h); h <- h[!correlation == 1000, ]
+M_before_dt <- h
+setnames(M_before_dt, old = "correlation", new = "correlation_before")
+h <- as.matrix(M_after)
+h[!lower.tri(h)] <- 1000; h <- reshape2::melt(h, value.name = "correlation"); h <- data.table(h); h <- h[!correlation == 1000, ]
+M_after_dt <- h
+
+M_compare <- merge(M_before_dt, M_after_dt, by = c("Var1", "Var2"))
+plot(M_compare$correlation_before, M_compare$correlation, 
+     xlab = "correlations before imputation", 
+     ylab = "correlations after imputation")
+mtext(side=3, line=2, at=-0.07, adj=0, cex=0.7, "Difference of correlation before and after \n Mean = Median = 0.00, with sd = 0.01")
+summary(M_compare$correlation_before - M_compare$correlation)
+# save as "22-05-24_function_imputation_correlations_before_and_after_imputation.pdf"
 ```
 
 
@@ -260,6 +281,7 @@ imputed_grlfuns <- data.table::copy(Y)
 rm(befun); rm(befunbackup); rm(corrbefun); rm(dataset); rm(imperr); rm(impvals)
 rm(X); rm(Y); rm(p); rm(naloc); rm(mimperr)
 rm(numcols); rm(tres)
+rm(M_before); rm(M_after); rm(M_before_dt); rm(M_after_dt); rm(M_compare)
 ```
 
 The multifunctionalities of imputed functions are calculated in another script. Current name `calc_multifun_from_imputed.Rmd`.
