@@ -10,7 +10,8 @@ require(gitcreds)
 # pathtoout <- "/run/user/1000/gvfs/smb-share:server=ipssmonstera.unibe.ch,share=nschenk/Documents/BEF/ANALYSIS_RESULTS"
 #TODO make pathtoout with new folder structure?
 pathtoout <- "~/Documents/github/BetaDivMultifun/vignettes/out"
-pathtodata <- "~/IPS_SYNCFILES_BetaDivMultifun"
+# pathtodata <- "~/IPS_SYNCFILES_BetaDivMultifun"
+pathtodata <- "/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun"
 
 # get nicenames
 #TODO add overview colors
@@ -34,7 +35,7 @@ model_results <- data.table::fread(paste(pathtodata, "/analysis/output_datasets/
 
 
 # # gdminput
-# funs <- "EFturnover_0.8"
+# funs <- "EFturnover_0.9"
 # compon_lui <- "LUI" #"components"
 # modelname <- paste("gdm", funs, compon_lui, sep = "_")
 # gdminput <- readRDS(paste(pathtodata, paste("/analysis/output_datasets/gdm", funs, compon_lui, "input.Rds", sep = "_"), sep = ""))
