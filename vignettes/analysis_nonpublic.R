@@ -5,11 +5,11 @@
 #    save the analysis_nonpublic.R with the analysis and source it with this specified vector in order to load the
 #    needed variables
 
-# please specify the vector of wanted datasets. The following vector will load all datasets.
-# sections_to_be_loaded <- c("assemble_covariates", 
-#                            "assemble_functions", 
-#                            "imputed_functions", 
-#                            "functions_dissimilarity", 
+# # please specify the vector of wanted datasets. The following vector will load all datasets.
+# sections_to_be_loaded <- c("assemble_covariates",
+#                            "assemble_functions",
+#                            "imputed_functions",
+#                            "functions_dissimilarity",
 #                            "prepared_covariates",
 #                            "raw_diversity",
 #                            "betadiversity",
@@ -17,7 +17,8 @@
 #                            "LUI",
 #                            "additional",
 #                                "master_diversity_alpha_beta_gamma",
-#                                "to_be_specified") #TODO check if needed
+#                                "to_be_specified", #TODO check if needed
+#                            "plotting")
 
 # PACKAGE
 # load functions from the package
@@ -135,4 +136,31 @@ if("additional" %in% sections_to_be_loaded){
     # master_alpha <- readRDS(paste(pathtodata, "/data_assembly/output_data/master_alpha.rds", sep = ""))
     # master_gamma <- ... "master_gamma.rds"
   }
+}
+
+
+if("plotting" %in% sections_to_beloaded){
+  # get nicenames
+  #TODO add overview colors
+  #   - check if gray is working well
+  nicenames <- data.table::data.table(read.csv("vignettes/nicenames.csv"))
+}
+
+if("results" %in% sections_to_be_loaded){
+  model_names <- read.csv("vignettes/helper_model_names.csv")
+  # for(i in nrow(model_names)){
+  #   source("vignettes/plot_GDM.Rmd") # by hand! no automation
+  # }
+  # i <- 30
+  
+  # #TODO : produce new deviance explained
+  # # note : save from model_overview.ods
+  model_results <- data.table::fread(paste(pathtodata, "/analysis/output_datasets/model_results.csv", sep = ""), header = T, skip = 0)
+  # model_results <- model_results[1:(nrow(model_results)-1)] # skipt last line
+  
+  # # gdminput
+  # funs <- "EFturnover_0.9"
+  # compon_lui <- "LUI" #"components"
+  # modelname <- paste("gdm", funs, compon_lui, sep = "_")
+  # gdminput <- readRDS(paste(pathtodata, paste("/analysis/output_datasets/gdm", funs, compon_lui, "input.Rds", sep = "_"), sep = ""))
 }
