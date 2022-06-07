@@ -12,7 +12,7 @@ suppressPackageStartupMessages(require(cowplot))
 
 ```{r}
 #TODO :  fill in code to work with significances, e.g. take out the non-significant maxsplines
-#TODO : order of trophic groups :  once all models are read, use effect size sequence and not alphabetically
+#TODO : order of trophic groups : once all models are read, use effect size sequence and not alphabetically
 ```
 
 
