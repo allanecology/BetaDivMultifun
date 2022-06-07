@@ -4,10 +4,7 @@
 #' pastes together the path where to get the gdm input file (.rds) which has been
 #' created before
 paste_gdm_input_path_together <- function(pathtoout, name){
-  # path_to_gdmin <- paste(pathtoout, "/GDM/", name, "_output.Rds", sep = "")
-  # edit : the gdm output is stored now in planteco
-  print("data is searched in planteco/.../analysis/output_datasets/")
-  path_to_gdmin <- paste(pathtoout, "/analysis/output_datasets/", name, "_output.Rds", sep = "")
+  path_to_gdmin <- paste(pathtodata, "/analysis/output_datasets/", name, "_output.Rds", sep = "")
   return(path_to_gdmin)
 }
 
