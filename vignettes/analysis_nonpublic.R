@@ -18,7 +18,10 @@
 #                            "additional",
 #                                "master_diversity_alpha_beta_gamma",
 #                                "to_be_specified", #TODO check if needed
-#                            "plotting")
+#                            "plotting",
+#                            "results",
+#                            "gdminput",
+#                            "gdmoutput")
 
 # PACKAGE
 # load functions from the package
@@ -139,7 +142,7 @@ if("additional" %in% sections_to_be_loaded){
 }
 
 
-if("plotting" %in% sections_to_beloaded){
+if("plotting" %in% sections_to_be_loaded){
   # get nicenames
   #TODO add overview colors
   #   - check if gray is working well
@@ -157,10 +160,27 @@ if("results" %in% sections_to_be_loaded){
   # # note : save from model_overview.ods
   model_results <- data.table::fread(paste(pathtodata, "/analysis/output_datasets/model_results.csv", sep = ""), header = T, skip = 0)
   # model_results <- model_results[1:(nrow(model_results)-1)] # skipt last line
-  
-  # # gdminput
-  # funs <- "EFturnover_0.9"
-  # compon_lui <- "LUI" #"components"
-  # modelname <- paste("gdm", funs, compon_lui, sep = "_")
-  # gdminput <- readRDS(paste(pathtodata, paste("/analysis/output_datasets/gdm", funs, compon_lui, "input.Rds", sep = "_"), sep = ""))
+}
+
+if("gdminput" %in% sections_to_be_loaded){
+  # gdminput
+  # if not specified differently, will read in the results from the GDM model EFdist with LUI
+  if(all(c(funs, compon_lui) < 0)){
+    print("using default model : EFdistance LUI")
+    funs <- "EFdistance"
+    compon_lui <- "LUI" #"components"
+  }
+  modelname <- paste("gdm", funs, compon_lui, sep = "_")
+  gdminput <- readRDS(paste(pathtodata, paste("/analysis/output_datasets/gdm", funs, compon_lui, "input.Rds", sep = "_"), sep = ""))
+}
+
+
+if("gdmoutput" %in% sections_to_be_loaded){
+  if(all(c(funs, compon_lui) < 0)){
+    print("using default model : EFdistance LUI")
+    funs <- "EFdistance"
+    compon_lui <- "LUI" #"components"
+  }
+  model_name <- paste("gdm", funs, compon_lui, sep = "_")
+  gdmoutput <- readRDS(paste_gdm_input_path_together(pathtoout = pathtodata, name = model_name))
 }
