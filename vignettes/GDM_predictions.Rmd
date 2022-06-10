@@ -1,0 +1,283 @@
+---
+title: "GDM Predictions"
+author: "N. V. Schenk"
+date: '2022-06-07'
+output: html_document
+---
+
+# GDM Predictions
+Run predictions from the GDMs in order to visualise the results (analogously to the effects package for mixed effects models).
+
+## Requirements
+From the file `analysis_nonpublic.R`.
+```{r}
+sections_to_be_loaded <- c("gdminput", "gdmoutput")
+funs <- "EFdistance"
+compon_lui <- "LUI"
+source("vignettes/analysis_nonpublic.R")
+library(gdm)
+library(hexbin) #TODO add to package if used
+library(ggplot2)
+theme_set(theme_half_open())
+library(cowplot)
+```
+
+
+# EFdist
+```{r}
+exSplines <- gdm::isplineExtract(gdmoutput)
+maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)
+```
+```{r}
+gdminput$predicted.distance <- predict(gdmoutput, gdminput) # is actually the same as gdmoutput$predicted
+
+dtgdminput <- data.table::data.table(gdminput)
+
+# check : plot pred vs. obs
+plot(gdminput$predicted.distance, gdminput$distance)
+
+# visualise results
+
+# ALL VALUES
+ggplot2::ggplot(dtgdminput, aes( x = s1.LUI, y = s2.LUI, col = predicted.distance)) +
+  geom_point() +
+  scale_color_viridis_c(option = "magma")
+# still quite messy. Try to clean out before plotting
+
+# hexbin plot
+# ggplot2::ggplot(gdminput, aes( x = s1.LUI, y = s2.LUI, z = predicted.distance)) +
+#   stat_summary_hex(fun = function(x) mean(x), bins = 30) +
+#   scale_fill_viridis_c(option = "magma", limits = c(0.19, 0.68))
+ggplot2::ggplot(gdminput, aes( x = s1.LUI, y = s2.LUI, z = predicted.distance)) +
+  stat_summary_hex(fun = function(x) mean(x), bins = 15) +
+  scale_fill_viridis_c(option = "magma", limits = c(0.19, 0.68))
+# ggplot2::ggplot(gdminput, aes( x = s1.LUI, y = s2.LUI, z = predicted.distance)) +
+#   stat_summary_hex(fun = function(x) mean(x), bins = 5) +
+#   scale_fill_viridis_c(option = "magma", limits = c(0.19, 0.68))
+
+ggplot2::ggplot(dtgdminput[s1.LUI < 1 & s2.LUI < 1, ], aes( x = s1.LUI, y = s2.LUI, z = predicted.distance)) +
+  stat_summary_hex(fun = function(x) mean(x), bins = 5) +
+  scale_fill_viridis_c(option = "magma", limits = c(0.19, 0.7)) + 
+  ggtitle("only LUI < 1")
+ggplot2::ggplot(dtgdminput[s1.LUI > 2.5 & s2.LUI > 2.5, ], aes( x = s1.LUI, y = s2.LUI, z = predicted.distance)) +
+  stat_summary_hex(fun = function(x) mean(x), bins = 5) +
+  scale_fill_viridis_c(option = "magma", limits = c(0.19, 0.7)) + 
+  ggtitle("only LUI > 2.7")
+
+# FIX TO CERTAIN VALUES
+# selecting ecologically interesting pairs of LUI dissim :
+# - low-low
+# - medium- medium
+# - high-high
+ggplot2::ggplot(dtgdminput[s1.LUI < 1 & s2.LUI < 1, ], aes( x = s1.LUI, y = s2.LUI, col = predicted.distance)) +
+  geom_point()
+
+ggplot2::ggplot(dtgdminput, aes( x = s1.LUI, y = predicted.distance, col = predicted.distance)) +
+  geom_point()
+ggplot2::ggplot(dtgdminput, aes( x = s2.LUI, y = predicted.distance, col = predicted.distance)) +
+  geom_point()
+ggplot2::ggplot(dtgdminput, aes( x = s1.LUI - s2.LUI, y = predicted.distance, col = predicted.distance)) +
+  geom_point()
+
+# only select certain LUI values : only s1.LUI has large values
+dtgdminput[s1.LUI > 3, ]
+ggplot2::ggplot(dtgdminput[s1.LUI > 3, ], aes( x = s2.LUI, y = predicted.distance, col = predicted.distance)) +
+  geom_point() +
+  ggtitle("Compared with plot with LUI > 3")
+
+# only select certain LUI values : only s1.LUI has small values
+dtgdminput[s1.LUI < 1, ]
+ggplot2::ggplot(dtgdminput[s1.LUI < 1, ], aes( x = s2.LUI, y = predicted.distance, col = predicted.distance)) +
+  geom_point() +
+  ggtitle("Compared with plot with LUI < 1")
+# conform to our hypothesis : low-low can have any distance, but low-high has always large distance.
+
+# only select certain LUI values : only s1.LUI has small values
+dtgdminput[s1.LUI < 0.7, ]
+ggplot2::ggplot(dtgdminput[s1.LUI < 0.7, ], aes( x = s2.LUI, y = predicted.distance, col = predicted.distance)) +
+  geom_point() +
+  ggtitle("Compared with plot with LUI < 0.7")
+# conform to our hypothesis : low-low can have any distance, but low-high has always large distance.
+
+# only select certain LUI values : only s1.LUI has medium values
+subset <- dtgdminput[abs(s1.LUI - 2) < 0.2, ]
+ggplot2::ggplot(subset, aes( x = s2.LUI, y = predicted.distance)) +
+  geom_point() +
+  ggtitle("Compared with plot with LUI = 2")
+# high range possible for all, highest when medium-low, but also high when medium-medium, lowest when medium-high!
+
+# only select certain LUI values : only s1.LUI has medium values
+subset <- dtgdminput[abs(s1.LUI - 2.5) < 0.2, ]
+ggplot2::ggplot(subset, aes( x = s2.LUI, y = predicted.distance, col = predicted.distance)) +
+  geom_point() +
+  ggtitle("Compared with plot with LUI = 2.5")
+# schon deutlich anders als bei LUI 2, compared to high nicht mehr so anders --> exponential shape!
+
+# only select certain LUI values : only s1.LUI has high values
+subset <- dtgdminput[abs(s1.LUI - 2.8) < 0.2, ]
+ggplot2::ggplot(subset, aes( x = s2.LUI, y = predicted.distance, col = predicted.distance)) +
+  geom_point() +
+  ggtitle("Compared with plot with LUI = 2.8")
+# high vs high hat NIE grosse Unterschiede! nicht so wie low-low!
+
+
+
+
+
+
+
+plot(abs(gdminput$s1.LUI - gdminput$s2.LUI), gdminput$predicted.distance)
+
+# just checking how it's in linear model.
+# we need to plot the residuals of LUI in order to get the exact model values...
+mod <- lm(distance ~ s1.LUI + s2.LUI, data = gdminput)
+plot(predict(mod), gdminput$distance)
+plot(predict(mod), gdminput$s2.LUI)
+
+# maybe need to work with the partial effects? Yes, probably!
+plot(exSplines[[1]][,"LUI"], exSplines[[2]][,"LUI"]) # second item : partial ecological distance
+length(exSplines[[1]][,"LUI"]) # why just 200 values? either too much or too few... ??
+# don't forget the intercept!
+
+# what is a rug plot in gdm.plot() ?
+```
+
+
+Selecting for high beta-multifunctionality
+```{r}
+# EFdist > 0.8
+subset <- dtgdminput[abs(predicted.distance - 0.8) < 0.2, ]
+ggplot2::ggplot(subset, aes( x = s2.LUI, y = predicted.distance, col = s1.LUI)) +
+  geom_point() +
+  ggtitle("high beta-multifunctionality cases")
+ggplot2::ggplot(subset, aes( x = s2.LUI, y = s1.LUI, col = predicted.distance)) +
+  geom_point() +
+  ggtitle("high beta-multifunctionality cases")
+# IMPORTANT : high beta-multifunctionality is NEVER observed between high-high!
+
+ggplot2::ggplot(subset, aes(x = abs(s2.LUI - s1.LUI), y = predicted.distance, col = rowMeans(data.frame(s1.LUI, s2.LUI)))) +
+  geom_point() 
+
+# EFdist > 0.6
+subset <- dtgdminput[abs(predicted.distance - 0.6) < 0.2, ]
+ggplot2::ggplot(subset, aes( x = s2.LUI, y = s1.LUI, col = predicted.distance)) +
+  geom_point() +
+  ggtitle("high beta-multifunctionality cases") +
+  scale_colour_continuous(type = "viridis")
+# IMPORTANT : high beta-multifunctionality is NEVER observed between high-high!
+```
+
+
+
+
+Example with saturating shape : plot.isolation
+```{r}
+# only select certain plot isolation values : only medium values
+subset <- dtgdminput[abs(s1.plot_isolation - 80) < 5, ]
+ggplot2::ggplot(subset, aes( x = s1.plot_isolation, y = predicted.distance, col = predicted.distance)) +
+  geom_point() +
+  ggtitle("Compared with plot with s1.plot_isolation = 80")
+# schon deutlich anders als bei LUI 2, compared to high nicht mehr so anders --> exponential shape!
+```
+
+
+
+
+
+From Vignette
+
+```{r}
+# As in Section 1, we first fit a gdm using raster layers as predictors
+# Load data from the gdm package
+gdmExpData <- southwest
+rastFile <- system.file("./extdata/swBioclims.grd", package="gdm")
+# create a raster stack
+envRast <- stack(rastFile)
+# Create a 'species list' data input using the gdm package data
+sppTab <- gdmExpData[, c("species", "site", "Lat", "Long")]
+# prepare the gdm input table, using rasters as predictors
+sitePairRast <- formatsitepair(bioData=sppTab, bioFormat=2, XColumn="Long", YColumn="Lat", sppColumn="species", siteColumn="site", predData=envRast)
+
+# Remove any site-pairs containing NAs for the extracted raster-based predictors
+sitePairRast <- na.omit(sitePairRast)
+# fit the GDM
+gdmRastMod <- gdm(data=sitePairRast,geo=TRUE)
+# Generate transformed predictor rasters, based on the raw raster predictor layers
+# and the fitted gdm
+transRasts <- gdm.transform(model=gdmRastMod, data=envRast)
+
+# Get the data from the gdm transformed rasters as a table
+rastDat <- na.omit(getValues(transRasts))
+# The PCA can be fit on a sample of grid cells if the rasters are large
+rastDat <- sampleRandom(transRasts, 50000)
+# perform the principle components analysis
+pcaSamp <- prcomp(rastDat)
+# Predict the first three principle components for every cell in the rasters
+# note the use of the 'index' argument
+pcaRast <- predict(transRasts, pcaSamp, index=1:3)
+# scale the PCA rasters to make full use of the colour spectrum
+pcaRast[[1]] <- (pcaRast[[1]]-pcaRast[[1]]@data@min) /
+(pcaRast[[1]]@data@max-pcaRast[[1]]@data@min)*255
+pcaRast[[2]] <- (pcaRast[[2]]-pcaRast[[2]]@data@min) /
+(pcaRast[[2]]@data@max-pcaRast[[2]]@data@min)*255
+pcaRast[[3]] <- (pcaRast[[3]]-pcaRast[[3]]@data@min) /
+(pcaRast[[3]]@data@max-pcaRast[[3]]@data@min)*255
+# Plot the three PCA rasters simultaneously, each representing a different colour
+# (red, green, blue)
+plotRGB(pcaRast, r=1, g=2, b=3)
+```
+
+What does the transform function do?
+```{r}
+
+test <- data.frame(X = seq(12,14), Y = seq(12, 14), autotroph.beta.sim = seq(0.2, 1, 0.3))
+
+trdf <- copy(gdminput)
+trdf$s1.Plot <- vapply(strsplit(rownames(trdf), "[.]"), `[`, 1, FUN.VALUE=character(1))
+trdf$s2.Plot <- vapply(strsplit(rownames(trdf), "[.]"), `[`, 2, FUN.VALUE=character(1))
+rownames(trdf) <- NULL
+trdf <- data.table(unique(trdf[, grep("s2", names(trdf), value = T)]))
+names(trdf) <- sub("s2.", "", names(trdf))
+setnames(trdf, old = c("xCoord", "yCoord"), new = c("X", "Y"))
+trdf <- data.frame(trdf)
+
+gdm.transform(gdmoutput, trdf)
+
+# gdm.transform(gdmoutput, exSplines[[1]]) # not working
+```
+
+
+
+# Change default 200 values from isplineExctract
+in the isplineExtract function, changed the parameter from 200 to `PSAMPLE <- 8350`
+```{r}
+exSplines.edit <- isplineExtract.edit(gdmoutput)
+maxsplines.edit <- apply(exSplines.edit$y, 2, max, na.rm = TRUE)
+plot(maxsplines.edit, maxsplines) # maxima are still the same
+exSplines.edit$x
+exSplines.edit
+plot(exSplines.edit[[1]][,"LUI"], exSplines.edit[[2]][,"LUI"]) # second item : partial ecological distance
+# this just has more points, right? equally spaced?
+hist(exSplines.edit[[1]][, "LUI"] - max(exSplines.edit[[1]][, "LUI"])) # yes, equally spaced
+# then it really does not make sense to plot this along the raw LUI values
+plot(exSplines.edit[[1]][, "LUI"], gdminput$s1.LUI - gdminput$s2.LUI)
+plot(exSplines.edit[[1]][, "LUI"], gdminput$s2.LUI)
+# no, really not.
+```
+
+
+## Can I just take this from the plot?
+```{r}
+partialeffdt <- data.table("LUI" = exSplines.edit[[1]][, "LUI"], "cumsum_partialeffLUI" = exSplines.edit[[2]][, "LUI"])
+
+partialeffdt$partialLUI <- c(partialeffdt$cumsum_partialeffLUI[1], diff(partialeffdt$cumsum_partialeffLUI))
+# plot(cumsum(partialeffdt$partialLUI), partialeffdt$cumsum_partialeffLUI) # just checking if reversion was correct. TRUE
+
+
+
+
+
+```
+
+
+
