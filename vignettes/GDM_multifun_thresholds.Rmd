@@ -515,8 +515,9 @@ mainmods[, legendnames := factor(legendnames, levels = rev(mainmods$legendnames)
 # plot
 p <- ggplot(data = mainmods, aes(x = legendnames, y = rank_avg, fill = color)) +
   geom_bar(stat = "identity", color = "black") + 
-  coord_flip() +
-  scale_fill_identity()
+  coord_flip() + ylim(c(0, 15)) +
+  scale_fill_identity() +
+  ylab("average ranks across main models") + xlab("")
 p
 # saved as : "GDM_multifun_thresholds_synthesis_biotic_ranks.pdf" A5 landscape
 
