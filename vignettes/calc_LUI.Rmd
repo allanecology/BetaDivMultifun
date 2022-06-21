@@ -9,7 +9,7 @@ Depends on `analysis_nonpublic.R` to load the raw dataset `rawlui` and `plotNAse
 # Combining LUI over 11 years
 Years 2006 to 2016. We have information until 2017, but the range of functions is until 2016.
 
-code by Caterina
+code by Caterina Penone
 ```{r}
 luiy <- data.table::copy(rawlui)
 luiy <- luiy[Year != "2017", ]
