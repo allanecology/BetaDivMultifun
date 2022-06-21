@@ -6,8 +6,8 @@ output: html_document
 ---
 ```{r, eval = T}
 suppressPackageStartupMessages(require(ggplot2))
-theme_set(theme_half_open())
 suppressPackageStartupMessages(require(cowplot))
+theme_set(theme_half_open())
 ```
 
 ```{r}
@@ -43,12 +43,21 @@ for(i in nrow(model_names)){
 If F, `luiinput` and `model_name` need to be given manually.
 *note* that i <- 6 for testing.
 ```{r}
+# Load requirements from <..>nonpublic.R file
+sections_to_be_loaded <- c("plotting", "results", "gdminput", "gdmoutput")
+funs <- "EFdistance"
+compon_lui <- "LUI"
+source("vignettes/analysis_nonpublic.R")
+# will create "model_name" automatically
+#    e.g. gdm_EFnestedness_0.7_LUI
+
+
 automaticrun <- F
     # only provide if automaticrun is F
 luiinput <- "lui" # lui or components
 # model_name <- "gdm_EFnestedness_0.7_LUI"
 # model_name <- "gdm_EFdistance_LUI_NO_sc_arthropodsoillarvae"
-model_name <- "gdm_EFdistance_LUI"
+# model_name <- "gdm_EFdistance_LUI"
 permut <- F # T or F, depending wether permutations are available or not
 ```
 
