@@ -4,6 +4,10 @@ author: 'Noëlle Schenk'
 date: "5/27/2021"
 output: html_document
 ---
+```{r}
+theme_set(theme_half_open())
+```
+
 
 requirements : 
 - TODO user : connect to planteco and nsch to get input files
@@ -464,5 +468,74 @@ q <- create_abio_barplot() + ylim(c(0, 0.15))
 # "EFnestedness_turnover_WEIGTHED_mean_across_thresholds_maxsplines.csv"
 ```
 
+
+
+
+# Create synthesis plot
+Create a plot with average effect sizes across the 3 main models : EFturnover_WEIGHTED_mean, EFnestedness_WEIGHTED_mean, EFdistance.
+
+Only biotic effects, because we add turnover and nestedness together, and a comparison with LUI would not be fair (2 effects vs. 1 effect).
+
+Average effect size : Depreciated, because it is almost exclusively driven by EFdist model, because it is on a different scale.
+- either scale and average (not done)
+- or take average rank (done)
+```{r}
+d1 <- fread(paste(pathtodata, "/analysis/output_datasets/all_LUI_mods_results_overview.csv", sep = ""))
+d2 <- fread(paste(pathtodata, "/analysis/output_datasets/EFnestedness_turnover_WEIGTHED_mean_across_thresholds_maxsplines.csv", sep = ""))
+mainmods <- merge(d1[, .(names, gdm_EFdistance_LUI)], d2, by = "names")
+mainmods <- mainmods[type == "bio"]
+
+###
+# Sum to + nes and THEN rank
+#
+# sum turnover and nestedness of each model
+mainmods <- data.table(stats::aggregate(mainmods[, .(gdm_EFdistance_LUI, EFturnover_WEIGTHED_mean_across_thresholds, EFnestedness_WEIGTHED_mean_across_thresholds)], 
+                 by = list(mainmods$legendnames), 
+                 FUN = sum))
+setnames(mainmods, old = "Group.1", new = "legendnames")
+#
+# # calc average across main mods
+# mainmods[, mean_across_main_mods := rowMeans(.SD), 
+#          .SDcols = c("gdm_EFdistance_LUI", "EFturnover_WEIGTHED_mean_across_thresholds", "EFnestedness_WEIGTHED_mean_across_thresholds")]
+#
+# calc rank average across main mods
+mainmods[, rank_EFdist := rank(gdm_EFdistance_LUI)]
+mainmods[, rank_EFnes := rank(EFnestedness_WEIGTHED_mean_across_thresholds)]
+mainmods[, rank_EFto := rank(EFturnover_WEIGTHED_mean_across_thresholds)]
+mainmods[, rank_avg := rowMeans(.SD), .SDcols = c("rank_EFdist", "rank_EFnes", "rank_EFto")]
+
+
+# Plot
+mainmods <- merge(mainmods, unique(nicenames[, .(lui_ground, ground, color, legendnames, type)]), by = "legendnames", all.x = T)
+# sort by effect size
+mainmods <- mainmods[order(-rank_avg),]
+# order the levels in the desired order
+mainmods[, legendnames := factor(legendnames, levels = rev(mainmods$legendnames))]
+#
+# plot
+p <- ggplot(data = mainmods, aes(x = legendnames, y = rank_avg, fill = color)) +
+  geom_bar(stat = "identity", color = "black") + 
+  coord_flip() +
+  scale_fill_identity()
+p
+# saved as : "GDM_multifun_thresholds_synthesis_biotic_ranks.pdf" A5 landscape
+
+
+# ###
+# # rank, average to + nes and then average across models
+# #
+# # calc rank within main mods
+# mainmods[, rank_EFdist := rank(gdm_EFdistance_LUI)]
+# mainmods[, rank_EFnes := rank(EFnestedness_WEIGTHED_mean_across_thresholds)]
+# mainmods[, rank_EFto := rank(EFturnover_WEIGTHED_mean_across_thresholds)]
+# #
+# # average the rank of to and nes
+# mainmods <- data.table(stats::aggregate(mainmods[, .(rank_EFdist, rank_EFnes, rank_EFto)], by = list(mainmods$legendnames), FUN = mean))
+# setnames(mainmods, old = "Group.1", new = "legendnames")
+# #
+# # average the rank across models
+# mainmods[, rank_avg := rowMeans(.SD), .SDcols = c("rank_EFdist", "rank_EFnes", "rank_EFto")]
+# #
+```
 
 
