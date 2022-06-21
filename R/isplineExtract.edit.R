@@ -1,4 +1,5 @@
-model <- gdmoutput
+# model <- gdmoutput
+#TODO : do I really need this function? Evaluate with the script GDM_predict
 
 isplineExtract.edit <- function (model){
   if (!is(model, "gdm")) {
