@@ -124,6 +124,7 @@ saveRDS(restab, file = "vignettes/out/plot_GDM_results_EFthresholds.rds")
 restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
 # need to add component column
 restab <- merge(restab, nicenames[, .(names, nicenames, ground, component)], by = c("names", "nicenames", "ground"))
+fwrite(restab, file = paste(pathtoout, "/all_LUI_mods_results_overview.csv", sep = ""), sep = ",") # write for supplementary
 ```
 
 
@@ -442,8 +443,8 @@ wres <- merge(wres[, .(names, wres)], nicenames, by = "names")
 ```
 prepare for plotting
 ```{r}
-restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFturnover.Rds", sep = ""))
-# restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFnestedness.Rds", sep = ""))
+# restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFturnover.Rds", sep = ""))
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFnestedness.Rds", sep = ""))
 setnames(restab, old = c("wres"), new = c("maxsplines"))
 model_name <- "EFturnover_WEIGTHED_mean_across_thresholds"
 # model_name <- "EFnestedness_WEIGTHED_mean_across_thresholds"
@@ -457,94 +458,11 @@ q <- create_abio_barplot() + ylim(c(0, 0.15))
 # go to plot_GDM, and run the part under "# Barplots ". Start with section "produce overview bars" (leave out the upper part)
 # reset the ylims : for EFnestedness : + ylim(c(0, 0.1)), for EFturnover : + ylim(c(0, 0.15))
 #TODO ERROR plotting does not work any more --> make sure it can be plotted normally with plot_GDM. At the moment, create_restab2() is not working.
+
+
+# Additional : loaded both EFturnover and EFnestedness, merged together and saved as : 
+# "EFnestedness_turnover_WEIGTHED_mean_across_thresholds_maxsplines.csv"
 ```
 
 
 
-## barplot average effects over all thresholds DEPRECIATED
-*Note : *The preferred dataset is weighted average over all thresholds, so don't run the below piece of code.
-#TODO : delete this part of the script
-
-select dataset
-```{r, eval = F}
-# Note : need to select the model below
-
-################################
-# EFthresholds mean se
-################################
-restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds_mean_se.rds", sep = "")) # Note : there is se.rds and sd.rds : standard error or standard deviation
-include <- c("nicenames", "EFturnover_mean", "EFturnover_sd", "EFnestedness_mean", "EFnestedness_sd")
-restab <- restab[, ..include]
-restab <- merge(nicenames, restab, by = "nicenames")
-####
-# SELECT MODEL
-####
-# chose variable to plot
-# # TURNOVER
-setnames(restab, old = c("EFturnover_mean", "EFturnover_sd"), new = c("maxsplines", "sd"))
-model_name <- "EFturnover_mean_across_thresholds"
-# NESTEDNESS
-# setnames(restab, old = c("EFnestedness_mean", "EFnestedness_sd"), new = c("maxsplines", "sd"))
-# model_name <- "EFnestedness_mean_across_thresholds"
-```
-Plot
-```{r, eval = F}
-###########
-# produce barplots
-###########
-p <- create_bio_aboveground_barplot()
-b <- create_bio_belowground_barplot()
-q <- create_abio_barplot()
-
-###########
-# add sd
-###########
-p <- p + geom_errorbar(aes(ymin = maxsplines - sd, ymax = maxsplines + sd), 
-                  linetype = "solid") 
-  # ylim(-0.01, 0.45)
-b <- b + geom_errorbar(aes(ymin = maxsplines - sd/2, ymax = maxsplines + sd/2), 
-                  linetype = "solid") #+
-  # ylim(-0.01, 0.45)
-q <- q + geom_errorbar(aes(ymin = maxsplines - sd/2, ymax = maxsplines + sd/2), 
-                  linetype = "solid") #+
-  # ylim(-0.01, 0.45)
-
-
-# copied from barplot section above --------------------------------------------
-###########
-# produce overview bars
-###########
-    # ABOVE - BELOW - ABIOTIC
-permut = "F"
-restab2 <- create_restab2(restab = restab)
-restab2 <- restab2[type %in% c("averaged_scaled")]
-df <- data.frame(restab2)
-ov1 <- create_overview_above_below_abiotic_barplot()
-ov1L <- create_overview_above_below_abiotic_barplot(legend = T) # legend only, plot with plot_grid()
-    # TURNOVER - NESTEDNESS - ABIOTIC
-restab3 <- create_restab_3()
-restab3 <- restab3[type %in% c("averaged_scaled")]
-df <- data.frame(restab3)
-ov2 <- create_overview_turnover_nestedness_abiotic_barplot()
-ov2L <- create_overview_turnover_nestedness_abiotic_barplot(legend = T) # only legend, plot with plot_grid()
-ov_legends <- plot_grid(ov1L, ov2L, nrow = 2)
-
-###########
-# add plots together
-###########
-multipanel_with_overview_bars <- plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5,
-                                             rel_heights = c(0.25, 0.4, 0.16, 0.08, 0.08), align = "v") # 2 summary bars
-
-annotated_multipanel_with_overview_bars <- ggdraw(multipanel_with_overview_bars) +
-  # draw_plot(labsplot, .65, .65, .35, .35) +
-  draw_plot(ov_legends, 0.05, 0.1, .1, .2)
-
-# copied from barplot section above --------------------------------------------
-
-###########
-# save
-###########
-ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars_not_annotated.pdf", sep = ""), plot = multipanel_with_overview_bars, device=cairo_pdf,
-       width = 11.96, height = 8.27, units = "in", dpi = 900)
-
-```
