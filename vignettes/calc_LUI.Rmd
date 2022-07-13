@@ -5,6 +5,12 @@ date: "June 18, 2019"
 output: html_document
 ---
 Depends on `analysis_nonpublic.R` to load the raw dataset `rawlui` and `plotNAset`
+```{r}
+# Load requirements from <..>nonpublic.R file
+sections_to_be_loaded <- c("raw_lui")
+source("vignettes/analysis_nonpublic.R")
+```
+
 
 # Combining LUI over 11 years
 Years 2006 to 2016. We have information until 2017, but the range of functions is until 2016.
@@ -37,7 +43,7 @@ data.table::setnames(luiy, old = "EP_PlotID", new = "Plot")
 luiy <- merge(luiy, usefulplotids, by = "Plot")
 luiy[, Plot := NULL]
 
-# calculate the means over 12 years
+# calculate the means over 11 years
 lui <- aggregate(LUI~Plotn, luiy, mean)
 lui <- merge(lui, aggregate(Gstd~Plotn, luiy, mean), by = "Plotn")
 lui <- merge(lui, aggregate(Mstd ~ Plotn, luiy, mean), by = "Plotn")
