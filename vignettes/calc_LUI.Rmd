@@ -15,6 +15,11 @@ source("vignettes/analysis_nonpublic.R")
 # Combining LUI over 11 years
 Years 2006 to 2016. We have information until 2017, but the range of functions is until 2016.
 
+
+$$LUI = \frac{1}{11} \left( \sum_{i = 2006}^{2016} \sqrt{\frac{G_i}{mean(G_i)}+ \frac{M_i}{mean(M_i)} + \frac{F_i}{mean(F_i)}} \right)$$
+
+
+
 code by Caterina Penone
 ```{r}
 luiy <- data.table::copy(rawlui)
