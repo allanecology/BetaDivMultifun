@@ -10,6 +10,12 @@ output: html_document
 
 # Load and merge dataset
 Note : this script is based on the Exploratoreis diversity dataset, which is read in with the script `analysis_nonpublic.R`. It reads in the two datasets `spdiv` and `spinfo`.
+```{r}
+# Load requirements from <..>nonpublic.R file
+sections_to_be_loaded <- c("raw_diversity")
+source("vignettes/analysis_nonpublic.R")
+```
+
 
 ## Dataset Cleaning
 From cleaning, getting numbers : 
