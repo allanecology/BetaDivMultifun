@@ -1,0 +1,88 @@
+---
+title: "Model diagnostics"
+author: "N. V. Schenk"
+date: '2022-07-29'
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include = F}
+sections_to_be_loaded <- c()
+source("analysis_nonpublic.R")
+```
+
+Quick and dirty diagnostics plot function. Taken from gdm package as there was no way to plot only first 2 plots.
+```{r, include = F}
+plot.diagn.gdm <- function(x, title = ""){
+  # x is a model output from GDM
+  # title is a character string, title for the plot
+  plot.color <- "blue"
+  PSAMPLE <- 200
+  plot.linewidth <- 2.0
+  
+  par(mfrow = c(1, 2))
+  ##plots the compositional dissimilarity spline plot
+  plot(x$ecological, x$observed, xlab="Predicted Ecological Distance", ylab="Observed Compositional Dissimilarity", type="n", ylim=c(0,1), main = title)
+  points(x$ecological, x$observed, pch=20, cex=0.25, col=plot.color)
+  overlayX <- seq( from=min(x$ecological), to=max(x$ecological), length=PSAMPLE )
+  overlayY <- 1 - exp( - overlayX )
+  lines(overlayX, overlayY, lwd=plot.linewidth )
+  
+  ##plots the second compositional dissimilarity spline plot
+  plot(x$predicted, x$observed, xlab="Predicted Compositional Dissimilarity", ylab="Observed Compositional Dissimilarity", type="n", ylim=c(0,1), main = paste("%var expl =", round(x$explained, 2)))
+  points( x$predicted, x$observed, pch=20, cex=0.25, col=plot.color )
+  overlayX <- overlayY <- seq( from=min(x$predicted), to=max(x$predicted), length=PSAMPLE )
+  lines( overlayX, overlayY, lwd=plot.linewidth )
+}
+```
+
+
+# Model diagnostic plots
+Some of the diagnostic plots of the GDMs look very crappy. Does the %deviance explained correspond to the crappyness of the GDM model fit?
+
+## EFdist
+High % dev expl
+```{r}
+efdist <- readRDS(paste(pathtodata, "/analysis/output_datasets/gdm_EFdistance_LUI_output.Rds", sep = ""))
+# efdist$explained # 29.99
+plot.diagn.gdm(efdist, title = "Efdistane")
+```
+
+
+## EF turnover
+```{r, eval = F, include = F}
+efto0.5 <- readRDS(paste(pathtodata, "/analysis/output_datasets/gdm_EFturnover_0.5_LUI_output.Rds", sep = ""))
+efto0.5$explained # 12.19
+plot.diagn.gdm(efto0.5)
+#TODO : Stimmt der Wert auf der Grafik nicht? Von Hand in Tabelle eingetragen und vertippt??
+```
+```{r}
+# 9 plots
+EFturnover_varexpl <- list()
+for(i in seq(0.1, 0.9, 0.1)){
+  print(i)
+  mod <- readRDS(paste(pathtodata, "/analysis/output_datasets/gdm_EFturnover_", i, "_LUI_output.Rds", sep = ""))
+  EFturnover_varexpl <- append(EFturnover_varexpl, mod$explained)
+  plot.diagn.gdm(mod, title = paste("EFturnover", i))
+}
+# EFturnover_varexpl
+```
+
+
+# EF nestedness
+```{r}
+# 9 plots
+EFnestedness_varexpl <- list()
+for(i in seq(0.1, 0.9, 0.1)){
+  print(i)
+  mod <- readRDS(paste(pathtodata, "/analysis/output_datasets/gdm_EFnestedness_", i, "_LUI_output.Rds", sep = ""))
+  EFnestedness_varexpl <- append(EFnestedness_varexpl, mod$explained)
+  plot.diagn.gdm(mod, title = paste("EFnestedness", i))
+}
+# EFnestedness_varexpl
+```
+
