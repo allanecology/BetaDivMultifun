@@ -346,6 +346,9 @@ SEG22 HEG20  0.7917539              0        0.5555556
 also if nestedness is > 0.4
 --> high nes cases are 0 turnover cases!
 ```{r}
+sections_to_be_loaded <- c("functions_dissimilarity")
+source("vignettes/analysis_nonpublic.R")
+
 #TODO HERE : summary stats of these cases.
 # note that somehow.
 
@@ -404,6 +407,32 @@ ggplot(data.frame(M), aes(x = functions, y = LUI)) +
 # corrplot::corrplot(m, type="lower", addCoef.col = "black", method="color", diag=F, tl.srt=1, tl.col="black", mar=c(1,0,1,0), number.cex=0.6)
 ```
 
+## which functions drive EFturnover?
+```{r}
+# requires EFmaster
+sections_to_be_loaded <- c("functions_dissimilarity", "LUI")
+source("vignettes/analysis_nonpublic.R")
+funs <- readRDS(paste(pathtodata, "/data_assembly/output_data/imputed_and_compound_grlfuns.rds", sep = ""))
+setcolorder(funs, c("Plotn"))
+
+# transform single functions to % --> interpret as "high" or "low"
+trans_funs <- data.table(apply(funs[, -1], 2, function(x) x / maxx(x, 5)))
+trans_funs$Plotn <- funs$Plotn
+trans_funs <- merge(trans_funs, LUI[, 1:2], by = "Plotn")
+
+
+highturnoverpairs <- EFmaster[EFturnover_0.7 > 0.8, .(Var1, Var2)] # plot pairs with high turnover
+i <- 6
+trans_funs[Plotn %in% as.character(unlist(highturnoverpairs[i, ]))]
+
+#example within region
+x <- sort(abs(apply(trans_funs[Plotn %in% c("AEG13", "AEG10"), -1], 2, diff)))
+par(mar=c(11,4,4,4))
+barplot(x, las = 2)
+y  <- sort(abs(apply(trans_funs[Plotn %in% c("SEG07", "SEG43"), -1], 2, diff)))
+par(mar=c(11,4,4,4))
+barplot(y, las = 2)
+```
 
 
 ## Violin plot over all plots
