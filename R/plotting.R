@@ -53,6 +53,67 @@ create_restab <- function(x=1){
 NULL
 
 
+#' Create restab for overview bars
+#' 
+#' calculates scaled averages of effect sizes per category, either (1) above- or belowground
+#' or (2) turnover or nestedness, as well as LUI and abiotic effects. The categories correspond
+#' to the categories given in the table `nicenames` in columns`lui_ground` and `lui_component`.
+#' 
+#' *Note for developers* : This function was built from `create_restab2()` and `create_restab_3()`
+#' which were deleted (available in git history, date : 22.06.22)
+#' 
+#' @return a data.table containing values ready for plotting
+#' @import data.table
+#' @param restab exactly the output from the function `create_restab0()`
+#' 
+#' @export
+create_overviewbar_restab <- function(restab){
+  if(permut == T){
+    print("please implement me...")
+    # lui_restab[sign > 0.05 , maxsplines := 0]
+  }
+  
+  # calculating the average, scaled effect
+  
+  #########
+  # NESTEDNESS- TURNOVER
+  #
+  ovtab_tn <- data.table(aggregate(maxsplines ~ lui_component, restab, function(x) mean(x)))
+  ovtab_tn[, maxsplines := maxsplines / sum(ovtab_tn$maxsplines)]
+  # add colors
+  ovtab_tn[lui_component == "turnover", color := "#E6AB02"]
+  ovtab_tn[lui_component == "nestedness", color := "#984EA3"]
+  ovtab_tn[lui_component == "abio", color := "#666666"]
+  ovtab_tn[lui_component == "lui", color := "#0072B2"]
+  ovtab_tn[, type := "averaged_scaled"]
+  
+  #########
+  # ABOVE- BELOWGROUND
+  #
+  # Divide plants to above- and belowground
+  auto <- restab[legendnames == "autotroph",]
+  auto[, ground := "b"]
+  auto <- rbind(restab[legendnames == "autotroph"], auto)
+  auto[, maxsplines := maxsplines / 2]
+  ovtab_ab <- rbindlist(list(auto, restab[legendnames != "autotroph",]))
+  # calculate average scaled effects
+  ovtab_ab <- data.table(aggregate(maxsplines ~ lui_ground_nicenames, ovtab_ab, function(x) mean(x)))
+  ovtab_ab[, maxsplines := maxsplines / sum(ovtab_ab$maxsplines)]
+  ovtab_ab[, type := "averaged_scaled"]
+  # add colors
+  ovtab_ab[lui_ground_nicenames == "aboveground", color := "#66A61E"]
+  ovtab_ab[lui_ground_nicenames == "belowground", color := "#A65628"]
+  ovtab_ab[lui_ground_nicenames == "abiotic", color := "#666666"]
+  ovtab_ab[lui_ground_nicenames == "LUI", color := "#0072B2"]
+  
+  #########
+  # RETURN
+  return(list("above-below" = ovtab_ab, "turnover-nestedness" = ovtab_tn))
+}
+
+
+
+
 #' Create the table 2 for plotting
 #'
 #' 
