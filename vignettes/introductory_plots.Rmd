@@ -380,6 +380,31 @@ funs <- readRDS(paste(pathtodata, "/data_assembly/output_data/imputed_and_compou
 ```
 
 
+## single functions correlation with LUI
+```{r}
+# read in dataset
+lui <- data.table(readRDS(paste(pathtodata, "/data_assembly/output_data/LUI.rds", sep = "")))
+funs <- readRDS(paste(pathtodata, "/data_assembly/output_data/imputed_and_compound_grlfuns.rds", sep = ""))
+dat <- merge(lui[, .(Plotn, LUI)], funs, by = "Plotn")
+
+m <- cor(dat[, -"Plotn"], use = "pairwise.complete.obs")
+M <- data.frame("LUI" = sort(m[-1, 1]))
+M$functions <- rownames(M)
+M$functions <- factor(M$functions, levels = M$functions)
+
+ggplot(data.frame(M), aes(x = functions, y = LUI)) +
+  geom_bar(stat = "identity") +
+  ylab("Correlation with LUI") +
+  xlab("") +
+  theme_cowplot() +
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+# saved as : "22-08-25_single_funs_corr_with_LUI.pdf"
+
+# corrplot::corrplot(m, type="lower", addCoef.col = "black", method="color", diag=F, tl.srt=1, tl.col="black", mar=c(1,0,1,0), number.cex=0.6)
+```
+
+
 
 ## Violin plot over all plots
 ```{r}
