@@ -171,6 +171,7 @@ if("gdminput" %in% sections_to_be_loaded){
     compon_lui <- "LUI" #"components"
   }
   modelname <- paste("gdm", funs, compon_lui, sep = "_")
+  model_name <- modelname
   gdminput <- readRDS(paste(pathtodata, paste("/analysis/output_datasets/gdm", funs, compon_lui, "input.Rds", sep = "_"), sep = ""))
 }
 
