@@ -1,9 +1,12 @@
-# This is the nonpublic file for the analysis
+# This is the nonpublic file for the data assembly and analysis
 
 # Usage : 
 # - in header of each script, the variables needed to be loaded are specified (elements of vector sections_to_be_loaded)
 #    save the analysis_nonpublic.R with the analysis and source it with this specified vector in order to load the
 #    needed variables
+
+# Explanation of name:
+# Was historically thought to not be public because contains file paths, but decided to keep it close to all code.
 
 # # please specify the vector of wanted datasets. The following vector will load all datasets.
 # sections_to_be_loaded <- c("assemble_covariates",
