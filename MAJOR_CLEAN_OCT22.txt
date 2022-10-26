@@ -1,0 +1,5 @@
+# Documentation of cleaning
+
+This is a documenation of the cleaning round in October 2022. 
+Mainly serves to create a searchable commit.
+But also to keep track of changes.
