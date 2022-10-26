@@ -1,0 +1,62 @@
+---
+title: "small sensitivity analyses"
+author: "N. V. Schenk"
+date: '2022-06-22'
+output: html_document
+---
+Depends on dependencies of `plot_GDM.Rmd`, until section preparation (needs maxsplines from given model)
+```{r}
+#TODO : make independent from plot_GDM.Rmd
+```
+
+
+# Overviewbar without correlated groups
+```{r}
+# run for each desired model.
+
+#######
+# Here : EFdistance
+restab <- create_restab0()
+
+#######
+# See script `GDM_multifun_thresholds.Rmd` for loading restab.
+#
+# for EFtrheshold weighted average :
+# model_name <- "EFturnover_WEIGTHED_mean_across_thresholds"
+model_name <- "EFnestedness_WEIGTHED_mean_across_thresholds"
+#
+# restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFturnover.Rds", sep = ""))
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFnestedness.Rds", sep = ""))
+setnames(restab, old = c("wres"), new = c("maxsplines")) #TODO : this line is maybe not needed any more
+restab <- merge(restab, nicenames[, .(names, correlated, lui_ground, lui_ground_nicenames, lui_component)], by = "names")
+
+
+#######
+# create overviewbars
+# exclude correlated drivers
+ov_list <- create_overviewbar_restab(restab = restab[correlated != "yes", ])
+
+# above- below
+df <- data.frame(ov_list$`above-below`)
+ov1 <- create_overview_above_below_abiotic_barplot()
+
+df <- data.frame(ov_list$`turnover-nestedness`)
+ov2 <- create_overview_turnover_nestedness_abiotic_barplot()
+
+plot_grid(NULL, ov1, ov2, NULL,  nrow = 4, align = T, labels = model_name)
+
+# saved as : "sensitivity_small_extras_overviewbar_without_correlated_gdm_EFdistance_LUI.pdf" A5
+#            "sensitivity_small_extras_overviewbar_without_correlated_EFnestedness_WEIGTHED_mean_across_thresholds.pdf"
+```
+
+
+# Overviewbar summing effects
+dependencies : needs maxsplines from given model, and variable called `restab`. Run from script `plot_GDM.Rmd`.
+```{r}
+# create categories : biotic, LUI, abiotic
+restab[lui_component %in% c("nestedness", "turnover"), lui_component := "bio"]
+sumtab <- aggregate(maxsplines ~ lui_component, restab, sum)
+ggplot(sumtab, aes(x = lui_component, y = maxsplines)) +
+  geom_bar(stat = "identity") + ggtitle("Summed contributions of EFnestedness0.7")
+```
+
