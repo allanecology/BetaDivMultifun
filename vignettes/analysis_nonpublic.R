@@ -71,6 +71,7 @@ if("assemble_functions" %in% sections_to_be_loaded){
   # store raw grassland functions for gapfilling
   raw_grlfuns <- data.table::fread(paste(pathtoexplosynthesis, "/Grassland_functions/27087_grassland_functions_bexis/27087_25_Dataset/bexis_to_wide_format_output.csv", sep = ""), header=T)
   #TODO : in first functions script : run new reformatting script
+  #TODO : run bexis_to_wide_format.R here already!
   # selection of required functions for gapfilling
   selection <- info_data[`used for Gapfilling` == "yes", ColumnName]
   raw_grlfuns <- raw_grlfuns[, ..selection]

@@ -82,6 +82,7 @@ selecting the functions which are used in analysis.
 usedforBetadivMultifun <- usedforBetadivMultifun[!usedforBetadivMultifun == "Plot"]
 imputed_grlfuns <- imputed_grlfuns[, ..usedforBetadivMultifun]
 # saveRDS(imputed_grlfuns, "imputed_and_compound_grlfuns.rds")
+#TODO is that used somewhere? if not, delete
 ```
 
 # Check Correlations
@@ -142,7 +143,7 @@ for(f in usedforBetadivMultifun[!usedforBetadivMultifun == "Plotn"]){
   diffsmall[, X := NULL]
   # assign(diffname, diffsmall)
   singleEFdist <- merge(singleEFdist, diffsmall, by = c("Var1", "Var2"), all.y = T)
-  # saveRDS(diffsmall, file = paste(diffname, ".rds", sep = ""))
+  # saveRDS(diffsmall, file = paste(diffname, ".rds", sep = "")) # note : is not saved, only produce on demand
 }
 # standardisation
 include <- colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")]
