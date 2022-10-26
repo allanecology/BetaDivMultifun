@@ -45,7 +45,7 @@ If F, `luiinput` and `model_name` need to be given manually.
 ```{r}
 # Load requirements from <..>nonpublic.R file
 sections_to_be_loaded <- c("plotting", "results", "gdminput", "gdmoutput")
-funs <- "EFdistance"
+funs <- "EFnestedness_0.7"
 compon_lui <- "LUI"
 source("vignettes/analysis_nonpublic.R")
 # will create "model_name" automatically
@@ -235,17 +235,23 @@ q <- create_abio_barplot()
 ###########
     # ABOVE - BELOW - ABIOTIC
 restab2 <- create_restab2(restab = restab)
+#TODO switch to function create_overviewbar_restab (and extract above- below from list)
 restab2 <- restab2[type %in% c("averaged_scaled")]
 df <- data.frame(restab2)
+#edit : ---
+df <- create_overviewbar_restab(restab)
+#edit end ---
 ov1 <- create_overview_above_below_abiotic_barplot()
 ov1L <- create_overview_above_below_abiotic_barplot(legend = T) # legend only, plot with plot_grid()
     # TURNOVER - NESTEDNESS - ABIOTIC
 restab3 <- create_restab_3()
+#TODO switch to function create_overviewbar_restab (and extract turnover-nestedness from list)
 restab3 <- restab3[type %in% c("averaged_scaled")]
 df <- data.frame(restab3)
 ov2 <- create_overview_turnover_nestedness_abiotic_barplot()
 ov2L <- create_overview_turnover_nestedness_abiotic_barplot(legend = T) # only legend, plot with plot_grid()
 ov_legends <- plot_grid(ov1L, ov2L, nrow = 2)
+#TODO correct error here
 
 ###########
 # add plots together
@@ -293,6 +299,17 @@ ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overvie
 
 ```
 Note : the barplot of weighted average is done in the script `GDM_multifun_thresholds.Rmd`, together with pieces of code from this script.
+
+
+# special case : stacked barplot
+Need turnover and nestedness in separate column.
+```{r}
+p <- create_bio_aboveground_barplot()
+b <- create_bio_belowground_barplot()
+q <- create_abio_barplot()
+```
+
+
 
 
 # get all legends
