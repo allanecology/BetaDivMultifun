@@ -370,8 +370,8 @@ reading in data
 ```{r}
 # Note : go through code and either chose to work with EFnestedness, or EFturnover. (by outcommenting respective lines)
 
-# modnames <- paste(paste("gdm_EFturnover_", seq(0.1, 0.9, 0.1), sep = ""), "_LUI", sep = "")
-modnames <- paste(paste("gdm_EFnestedness_", seq(0.1, 0.9, 0.1), sep = ""), "_LUI", sep = "")
+modnames <- paste(paste("gdm_EFturnover_", seq(0.1, 0.9, 0.1), sep = ""), "_LUI", sep = "")
+# modnames <- paste(paste("gdm_EFnestedness_", seq(0.1, 0.9, 0.1), sep = ""), "_LUI", sep = "")
 i <- 1
 res <- readRDS(paste(paste(paste(pathtodata, "/analysis/output_datasets/uncertainty_calc/", sep = ""), modnames[i], sep = ""), "_uncertainty.Rds", sep = ""))
 res[, component := modnames[i]]
@@ -442,22 +442,32 @@ sum(res[varname == i, yatmax] * (1 / res[varname == i, sdy])) / sum((1 / res[var
 setnames(wres, old = "varname", new = "names")
 wres <- merge(wres[, .(names, wres)], nicenames, by = "names")
 
+setnames(wres, old = c("wres"), new = c("maxsplines")) #TODO this line was added to get cleaner input
 # saveRDS(wres, file = "vignettes/out/weighted_avg_over_all_thresholds_EFturnover.Rds")
 # saveRDS(wres, file = "vignettes/out/weighted_avg_over_all_thresholds_EFnestedness.Rds")
 ```
 prepare for plotting
 ```{r}
-# restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFturnover.Rds", sep = ""))
-restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFnestedness.Rds", sep = ""))
-setnames(restab, old = c("wres"), new = c("maxsplines"))
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFturnover.Rds", sep = ""))
+# restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFnestedness.Rds", sep = ""))
+setnames(restab, old = c("wres"), new = c("maxsplines")) #TODO : this line is maybe not needed any more
 model_name <- "EFturnover_WEIGTHED_mean_across_thresholds"
 # model_name <- "EFnestedness_WEIGTHED_mean_across_thresholds"
 luiinput <- "lui"
 permut <- F
 
+# ----------------------------- change for presentation at INTECOL
+#TODO HACK to have stacked bars : 
+# NEEDS TO BE CLEANED URGENTLY!!!
+# instead of plotting with aes(x = nicenames) we use : aes(x = legendnames)
+# hack to use oritinal code : rename the according column in the data.table restab
+setnames(restab, old = c("nicenames", "legendnames"), new = c("former_nicenames", "nicenames"))
+# -----------------------------
+
 p <- create_bio_aboveground_barplot() + ylim(c(0, 0.15))
 b <- create_bio_belowground_barplot() + ylim(c(0, 0.15))
 q <- create_abio_barplot() + ylim(c(0, 0.15))
+
 
 # go to plot_GDM, and run the part under "# Barplots ". Start with section "produce overview bars" (leave out the upper part)
 # reset the ylims : for EFnestedness : + ylim(c(0, 0.1)), for EFturnover : + ylim(c(0, 0.15))
@@ -466,6 +476,14 @@ q <- create_abio_barplot() + ylim(c(0, 0.15))
 
 # Additional : loaded both EFturnover and EFnestedness, merged together and saved as : 
 # "EFnestedness_turnover_WEIGTHED_mean_across_thresholds_maxsplines.csv"
+
+
+#TODO URGENTLY CLEAN THAT MESS!
+
+multipanel_with_overview_bars <- plot_grid(p, b, q, labels = c('A', 'B', 'C'), label_size = 12, nrow = 3,
+                                             rel_heights = c(0.31, 0.49, 0.33), align = "v")
+multipanel_with_overview_bars
+# saved as : "EFturnover_WEIGHTED_mean_across_tresholds_multipanel_barplot_intecol_presentation_22-08-25.pdf"
 ```
 
 
