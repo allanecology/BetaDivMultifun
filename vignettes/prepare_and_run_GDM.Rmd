@@ -9,11 +9,12 @@ This script runs the GDM models. In the first code section, the desired GDM mode
 # Dependencies
 ## Data
 - colorder_gdm_input : the order of columns which is used for GDM input data. Can be given manually, but is very tedious
-- EFmaster : ecosystem function dissimilarities
-- masterbeta
-- LUI
-- predictors, predictors_soil
-- pathtoout
+- datasets : 
+  - EFmaster
+  - masterbeta
+  - LUI
+  - predictors, predictors_soil
+- pathtoout : path to save output to
 see `analysis_nonpublic.R` file.
 
 ```{r}
@@ -21,54 +22,46 @@ sections_to_be_loaded <- c("functions_dissimilarity", "betadiversity", "LUI", "p
 source("vignettes/analysis_nonpublic.R")
 ```
 
-
-## packages
-- BetaDivMultifun (as usual)
-    - the pacakges used by betadivmultifun (see DESCRIPTION file)
-
 # output
-- gdm input .CSV and .Rds
-- gdm output as .Rds
-- gdm summary output as .txt
+- gdm input .CSV and .Rds (the dataset fed into GDM models)
+- gdm output as .Rds (the direct output of a GDM model)
+- gdm summary output as .txt (the model summary as given by the `gdm()` funciton)
+
 
 # select input
 depending on the model intented to run, chose the appropriate variables below.
 ```{r}
 #TODO : write automatic input for all models
-#TODO : capture deviance explained from all models and store in table
-# ECOSYSTEM FUNCTION
-funs <- "EFdistance"
-# funs <- "soilNitrateflxs"
-# funs <- "EFbeta_median"
+model_names_selection <- model_names[which(model_names$modelname == "gdm_EFdistance_LUI"), ]
+print(c("working on model :", paste(model_names_selection, collapse = ", ")))
 
-# LUI
-## name of the chosen LUI
-compon_lui <- "LUI"
-# compon_lui <- "components"
+#TODO : capture deviance explained from all models and store in table
 
 ## column titles of the chosen LUI
-lui <- c("LUI", "deltaLUI")
-# lui <- c("Gstd", "Mstd", "Fstd", "deltaGstd", "deltaMstd", "deltaFstd")
+lui <- c(model_names_selection$lui, paste("delta", model_names_selection$lui, sep = ""))
+# can be e.g. : "deltaLUI", "Gstd", "Mstd", "Fstd", "deltaGstd", "deltaMstd", "deltaFstd"
 
-## special case : ABUNDANCE-based betadiversity
+## special case : ABUNDANCE-based betadiversity DEPRECIATED
 # model name : gdm_EFdistance_abundancebeta_LUI
 # colorder_gdm_input <- gsub(pattern = ".beta.sim", replacement = ".beta.bal", colorder_gdm_input)
 # colorder_gdm_input <- gsub(pattern = ".beta.sne", replacement = ".beta.gra", colorder_gdm_input)
 ```
 chose selected input from mastertables
 ```{r}
-modelname <- paste("gdm", funs, compon_lui, sep = "_")
-
-include <- c("Var1", "Var2", funs)
+# ecosystem funcitons
+include <- c("Var1", "Var2", model_names_selection$funs)
 EFmaster <- EFmaster[, ..include]
 rm(include)
 
+# lui
 LUI <- LUI[, c("Plotn", lui)]
 LUI <- data.table(LUI)
 
-# create table containing geographic distances
+# geographic distances
 geodist <- predictors[, c("Plotn", "Longitude_Dec_Plotcenter", "Latitude_Dec_Plotcenter")]
 geodist <- data.table(geodist)
+
+# soil covariates
 predictors <- data.table(predictors)
 predictors <- predictors[, .(Plotn, plot_isolation)]
 predictors_soil <- data.table(predictors_soil)
@@ -80,7 +73,7 @@ predictors_soil <- data.table(predictors_soil)
 ## ecosystem functions
 Distance in ecosystem functions is called "distance"
 ```{r}
-setnames(EFmaster, old = funs, new = "distance")
+setnames(EFmaster, old = model_names_selection$funs, new = "distance")
 gdminput <- data.table::copy(EFmaster)
 gdminput[, weights := 1]
 rm(EFmaster)
@@ -104,11 +97,14 @@ gdminput[, s1.geosphere_distgeo := geosphere::distGeo(p1 = as.matrix(gdminput[, 
                                                    p2 = as.matrix(gdminput[, .(s2.yCoord, s2.xCoord)]))]
 gdminput[, s2.geosphere_distgeo := 0]
 ```
-
+Note : based on sensitivity analysis (comparing by-hand and automatic distance calculation), this variant was not used.
+#TODO include conclusion why.
+Note that this variant has code below as well.
 
 ## betadiversities
 Prepare for each betadiversity two columns : one "s1.<name_of_diversity>" containing the betadiversity values and one "s2.<name_of_diversity>" with 0.
 GDM expects two values per predictor, but as dissimilarities for betadivs are already calculated, the input is just the distance between the actual distance (beta diversity) and 0.
+Note that this is not the intented use of GDM and causes issues in permutation that need to be solved later on.
 ```{r}
 # add betadiversities
 colnames(masterbeta)[-c(1,2)] <- paste("s1.", colnames(masterbeta)[-c(1,2)], sep = "")
@@ -150,9 +146,9 @@ convert to data.frame and assign rownames to be the plot combinations separated 
 GDM requires a well-defined table. Below, the names of the columns and their content are listed:
 - distance : distance between ecosystem functions
 - weights : column containing all 1 (because we weigh all comparisons the same)
-- s1.xCoord, s1.yCoord, s2.xCoord, s2.yCoord : 4 columns which will be ignored as I will set geo = F in the gdm() function. 
-- s1.pred1, ..., s1.predn : here I fill in my predictor columns, (all have s1. at the beginning)
-- s2.pred1, ..., s2.predn : here I fill in columns of zero to imitate I would not have given distance but two values.
+- s1.xCoord, s1.yCoord, s2.xCoord, s2.yCoord : 4 columns containting geographic location. GDM either includes them in modelling (geo = T) or excludes (geo = F).
+- s1.pred1, ..., s1.predn : here I fill in my predictor columns, diversity, LUI and covariates of the first plot. (all have s1. at the beginning)
+- s2.pred1, ..., s2.predn : here I fill in LUI and covariate values of plot 2, and columns of zero for betadiversity to imitate I would have 2 values.
 ```{r, eval = F}
 ### variant : by hand geographic distance calculation
 # adjust colorder so it includes s1.geosphere_distgeo and s2.geosphere_distgeo
@@ -172,30 +168,11 @@ if(lui[1] == "LUI"){
 
 
 ```{r}
-# # --------- intermediate solution start
-# #TODO change input file, fix this
-# # adapt for LUi
-# test <- read.csv("colord.csv", header = T)
-# colorder_gdm_input <- as.vector(t(test))
-# rm(test)
-# #TODO maybe add tertiary consumers
-# colorder_gdm_input[36]
-# # grep("tertiary", colnames(gdminput), value = T)
-# colorder_gdm_input <- append(colorder_gdm_input, c("s1.tertiary.consumer.beta.sne"), after = 36)
-# colorder_gdm_input[22]
-# colorder_gdm_input <- append(colorder_gdm_input, c("s1.tertiary.consumer.beta.sim"), after = 22)
-# colorder_gdm_input[56]
-# colorder_gdm_input <- append(colorder_gdm_input, "s2.tertiary.consumer.beta.sim", after = 56)
-# colorder_gdm_input[71]
-# colorder_gdm_input <- append(colorder_gdm_input, "s2.tertiary.consumer.beta.sne", after = 71)
-# # --------- intermediate solution end
-
 # check if all names of gdminput are in colorder_gdm_input and vice versa
 all(colnames(gdminput) %in% colorder_gdm_input)
 all(colorder_gdm_input %in% colnames(gdminput))
 length(grep("geosphere_distgeo", colorder_gdm_input)) == 0
 length(grep("geosphere_distgeo", colnames(gdminput))) == 0
-
 
 gdminput <- data.table::setcolorder(gdminput, colorder_gdm_input)
 
@@ -209,38 +186,36 @@ gdminput <- gdm::formatsitepair(bioData = gdminput, bioFormat = 4, predData = gd
 ```
 
 
-
-
 # run GDM
 ```{r}
 gdm_output <- gdm::gdm(gdminput, geo = T)
 ```
 
+
 # save output
 ```{r}
-outname <- paste("gdm", funs, compon_lui, "output_summary.txt", sep = "_")
-outnameRDS <- paste("gdm", funs, compon_lui, "output.Rds", sep = "_")
+outname <- paste("gdm", model_names_selection$funs, lui[1], "output_summary.txt", sep = "_")
+outnameRDS <- paste("gdm", model_names_selection$funs, lui[1], "output.Rds", sep = "_")
 
 # save input and output
-saveRDS(gdminput, file = paste("vignettes/out/", paste("gdm", funs, compon_lui, "input.Rds", sep = "_"), sep = ""))
-write.csv(gdminput, file = paste("vignettes/out/", paste("gdm", funs, compon_lui, "input.CSV", sep = "_"), sep = ""))
+saveRDS(gdminput, file = paste("vignettes/out/", paste("gdm", model_names_selection$funs, lui[1], "input.Rds", sep = "_"), sep = ""))
+write.csv(gdminput, file = paste("vignettes/out/", paste("gdm", model_names_selection$funs, lui[1], "input.CSV", sep = "_"), sep = ""))
 saveRDS(gdm_output, paste("vignettes/out/", outnameRDS, sep = ""))
 capture.output(summary(gdm_output), file = paste("vignettes/out/", outname, sep = ""))
 
 # get model specifications
 model_specs <- paste(
-modelname,
+model_names_selection$modelname,
 paste("deviance of the fitted GDM model :", round(gdm_output$gdmdeviance, 3)),
 paste("deviance of the null model : ", round(gdm_output$nulldeviance, 3)),
 paste("percentage of null deviance \n explained by the fitted GDM model :", round(gdm_output$explained, 3)),
 "3 splines used, knots at min, max and 50% (default). ",
 paste("LUI knots at :", paste(round(gdm_output$knots[1:3], 3), collapse = ", ")),
 sep = "\n")
-capture.output(print(model_specs), file = paste(pathtoout, "/", modelname, "_GDM_model_specs.txt", sep = ""))
+capture.output(print(model_specs), file = paste(pathtoout, "/", model_names_selection$modelname, "_GDM_model_specs.txt", sep = ""))
 ```
 
 
 # next steps
 - check the input table for correlations and produce linear model and variance inflation `check_GDM_input.Rmd`
-- plot models
-- run permutations (cluster scripts)
+- later : plot models, run permutations (cluster scripts)
