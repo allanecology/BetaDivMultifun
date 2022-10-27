@@ -131,8 +131,6 @@ Average of LUI across time, combining the years 2006, 2007, 2008, 2009 and 2010 
 Gmean <- mean(lui5y$TotalGrazing)
 Mmean <- mean(lui5y$TotalMowing)
 Fmean <- mean(lui5y$TotalFertilization)
-
-
 ```
 
 
