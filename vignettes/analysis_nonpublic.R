@@ -27,8 +27,9 @@
 #                            "gdmoutput")
 
 # PACKAGE
-# load functions from the package
+# load functions and small helper datasets from the package
 devtools::load_all()
+
 
 # LOCAL ABSOLUTE PATHS
 # note : for IPS Computer : "/run/user/1001/...", but for laptop : "/run/user/1000/..."
@@ -42,16 +43,6 @@ pathtoout <- "~/Documents/github/BetaDivMultifun/vignettes/out"
 plotNAset <- readRDS(paste(pathtodata, "/data_assembly/helper_data/plotNAset.rds", sep = ""))
 info_data <- data.table::fread(paste(pathtodata, "/data_assembly/helper_data/info_data.csv", sep = ""), header=T)
 usedforBetadivMultifun <- info_data[`used for BetadivMultiFun` == "yes", ColumnName]
-usefulplotids <- readRDS(paste(pathtodata, "/data_assembly/helper_data/useful_plot_ids.rds", sep="")) # used in calc_covariates.Rmd
-colorder_gdm_input <- readRDS(paste(pathtodata, "/analysis/helper_data/colorder_gdminput.rds", sep = "")) # used in prepare_and_run_GDM.Rmd
-
-# a <- c(paste("AEG", stringr::str_pad(seq(1, 50), 2, pad = "0"), sep = ""),
-#   paste("HEG", stringr::str_pad(seq(1, 50), 2, pad = "0"), sep = ""),
-#   paste("SEG", stringr::str_pad(seq(1, 50), 2, pad = "0"), sep = ""))
-# b <- c(paste("AEG", seq(1, 50), sep = ""),
-#   paste("HEG", seq(1, 50), sep = ""),
-#   paste("SEG", seq(1, 50), sep = ""))
-# usefulplotids <- data.table(Plot = b, Plotn = a)
 
 
 ######################
