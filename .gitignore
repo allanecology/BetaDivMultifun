@@ -2,8 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
-*.rds
 *.pdf
 *.png
-data
-*pca_summary.txt
