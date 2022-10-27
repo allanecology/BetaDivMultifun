@@ -1,0 +1,66 @@
+---
+title: "Major cleaning round"
+author: "Noelle Schenk"
+date: "2022-10-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Documentation of cleaning
+
+This is a documenation of the cleaning round in October 2022. Mainly serves to create a searchable commit. But also to keep track of changes.
+
+## Major topics of scriptx
+
+-   data assembly (create input data) ok
+-   analysis (create output data)
+-   visualisation and summarising (create summaries and plots from output data)
+
+## Problematic scripts
+
+-   GDM_multifun_thresholds
+-   
+
+## Sequence of analysis steps
+
+## Files
+
+-   [ ] alpha_plots.Rmd
+-   [x] 0 analysis_nonpublic.R betadiversity_imputation.R betadiversity_imputation.Rmd
+-   [x] 2 calc_betadiversities.Rmd (calc_betadiversities.html)
+-   [x] 1b calc_covariates.Rmd
+-   [x] calc_LUI.Rmd
+-   [x] 4b calc_multifun_from_imputed_additional_sensitivity.R
+-   [x] 4 calc_multifun_from_imputed.Rmd
+-   [ ] check_GDM_input_GAM.Rmd
+-   [ ] check_GDM_input.Rmd
+-   [x] 1a clean_and_load_soil_covariates.Rmd
+-   [ ] cluster_scripts_documentation.Rmd
+-   [ ] detect_GDM_effect_shape.Rmd
+-   [ ] explore_functions_dataset.Rmd
+-   [ ] filenames.txt
+-   [x] 3 function_imputation.Rmd
+-   [ ] gdm_model_diagnostics_overview.pdf
+-   [ ] GDM_multifun_betadiv_lui_analysis.Rmd
+-   [ ] GDM_multifun_thresholds.Rmd
+-   [ ] GDM_predictions.Rmd
+-   [ ] GDM_pvalues_test.R
+-   [ ] GDM_sensitivity_indirect_beta_effects.Rmd
+-   [ ] helper_model_names.csv
+-   [ ] introductory_plots.Rmd
+-   [ ] nicenames.csv
+-   [ ] nicenames_old_may2021.csv
+-   [ ] package_testing.Rmd
+-   [ ] plot_GDM.Rmd
+-   [ ] prepare_and_run_GDM.Rmd
+-   [ ] quick_singlefunctions_plot.R
+-   [ ] README_how-to-use-this-package.html (README_how-to-use-this-package.Rmd)
+-   [ ] result_GDM_model_diagnostics_plots.Rmd
+-   [ ] sensitivity_GDM_variable_sequence_does_not_matter.R
+-   [ ] sensitivity_small_extras.Rmd
+-   [ ] single_functions_effect_on_multifunctionality.Rmd
+-   [ ] suppl_analysis_differences_in_richness.Rmd
+-   [ ] THEORY_simulate_betadiversity.R
