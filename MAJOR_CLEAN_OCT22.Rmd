@@ -25,14 +25,35 @@ This is a documenation of the cleaning round in October 2022. Mainly serves to c
 
 small datasets that are stored in /vignettes are transferred to /data
 
-`usethis::use_data(\<nameofdataset\>)`
+`usethis::use_data(\<nameofdataset\>)` if necessary with `overwrite = T` to overwrite existing dataset
 
 No loading is needed, because R packages use "lazy-loading", i.e. only load data when necessary.
+
+**model_names**
+
+will be used uniquely to select the current model to run, or to run all of them.
+
+names need to be cleaned!
+
+-   model_names column "name" renamed to "modelname"
+
+-   added columns : funs, lui containing more info about the selected model --\> reduce the amount of hand-filled input
+
+-   `model_names` column `luiinput` will not be used in the future any more : there will not be a model with all 3 components together, but only with individual ones. (because LUI components are correlated.)
 
 ## Problematic scripts
 
 -   GDM_multifun_thresholds
--   
+
+**prepare_and_run_GDM.Rmd**
+
+implement the use of the `model_names` table. Select used models with `model_names_selection`.
+
+-   `funs` needs to be changed to `model_names_selection$funs`
+
+-   compon_luli is depreciated: use `lui` instead
+
+-   replaced `modelname` with `model_names_selection$modelname`
 
 ## Sequence of analysis steps
 
@@ -73,9 +94,17 @@ No loading is needed, because R packages use "lazy-loading", i.e. only load data
 
 **helper_datasets**
 
+from vignettes/
+
 -   [x] nicenames.csv (added to /data)
 -   [x] nicenames_old_may2021.csv (added to /old)
 -   [x] helper_model_names.csv (added to /data)
+
+from data_assembly/helper_data and analysis/helper_data
+
+-   `usefulplotids` added to /data
+
+-   `colorder_gdm_input` added to /data
 
 ## clean
 
