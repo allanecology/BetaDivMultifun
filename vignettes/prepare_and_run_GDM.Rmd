@@ -4,7 +4,7 @@ author: "Noelle Schenk"
 date: "1/24/2020"
 output: html_document
 ---
-This script runs the GDM models. In the first code section, the desired GDM model is chosen manually. The script writes the GDM input and ouput files and the summary output.
+This script runs the GDM models. In the first code section, the desired GDM model is chosen manually. The script writes the GDM input and output files and the summary output.
 
 # Dependencies
 ## Data
@@ -28,26 +28,37 @@ source("vignettes/analysis_nonpublic.R")
 - gdm summary output as .txt (the model summary as given by the `gdm()` funciton)
 
 
-# select input
+# select input by hand
 depending on the model intented to run, chose the appropriate variables below.
 ```{r}
-#TODO : write automatic input for all models
-model_names_selection <- model_names[which(model_names$modelname == "gdm_EFdistance_LUI"), ]
-print(c("working on model :", paste(model_names_selection, collapse = ", ")))
+#TODO : write automatic input for all models : if calling from a summary script : 
+#    put a default value here, in case none is given.
+
+if(exists("model_names_selection")){
+  # model_names_selection is given from outside the script
+  print("using selection of the model from outside the script")
+} else {
+  print("model selection is done by hand, default is EFturnover_0.7")
+  model_names_selection <- model_names[which(model_names$modelname == "gdm_EFturnover_0.7_LUI"), ]
+  print(c("working on model :", paste(model_names_selection, collapse = ", ")))
+}
 
 #TODO : capture deviance explained from all models and store in table
-
-## column titles of the chosen LUI
-lui <- c(model_names_selection$lui, paste("delta", model_names_selection$lui, sep = ""))
-# can be e.g. : "deltaLUI", "Gstd", "Mstd", "Fstd", "deltaGstd", "deltaMstd", "deltaFstd"
 
 ## special case : ABUNDANCE-based betadiversity DEPRECIATED
 # model name : gdm_EFdistance_abundancebeta_LUI
 # colorder_gdm_input <- gsub(pattern = ".beta.sim", replacement = ".beta.bal", colorder_gdm_input)
 # colorder_gdm_input <- gsub(pattern = ".beta.sne", replacement = ".beta.gra", colorder_gdm_input)
 ```
+by-hand input ends here.
+
+# Implementation of input choice
 chose selected input from mastertables
 ```{r}
+## column titles of the chosen LUI
+lui <- c(model_names_selection$lui, paste("delta", model_names_selection$lui, sep = ""))
+# can be e.g. : "deltaLUI", "Gstd", "Mstd", "Fstd", "deltaGstd", "deltaMstd", "deltaFstd"
+
 # ecosystem funcitons
 include <- c("Var1", "Var2", model_names_selection$funs)
 EFmaster <- EFmaster[, ..include]

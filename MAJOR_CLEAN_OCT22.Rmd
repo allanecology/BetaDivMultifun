@@ -13,7 +13,19 @@ knitr::opts_chunk$set(echo = TRUE)
 
 This is a documenation of the cleaning round in October 2022. Mainly serves to create a searchable commit. But also to keep track of changes.
 
-## Major topics of scriptx
+## next step
+
+-   test if `prepare_and_run_GDM` is still working
+
+    -   problem in analysis_nonpublic.R : masterbeta could not be loaded - connection to server problem? check again later
+
+-   potentially : think about a way to feed desired model names (checklist?)
+
+    probably best solution : not shiny, but make script a function and call from a summary script.
+
+    evaluate : which scripts go to this summary script?
+
+## Major topics of scripts
 
 -   data assembly (create input data) ok
 -   analysis (create output data)

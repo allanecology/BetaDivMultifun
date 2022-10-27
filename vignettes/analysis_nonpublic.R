@@ -43,7 +43,10 @@ pathtoout <- "~/Documents/github/BetaDivMultifun/vignettes/out"
 plotNAset <- readRDS(paste(pathtodata, "/data_assembly/helper_data/plotNAset.rds", sep = ""))
 info_data <- data.table::fread(paste(pathtodata, "/data_assembly/helper_data/info_data.csv", sep = ""), header=T)
 usedforBetadivMultifun <- info_data[`used for BetadivMultiFun` == "yes", ColumnName]
-
+data("colorder_gdm_input")
+data("usefulplotids")
+data("model_names")
+data("nicenames")
 
 ######################
 # CONSTRUCTION OF ASSEMBLED DATA FROM RAW
