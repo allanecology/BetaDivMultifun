@@ -148,13 +148,18 @@ if("additional" %in% sections_to_be_loaded){
 
 if("plotting" %in% sections_to_be_loaded){
   # get nicenames
+  # is already loaded by package per default (lazy-loading)
+  # data(nicenames, package = "BetaDivMultifun")
+  # note : update data with : 
+  # usethis::use_data(nicenames)
+  
   #TODO add overview colors
   #   - check if gray is working well
-  nicenames <- data.table::data.table(read.csv("vignettes/nicenames.csv"))
+  #TODO remove "plotting" section - does not need to load anything anymore
 }
 
 if("results" %in% sections_to_be_loaded){
-  model_names <- read.csv("vignettes/helper_model_names.csv")
+  # variable `model_names` will be loaded by lazy-loading from /data
   # for(i in nrow(model_names)){
   #   source("vignettes/plot_GDM.Rmd") # by hand! no automation
   # }

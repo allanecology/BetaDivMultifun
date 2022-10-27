@@ -19,6 +19,16 @@ This is a documenation of the cleaning round in October 2022. Mainly serves to c
 -   analysis (create output data)
 -   visualisation and summarising (create summaries and plots from output data)
 
+## Documentation of cleaning
+
+**small datasets**
+
+small datasets that are stored in /vignettes are transferred to /data
+
+`usethis::use_data(\<nameofdataset\>)`
+
+No loading is needed, because R packages use "lazy-loading", i.e. only load data when necessary.
+
 ## Problematic scripts
 
 -   GDM_multifun_thresholds
@@ -44,15 +54,11 @@ This is a documenation of the cleaning round in October 2022. Mainly serves to c
 -   [ ] filenames.txt
 -   [x] 3 function_imputation.Rmd
 -   [ ] gdm_model_diagnostics_overview.pdf
--   [ ] GDM_multifun_betadiv_lui_analysis.Rmd
 -   [ ] GDM_multifun_thresholds.Rmd
 -   [ ] GDM_predictions.Rmd
 -   [ ] GDM_pvalues_test.R
 -   [ ] GDM_sensitivity_indirect_beta_effects.Rmd
--   [ ] helper_model_names.csv
 -   [ ] introductory_plots.Rmd
--   [ ] nicenames.csv
--   [ ] nicenames_old_may2021.csv
 -   [ ] package_testing.Rmd
 -   [ ] plot_GDM.Rmd
 -   [ ] prepare_and_run_GDM.Rmd
@@ -64,3 +70,15 @@ This is a documenation of the cleaning round in October 2022. Mainly serves to c
 -   [ ] single_functions_effect_on_multifunctionality.Rmd
 -   [ ] suppl_analysis_differences_in_richness.Rmd
 -   [ ] THEORY_simulate_betadiversity.R
+
+**helper_datasets**
+
+-   [x] nicenames.csv (added to /data)
+-   [x] nicenames_old_may2021.csv (added to /old)
+-   [x] helper_model_names.csv (added to /data)
+
+## clean
+
+Evaluate if useful content is in there, think about what to do later.
+
+-   [ ] GDM_multifun_betadiv_lui_analysis.Rmd
