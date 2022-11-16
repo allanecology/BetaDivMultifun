@@ -15,15 +15,7 @@ This is a documenation of the cleaning round in October 2022. Mainly serves to c
 
 ## next step
 
--   test if `prepare_and_run_GDM` is still working
-
-    -   problem in analysis_nonpublic.R : masterbeta could not be loaded - connection to server problem? check again later
-
--   potentially : think about a way to feed desired model names (checklist?)
-
-    probably best solution : not shiny, but make script a function and call from a summary script.
-
-    evaluate : which scripts go to this summary script?
+-   merge scripts alpha_plots.Rmd and introductory_plots.Rmd
 
 ## Major topics of scripts
 
@@ -32,6 +24,8 @@ This is a documenation of the cleaning round in October 2022. Mainly serves to c
 -   visualisation and summarising (create summaries and plots from output data)
 
 ## Documentation of cleaning
+
+-   reading in LUI input : before I gave the variable `compon_lui` by hand, now this is called `lui` and taken from `model_names_selecton$lui`.
 
 **small datasets**
 
@@ -69,6 +63,8 @@ implement the use of the `model_names` table. Select used models with `model_nam
 
 ## Sequence of analysis steps
 
+-   is in file `the_analysis_hive.Rmd` now. (hive-drone wording is used here)
+
 ## Files
 
 -   [ ] alpha_plots.Rmd
@@ -94,7 +90,7 @@ implement the use of the `model_names` table. Select used models with `model_nam
 -   [ ] introductory_plots.Rmd
 -   [ ] package_testing.Rmd
 -   [ ] plot_GDM.Rmd
--   [ ] prepare_and_run_GDM.Rmd
+-   [x] prepare_and_run_GDM.Rmd
 -   [ ] quick_singlefunctions_plot.R
 -   [ ] README_how-to-use-this-package.html (README_how-to-use-this-package.Rmd)
 -   [ ] result_GDM_model_diagnostics_plots.Rmd
@@ -123,3 +119,11 @@ from data_assembly/helper_data and analysis/helper_data
 Evaluate if useful content is in there, think about what to do later.
 
 -   [ ] GDM_multifun_betadiv_lui_analysis.Rmd
+
+# Re-Analysis
+
+Take care that the following points are included in re-analysis :
+
+-   %var expl. plot is re-done. Seems there was an error in manually entering the values in a large table. New : use the small tables extracted for each model and rbind them to a full table of model specs.
+
+-   ...
