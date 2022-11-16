@@ -15,7 +15,7 @@
 #' @param bsIters same as in gdm::plotUncertainty. 100 were used in Gossner 2016.
 #' @param geo same as in gdm::plotUncertainty
 #' @param splines same as in gdm::plotUncertainty
-#' @example 
+#' @examples 
 #' # read in gdminput from `results_nonpublic.R`.
 #' test <- plotUncertainty_getsd(gdminput, sampleSites = 0.3, bsIters = 5, geo = T)
 #' 

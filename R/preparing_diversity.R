@@ -161,7 +161,7 @@ NULL
 #' @return same as for function beta.pair. A list with three dissimilarity matrices,
 #' being beta.sim, beta.sne and beta.sor. For more information, please read the
 #' documentation for beta.pair.
-#' @example 
+#' @examples
 #' TESTING
 #' prepare test dataset
 #' test <- data.table(Species = rep(c("S1", "S2", "S3", "S4", "S5"), 4), 

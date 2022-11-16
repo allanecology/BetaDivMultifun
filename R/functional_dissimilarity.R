@@ -19,7 +19,7 @@
 #'
 #' @param x input vector
 #' @param threshold the threshold for calculation, between 0 and 1, e.g. 0.5
-#' @type is either "max5" or "quantile". "max5" calculates the mean of the
+#' @param type is either "max5" or "quantile". "max5" calculates the mean of the
 #' maximum 5 values, whereas "quantile" calculates the threshold - quantile.
 #' @return a vector of scaled values to be between 0 and 1.
 #' 

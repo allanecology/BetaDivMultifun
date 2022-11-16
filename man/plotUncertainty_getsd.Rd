@@ -42,3 +42,8 @@ the estimate at maximum x and its standard deviation for each predictor separate
 The plotting has been outcommented, as there is no plot output needed in this case.
 All edited placed are marked with `#EDIT` in the code
 }
+\examples{
+# read in gdminput from `results_nonpublic.R`.
+test <- plotUncertainty_getsd(gdminput, sampleSites = 0.3, bsIters = 5, geo = T)
+
+}

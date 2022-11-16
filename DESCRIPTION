@@ -23,6 +23,7 @@ VignetteBuilder: knitr
 Depends: R (>= 3.0.3)
 Imports:
     data.table,
+    knitr,
     reshape2,
     devtools,
     betapart,
