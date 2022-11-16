@@ -40,8 +40,6 @@ if(exists("model_names_selection")){
   model_names_selection <- model_names[which(model_names$modelname == "gdm_EFturnover_0.7_LUI"), ]
   print(c("working on model :", paste(model_names_selection, collapse = ", ")))
 }
-
-#TODO : capture deviance explained from all models and store in table
 ```
 by-hand input ends here.
 
@@ -208,15 +206,23 @@ saveRDS(gdm_output, paste("vignettes/out/", outnameRDS, sep = ""))
 capture.output(summary(gdm_output), file = paste("vignettes/out/", outname, sep = ""))
 
 # get model specifications
-model_specs <- paste(
-model_names_selection$modelname,
-paste("deviance of the fitted GDM model :", round(gdm_output$gdmdeviance, 3)),
-paste("deviance of the null model : ", round(gdm_output$nulldeviance, 3)),
-paste("percentage of null deviance \n explained by the fitted GDM model :", round(gdm_output$explained, 3)),
-"3 splines used, knots at min, max and 50% (default). ",
-paste("LUI knots at :", paste(round(gdm_output$knots[1:3], 3), collapse = ", ")),
-sep = "\n")
-capture.output(print(model_specs), file = paste(pathtoout, "/", model_names_selection$modelname, "_GDM_model_specs.txt", sep = ""))
+# model_specs <- paste(
+# model_names_selection$modelname,
+# paste("deviance of the fitted GDM model :", round(gdm_output$gdmdeviance, 3)),
+# paste("deviance of the null model : ", round(gdm_output$nulldeviance, 3)),
+# paste("percentage of null deviance \n explained by the fitted GDM model :", round(gdm_output$explained, 3)),
+# "3 splines used, knots at min, max and 50% (default). ",
+# paste("LUI knots at :", paste(round(gdm_output$knots[1:3], 3), collapse = ", ")),
+# sep = "\n")
+# capture.output(print(model_specs), file = paste(pathtoout, "/", model_names_selection$modelname, "_GDM_model_specs.txt", sep = ""))
+
+model_specs <- data.table(modelname = model_names_selection$modelname,
+                           "deviance of the fitted GDM model" = round(gdm_output$gdmdeviance, 3),
+                           "deviance of the null model" = round(gdm_output$nulldeviance, 3),
+                           "percentage of null dev expl" = round(gdm_output$explained, 3),
+                           "3 splines knots at min, max and 50% (default)" = paste(round(gdm_output$knots[1:3], 3), collapse = ", ")
+)
+fwrite(model_specs, paste(pathtoout, "/", model_names_selection$modelname, "_GDM_model_spects.csv", sep = ""))
 ```
 
 
