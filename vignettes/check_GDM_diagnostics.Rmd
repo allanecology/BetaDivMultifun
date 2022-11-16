@@ -14,6 +14,10 @@ knitr::opts_chunk$set(echo = TRUE)
 sections_to_be_loaded <- c()
 source("vignettes/analysis_nonpublic.R")
 ```
+# Header
+Aim : create diagnostic plots of the models and compare.
+
+The respective input datasets are loaded just before plotting.
 
 
 # Model diagnostic plots
@@ -24,16 +28,17 @@ High % dev expl
 ```{r}
 efdist <- readRDS(paste(pathtodata, "/analysis/output_datasets/gdm_EFdistance_LUI_output.Rds", sep = ""))
 # efdist$explained # 29.99
-plot.diagn.gdm(efdist, title = "Efdistane")
+cairo_pdf(paste("vignettes/out/gdm_EFdistance_LUI_GDM_diagnostic_plot.pdf", sep = ""), width = 11.7, height = 8.3)
+plot_diagn_gdm(efdist, title = "Efdistane")
+dev.off()
 ```
 
 
 ## EF turnover
-```{r, eval = F, include = F}
+```{r, eval = F, include = T}
 efto0.5 <- readRDS(paste(pathtodata, "/analysis/output_datasets/gdm_EFturnover_0.5_LUI_output.Rds", sep = ""))
 efto0.5$explained # 12.19
 plot_diagn_gdm(efto0.5)
-#TODO : Stimmt der Wert auf der Grafik nicht? Von Hand in Tabelle eingetragen und vertippt??
 ```
 ```{r}
 # 9 plots
@@ -42,7 +47,9 @@ for(i in seq(0.1, 0.9, 0.1)){
   print(i)
   mod <- readRDS(paste(pathtodata, "/analysis/output_datasets/gdm_EFturnover_", i, "_LUI_output.Rds", sep = ""))
   EFturnover_varexpl <- append(EFturnover_varexpl, mod$explained)
+  cairo_pdf(paste("vignettes/out/gdm_EFturnover_",i ,"_LUI_diagnostic_plot.pdf", sep = ""), width = 11.7, height = 8.3)
   plot_diagn_gdm(mod, title = paste("EFturnover", i))
+  dev.off()
 }
 # EFturnover_varexpl
 ```
