@@ -28,20 +28,19 @@ source("vignettes/analysis_nonpublic.R")
 - gdm summary output as .txt (the model summary as given by the `gdm()` funciton)
 
 
-# select input by hand
-depending on the model intented to run, chose the appropriate variables below.
+# select input
+Depending on the model intented to run, chose the appropriate variables below.
 ```{r}
 # select a model to run, from the table `model_names` which is part of the R package data (see how to load in `analysis_nonpublic.R`)
 if(exists("model_names_selection")){
   # model_names_selection is given from outside the script
   print("using selection of the model from outside the script")
 } else {
-  print("model selection is done by hand, default is EFturnover_0.7")
+  print("model selection is not given, default is EFturnover_0.7")
   model_names_selection <- model_names[which(model_names$modelname == "gdm_EFturnover_0.7_LUI"), ]
   print(c("working on model :", paste(model_names_selection, collapse = ", ")))
 }
 ```
-by-hand input ends here.
 
 # Implementation of input choice
 chose selected input from mastertables

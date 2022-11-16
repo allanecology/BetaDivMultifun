@@ -20,7 +20,6 @@ Output :
 - correlation plot `vignettes/out/<modelname>_corrplot_before_gdm.pdf`
 
 
-
 # creating dataset
 ```{r}
 lui <- c(model_names_selection$lui, paste("delta", model_names_selection$lui, sep = ""))

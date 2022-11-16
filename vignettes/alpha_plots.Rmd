@@ -7,6 +7,7 @@ output: html_document
 requirements : `masterdiversity` in the file "master_diversity_alpha_beta.rds", see file analysis_nonpublic.R
 - `trlevels`
 - `master_alpha`
+
 ```{r}
 masterdiversity <- data.table(masterdiversity)
 require(cowplot)
