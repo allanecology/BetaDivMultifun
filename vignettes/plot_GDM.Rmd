@@ -15,20 +15,38 @@ theme_set(theme_half_open())
 #TODO : order of trophic groups : once all models are read, use effect size sequence and not alphabetically
 ```
 
+# Aim
+This scripts visualises the GDM output. It is runned for each model individually.
 
-requirements : 
-- TODO user : connect to planteco and nsch to get input files
+
+**Requirements** : 
 - GDM output as .rds, e.g. gdm_EFnestedness_LUI_input.Rds
     - find at planteco/.../BetaDivMultifun/analysis/output_datasets
 - cluster output as .rds, e.g. gdm_EFnestedness_LUI_permutation.Rds
     - TODO : not calculated yet (only for old)
-- run `results_nonpublic.R` : load pathtodata, nicenames and model_names
-  - pathtodata : path to location where gdm input of model is stored. points to a folder, where the folder cluster witht the model input is. *note : was pathtoout before.*
-  - nicenames : helper file to get nice names of functions and trophic levels
+
+------------DELETE
   - model_names : helper file for automation. Contains 3 columns : `name`  contains the all model names for `model_name`, `luiinput` contains either "lui" or "components" as LUI input for `luiinput` and `permut` is either TRUE or FALSE.
+----------------
 
 
 ## Load data
+The model name 
+
+# select input
+Depending on the model intented to run, chose the appropriate variables below.
+```{r}
+# select a model to run, from the table `model_names` which is part of the R package data (see how to load in `analysis_nonpublic.R`)
+if(exists("model_names_selection")){
+  # model_names_selection is given from outside the script
+  print("using selection of the model from outside the script")
+} else {
+  print("model selection is not given, default is EFturnover_0.7")
+  model_names_selection <- model_names[which(model_names$modelname == "gdm_EFturnover_0.7_LUI"), ]
+  print(c("working on model :", paste(model_names_selection, collapse = ", ")))
+}
+```
+
 
 ### User input
 Either chose automaticrun T or F. If T, the model names and lui input are automatically read in from model_names in a loop, started from `results_nonpublic.R`.
@@ -45,11 +63,16 @@ If F, `luiinput` and `model_name` need to be given manually.
 ```{r}
 # Load requirements from <..>nonpublic.R file
 sections_to_be_loaded <- c("plotting", "results", "gdminput", "gdmoutput")
-funs <- "EFnestedness_0.7"
-compon_lui <- "LUI"
+funs <- model_names_selection$funs
+lui <- model_names_selecton$lui
 source("vignettes/analysis_nonpublic.R")
 # will create "model_name" automatically
 #    e.g. gdm_EFnestedness_0.7_LUI
+
+
+#TODO HERE load model_names_selection, clean that it's everywhere the same!
+
+
 
 
 automaticrun <- F
