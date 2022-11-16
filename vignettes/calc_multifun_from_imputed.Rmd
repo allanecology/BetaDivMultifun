@@ -139,7 +139,8 @@ for(f in usedforBetadivMultifun[!usedforBetadivMultifun == "Plotn"]){
   diffsmall <- reshape2::melt(diffsmall, value.name = "X")
   diffsmall <- diffsmall[!is.na(diffsmall[, 3]),]
   diffsmall <- data.table::data.table(diffsmall)
-  diffsmall[, eval(f) := scale(X, center = F)] # scale and center
+  diffsmall[, eval(f) := scale(X, center = T, scale = T)] # scale and center
+  #TODO remove scaling here, below normalisation is done
   diffsmall[, X := NULL]
   # assign(diffname, diffsmall)
   singleEFdist <- merge(singleEFdist, diffsmall, by = c("Var1", "Var2"), all.y = T)
