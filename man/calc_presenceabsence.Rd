@@ -10,6 +10,9 @@ calc_presenceabsence(x, threshold = 0.5, type = "max5")
 \item{x}{input vector}
 
 \item{threshold}{the threshold for calculation, between 0 and 1, e.g. 0.5}
+
+\item{type}{is either "max5" or "quantile". "max5" calculates the mean of the
+maximum 5 values, whereas "quantile" calculates the threshold - quantile.}
 }
 \value{
 a vector of scaled values to be between 0 and 1.

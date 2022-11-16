@@ -59,3 +59,20 @@ The cases are set to 0 or 1, as described above.
 
 note that some tests of the function are provided as example.
 }
+\examples{
+TESTING
+prepare test dataset
+test <- data.table(Species = rep(c("S1", "S2", "S3", "S4", "S5"), 4), 
+                   Plot = paste("P", sort(rep(seq(1, 4), 5)), sep = ""),
+                   value = c(rep(0, 5), 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, rep(0, 5)))
+test <- prepare_for_betapair(test)
+old_res <- betapart::beta.pair(test, index.family = "sorensen") # producin NaN s
+res <- beta.pair_zerospecies(test, index.family = "sorensen")
+
+# all tests need to be TRUE
+all(!any(is.nan(res$beta.sim)), !any(is.nan(res$beta.sne)), !any(is.nan(res$beta.sor))) # there are no more NaN values in the dataset any more.
+all(res$beta.sne[is.nan(old_res$beta.sne)] \%in\% c(0, 1)) # previously NaN are now 0 or 1
+all(res$beta.sor[is.nan(old_res$beta.sne)] \%in\% c(0, 1)) # previously NaN are now 0 or 1
+all(res$beta.sim[is.nan(old_res$beta.sne)] \%in\% c(0)) # previously NaN are now 0 or 1
+all(res$beta.sor[is.nan(old_res$beta.sne)]== res$beta.sne[is.nan(old_res$beta.sne)]) # beta.sor. and beta.sne are the same
+}
