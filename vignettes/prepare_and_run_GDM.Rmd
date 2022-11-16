@@ -31,9 +31,7 @@ source("vignettes/analysis_nonpublic.R")
 # select input by hand
 depending on the model intented to run, chose the appropriate variables below.
 ```{r}
-#TODO : write automatic input for all models : if calling from a summary script : 
-#    put a default value here, in case none is given.
-
+# select a model to run, from the table `model_names` which is part of the R package data (see how to load in `analysis_nonpublic.R`)
 if(exists("model_names_selection")){
   # model_names_selection is given from outside the script
   print("using selection of the model from outside the script")
@@ -44,11 +42,6 @@ if(exists("model_names_selection")){
 }
 
 #TODO : capture deviance explained from all models and store in table
-
-## special case : ABUNDANCE-based betadiversity DEPRECIATED
-# model name : gdm_EFdistance_abundancebeta_LUI
-# colorder_gdm_input <- gsub(pattern = ".beta.sim", replacement = ".beta.bal", colorder_gdm_input)
-# colorder_gdm_input <- gsub(pattern = ".beta.sne", replacement = ".beta.gra", colorder_gdm_input)
 ```
 by-hand input ends here.
 
@@ -169,7 +162,7 @@ colorder_gdm_input <- append(colorder_gdm_input, "s2.geosphere_distgeo", after =
 
 ```{r}
 # select respective LUI measures from colorder
-grep(lui[1], colorder_gdm_input)
+# grep(lui[1], colorder_gdm_input)
 if(lui[1] == "LUI"){
   colorder_gdm_input <- colorder_gdm_input[-grep(paste(c("Gstd", "Mstd", "Fstd"), collapse = "|"), colorder_gdm_input)]
 } else {
