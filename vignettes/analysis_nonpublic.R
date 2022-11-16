@@ -5,6 +5,8 @@
 #    save the analysis_nonpublic.R with the analysis and source it with this specified vector in order to load the
 #    needed variables
 
+#TODO user : connect to planteco and nsch to get input files
+
 # Explanation of name:
 # Was historically thought to not be public because contains file paths, but decided to keep it close to all code.
 
@@ -167,24 +169,24 @@ if("results" %in% sections_to_be_loaded){
 
 if("gdminput" %in% sections_to_be_loaded){
   # gdminput
-  # if not specified differently, will read in the results from the GDM model EFdist with LUI
-  if(all(c(funs, compon_lui) < 0)){
-    print("using default model : EFdistance LUI")
-    funs <- "EFdistance"
-    compon_lui <- "LUI" #"components"
+  # if not specified differently, will read in the results from the GDM model EFturnover 0.7 with LUI
+  if(!exists("model_names_selection")){
+    print("model selection is not given, default is EFturnover_0.7")
+    model_names_selection <- model_names[which(model_names$modelname == "gdm_EFturnover_0.7_LUI"), ]
   }
-  modelname <- paste("gdm", funs, compon_lui, sep = "_")
+  modelname <- paste("gdm", funs, lui, sep = "_")
   model_name <- modelname
-  gdminput <- readRDS(paste(pathtodata, paste("/analysis/output_datasets/gdm", funs, compon_lui, "input.Rds", sep = "_"), sep = ""))
+  #TODO HIER gerade am cleanen damit IMMER model_names_selection verwendet wird.
+  gdminput <- readRDS(paste(pathtodata, paste("/analysis/output_datasets/gdm", funs, lui, "input.Rds", sep = "_"), sep = ""))
 }
 
 
 if("gdmoutput" %in% sections_to_be_loaded){
-  if(all(c(funs, compon_lui) < 0)){
+  if(all(c(funs, lui) < 0)){
     print("using default model : EFdistance LUI")
     funs <- "EFdistance"
-    compon_lui <- "LUI" #"components"
+    lui <- "LUI" #"components"
   }
-  model_name <- paste("gdm", funs, compon_lui, sep = "_")
+  model_name <- paste("gdm", funs, lui, sep = "_")
   gdmoutput <- readRDS(paste_gdm_input_path_together(pathtoout = pathtodata, name = model_name))
 }
