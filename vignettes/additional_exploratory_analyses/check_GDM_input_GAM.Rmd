@@ -9,6 +9,27 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+----------CLEAN THIS
+Requirements : 
+- script is runned right after `prepare_and_run_GDM.Rmd`. Requires its output `gdminput`.
+    - note that `gdminput` is also saved as .csv and .Rds from the above mentioned script.
+    - `nicenames` for nice correlation plot
+    - `model_names_selection` : a row of the dataframe model_names
+
+The script calculates euclidean distances abs(simple substraction) of the covariates and LUI as well as the geographic distance based on coordinates and forms a table with all distances. A correlation plot is produced and a *linear model* fitted and both are saved. Variance inflation of the linear model is calculated and saved.
+
+DEPRECIATED notice : linear model not used any more in analyis: assumption of independent observations (i.i.d. assumption) not met and therefore p-values not trustable. Also : nonlinearities are exptected.
+GAM used to check, but it also violates the i.i.d. assumption.
+Individual associations (correlation plot) does not correct for other predictors.
+Need to check associations among variables and GDM assumption of monotonic increase.
+--> all methods violate important assumptions --> compare the 3 methods and make the best of it.
+
+Output : 
+- DEPRECIATED linear model output `vignettes/out/<modelname>_linear_model_before_gdm.Rds`
+- DEPRECIATED variance inflation `out/<modelname>_vif_before_gdm.txt`
+- DEPRECIATED linear model plot `vignettes/out/<modelname>_linear_model_directions.pdf`
+----------
+
 Goal :
 - find negative and positive associations --> help interpretation
 - variance inflation
@@ -19,6 +40,58 @@ Requirement :
 ```{r}
 require(mgcv)
 ```
+
+# Linear model
+
+```{r}
+# ## variance inflation in linear model
+# # note : p-values are not trustable, because the assumption of independent observations is  not met! (matrix correlation)
+# #    DEPRECIATED --> new method needed
+# # generate model
+# mod <- paste("distance ~ " ,paste(colnames(checkgdminput)[!colnames(checkgdminput) %in% c("distance")], collapse = " + "))
+# m1 <- lm(formula = formula(mod), data = checkgdminput)
+# # save linear model
+# saveRDS(m1, file = paste("vignettes/out/", modelname, "_linear_model_before_gdm.Rds", sep = ""))
+# # save linear model output
+# capture.output(summary(m1),
+#                file = paste("vignettes/out/", modelname, "_lm_summary.txt"))
+# 
+# vif_output <- car::vif(m1)
+# vif_output[which(vif_output > 5)]
+# # vif_output[which(vif_output[, "GVIF"] > 5),]
+# capture.output(c(mod,
+#                vif_output[which(vif_output > 5)]),
+#                file = paste("vignettes/out/", modelname, "_vif_before_gdm.txt", sep = ""))
+# 
+# # plot linear model
+# # m1$coefficients
+# test <- summary(m1)
+# coefs <- test$coefficients
+# coefs <- data.table(coefs)
+# coefs[, names := rownames(test$coefficients)]
+# coefs[`Pr(>|t|)` < 0.05, pval_symbol := "*"]
+# coefs[`Pr(>|t|)` > 0.05, pval_symbol := ""]
+# 
+# linplot <- ggplot(coefs, aes(x = names, y = Estimate)) +
+#   geom_bar(stat = "identity") +
+#   coord_flip() +
+#   geom_text(aes(label=pval_symbol), y=0.5, color="black", size=3.5) +
+#   geom_errorbar(aes(ymin=Estimate-`Std. Error`, ymax=Estimate+`Std. Error`), width=.2, color = "red") +
+#   background_grid() +
+#   ggtitle(modelname) +
+#   ylab("linear model estimates") +
+#   xlab("") +
+#   ylim(-0.4, 0.5) +
+#   labs(caption = "error bars correspond to standard errors")
+# 
+# ggsave(linplot, filename = paste("vignettes/out/", modelname, "_linear_model_directions.pdf", sep = ""), dpi = 400,
+#        units = "cm", width = 29.7, height = 21)
+```
+
+
+
+
+
 
 # GAM
 ```{r}
