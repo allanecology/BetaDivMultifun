@@ -107,9 +107,9 @@ if("raw_diversity" %in% sections_to_be_loaded){
 if("betadiversity" %in% sections_to_be_loaded){
   # BETADIVERSITY
   trlevels <- readRDS(paste(pathtodata, "/data_assembly/output_data/trlevels_vector.rds", sep = ""))
-  # masterbeta <- readRDS(paste(pathtodata, "/data_assembly/output_data/master_beta.rds", sep = ""))
+  masterbeta <- readRDS(paste(pathtodata, "/data_assembly/output_data/master_beta.rds", sep = ""))
   # masterbeta <- readRDS(paste(pathtodata, "/data_assembly/output_data/master_beta_incl_poll_and_tertcons.rds", sep = ""))
-  masterbeta <- readRDS(paste(pathtodata, "/data_assembly/output_data/master_beta_no_bats_with_birds.rds", sep = "")) # THIS WAS ACTIVE LAST TIME
+  # masterbeta <- readRDS(paste(pathtodata, "/data_assembly/output_data/master_beta_no_bats_with_birds.rds", sep = ""))
   # masterbeta <- readRDS(paste(pathtodata, "/data_assembly/output_data/master_beta_abundance.rds", sep = "")) # note: needs some special modifications in scripts
 }
 
