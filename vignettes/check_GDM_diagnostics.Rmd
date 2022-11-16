@@ -12,33 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r, include = F}
 sections_to_be_loaded <- c()
-source("analysis_nonpublic.R")
-```
-
-Quick and dirty diagnostics plot function. Adapted from gdm package: just plot first 2 plots. (In package, there was no possibility to plot only the first 2 plots).
-```{r, include = F}
-#TODO : add to package!
-plot.diagn.gdm <- function(x, title = ""){
-  # x is a model output from GDM
-  # title is a character string, title for the plot
-  plot.color <- "blue"
-  PSAMPLE <- 200
-  plot.linewidth <- 2.0
-  
-  par(mfrow = c(1, 2))
-  ##plots the compositional dissimilarity spline plot
-  plot(x$ecological, x$observed, xlab="Predicted Ecological Distance", ylab="Observed Compositional Dissimilarity", type="n", ylim=c(0,1), main = title)
-  points(x$ecological, x$observed, pch=20, cex=0.25, col=plot.color)
-  overlayX <- seq( from=min(x$ecological), to=max(x$ecological), length=PSAMPLE )
-  overlayY <- 1 - exp( - overlayX )
-  lines(overlayX, overlayY, lwd=plot.linewidth )
-  
-  ##plots the second compositional dissimilarity spline plot
-  plot(x$predicted, x$observed, xlab="Predicted Compositional Dissimilarity", ylab="Observed Compositional Dissimilarity", type="n", ylim=c(0,1), main = paste("%var expl =", round(x$explained, 2)))
-  points( x$predicted, x$observed, pch=20, cex=0.25, col=plot.color )
-  overlayX <- overlayY <- seq( from=min(x$predicted), to=max(x$predicted), length=PSAMPLE )
-  lines( overlayX, overlayY, lwd=plot.linewidth )
-}
+source("vignettes/analysis_nonpublic.R")
 ```
 
 
@@ -58,7 +32,7 @@ plot.diagn.gdm(efdist, title = "Efdistane")
 ```{r, eval = F, include = F}
 efto0.5 <- readRDS(paste(pathtodata, "/analysis/output_datasets/gdm_EFturnover_0.5_LUI_output.Rds", sep = ""))
 efto0.5$explained # 12.19
-plot.diagn.gdm(efto0.5)
+plot_diagn_gdm(efto0.5)
 #TODO : Stimmt der Wert auf der Grafik nicht? Von Hand in Tabelle eingetragen und vertippt??
 ```
 ```{r}
@@ -68,7 +42,7 @@ for(i in seq(0.1, 0.9, 0.1)){
   print(i)
   mod <- readRDS(paste(pathtodata, "/analysis/output_datasets/gdm_EFturnover_", i, "_LUI_output.Rds", sep = ""))
   EFturnover_varexpl <- append(EFturnover_varexpl, mod$explained)
-  plot.diagn.gdm(mod, title = paste("EFturnover", i))
+  plot_diagn_gdm(mod, title = paste("EFturnover", i))
 }
 # EFturnover_varexpl
 ```
@@ -82,7 +56,7 @@ for(i in seq(0.1, 0.9, 0.1)){
   print(i)
   mod <- readRDS(paste(pathtodata, "/analysis/output_datasets/gdm_EFnestedness_", i, "_LUI_output.Rds", sep = ""))
   EFnestedness_varexpl <- append(EFnestedness_varexpl, mod$explained)
-  plot.diagn.gdm(mod, title = paste("EFnestedness", i))
+  plot_diagn_gdm(mod, title = paste("EFnestedness", i))
 }
 # EFnestedness_varexpl
 ```
