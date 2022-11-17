@@ -34,7 +34,14 @@ This scripts visualises the GDM output. It is runned for each model individually
 The model name 
 
 # select input
-Depending on the model intented to run, chose the appropriate variables below.
+Depending on the model intented to run, chose the appropriate variables below. The model is selected from the table model_names.
+
+Load table `model_names`.
+```{r}
+# Load requirements from <..>nonpublic.R file
+source("vignettes/analysis_nonpublic.R")
+```
+Chose model
 ```{r}
 # select a model to run, from the table `model_names` which is part of the R package data (see how to load in `analysis_nonpublic.R`)
 if(exists("model_names_selection")){
@@ -46,25 +53,11 @@ if(exists("model_names_selection")){
   print(c("working on model :", paste(model_names_selection, collapse = ", ")))
 }
 ```
-
-
-### User input
-Either chose automaticrun T or F. If T, the model names and lui input are automatically read in from model_names in a loop, started from `results_nonpublic.R`.
-```
-for(i in nrow(model_names)){
-  source("plot_GDM.R")
-}
-```
-
-# manual input
-
-If F, `luiinput` and `model_name` need to be given manually.
-*note* that i <- 6 for testing.
+Load requirements
 ```{r}
-# Load requirements from <..>nonpublic.R file
-sections_to_be_loaded <- c("plotting", "results", "gdminput", "gdmoutput")
 funs <- model_names_selection$funs
-lui <- model_names_selecton$lui
+lui <- model_names_selection$lui
+sections_to_be_loaded <- c("plotting", "results", "gdminput", "gdmoutput")
 source("vignettes/analysis_nonpublic.R")
 # will create "model_name" automatically
 #    e.g. gdm_EFnestedness_0.7_LUI
@@ -73,27 +66,24 @@ source("vignettes/analysis_nonpublic.R")
 #TODO HERE load model_names_selection, clean that it's everywhere the same!
 
 
-
-
-automaticrun <- F
-    # only provide if automaticrun is F
-luiinput <- "lui" # lui or components
-# model_name <- "gdm_EFnestedness_0.7_LUI"
-# model_name <- "gdm_EFdistance_LUI_NO_sc_arthropodsoillarvae"
-# model_name <- "gdm_EFdistance_LUI"
-permut <- F # T or F, depending wether permutations are available or not
-```
-
-# preparation
-```{r}
-# i <- 6 # i <- 6 for testing
-if(automaticrun){
   print("automatic input")
   luiinput <- model_names$luiinput[i]
   model_name <- model_names$name[i]
   permut <- model_names$permut[i]
-}
+
+luiinput <- "lui" # lui or components
+
+permut <- F # T or F, depending wether permutations are available or not
+#TODO : implement this
+```
+
+
+
+
+# preparation
+```{r}
 if(permut == T){
+  stop("handling permutation values is currently not implemented")
   gdmperm <- readRDS(paste(paste(paste(pathtodata, "/analysis/output_datasets/pvalue_calculation/", sep = ""), model_name, sep = ""), "_perm.Rds", sep = ""))
   sign <- gdmperm[[3]][,1]
   sign <- data.table::data.table("names" = names(sign), "sign" = sign)
@@ -126,7 +116,8 @@ capture.output(print(model_specs), file = paste(pathtoout, "/", model_name, "_GD
 # define plot sequence
 ###########
 plotsequence_bio <- c("autotroph", "bacteria.RNA", "herbivore.arthropodsoillarvae", "secondary.consumer.arthropodsoillarvae", "herbivore.arthropod", "plantpathogen.fungi", "bacterivore.protist", "eukaryvore.protist", "omnivore.protist", "plantparasite.protist", "secondary.consumer", "decomposer.soilfungi", "pathotroph.soilfungi", "symbiont.soilfungi", "tertiary.consumer")
-plotsequence_abio <- define_rownames_lui_or_components(luiinput = luiinput)
+plotsequence_abio <- c(model_names_selection$lui, 
+                       paste("delta", lui, sep = ""), "soil", "isolation", "geo")
 ```
 
 
