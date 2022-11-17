@@ -25,6 +25,10 @@ This is a documenation of the cleaning round in October 2022. Mainly serves to c
 
 ## Documentation of cleaning
 
+-   `plot_GDM.Rmd` :
+    -   removed `automaticrun` variable : all runs are automatic from now.
+
+    -   chosing model from `model_names`.
 -   reading in LUI input : before I gave the variable `compon_lui` by hand, now this is called `lui` and taken from `model_names_selecton$lui`.
 
 **small datasets**
@@ -126,4 +130,4 @@ Take care that the following points are included in re-analysis :
 
 -   %var expl. plot is re-done. Seems there was an error in manually entering the values in a large table. New : use the small tables extracted for each model and rbind them to a full table of model specs.
 
--   ...
+-   Implement permutations in `plot_GDM.Rmd`.
