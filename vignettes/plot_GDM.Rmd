@@ -63,18 +63,12 @@ source("vignettes/analysis_nonpublic.R")
 #    e.g. gdm_EFnestedness_0.7_LUI
 
 
-#TODO HERE load model_names_selection, clean that it's everywhere the same!
-
-
-  print("automatic input")
-  luiinput <- model_names$luiinput[i]
-  model_name <- model_names$name[i]
-  permut <- model_names$permut[i]
-
+#TODO solve luiinput thing
 luiinput <- "lui" # lui or components
 
 permut <- F # T or F, depending wether permutations are available or not
 #TODO : implement this
+
 ```
 
 
@@ -90,36 +84,30 @@ if(permut == T){
 }
 
 
-###########
 # read input data
-###########
 gdm_output <- readRDS(paste_gdm_input_path_together(pathtoout = pathtodata, name = model_name))
 exSplines <- gdm::isplineExtract(gdm_output)
 maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)
 
-
-###########
-# get model specifications
-###########
-# get model specs to print with plot
-model_specs <- paste(
-model_name,
-paste("deviance of the fitted GDM model :", round(gdm_output$gdmdeviance, 3)),
-paste("deviance of the null model : ", round(gdm_output$nulldeviance, 3)),
-paste("percentage of null deviance \n explained by the fitted GDM model :", round(gdm_output$explained, 3)),
-"3 splines used, knots at min, max and 50% (default). ",
-paste("LUI knots at :", paste(round(gdm_output$knots[1:3], 3), collapse = ", ")),
-sep = "\n")
-capture.output(print(model_specs), file = paste(pathtoout, "/", model_name, "_GDM_model_specs.txt", sep = ""))
-
-###########
 # define plot sequence
-###########
 plotsequence_bio <- c("autotroph", "bacteria.RNA", "herbivore.arthropodsoillarvae", "secondary.consumer.arthropodsoillarvae", "herbivore.arthropod", "plantpathogen.fungi", "bacterivore.protist", "eukaryvore.protist", "omnivore.protist", "plantparasite.protist", "secondary.consumer", "decomposer.soilfungi", "pathotroph.soilfungi", "symbiont.soilfungi", "tertiary.consumer")
 plotsequence_abio <- c(model_names_selection$lui, 
                        paste("delta", lui, sep = ""), "soil", "isolation", "geo")
 ```
 
+## Creating legend plots
+Plots that are re-used in all the plots (Legend and model results)
+```{r}
+###########
+# create additional plots
+###########
+# model specifications and legends
+labsplot <- ggplot(NULL) + #annotate("text", x = 0.8, y = 0.5, size=8, label = model_name) +
+  theme_void() + annotate("text", x = 0.4, y = 0.5, size = 3, 
+                          label = paste(names(model_specs), model_specs, sep = ": ", collapse = "\n"))
+biotic_legend <- get_nice_legend(type = "biotic") # plot with plot_grid(biotic_legend)
+abiotic_legend <- get_nice_legend(type = "abiotic")
+```
 
 
 
@@ -152,83 +140,72 @@ lineplot_data <- merge(lineplot_data, nicenames, by = "names", all.x = T)
 # create lineplots
 ###########
 # above, below and abiotic subplots
-p <- create_gdm_lineplot(lineplot_data[ground == "a"], legend = T, ymax = max(lineplot_data$value))
-q <- create_gdm_lineplot(lineplot_data[ground == "b"], legend = T, ymax = max(lineplot_data$value))
+p <- create_gdm_lineplot(lineplot_data[ground == "a"], legend = F, ymax = max(lineplot_data$value))
+q <- create_gdm_lineplot(lineplot_data[ground == "b"], legend = F, ymax = max(lineplot_data$value))
 
-# abiotic is splitted into several plots due to x axes
-if(luiinput == "components"){
-  luidat <- lineplot_data[names %in% c("Gstd", "Mstd", "Fstd")]
-  deltaluidat <- lineplot_data[names %in% c("deltaGstd", "deltaMstd", "deltaFstd")]
-} else if(luiinput == "lui"){
-  luidat <- lineplot_data[names %in% c("LUI")]
-  deltaluidat <- lineplot_data[names %in% c("deltaLUI")]
-}
-l <- create_gdm_lineplot(luidat, legend = T, ymax = max(lineplot_data$value))
-dl <- create_gdm_lineplot(deltaluidat, legend = T, ymax = max(lineplot_data$value))
+# abiotic subplots
+# LUI
+luidat <- lineplot_data[names %in% model_names_selection$lui,]
+deltaluidat <- lineplot_data[names %in% paste("delta", model_names_selection$lui, sep = ""),]
+l <- create_gdm_lineplot(luidat, legend = F, ymax = max(lineplot_data$value))
+dl <- create_gdm_lineplot(deltaluidat, legend = F, ymax = max(lineplot_data$value))
 
-lgeo <- create_gdm_lineplot(lineplot_data[names %in% c("Geographic")], legend = T, ymax = max(lineplot_data$value))
-lsoil <- create_gdm_lineplot(lineplot_data[names %in% c("edis_soil")], legend = T, ymax = max(lineplot_data$value))
-lisol <- create_gdm_lineplot(lineplot_data[names %in% c("plot_isolation")], legend = T, ymax = max(lineplot_data$value))
+lgeo <- create_gdm_lineplot(lineplot_data[names %in% c("Geographic")], legend = F, ymax = max(lineplot_data$value))
+lsoil <- create_gdm_lineplot(lineplot_data[names %in% c("edis_soil")], legend = F, ymax = max(lineplot_data$value))
+lisol <- create_gdm_lineplot(lineplot_data[names %in% c("plot_isolation")], legend = F, ymax = max(lineplot_data$value))
 
-# r <- create_gdm_lineplot(lineplot_data[names %in% c("Geographic", "edis_soil", "plot_isolation")], legend = T)
-#TODO outcomment this, because x axis don't match?
-
-###########
-# create additional plots
-###########
-# model specifications and legends
-labsplot <- ggplot(NULL) + #annotate("text", x = 0.8, y = 0.5, size=8, label = model_name) +
-  theme_void() + annotate("text", x = 0.4, y = 0.5, size = 4, label = model_specs)
-biotic_legend <- get_nice_legend(type = "biotic") # plot with plot_grid(biotic_legend)
-abiotic_legend <- get_nice_legend(type = "abiotic")
 
 ###########
 # add plots together
 ###########
+# create classic lineplot
+suppressWarnings(
+  lin <- plot_grid(p, biotic_legend, q, labsplot, l, abiotic_legend,
+                   labels = c('A', '', 'B', '', 'C', ''), nrow = 3,
+                   rel_widths = c(0.6, 0.5))
+  ) # suppresswarnings because of special characters
+lin_abiotic <- plot_grid(dl, lgeo, lsoil, lisol,
+                         labels = c("D", "", "", ""),
+                         align = T, nrow = 1)
+all_lines <- plot_grid(lin, lin_abiotic, nrow = 2, rel_heights = c(0.8, 0.2))
+
+
+# Alternative plottings
+# lin <- plot_grid(p, q, l, labels = c("A", "B", "C"), nrow = 3,
+#                    align = T)
 # suppressWarnings(
-#   lin <- plot_grid(p, biotic_legend, q, labsplot, l, abiotic_legend,  
-#                    labels = c('A', '', 'B', '', 'C', ''), nrow = 3,
-#                    rel_widths = c(0.7, 0.3, 0.7, 0.3, 0.7, 0.3))
-#   ) # suppresswarnings because of special characters
-# 
-# suppressWarnings(
-# lin <- plot_grid(p, labsplot, q, NULL, l, 
+# lin <- plot_grid(p, labsplot, q, NULL, l,
 #                  labels = c('A', '', 'B', '', 'C', ''), nrow = 3,
 #                  rel_widths = c(0.7, 0.3))
 # )
-#TODO uncomment above, here just use quick solution for the seminar
-suppressWarnings(
-  lin <- plot_grid(p, q, l, labels = c("A", "B", "C"), nrow = 3,
-                   align = T)
-)
-                   
-lin_abiotic <- plot_grid(dl, lgeo, lsoil, lisol, 
-                         labels = c("D", "", "", ""),
-                         align = T)
+# p_annot <- plot_grid(biotic_legend, plot_grid(abiotic_legend, labsplot, NULL, nrow = 3))
+# all_lines <- plot_grid(p, p_annot, q, l, dl, lgeo, lsoil, lisol,
+#           labels = c("A", "B", "C", "D"),
+#           nrow = 4)
 
-# plot_grid(lin, lin_abiotic, nrow = 1)
-#TODO shuffle well the plots on a page. Ev. remove legend
+
 
 ###########
 # save
 ###########
 # `model_name` + "_lineplot_all_modelspec.pdf"
-ggplot2::ggsave(plot = lin, 
-                filename = paste(pathtoout, "/", model_name, "_lineplot_no_modelspec.pdf", sep = ""),
+# ggplot2::ggsave(plot = lin, 
+#                 filename = paste(pathtoout, "/", model_name, "_lineplot.pdf", sep = ""),
+#                 device=cairo_pdf, width = 8.27, height = 11.96, units = "in", dpi = 900)
+
+ggplot2::ggsave(plot = all_lines, 
+                filename = paste(pathtoout, "/", model_name, "_lineplot.pdf", sep = ""),
                 device=cairo_pdf, width = 8.27, height = 11.96, units = "in", dpi = 900)
-ggplot2::ggsave(plot = lin_abiotic, filename = paste(pathtoout, "/", model_name, "_lineplot_no_modelspec_abiotic.pdf", sep = ""),
-                device=cairo_pdf, width = 11.96, height = 8.27, units = "in", dpi = 900)
-ggplot2::ggsave(plot = labsplot, filename = paste(pathtoout, "/", model_name, "_lineplot_only_modelspec_abiotic.pdf", sep = ""),
-                device=cairo_pdf, width = 11.96, height = 8.27, units = "in", dpi = 900)
+
+# ggplot2::ggsave(plot = lin_abiotic, filename = paste(pathtoout, "/", model_name, "_lineplot_no_modelspec_abiotic.pdf", sep = ""),
+#                 device=cairo_pdf, width = 11.96, height = 8.27, units = "in", dpi = 900)
+# ggplot2::ggsave(plot = labsplot, filename = paste(pathtoout, "/", model_name, "_lineplot_only_modelspec_abiotic.pdf", sep = ""),
+#                 device=cairo_pdf, width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 
 
 # Barplots 
 ```{r, eval = F}
-# redo labsplot from lineplot section above
-labsplot <- ggplot(NULL) + #annotate("text", x = 0.8, y = 0.5, size=8, label = model_name) +
-  theme_void() + annotate("text", x = 0.4, y = 0.5, size = 4, label = model_specs)
-
 ###########
 # create table
 ###########
@@ -247,25 +224,19 @@ q <- create_abio_barplot()
 ###########
 # produce overview bars
 ###########
-    # ABOVE - BELOW - ABIOTIC
-restab2 <- create_restab2(restab = restab)
-#TODO switch to function create_overviewbar_restab (and extract above- below from list)
-restab2 <- restab2[type %in% c("averaged_scaled")]
-df <- data.frame(restab2)
-#edit : ---
 df <- create_overviewbar_restab(restab)
-#edit end ---
-ov1 <- create_overview_above_below_abiotic_barplot()
-ov1L <- create_overview_above_below_abiotic_barplot(legend = T) # legend only, plot with plot_grid()
-    # TURNOVER - NESTEDNESS - ABIOTIC
-restab3 <- create_restab_3()
-#TODO switch to function create_overviewbar_restab (and extract turnover-nestedness from list)
-restab3 <- restab3[type %in% c("averaged_scaled")]
-df <- data.frame(restab3)
-ov2 <- create_overview_turnover_nestedness_abiotic_barplot()
-ov2L <- create_overview_turnover_nestedness_abiotic_barplot(legend = T) # only legend, plot with plot_grid()
+
+# ABOVE - BELOW - ABIOTIC
+ov1 <- create_overview_above_below_abiotic_barplot(df$`above-below`)
+ov1L <- create_overview_above_below_abiotic_barplot(df$`above-below`, legend = T) # legend only, plot with plot_grid()
+
+# TURNOVER - NESTEDNESS - ABIOTIC
+ov2 <- create_overview_turnover_nestedness_abiotic_barplot(df$`turnover-nestedness`)
+ov2L <- create_overview_turnover_nestedness_abiotic_barplot(df$`turnover-nestedness`, legend = T) # only legend, plot with plot_grid()
+
+# combine legends
 ov_legends <- plot_grid(ov1L, ov2L, nrow = 2)
-#TODO correct error here
+
 
 ###########
 # add plots together
