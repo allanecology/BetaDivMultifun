@@ -4,9 +4,12 @@
 \alias{create_overview_turnover_nestedness_abiotic_barplot}
 \title{create plot Overview : turnover - newtedness - abiotic}
 \usage{
-create_overview_turnover_nestedness_abiotic_barplot(legend = F)
+create_overview_turnover_nestedness_abiotic_barplot(df, legend = F)
 }
 \arguments{
+\item{df}{input dataframe or data.table, 
+is the output of `create_overviewbar_restab`}
+
 \item{legend}{boolean, if T, only legend is returned, if F, 
 only plot is returned.}
 }

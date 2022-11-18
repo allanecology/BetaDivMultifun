@@ -22,4 +22,5 @@ all the indivdiual effects, which results in 2+(number of explanatory)
 plots.
 The function uses 200 samples along the ecological gradient to 
 get the line. (similar as used in gdm package.)
+Note that the var expl. is taken directly from the fitted model.
 }
