@@ -219,9 +219,9 @@ model_specs <- data.table(modelname = model_names_selection$modelname,
                            "deviance of the fitted GDM model" = round(gdm_output$gdmdeviance, 3),
                            "deviance of the null model" = round(gdm_output$nulldeviance, 3),
                            "percentage of null dev expl" = round(gdm_output$explained, 3),
-                           "3 splines knots at min, max and 50% (default)" = paste(round(gdm_output$knots[1:3], 3), collapse = ", ")
+                           "splines knots" = paste(round(gdm_output$knots[1:3], 3), collapse = ", ")
 )
-fwrite(model_specs, paste(pathtoout, "/", model_names_selection$modelname, "_GDM_model_spects.csv", sep = ""))
+fwrite(model_specs, paste(pathtoout, "/", model_names_selection$modelname, "_GDM_model_specs.csv", sep = ""))
 ```
 
 
