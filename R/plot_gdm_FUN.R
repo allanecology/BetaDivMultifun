@@ -64,15 +64,28 @@ NULL
 #' 
 #' code to create plot p : bio and aboveground
 #' 
+#' @param type is either grouped, where turnover and nestedness components
+#' are shown in individual bars, or "stacked", where turnover and 
+#' nestedness components are stacked on top of each other.
 #' @import ggplot2
 #' @import cowplot
 #' 
 #' @export
-create_bio_aboveground_barplot <- function(){
+create_bio_aboveground_barplot <- function(type = c("grouped", "stacked")){
   df <- restab[type == "bio" & ground == "a", ]
-  p<-ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
-    geom_bar(stat="identity", color = "black") + 
-    coord_flip() + 
+  if(type == "grouped"){
+    # plot by nicenmaes, unique names for each trophic level and each component
+    p<-ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
+      geom_bar(stat="identity", color = "black")
+    
+  } else if(type == "stacked"){
+    # plot by legendnames if stacked - unique names for trophic group, but no unique names for
+    # turnover and nestedness
+    p<-ggplot(data = df, aes(x=legendnames, y=maxsplines, fill = color, linetype = linetypet)) +
+      geom_bar(stat="identity", color = "black")
+    
+  }
+  p <- p + coord_flip() + 
     scale_fill_identity() + scale_linetype_identity() + # the best option for customizing linetype, color,...!
     ylim(0, 0.44) + 
     ggtitle(model_name) +
@@ -82,8 +95,8 @@ create_bio_aboveground_barplot <- function(){
           axis.text.x = element_blank(),
           axis.line.x=element_blank(),
           axis.ticks.x = element_blank(),
-          panel.grid.major.x = element_line(color = "grey")
-    )
+          panel.grid.major.x = element_line(color = "grey"))
+  
   return(p)
 }
 NULL
@@ -143,7 +156,8 @@ NULL
 
 
 
-#' create plot Overview : Aboveground - belowground - abiotic
+#' DEPRECIATED create plot Overview : Aboveground - belowground - abiotic
+#' TODO delete this function, use now : `create_overview_barplot` 18.11.22
 #' 
 #' code to create overview
 #' @param df data frame to be used for plotting. Is output from `create_overviewbar_restab`.
@@ -186,8 +200,8 @@ create_overview_above_below_abiotic_barplot <- function(df, legend = F){
 NULL
 
 
-#' create plot Overview : turnover - newtedness - abiotic
-#' 
+#' DEPRECIATED create plot Overview : turnover - newtedness - abiotic
+#' TODO delete this function, use now : `create_overview_barplot` 18.11.22
 #' code to create overview
 #' 
 #' @param df input dataframe or data.table, 
@@ -201,7 +215,7 @@ NULL
 #' @export
 create_overview_turnover_nestedness_abiotic_barplot <- function(df, legend = F){
   if(legend){
-    # create dummy barplot with values 1 for all groups and extract colors from there.
+    # create dummy barplot with `values 1 for all groups and extract colors from there.
     # reason : check if the colors are assigned correctly (visual test)
     df <- as.data.table(df)
     ldf <- unique(df[, .(color, lui_component)])
@@ -213,6 +227,52 @@ create_overview_turnover_nestedness_abiotic_barplot <- function(df, legend = F){
     return(ov1L)
   } else {
     ov2 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = factor(color, levels=c("#666666", "#0072B2", "#984EA3", "#E6AB02")))) +
+      geom_bar(stat="identity", color = "black", linetype = "solid") +
+      coord_flip() +
+      scale_fill_identity() +
+      theme(legend.position = "none", axis.title = element_blank(),
+            axis.text.y = element_text(size=9),
+            panel.grid.major.x = element_line(color = "grey"))
+    
+    return(ov2)
+  }
+}
+NULL
+
+
+
+#' Create Overview Barplot
+#' 
+#' Creates overview barplots from the data.table outputted by `create_overviewbar_restab()`. 
+#' Plots all overviewbars provided by the input data, in order
+#' to cut bars, please take out the respective lines.
+#' 
+#' @param df input dataset for plotting, taken from `create_overviewbar_restab()`.
+#' @param legend if set to T, only the legend is the output. Defaults to F.
+#' @return A barplot of the overviewbars. If `legend=T`, legend extracted with `cowplot::get_legend` which can be plotted
+#' using `cowplot::plot_grid(legend)`.
+#'
+#' @import ggplot2
+#' @import cowplot
+#' @import data.table
+#'
+#' @export
+create_overview_barplot <- function(df, legend = F){
+  if(legend){
+    # create dummy barplot with values 1 for all groups and extract colors from there.
+    # reason : check if the colors are assigned correctly (visual test)
+    df <- as.data.table(df)
+    ldf <- unique(df[, .(color, component)])
+    ldf[, testvals := 1]
+    ov1L <- ggplot(ldf, aes(x = component, y = testvals, 
+                            fill = factor(color, levels=c("#666666", "#0072B2", "#984EA3", "#E6AB02", "#66A61E", "#A65628")))) +
+      geom_bar(stat = "identity", color = "black") +
+      scale_fill_identity("", labels = ldf$component, breaks = ldf$color,  guide = "legend")
+    ov1L <- cowplot::get_legend(ov1L)
+    return(ov1L)
+  } else {
+    ov2 <- ggplot(data = df, aes(x=bar_name, y=maxsplines, 
+                                 fill = factor(color, levels=c("#666666", "#0072B2", "#984EA3", "#E6AB02", "#66A61E", "#A65628")))) +
       geom_bar(stat="identity", color = "black", linetype = "solid") +
       coord_flip() +
       scale_fill_identity() +
