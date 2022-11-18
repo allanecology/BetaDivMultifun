@@ -27,6 +27,10 @@
 #                            "results",
 #                            "gdminput",
 #                            "gdmoutput")
+if(!exists("sections_to_be_loaded")){
+  sections_to_be_loaded <- c()
+}
+
 
 # PACKAGE
 # load functions and small helper datasets from the package
@@ -177,7 +181,10 @@ if("gdminput" %in% sections_to_be_loaded){
   modelname <- paste("gdm", funs, lui, sep = "_")
   model_name <- modelname
   #TODO HIER gerade am cleanen damit IMMER model_names_selection verwendet wird.
-  gdminput <- readRDS(paste(pathtodata, paste("/analysis/output_datasets/gdm", funs, lui, "input.Rds", sep = "_"), sep = ""))
+  
+  gdminput <- readRDS(paste(pathtodata, paste("/analysis/output_datasets/gdm", 
+                                              model_names_selection$funs, 
+                                              model_names_selection$lui, "input.Rds", sep = "_"), sep = ""))
 }
 
 
@@ -189,4 +196,6 @@ if("gdmoutput" %in% sections_to_be_loaded){
   }
   model_name <- paste("gdm", funs, lui, sep = "_")
   gdmoutput <- readRDS(paste_gdm_input_path_together(pathtoout = pathtodata, name = model_name))
+  model_specs <- data.table::fread(paste(pathtodata, "/analysis/output_datasets/", 
+                          model_names_selection$modelname, "_GDM_model_specs.csv", sep = ""))
 }
