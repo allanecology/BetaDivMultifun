@@ -116,7 +116,7 @@ abiotic_legend <- get_nice_legend(type = "abiotic")
 naming convention : `model_name` + "_lineplot_all_modelspec.pdf"
 
 common y axis maximum is the maximum of the current model
-```{r, eval = F}
+```{r, eval = T}
 ###########
 # create plot table
 ###########
@@ -205,7 +205,7 @@ ggplot2::ggsave(plot = all_lines,
 
 
 # Barplots 
-```{r, eval = F}
+```{r, eval = T}
 ###########
 # create table
 ###########
@@ -230,7 +230,7 @@ df <- create_overviewbar_restab(restab, fun = "mean")
 df2 <- create_overviewbar_restab(restab, fun = "sum")
 df <- rbindlist(list(df, df2), use.names = T, fill = T)
 rm(df2)
-#TODO save output
+saveRDS(df, file = paste(pathtoout, "/", model_names_selection$modelname, "_overviewbar_data.RDS", sep = ""))
 #TODO check if it's a problem that instead of "averaged_scaled", it's called "mean"
 
 # # # # #
@@ -270,7 +270,7 @@ annotated_multipanel_with_overview_bars <- ggdraw(multipanel_with_overview_bars)
 #        # width = 11.96, height = 8.27, units = "in", dpi = 900)
 # --
 
-ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars.pdf", sep = ""), plot = annotated_multipanel_with_overview_bars, device=cairo_pdf,
+ggsave(filename = paste(pathtoout, "/", model_name, "_barplot.pdf", sep = ""), plot = annotated_multipanel_with_overview_bars, device=cairo_pdf,
        width = 11.96, height = 8.27, units = "in", dpi = 900)
 
 # ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars_extraplot_annotations.pdf", sep = ""), plot = extraplot, device=cairo_pdf,
@@ -279,13 +279,26 @@ ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overvie
 Note : the barplot of weighted average is done in the script `GDM_multifun_thresholds.Rmd`, together with pieces of code from this script.
 
 
-# special case : stacked barplot
-Need turnover and nestedness in separate column.
-```{r}
-p <- create_bio_aboveground_barplot()
-b <- create_bio_belowground_barplot()
-q <- create_abio_barplot()
-```
+
+
+
+#TODO HERE
+the below part is mostly appendix figures. 
+Probably move that?
+Also here : only include figures that are done model-wise and that have an input data format which matches the
+examples here.
+Check if the output format of the average over threshold models can be used as input here.
+Check if the ouptut format of singleEFdist models can be used as input here (probably could be, but we anyway show results in a summary) Maybe just use summary functions used here for those as well.
+--> Philosophy : use more scripts, that contain similar things.
+
+- Move the creation of the average-threshold computation to a separate file and put that to the group of scripts that only need to be runned once.
+
+
+
+
+
+
+
 
 
 
