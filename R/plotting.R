@@ -87,19 +87,20 @@ create_overviewbar_restab <- function(restab, fun = c("mean", "sum")){
     print("please implement me...")
     # lui_restab[sign > 0.05 , maxsplines := 0]
   }
-
   
   #########
   # NESTEDNESS- TURNOVER
   #
   ovtab_tn <- data.table(aggregate(maxsplines ~ lui_component, restab, FUN = fun))
   ovtab_tn[, maxsplines := maxsplines / sum(ovtab_tn$maxsplines)] # convert to percent
+  setnames(ovtab_tn, old = "lui_component", new = "component")
   # add colors
-  ovtab_tn[lui_component == "turnover", color := "#E6AB02"]   # yellow
-  ovtab_tn[lui_component == "nestedness", color := "#984EA3"] # purple
-  ovtab_tn[lui_component == "abio", color := "#666666"] # gray
-  ovtab_tn[lui_component == "lui", color := "#0072B2"] # blue
+  ovtab_tn[component == "turnover", color := "#E6AB02"]   # yellow
+  ovtab_tn[component == "nestedness", color := "#984EA3"] # purple
+  ovtab_tn[component == "abiotic", color := "#666666"] # gray
+  ovtab_tn[component == "LUI", color := "#0072B2"] # blue
   ovtab_tn[, type := fun]
+  ovtab_tn[, groups := "turn_nes"]
   
   #########
   # ABOVE- BELOWGROUND
@@ -116,16 +117,19 @@ create_overviewbar_restab <- function(restab, fun = c("mean", "sum")){
   # calculate average scaled effects
   ovtab_ab <- data.table(aggregate(maxsplines ~ lui_ground_nicenames, ovtab_ab, FUN = fun))
   ovtab_ab[, maxsplines := maxsplines / sum(ovtab_ab$maxsplines)]
+  setnames(ovtab_ab, old = "lui_ground_nicenames", new = "component")
   ovtab_ab[, type := fun]
+  ovtab_ab[, groups := "above_below"]
   # add colors
-  ovtab_ab[lui_ground_nicenames == "aboveground", color := "#66A61E"] # green
-  ovtab_ab[lui_ground_nicenames == "belowground", color := "#A65628"] # brown
-  ovtab_ab[lui_ground_nicenames == "abiotic", color := "#666666"] # gray
-  ovtab_ab[lui_ground_nicenames == "LUI", color := "#0072B2"] # blue
+  ovtab_ab[component == "aboveground", color := "#66A61E"] # green
+  ovtab_ab[component == "belowground", color := "#A65628"] # brown
+  ovtab_ab[component == "abiotic", color := "#666666"] # gray
+  ovtab_ab[component == "LUI", color := "#0072B2"] # blue
   
   #########
   # RETURN
-  res <- list("above-below" = ovtab_ab, "turnover-nestedness" = ovtab_tn)
+  res <- rbindlist(list(ovtab_ab, ovtab_tn), use.names = T, fill = T)
+  res[, bar_name := paste(type, groups, sep = "_")]
   return(res)
 }
 
