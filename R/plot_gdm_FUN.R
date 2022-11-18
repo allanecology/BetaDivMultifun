@@ -75,17 +75,14 @@ create_bio_aboveground_barplot <- function(type = c("grouped", "stacked")){
   df <- restab[type == "bio" & ground == "a", ]
   if(type == "grouped"){
     # plot by nicenmaes, unique names for each trophic level and each component
-    p<-ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
-      geom_bar(stat="identity", color = "black")
-    
+    p <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet))
   } else if(type == "stacked"){
     # plot by legendnames if stacked - unique names for trophic group, but no unique names for
     # turnover and nestedness
-    p<-ggplot(data = df, aes(x=legendnames, y=maxsplines, fill = color, linetype = linetypet)) +
-      geom_bar(stat="identity", color = "black")
-    
+    p <- ggplot(data = df, aes(x=legendnames, y=maxsplines, fill = color, linetype = linetypet))
   }
-  p <- p + coord_flip() + 
+  p <- p + geom_bar(stat="identity", color = "black") +
+    coord_flip() + 
     scale_fill_identity() + scale_linetype_identity() + # the best option for customizing linetype, color,...!
     ylim(0, 0.44) + 
     ggtitle(model_name) +
@@ -109,10 +106,14 @@ NULL
 #' @import cowplot
 #' 
 #' @export
-create_bio_belowground_barplot <- function(){
+create_bio_belowground_barplot <- function(type = c("grouped", "stacked")){
   df <- restab[type == "bio" & ground == "b", ]
-  b <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
-    geom_bar(stat="identity", color = "black") + 
+  if(type == "grouped"){
+    b <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet))
+  } else if(type == "stacked"){
+    b <- ggplot(data = df, aes(x = legendnames, y = maxsplines, fill = color, linetype = linetypet))
+  }
+  b <- b + geom_bar(stat="identity", color = "black") +
     coord_flip() +
     scale_fill_identity() + scale_linetype_identity() +
     ylim(0, 0.44) +
@@ -131,16 +132,23 @@ NULL
 
 #' create plot abio
 #' 
-#' code to create plot abio
-#' 
+#' code to create plot abio.
+#' @param type is in "grouped" (turnover and nestedness are shown as individual
+#' bars) or in "stacked" (turnover and nestedness are stacked on top of each
+#' other). This does not matter for abiotic plot, but is kept in order to make
+#' clear it's the same code for abiotic, above and belowground.
 #' @import ggplot2
 #' @import cowplot
 #' 
 #' @export
-create_abio_barplot <- function(){
+create_abio_barplot <- function(type = c("grouped", "stacked")){
   df <- restab[ground == "x"]
-  q <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet)) +
-    geom_bar(stat="identity", color = "black") +
+  if(type == "grouped"){
+    q <- ggplot(data = df, aes(x = nicenames, y = maxsplines, fill = color, linetype = linetypet))
+  } else if(type == "stacked"){
+    q <- ggplot(data = df, aes(x = legendnames, y = maxsplines, fill = color, linetype = linetypet))
+  }
+  q <- q + geom_bar(stat="identity", color = "black") +
     coord_flip() +
     # scale_fill_manual(values = as.character(df$color)) +
     scale_fill_identity() +

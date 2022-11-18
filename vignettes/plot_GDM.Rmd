@@ -216,72 +216,65 @@ restab <- create_restab0()
 ###########
 # produce barplots
 ###########
-p <- create_bio_aboveground_barplot()
-b <- create_bio_belowground_barplot()
-q <- create_abio_barplot()
+p <- create_bio_aboveground_barplot(type = "stacked") # type is  in c("stacked", "grouped")
+b <- create_bio_belowground_barplot(type = "stacked")
+q <- create_abio_barplot(type = "stacked") # here it does not matter if "stacked" or "grouped" is given.
 
 
 ###########
 # produce overview bars
 ###########
-df <- create_overviewbar_restab(restab)
+# # # # #
+# Produce data for plotting
+df <- create_overviewbar_restab(restab, fun = "mean")
+df2 <- create_overviewbar_restab(restab, fun = "sum")
+df <- rbindlist(list(df, df2), use.names = T, fill = T)
+rm(df2)
+#TODO save output
+#TODO check if it's a problem that instead of "averaged_scaled", it's called "mean"
 
-# ABOVE - BELOW - ABIOTIC
-ov1 <- create_overview_above_below_abiotic_barplot(df$`above-below`)
-ov1L <- create_overview_above_below_abiotic_barplot(df$`above-below`, legend = T) # legend only, plot with plot_grid()
-
-# TURNOVER - NESTEDNESS - ABIOTIC
-ov2 <- create_overview_turnover_nestedness_abiotic_barplot(df$`turnover-nestedness`)
-ov2L <- create_overview_turnover_nestedness_abiotic_barplot(df$`turnover-nestedness`, legend = T) # only legend, plot with plot_grid()
-
-# combine legends
-ov_legends <- plot_grid(ov1L, ov2L, nrow = 2)
-
+# # # # #
+# Produce plot
+ov <- create_overview_barplot(df)
+ovL <- create_overview_barplot(df, legend = T)
 
 ###########
 # add plots together
 ###########
-# multipanel_without_overviews <- plot_grid(p, b, q, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
-
-# annotated_multipanel_without_overviews <- ggdraw(multipanel_without_overviews) +
-  # draw_plot(labsplot, .65, .65, .35, .35) 
-
-if(luiinput == "lui"){
-  # LUI
-  multipanel_with_overview_bars <- plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5,
-                                             rel_heights = c(0.23, 0.37, 0.14, 0.09, 0.09), align = "v") # 2 summary bars
-} else if(luiinput == "components"){
-  # components
-  multipanel_with_overview_bars <- plot_grid(p, b, q, ov1, ov2, labels = c('A', '', 'B', 'C', ''), label_size = 12, nrow = 5,
-                                             rel_heights = c(0.23, 0.37, 0.23, 0.1, 0.1), align = "v") # 2 summary bars
-}
+multipanel_with_overview_bars <- plot_grid(p, b, q, ov, 
+                                           labels = c('A', '', 'B', 'C'), 
+                                             label_size = 12, nrow = 4,
+                                             rel_heights = c(0.23, 0.37, 0.15, 0.15), 
+                                           align = "v") # 2 summary bars
 
 
 annotated_multipanel_with_overview_bars <- ggdraw(multipanel_with_overview_bars) +
   # draw_plot(labsplot, .65, .65, .35, .35) +
-  draw_plot(ov_legends, 0.05, 0.1, .1, .2)
+  draw_plot(ovL, 0.05, 0.1, .1, .2) +
+  draw_plot(labsplot, 0.6, 0.6, 0.6, 0.6)
 
-
-
-extraplot <- plot_grid(labsplot, ov_legends)
+# extraplot <- plot_grid(labsplot, ov_legends)
 
 ###########
 # save
 ###########
-    # WITHOUT ANNOTATION
-# ggsave(filename=paste(model_name, "_multipanel_barplot.pdf", sep = ""), plot = multipanel_without_overviews, device=cairo_pdf,
-       # width = 11.96, height = 8.27, units = "in", dpi = 900)
-# ggsave(filename = paste(model_name, "_multipanel_barplot_overviewbars.pdf", sep = ""), plot = multipanel_with_overview_bars, device=cairo_pdf,
-       # width = 11.96, height = 8.27, units = "in", dpi = 900)
+# -- probably delete below
+#     # WITHOUT ANNOTATION
+# # ggsave(filename=paste(model_name, "_multipanel_barplot.pdf", sep = ""), plot = multipanel_without_overviews, device=cairo_pdf,
+#        # width = 11.96, height = 8.27, units = "in", dpi = 900)
+# # ggsave(filename = paste(model_name, "_multipanel_barplot_overviewbars.pdf", sep = ""), plot = multipanel_with_overview_bars, device=cairo_pdf,
+#        # width = 11.96, height = 8.27, units = "in", dpi = 900)
+# 
+#     # ANNOTATED PLOTS
+# # ggsave(filename=paste(model_name, "_multipanel_barplot_annotated.pdf", sep = ""), plot = annotated_multipanel_without_overviews, device=cairo_pdf,
+#        # width = 11.96, height = 8.27, units = "in", dpi = 900)
+# --
 
-    # ANNOTATED PLOTS
-# ggsave(filename=paste(model_name, "_multipanel_barplot_annotated.pdf", sep = ""), plot = annotated_multipanel_without_overviews, device=cairo_pdf,
-       # width = 11.96, height = 8.27, units = "in", dpi = 900)
-ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars_not_annotated.pdf", sep = ""), plot = annotated_multipanel_with_overview_bars, device=cairo_pdf,
-       width = 11.96, height = 8.27, units = "in", dpi = 900)
-ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars_extraplot_annotations.pdf", sep = ""), plot = extraplot, device=cairo_pdf,
+ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars.pdf", sep = ""), plot = annotated_multipanel_with_overview_bars, device=cairo_pdf,
        width = 11.96, height = 8.27, units = "in", dpi = 900)
 
+# ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars_extraplot_annotations.pdf", sep = ""), plot = extraplot, device=cairo_pdf,
+#        width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 Note : the barplot of weighted average is done in the script `GDM_multifun_thresholds.Rmd`, together with pieces of code from this script.
 
