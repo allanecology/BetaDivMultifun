@@ -55,37 +55,51 @@ NULL
 
 #' Create restab for overview bars
 #' 
-#' calculates scaled averages of effect sizes per category, either (1) above- or belowground
+#' calculates scaled averages OR summed effect sizes per category, either (1) above- or belowground
 #' or (2) turnover or nestedness, as well as LUI and abiotic effects. The categories correspond
 #' to the categories given in the table `nicenames` in columns`lui_ground` and `lui_component`.
 #' 
 #' *Note for developers* : This function was built from `create_restab2()` and `create_restab_3()`
 #' which were deleted (available in git history, date : 22.06.22)
 #' 
+#' **averaged scaled** : calculating the average, scaled effect. The mean 
+#' contribution of a given group, represented as percentage of the total 
+#' contribution of 100%.
+#'
+#' **summed scaled** : calculates the summed effect, scaled to the total effect.
+#' There are more biotic than abiotic effects, but the biotic effect is "distilled"
+#' across more variables. Summing the effects shows which groups are driving the
+#' patterns dominantly.
+#'
+#' Note : Here, the mean values for each component are calculated. Summing the mean scaled 
+#' contribution of above + belowground **is not the same as** summing the mean scaled
+#' contribution of turnover + nestedness. The overviewbars do not show the same length of
+#' LUI and abiotic, because it's the relative contributions.
+#' 
 #' @return a data.table containing values ready for plotting
 #' @import data.table
 #' @param restab exactly the output from the function `create_restab0()`
+#' @param fun the function for aggregating. Is either "mean" or "sum".
 #' 
 #' @export
-create_overviewbar_restab <- function(restab){
+create_overviewbar_restab <- function(restab, fun = c("mean", "sum")){
   if(permut == T){
     print("please implement me...")
     # lui_restab[sign > 0.05 , maxsplines := 0]
   }
-  
-  # calculating the average, scaled effect
+
   
   #########
   # NESTEDNESS- TURNOVER
   #
-  ovtab_tn <- data.table(aggregate(maxsplines ~ lui_component, restab, function(x) mean(x)))
-  ovtab_tn[, maxsplines := maxsplines / sum(ovtab_tn$maxsplines)]
+  ovtab_tn <- data.table(aggregate(maxsplines ~ lui_component, restab, FUN = fun))
+  ovtab_tn[, maxsplines := maxsplines / sum(ovtab_tn$maxsplines)] # convert to percent
   # add colors
   ovtab_tn[lui_component == "turnover", color := "#E6AB02"]   # yellow
   ovtab_tn[lui_component == "nestedness", color := "#984EA3"] # purple
   ovtab_tn[lui_component == "abio", color := "#666666"] # gray
   ovtab_tn[lui_component == "lui", color := "#0072B2"] # blue
-  ovtab_tn[, type := "averaged_scaled"]
+  ovtab_tn[, type := fun]
   
   #########
   # ABOVE- BELOWGROUND
@@ -93,14 +107,16 @@ create_overviewbar_restab <- function(restab){
   # Divide plants to above- and belowground
   auto <- restab[legendnames == "autotroph",]
   auto[, ground := "b"]
+  auto[, lui_ground := "b"]
+  auto[, lui_ground_nicenames := "belowground"]
   auto <- rbind(restab[legendnames == "autotroph"], auto)
   auto[, maxsplines := maxsplines / 2]
   ovtab_ab <- rbindlist(list(auto, restab[legendnames != "autotroph",]))
   rm(auto)
   # calculate average scaled effects
-  ovtab_ab <- data.table(aggregate(maxsplines ~ lui_ground_nicenames, ovtab_ab, function(x) mean(x)))
+  ovtab_ab <- data.table(aggregate(maxsplines ~ lui_ground_nicenames, ovtab_ab, FUN = fun))
   ovtab_ab[, maxsplines := maxsplines / sum(ovtab_ab$maxsplines)]
-  ovtab_ab[, type := "averaged_scaled"]
+  ovtab_ab[, type := fun]
   # add colors
   ovtab_ab[lui_ground_nicenames == "aboveground", color := "#66A61E"] # green
   ovtab_ab[lui_ground_nicenames == "belowground", color := "#A65628"] # brown
