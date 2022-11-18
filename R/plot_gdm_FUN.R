@@ -146,26 +146,34 @@ NULL
 #' create plot Overview : Aboveground - belowground - abiotic
 #' 
 #' code to create overview
+#' @param df data frame to be used for plotting. Is output from `create_overviewbar_restab`.
 #' @param legend boolean T or F. if T, a plot with legend is created.
-#' The legend can be exctracted with cowplot.
+#' The legend can be exctracted with cowplot.1
 #' 
 #' @import ggplot2
 #' @import cowplot
 #' 
 #' @export
-create_overview_above_below_abiotic_barplot <- function(legend = F){
+create_overview_above_below_abiotic_barplot <- function(df, legend = F){
   if(legend){
+    # create a plot with dummy values (all 1) to extract legend from
     df <- as.data.table(df)
-    ldf <- unique(df[, .(color, nicenames, ground)])
+    ldf <- unique(df[, .(color, lui_ground_nicenames)])
     ldf[, testvals := 1]
-    ov1L <- ggplot(ldf, aes(x = nicenames, y = testvals, fill = factor(color, levels=c("#666666", "#0072B2", "#66A61E", "#A65628")))) +
+    ov1L <- ggplot(ldf, aes(x = lui_ground_nicenames, y = testvals, 
+                            fill = factor(color, levels=c("#666666", "#0072B2", "#66A61E", "#A65628")))) +
+      # note : the colors are just given individually in order to control the sequence
+      #    of names in the legend. The colors themselves are read from the dataset
       geom_bar(stat = "identity", color = "black") +
-      scale_fill_identity("", labels = ldf$nicenames, breaks = ldf$color, guide = "legend")
+      scale_fill_identity("", labels = ldf$lui_ground_nicenames, breaks = ldf$color, guide = "legend")
     ov1L <- cowplot::get_legend(ov1L)
     return(ov1L)
     
   } else {
+    # create the overviewbar plot
     ov1 <- ggplot(data = df, aes(x=type, y=maxsplines, fill = factor(color, levels=c("#666666", "#0072B2", "#66A61E", "#A65628")))) +
+      # note : the colors are just given individually in order to control the sequence
+      #    of names in the legend. The colors themselves are read from the dataset
       geom_bar(stat="identity", color = "black", linetype = "solid") +
       coord_flip() +
       scale_fill_identity() +
@@ -182,6 +190,8 @@ NULL
 #' 
 #' code to create overview
 #' 
+#' @param df input dataframe or data.table, 
+#' is the output of `create_overviewbar_restab`
 #' @param legend boolean, if T, only legend is returned, if F, 
 #' only plot is returned.
 #' 
@@ -189,14 +199,16 @@ NULL
 #' @import cowplot
 #' 
 #' @export
-create_overview_turnover_nestedness_abiotic_barplot <- function(legend = F){
+create_overview_turnover_nestedness_abiotic_barplot <- function(df, legend = F){
   if(legend){
+    # create dummy barplot with values 1 for all groups and extract colors from there.
+    # reason : check if the colors are assigned correctly (visual test)
     df <- as.data.table(df)
-    ldf <- unique(df[, .(color, nicenames, component)])
+    ldf <- unique(df[, .(color, lui_component)])
     ldf[, testvals := 1]
-    ov1L <- ggplot(ldf, aes(x = nicenames, y = testvals, fill = factor(color, levels=c("#666666", "#0072B2", "#984EA3", "#E6AB02")))) +
+    ov1L <- ggplot(ldf, aes(x = lui_component, y = testvals, fill = factor(color, levels=c("#666666", "#0072B2", "#984EA3", "#E6AB02")))) +
       geom_bar(stat = "identity", color = "black") +
-      scale_fill_identity("", labels = ldf$nicenames, breaks = ldf$color,  guide = "legend")
+      scale_fill_identity("", labels = ldf$lui_component, breaks = ldf$color,  guide = "legend")
     ov1L <- cowplot::get_legend(ov1L)
     return(ov1L)
   } else {

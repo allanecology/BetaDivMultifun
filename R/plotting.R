@@ -81,10 +81,10 @@ create_overviewbar_restab <- function(restab){
   ovtab_tn <- data.table(aggregate(maxsplines ~ lui_component, restab, function(x) mean(x)))
   ovtab_tn[, maxsplines := maxsplines / sum(ovtab_tn$maxsplines)]
   # add colors
-  ovtab_tn[lui_component == "turnover", color := "#E6AB02"]
-  ovtab_tn[lui_component == "nestedness", color := "#984EA3"]
-  ovtab_tn[lui_component == "abio", color := "#666666"]
-  ovtab_tn[lui_component == "lui", color := "#0072B2"]
+  ovtab_tn[lui_component == "turnover", color := "#E6AB02"]   # yellow
+  ovtab_tn[lui_component == "nestedness", color := "#984EA3"] # purple
+  ovtab_tn[lui_component == "abio", color := "#666666"] # gray
+  ovtab_tn[lui_component == "lui", color := "#0072B2"] # blue
   ovtab_tn[, type := "averaged_scaled"]
   
   #########
@@ -96,19 +96,21 @@ create_overviewbar_restab <- function(restab){
   auto <- rbind(restab[legendnames == "autotroph"], auto)
   auto[, maxsplines := maxsplines / 2]
   ovtab_ab <- rbindlist(list(auto, restab[legendnames != "autotroph",]))
+  rm(auto)
   # calculate average scaled effects
   ovtab_ab <- data.table(aggregate(maxsplines ~ lui_ground_nicenames, ovtab_ab, function(x) mean(x)))
   ovtab_ab[, maxsplines := maxsplines / sum(ovtab_ab$maxsplines)]
   ovtab_ab[, type := "averaged_scaled"]
   # add colors
-  ovtab_ab[lui_ground_nicenames == "aboveground", color := "#66A61E"]
-  ovtab_ab[lui_ground_nicenames == "belowground", color := "#A65628"]
-  ovtab_ab[lui_ground_nicenames == "abiotic", color := "#666666"]
-  ovtab_ab[lui_ground_nicenames == "LUI", color := "#0072B2"]
+  ovtab_ab[lui_ground_nicenames == "aboveground", color := "#66A61E"] # green
+  ovtab_ab[lui_ground_nicenames == "belowground", color := "#A65628"] # brown
+  ovtab_ab[lui_ground_nicenames == "abiotic", color := "#666666"] # gray
+  ovtab_ab[lui_ground_nicenames == "LUI", color := "#0072B2"] # blue
   
   #########
   # RETURN
-  return(list("above-below" = ovtab_ab, "turnover-nestedness" = ovtab_tn))
+  res <- list("above-below" = ovtab_ab, "turnover-nestedness" = ovtab_tn)
+  return(res)
 }
 
 
