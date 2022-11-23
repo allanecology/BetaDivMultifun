@@ -23,10 +23,14 @@ model_names_selection <- model_names[which(model_names$modelname == "gdm_EFturno
 # run analysis and create results
 ksource("vignettes/prepare_and_run_GDM.Rmd") # default model : EF turnover 0.7 LUI
 ksource("vignettes/check_GDM_input.Rmd") # produce nice plots/ results about correlations among input variables
-
+ksource("vignettes/plot_modelwise_GDM.Rmd") # produce bar and line plots of the current model
 ```
 
 Note : some scripts only have to be runned once. They are not (yet) listed here.
 Will include : 
-- `check_GDM_diagnostics.Rmd`
+- Run AFTER prepare_and run GDM and before plot_modelwise
+    - `check_GDM_diagnostics.Rmd`
+    - `plot_unique_GDM.Rmd`
+
+
 
