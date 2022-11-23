@@ -8,6 +8,19 @@ output: html_document
 theme_set(theme_half_open())
 ```
 
+# Aim
+
+Content
+- Threshold selection : produce plots that show that a selection of a given threshold is impossible
+
+# Requirements
+
+```{r}
+sections_to_be_loaded <- c("thresholds", "results", "gdminput", "gdmoutput")
+source("vignettes/analysis_nonpublic.R")
+```
+
+
 
 requirements : 
 - TODO user : connect to planteco and nsch to get input files
@@ -21,7 +34,10 @@ requirements :
 - `analysis_nonpublic.R` loads `EFmaster_all_thresholds.Rds`
 
 
-# create sensitivity comparison: deviance explained, sdev
+# Threshold selection
+Produce plots that show that a selection of a given threshold is impossible.
+
+## create sensitivity comparison: deviance explained, sdev
 ```{r, eval = F}
 #############################
 #
@@ -35,6 +51,7 @@ requirements :
 
 # VARIABILITY OF RESPONSE VARIABLE
 # require : input data : EFmaster_all_thresholds.Rds : load from script "analysis_nonpublic.R"
+# is the response variable of all the models
 EFmaster_sd <- apply(EFmaster[, -c("Var1", "Var2")], 2, function(x) sd(x, na.rm = F))
 EFmaster_var <- apply(EFmaster[, -c("Var1", "Var2")], 2, function(x) var(x, na.rm = F))
 EFmaster <- data.table(name = names(EFmaster)[-(1:2)], sd = EFmaster_sd, var = EFmaster_var)
@@ -51,6 +68,7 @@ ggplot(EFmaster[type != "beta"], aes(x = name, y = sd, fill = type)) +
 # PERCENT DEVIANCE EXPLAINED
 # require : 
 # model_results : the model results saved manually from the models
+#TODO where is this? Can be produced by a new script : summarise_resuls??
 setorder(model_results, cols = "name")
 model_results[, EF := factor(EF, ordered = T, levels = c("distance", "singleEF", "abund", "beta", "turnover", "nestedness"))]
 str(model_results)
