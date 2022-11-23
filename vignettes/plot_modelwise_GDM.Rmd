@@ -25,10 +25,6 @@ This scripts visualises the GDM output. It is runned for each model individually
 - cluster output as .rds, e.g. gdm_EFnestedness_LUI_permutation.Rds
     - TODO : not calculated yet (only for old)
 
-------------DELETE
-  - model_names : helper file for automation. Contains 3 columns : `name`  contains the all model names for `model_name`, `luiinput` contains either "lui" or "components" as LUI input for `luiinput` and `permut` is either TRUE or FALSE.
-----------------
-
 
 ## Load data
 The model name 
@@ -62,13 +58,8 @@ source("vignettes/analysis_nonpublic.R")
 # will create "model_name" automatically
 #    e.g. gdm_EFnestedness_0.7_LUI
 
-
-#TODO solve luiinput thing
-luiinput <- "lui" # lui or components
-
 permut <- F # T or F, depending wether permutations are available or not
 #TODO : implement this
-
 ```
 
 
@@ -237,6 +228,8 @@ saveRDS(df, file = paste(pathtoout, "/", model_names_selection$modelname, "_over
 # Produce plot
 ov <- create_overview_barplot(df)
 ovL <- create_overview_barplot(df, legend = T)
+# plot_grid(ovL) # to show the legend individually
+
 
 ###########
 # add plots together
@@ -244,13 +237,13 @@ ovL <- create_overview_barplot(df, legend = T)
 multipanel_with_overview_bars <- plot_grid(p, b, q, ov, 
                                            labels = c('A', '', 'B', 'C'), 
                                              label_size = 12, nrow = 4,
-                                             rel_heights = c(0.23, 0.37, 0.15, 0.15), 
+                                             rel_heights = c(0.21, 0.32, 0.2, 0.15), 
                                            align = "v") # 2 summary bars
 
 
 annotated_multipanel_with_overview_bars <- ggdraw(multipanel_with_overview_bars) +
   # draw_plot(labsplot, .65, .65, .35, .35) +
-  draw_plot(ovL, 0.05, 0.1, .1, .2) +
+  draw_plot(ovL, 0.04, 0.02, .1, .2) + # (left, below, x, x)
   draw_plot(labsplot, 0.6, 0.6, 0.6, 0.6)
 
 # extraplot <- plot_grid(labsplot, ov_legends)
@@ -301,9 +294,9 @@ Check if the ouptut format of singleEFdist models can be used as input here (pro
 
 
 
+# Once-in lifetime plots (only run once)
 
-
-# get all legends
+## get all legends
 ```{r, eval = F}
 ###########
 # legends
@@ -311,7 +304,7 @@ Check if the ouptut format of singleEFdist models can be used as input here (pro
 biotic_legend <- get_nice_legend(type = "biotic") # plot with plot_grid(biotic_legend)
 abiotic_legend <- get_nice_legend(type = "abiotic")
 
-all_legends <- plot_grid(biotic_legend, abiotic_legend, ov1L, ov2L, nrow = 4, rel_heights = c(0.3, 0.3, 0.1, 0.1))
+all_legends <- plot_grid(biotic_legend, abiotic_legend, ovL, nrow = 4, rel_heights = c(0.3, 0.3, 0.1, 0.1))
 all_legends <- plot_grid(NULL, NULL, NULL, NULL,  all_legends, NULL, NULL, NULL, nrow = 3, rel_heights = c(0.1, 0.8, 0.1))
 ggsave(filename = paste(pathtoout, "/", "all_legends_incl_overview.pdf", sep = ""), plot = all_legends, device=cairo_pdf,
        width = 8.27, height = 11.96, units = "in", dpi = 900)
@@ -319,9 +312,7 @@ ggsave(filename = paste(pathtoout, "/", "all_legends_incl_overview.pdf", sep = "
 
 
 
-
-
-# single EFs heatmap
+## single EFs heatmap
 
 ```{r, eval = F}
 ###########
