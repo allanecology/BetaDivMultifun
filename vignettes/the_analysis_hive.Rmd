@@ -1,0 +1,32 @@
+---
+title: "Conductor script"
+author: "N. Schenk"
+date: "2022-11-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Aim
+The analysis consists of various small (drone) scripts. The order is indicated, but instead of calling them by hand, giving the model names as inputs, this script does this job for you, as the hive does the coordination job for the drones. (source for hive-drone terminology : https://www.theserverside.com/opinion/Master-slave-terminology-alternatives-you-can-use-right-now)
+
+The conductor script here calls the drone scripts of the analysis in order to run the full analysis from one place.
+
+# Run modelwise
+Scripts depending on output of each other, need to run per model.
+```{r}
+# select a given model
+model_names_selection <- model_names[which(model_names$modelname == "gdm_EFturnover_0.7_LUI"), ]
+#
+# run analysis and create results
+ksource("vignettes/prepare_and_run_GDM.Rmd") # default model : EF turnover 0.7 LUI
+ksource("vignettes/check_GDM_input.Rmd") # produce nice plots/ results about correlations among input variables
+
+```
+
+Note : some scripts only have to be runned once. They are not (yet) listed here.
+Will include : 
+- `check_GDM_diagnostics.Rmd`
+
