@@ -94,7 +94,6 @@ if("functions_dissimilarity" %in% sections_to_be_loaded){
   # EFmaster <- readRDS(paste(pathtodata, "/data_assembly/output_data/singleEFdist.rds", sep = "")) # single functions, already scaled
   # EFmaster <- readRDS(paste(pathtodata, "/data_assembly/output_data/EFbeta_abund.rds", sep = "")) # EFbeta abund
   # EFmaster <- readRDS(paste(pathtodata, "/data_assembly/output_data/EFquantile_median.rds", sep = "")) # EFbeta abund
-  # EFmaster <- readRDS(paste(pathtodata, "/data_assembly/output_data/EFmaster_all_thresholds.rds", sep = ""))
 }
 
 if("prepared_covariates" %in% sections_to_be_loaded){
@@ -198,4 +197,9 @@ if("gdmoutput" %in% sections_to_be_loaded){
   gdmoutput <- readRDS(paste_gdm_input_path_together(pathtoout = pathtodata, name = model_name))
   model_specs <- data.table::fread(paste(pathtodata, "/analysis/output_datasets/", 
                           model_names_selection$modelname, "_GDM_model_specs.csv", sep = ""))
+}
+
+if("thresholds" %in% sections_to_be_loaded){
+  EFmaster <- readRDS(paste(pathtodata, "/data_assembly/output_data/EFmaster_all_thresholds.rds", sep = ""))
+  # note : overwrites current EFmaster in case "functions_dissimilarity" is also loaded
 }
