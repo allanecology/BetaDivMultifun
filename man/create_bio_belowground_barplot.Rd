@@ -4,7 +4,7 @@
 \alias{create_bio_belowground_barplot}
 \title{create plot bio belowground}
 \usage{
-create_bio_belowground_barplot()
+create_bio_belowground_barplot(type = c("grouped", "stacked"))
 }
 \description{
 code to create plot p : bio and belowground

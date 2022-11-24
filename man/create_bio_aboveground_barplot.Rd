@@ -4,7 +4,12 @@
 \alias{create_bio_aboveground_barplot}
 \title{create plot "p"}
 \usage{
-create_bio_aboveground_barplot()
+create_bio_aboveground_barplot(type = c("grouped", "stacked"))
+}
+\arguments{
+\item{type}{is either grouped, where turnover and nestedness components
+are shown in individual bars, or "stacked", where turnover and 
+nestedness components are stacked on top of each other.}
 }
 \description{
 code to create plot p : bio and aboveground

@@ -4,8 +4,14 @@
 \alias{create_abio_barplot}
 \title{create plot abio}
 \usage{
-create_abio_barplot()
+create_abio_barplot(type = c("grouped", "stacked"))
+}
+\arguments{
+\item{type}{is in "grouped" (turnover and nestedness are shown as individual
+bars) or in "stacked" (turnover and nestedness are stacked on top of each
+other). This does not matter for abiotic plot, but is kept in order to make
+clear it's the same code for abiotic, above and belowground.}
 }
 \description{
-code to create plot abio
+code to create plot abio.
 }

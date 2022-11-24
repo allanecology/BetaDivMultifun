@@ -2,7 +2,8 @@
 % Please edit documentation in R/plot_gdm_FUN.R
 \name{create_overview_above_below_abiotic_barplot}
 \alias{create_overview_above_below_abiotic_barplot}
-\title{create plot Overview : Aboveground - belowground - abiotic}
+\title{DEPRECIATED create plot Overview : Aboveground - belowground - abiotic
+TODO delete this function, use now : `create_overview_barplot` 18.11.22}
 \usage{
 create_overview_above_below_abiotic_barplot(df, legend = F)
 }
