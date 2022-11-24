@@ -76,6 +76,8 @@ library(roxygen2)
 ```
 
 
+## Maintaining the package
+
 ### changing code
 After you generated/changed code of the package, the newly generated code needs to be loaded. (E.g. if you add a function and later want to use it.) Therefore, the function code as well as the functions documentation needs to be loaded as described below. 
 
@@ -92,14 +94,14 @@ devtools::document()
 
 - to *rebuild the source package* .tar.gz file newly : RStudio : Build > Build Source Package `devtools::build()`
 
-#### check code
+### check code
 RStudio : Build > Check
 --> note : don't confuse with "test", this is something else.
 
 #### test code
 develop your own tests to prevent introducing bugs.
 
-# knit to html
+### knit to html
 By hand
 ```{r, eval = F}
 rmarkdown::render('<pathtothisdocument>/1read_raw_dataset.Rmd')
@@ -107,3 +109,30 @@ rmarkdown::render('vignettes/function_imputation.Rmd', output_format = "html_doc
 ```
 
 Note : knit will produce a .html file in a temporal directory (e.g. tmp/) to not clutter the "vignettes" folder with html files. To get a html file output, use the code above.
+
+
+### Update datasets
+Updating the included datasets
+
+Example : change dataset "model_names" :
+```{r, eval = F}
+# data("model_names") # loads the dataset
+
+# IF change is done by hand
+fwrite(model_names, "deleteme.csv") # write dataset to .csv in order to change by hand
+model_names <- fread("deleteme.csv")
+
+# IF change is done by hand
+# just change the variable model_names
+
+# overwrite dataset in /data folder with new version
+save(model_names, "data/model_names.rda")
+usethis::use_data(model_names, overwrite = T)
+# document changes in the file R/data.R
+# create new documentation
+devtools::document()
+
+# clean up
+# in case you wrote to a .csv file, clean this up.
+```
+
