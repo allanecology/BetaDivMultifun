@@ -68,3 +68,8 @@ for(i in seq(0.1, 0.9, 0.1)){
 # EFnestedness_varexpl
 ```
 
+
+```{r}
+#TODO add diagnostics for single Functions models
+```
+
