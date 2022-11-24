@@ -14,8 +14,19 @@ The analysis consists of various small (drone) scripts. The order is indicated, 
 
 The conductor script here calls the drone scripts of the analysis in order to run the full analysis from one place.
 
-# Run modelwise
+# Sequence of analysis
+
+
+## Prepare data
+```{r}
+#TODO add early scripts
+```
+
+
+## Run modelwise
 Scripts depending on output of each other, need to run per model.
+
+Chose model by hand
 ```{r}
 # select a given model
 model_names_selection <- model_names[which(model_names$modelname == "gdm_EFturnover_0.7_LUI"), ]
@@ -26,11 +37,27 @@ ksource("vignettes/check_GDM_input.Rmd") # produce nice plots/ results about cor
 ksource("vignettes/plot_modelwise_GDM.Rmd") # produce bar and line plots of the current model
 ```
 
-Note : some scripts only have to be runned once. They are not (yet) listed here.
-Will include : 
-- Run AFTER prepare_and run GDM and before plot_modelwise
-    - `check_GDM_diagnostics.Rmd`
-    - `plot_unique_GDM.Rmd`
+Loop through all models
+```{r, eval = F}
+for(m in model_names$modelname){
+  m <- model_names$modelname[10]
+  
+  model_names_selection <- model_names[which(model_names$modelname == m), ]
+  # run analysis and create results
+  ksource("vignettes/prepare_and_run_GDM.Rmd") 
+  ksource("vignettes/check_GDM_input.Rmd") # produce nice plots/ results about correlations among input variables
+  ksource("vignettes/plot_modelwise_GDM.Rmd") # produce bar and line plots of the current model
+}
+```
+
+
+## Run unique
+Note : some scripts only have to be runned once, after the above scripts have been runned for all models. 
+```{r}
+ksource("vignettes/check_GDM_diagnostics.Rmd") # 1 script for all model diagnostics
+ksource("plot_unique_GDM.Rmd") # plot single EF models
+ksource("summarise_GDM_results.Rmd") # create summary tables of all model results
+```
 
 
 
