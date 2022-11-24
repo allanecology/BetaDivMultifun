@@ -11,7 +11,8 @@ theme_set(theme_half_open())
 # Aim
 
 Content
-- Threshold selection : produce plots that show that a selection of a given threshold is impossible
+- **Threshold selection** : produce plots that show that a selection of a given threshold is impossible
+- **calculate Threshold averages** : 
 
 # Requirements
 
@@ -69,6 +70,7 @@ ggplot(EFmaster[type != "beta"], aes(x = name, y = sd, fill = type)) +
 # require : 
 # model_results : the model results saved manually from the models
 #TODO where is this? Can be produced by a new script : summarise_resuls??
+#TODO renamed to GDM_results, and is not produced by the script "summarise_GDM_results.Rmd"
 setorder(model_results, cols = "name")
 model_results[, EF := factor(EF, ordered = T, levels = c("distance", "singleEF", "abund", "beta", "turnover", "nestedness"))]
 str(model_results)

@@ -40,7 +40,7 @@ setNonpublicVariables <- function(accessBexispath = ".",
 #' @return the output of the sourced file
 #' @export
 ksource <- function(x, ...) {
-  source(purl(x, output = tempfile()), ...)
+  source(knitr::purl(x, output = tempfile()), ...)
 }
 
 NULL

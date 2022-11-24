@@ -90,8 +90,16 @@ if("imputed_functions" %in% sections_to_be_loaded){
 
 if("functions_dissimilarity" %in% sections_to_be_loaded){
   # FUNCTIONS DISSIMILARITY
-  EFmaster <- readRDS(paste(pathtodata, "/data_assembly/output_data/EFmaster.rds", sep = ""))
-  # EFmaster <- readRDS(paste(pathtodata, "/data_assembly/output_data/singleEFdist.rds", sep = "")) # single functions, already scaled
+  if(!exists("model_names_selection") | model_names_selection$model_class == "multifun"){
+    # if no specific class of EFmaster is selected, or the multifunctionality models are selected.
+    EFmaster <- readRDS(paste(pathtodata, "/data_assembly/output_data/EFmaster.rds", sep = ""))
+  } else if(model_names_selection$model_class == "singlefun"){
+    EFmaster <- readRDS(paste(pathtodata, "/data_assembly/output_data/singleEFdist.rds", sep = "")) # single functions, already scaled
+  } else {
+    stop("Error : unclear which Functions input should be read, please indicate in model_names_selection.
+         In case EFbeta or EFbeta abundance was intented, please run by hand or implement, the automatic running
+         of these response variables is depreciated.")
+  }
   # EFmaster <- readRDS(paste(pathtodata, "/data_assembly/output_data/EFbeta_abund.rds", sep = "")) # EFbeta abund
   # EFmaster <- readRDS(paste(pathtodata, "/data_assembly/output_data/EFquantile_median.rds", sep = "")) # EFbeta abund
 }
@@ -165,6 +173,7 @@ if("results" %in% sections_to_be_loaded){
   # i <- 30
   
   # #TODO : produce new deviance explained
+  #TODO will be named GDM_results.csv and produced by script "summarise_GDM_results.Rmd"
   # # note : save from model_overview.ods
   model_results <- data.table::fread(paste(pathtodata, "/analysis/output_datasets/model_results.csv", sep = ""), header = T, skip = 0)
   # model_results <- model_results[1:(nrow(model_results)-1)] # skipt last line
@@ -177,10 +186,8 @@ if("gdminput" %in% sections_to_be_loaded){
     print("model selection is not given, default is EFturnover_0.7")
     model_names_selection <- model_names[which(model_names$modelname == "gdm_EFturnover_0.7_LUI"), ]
   }
-  modelname <- paste("gdm", funs, lui, sep = "_")
-  model_name <- modelname
-  #TODO HIER gerade am cleanen damit IMMER model_names_selection verwendet wird.
-  
+  # modelname <- model_names_selection$modelname
+  # model_name <- modelname #TODO delete soon (Nov 2022) just left to see if I will miss this
   gdminput <- readRDS(paste(pathtodata, paste("/analysis/output_datasets/gdm", 
                                               model_names_selection$funs, 
                                               model_names_selection$lui, "input.Rds", sep = "_"), sep = ""))
@@ -193,8 +200,11 @@ if("gdmoutput" %in% sections_to_be_loaded){
     funs <- "EFdistance"
     lui <- "LUI" #"components"
   }
-  model_name <- paste("gdm", funs, lui, sep = "_")
-  gdmoutput <- readRDS(paste_gdm_input_path_together(pathtoout = pathtodata, name = model_name))
+  # model_name <- paste("gdm", funs, lui, sep = "_") #TODO delete soon if realise that not needed (Nov 2022)
+  gdmoutput <- readRDS(paste_gdm_input_path_together(pathtoout = pathtodata, 
+                                                     name = paste("gdm_", model_names_selection$funs, 
+                                                                  "_", model_names_selection$lui, 
+                                                                  sep = "")))
   model_specs <- data.table::fread(paste(pathtodata, "/analysis/output_datasets/", 
                           model_names_selection$modelname, "_GDM_model_specs.csv", sep = ""))
 }

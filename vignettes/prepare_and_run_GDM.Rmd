@@ -227,4 +227,9 @@ fwrite(model_specs, paste(pathtoout, "/", model_names_selection$modelname, "_GDM
 
 # next steps
 - check the input table for correlations and produce linear model and variance inflation `check_GDM_input.Rmd`
-- later : plot models, run permutations (cluster scripts)
+- later : plot models, run permutations (cluster scripts)$
+```{r}
+rm(sections_to_be_loaded)
+```
+
+

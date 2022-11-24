@@ -85,7 +85,7 @@ create_bio_aboveground_barplot <- function(type = c("grouped", "stacked")){
     coord_flip() + 
     scale_fill_identity() + scale_linetype_identity() + # the best option for customizing linetype, color,...!
     ylim(0, 0.44) + 
-    ggtitle(model_name) +
+    ggtitle(model_names_selection$modelname) +
     theme(legend.position = "none", axis.title = element_blank(),
           axis.text.y = element_text(size=9, angle = 0),
           plot.margin = margin(l = 50), 

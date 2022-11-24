@@ -28,6 +28,7 @@ This is a documenation of the cleaning round in October 2022. Mainly serves to c
 
 ## Documentation of cleaning
 
+-   Added documentation of datasets
 -   `plot_GDM.Rmd` :
     -   removed `automaticrun` variable : all runs are automatic from now.
 
@@ -139,3 +140,11 @@ Take care that the following points are included in re-analysis :
 -   %var expl. plot is re-done. Seems there was an error in manually entering the values in a large table. New : use the small tables extracted for each model and rbind them to a full table of model specs.
 
 -   Implement permutations in `plot_GDM.Rmd`.
+
+## Future todos
+
+-   document data
+
+-   screen through all scripts and solve remaining #TODO
+
+-   remove `sections_to-be_loaded` in the end of every script!
