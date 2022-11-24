@@ -53,7 +53,7 @@ Load requirements
 ```{r}
 funs <- model_names_selection$funs
 lui <- model_names_selection$lui
-sections_to_be_loaded <- c("plotting", "results", "gdminput", "gdmoutput")
+sections_to_be_loaded <- c("gdminput", "gdmoutput")
 source("vignettes/analysis_nonpublic.R")
 # will create "model_name" automatically
 #    e.g. gdm_EFnestedness_0.7_LUI
@@ -75,9 +75,8 @@ if(permut == T){
 }
 
 
-# read input data
-gdm_output <- readRDS(paste_gdm_input_path_together(pathtoout = pathtodata, name = model_name))
-exSplines <- gdm::isplineExtract(gdm_output)
+# get maxsplines
+exSplines <- gdm::isplineExtract(gdmoutput)
 maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)
 
 # define plot sequence
@@ -93,7 +92,7 @@ Plots that are re-used in all the plots (Legend and model results)
 # create additional plots
 ###########
 # model specifications and legends
-labsplot <- ggplot(NULL) + #annotate("text", x = 0.8, y = 0.5, size=8, label = model_name) +
+labsplot <- ggplot(NULL) + #annotate("text", x = 0.8, y = 0.5, size=8, label = model_names_selection$modelname) +
   theme_void() + annotate("text", x = 0.4, y = 0.5, size = 3, 
                           label = paste(names(model_specs), model_specs, sep = ": ", collapse = "\n"))
 biotic_legend <- get_nice_legend(type = "biotic") # plot with plot_grid(biotic_legend)
@@ -104,7 +103,7 @@ abiotic_legend <- get_nice_legend(type = "abiotic")
 
 # line plots
 
-naming convention : `model_name` + "_lineplot_all_modelspec.pdf"
+naming convention : `model_names_selection$modelname` + "_lineplot_all_modelspec.pdf"
 
 common y axis maximum is the maximum of the current model
 ```{r, eval = T}
@@ -179,18 +178,18 @@ all_lines <- plot_grid(lin, lin_abiotic, nrow = 2, rel_heights = c(0.8, 0.2))
 ###########
 # save
 ###########
-# `model_name` + "_lineplot_all_modelspec.pdf"
+# `model_names_selection$modelname` + "_lineplot_all_modelspec.pdf"
 # ggplot2::ggsave(plot = lin, 
-#                 filename = paste(pathtoout, "/", model_name, "_lineplot.pdf", sep = ""),
+#                 filename = paste(pathtoout, "/", model_names_selection$modelname, "_lineplot.pdf", sep = ""),
 #                 device=cairo_pdf, width = 8.27, height = 11.96, units = "in", dpi = 900)
 
 ggplot2::ggsave(plot = all_lines, 
-                filename = paste(pathtoout, "/", model_name, "_lineplot.pdf", sep = ""),
+                filename = paste(pathtoout, "/", model_names_selection$modelname, "_lineplot.pdf", sep = ""),
                 device=cairo_pdf, width = 8.27, height = 11.96, units = "in", dpi = 900)
 
-# ggplot2::ggsave(plot = lin_abiotic, filename = paste(pathtoout, "/", model_name, "_lineplot_no_modelspec_abiotic.pdf", sep = ""),
+# ggplot2::ggsave(plot = lin_abiotic, filename = paste(pathtoout, "/", model_names_selection$modelname, "_lineplot_no_modelspec_abiotic.pdf", sep = ""),
 #                 device=cairo_pdf, width = 11.96, height = 8.27, units = "in", dpi = 900)
-# ggplot2::ggsave(plot = labsplot, filename = paste(pathtoout, "/", model_name, "_lineplot_only_modelspec_abiotic.pdf", sep = ""),
+# ggplot2::ggsave(plot = labsplot, filename = paste(pathtoout, "/", model_names_selection$modelname, "_lineplot_only_modelspec_abiotic.pdf", sep = ""),
 #                 device=cairo_pdf, width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 
@@ -253,20 +252,20 @@ annotated_multipanel_with_overview_bars <- ggdraw(multipanel_with_overview_bars)
 ###########
 # -- probably delete below
 #     # WITHOUT ANNOTATION
-# # ggsave(filename=paste(model_name, "_multipanel_barplot.pdf", sep = ""), plot = multipanel_without_overviews, device=cairo_pdf,
+# # ggsave(filename=paste(model_names_selection$modelname, "_multipanel_barplot.pdf", sep = ""), plot = multipanel_without_overviews, device=cairo_pdf,
 #        # width = 11.96, height = 8.27, units = "in", dpi = 900)
-# # ggsave(filename = paste(model_name, "_multipanel_barplot_overviewbars.pdf", sep = ""), plot = multipanel_with_overview_bars, device=cairo_pdf,
+# # ggsave(filename = paste(model_names_selection$modelname, "_multipanel_barplot_overviewbars.pdf", sep = ""), plot = multipanel_with_overview_bars, device=cairo_pdf,
 #        # width = 11.96, height = 8.27, units = "in", dpi = 900)
 # 
 #     # ANNOTATED PLOTS
-# # ggsave(filename=paste(model_name, "_multipanel_barplot_annotated.pdf", sep = ""), plot = annotated_multipanel_without_overviews, device=cairo_pdf,
+# # ggsave(filename=paste(model_names_selection$modelname, "_multipanel_barplot_annotated.pdf", sep = ""), plot = annotated_multipanel_without_overviews, device=cairo_pdf,
 #        # width = 11.96, height = 8.27, units = "in", dpi = 900)
 # --
 
-ggsave(filename = paste(pathtoout, "/", model_name, "_barplot.pdf", sep = ""), plot = annotated_multipanel_with_overview_bars, device=cairo_pdf,
+ggsave(filename = paste(pathtoout, "/", model_names_selection$modelname, "_barplot.pdf", sep = ""), plot = annotated_multipanel_with_overview_bars, device=cairo_pdf,
        width = 11.96, height = 8.27, units = "in", dpi = 900)
 
-# ggsave(filename = paste(pathtoout, "/", model_name, "_multipanel_barplot_overviewbars_extraplot_annotations.pdf", sep = ""), plot = extraplot, device=cairo_pdf,
+# ggsave(filename = paste(pathtoout, "/", model_names_selection$modelname, "_multipanel_barplot_overviewbars_extraplot_annotations.pdf", sep = ""), plot = extraplot, device=cairo_pdf,
 #        width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 Note : the barplot of weighted average is done in the script `GDM_multifun_thresholds.Rmd`, together with pieces of code from this script.
