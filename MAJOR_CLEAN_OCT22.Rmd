@@ -15,6 +15,7 @@ This is a documenation of the cleaning round in October 2022. Mainly serves to c
 
 ## next step
 
+-   TODO HERE going on producing output for each model in order to summarise it into a common document and use for average barplots
 -   TODO HERE go on with plotting things : currently : `plot_modelwise_GDM` and `plot_unique_GDM` . Need to create input for average over threshold plots, and either move to separate script or include in plot_modelwise_GDM.
     -   Add description in the powerpoint readme about plot_modelwise_GDM which iterates over model_names, and plot_unique which is only runned once.
 -   TODO HERE GDM_multifun_thresholds : just started
