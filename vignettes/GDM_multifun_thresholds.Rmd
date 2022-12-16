@@ -22,67 +22,82 @@ source("vignettes/analysis_nonpublic.R")
 ```
 
 
+# THRESHOLD SELECTION
 
-requirements : 
-- TODO user : connect to planteco and nsch to get input files
-- GDM output as .rds, e.g. gdm_EFnestedness_LUI_input.Rds
-    - find at planteco/.../BetaDivMultifun/analysis/output_datasets
-- cluster output as .rds, e.g. gdm_EFnestedness_LUI_permutation.Rds
-- run `results_nonpublic.R` : load pathtodata, nicenames and model_names
-  - pathtodata : path to location where gdm input of model is stored. points to a folder, where the folder cluster witht the model input is. *note : was pathtoout before.*
-  - nicenames : helper file to get nice names of functions and trophic levels
-  - model_names : helper file for automation. Contains 3 columns : `name`  contains the all model names for `model_name`, `luiinput` contains either "lui" or "components" as LUI input for `luiinput` and `permut` is either TRUE or FALSE.
-- `analysis_nonpublic.R` loads `EFmaster_all_thresholds.Rds`
+Aim : Show that a selection of a given threshold is impossible.
 
 
-# Threshold selection
-Produce plots that show that a selection of a given threshold is impossible.
 
-## create sensitivity comparison: deviance explained, sdev
+## Variability in Response vs. deviance explained
+
+Aim : over all thresholds, show the varaibility of the response variable as well as the percent deviance explained of the fitted model.
+
+Included are EFnes and EFturnover model, thresholds 0.1 - 0.9.
+
+We prefer a selection based on variability of the response variable, because this is not a post-hoc decision.
+
 ```{r, eval = F}
-#############################
+# # # # # # # # #
+# CALC VARIABILITY OF RESPONSE VARIABLE
 #
-# treshold selection
-#
-#############################
-
-# models with function calculated with threshold : 
-# thresholds between 0.1 and 0.9.
-# need selection : by (new) : sdev of input. old : percent deviance explained.
-
-# VARIABILITY OF RESPONSE VARIABLE
 # require : input data : EFmaster_all_thresholds.Rds : load from script "analysis_nonpublic.R"
-# is the response variable of all the models
-EFmaster_sd <- apply(EFmaster[, -c("Var1", "Var2")], 2, function(x) sd(x, na.rm = F))
-EFmaster_var <- apply(EFmaster[, -c("Var1", "Var2")], 2, function(x) var(x, na.rm = F))
-EFmaster <- data.table(name = names(EFmaster)[-(1:2)], sd = EFmaster_sd, var = EFmaster_var)
-EFmaster[, type := "EFdistance"]
-EFmaster[grep("nestedness", EFmaster$name), type := "nestedness"]
-EFmaster[grep("turnover", EFmaster$name), type := "turnover"]
-EFmaster[grep("beta", EFmaster$name), type := "beta"]
+# is the response variable of all the models including a threshold
+names <- model_names[model_class %in% c("multifun") & lui == "LUI", funs]
+# EFmaster[, ..names]
 
-ggplot(EFmaster[type != "beta"], aes(x = name, y = sd, fill = type)) +
+EFmaster_sd <- apply(EFmaster[, ..names], 2, function(x) sd(x, na.rm = F))
+EFmaster_var <- apply(EFmaster[, ..names], 2, function(x) var(x, na.rm = F))
+
+RespVar <- data.table(funs = names(EFmaster_var), sd = EFmaster_sd, var = EFmaster_var)
+
+# add column with type of model
+RespVar[, type := "EFdistance"]
+RespVar[grep("nestedness", RespVar$funs), type := "nestedness"]
+RespVar[grep("turnover", RespVar$funs), type := "turnover"]
+# EFmaster[grep("beta", EFmaster$funs), type := "beta"] # note that this is not currently included
+
+ggplot(RespVar[type != "beta"], aes(x = funs, y = sd, fill = type)) +
   geom_bar(stat = "identity") +
+  scale_fill_brewer(palette = "Dark2") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 
-# PERCENT DEVIANCE EXPLAINED
-# require : 
-# model_results : the model results saved manually from the models
-#TODO where is this? Can be produced by a new script : summarise_resuls??
-#TODO renamed to GDM_results, and is not produced by the script "summarise_GDM_results.Rmd"
-setorder(model_results, cols = "name")
-model_results[, EF := factor(EF, ordered = T, levels = c("distance", "singleEF", "abund", "beta", "turnover", "nestedness"))]
-str(model_results)
-model_results <- model_results[!is.na(dev_expl_by_GDM)]
 
-devexpl <- ggplot(model_results, aes(x = name, y = dev_expl_by_GDM, fill = EF)) + 
+# # # # # # # # #
+# ADD DEVIANCE EXPLAINED
+#
+# Read in output from the script "summarise_GDM_results.Rmd" (is done automatically)
+devexpl <- merge(devexpl, model_names[, modelname, funs], by = "modelname")
+#
+model_results <- merge(RespVar, devexpl, by = "funs")
+model_results[, modelname := NULL]
+setorder(model_results, cols = "funs")
+model_results[, type := factor(type, ordered = T, levels = c("EFdistance", "singleEF", "abund", "beta", "turnover", "nestedness"))] # assign order for plotting
+model_results <- model_results[!is.na(GDM_dev_expl)]
+
+
+#TODO HERE continue plotting, make same colors as before
+
+
+# # # # # # # # #
+# PLOT DEVIANCE EXPLAINED
+#
+devexpl_plot <- ggplot(model_results, aes(x = funs, y = GDM_dev_expl, fill = type)) +
   geom_bar(stat = "identity") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 ggsave(filename = paste(pathtoout, "/plot_GDM_EFbeta_tresholds_var_expl.pdf", sep = ""), 
-       plot = devexpl, device=cairo_pdf,
+       plot = devexpl_plot, device=cairo_pdf,
        width = 11.96, height = 8.27, units = "in", dpi = 900)
+
+
+
+
+
+# # # # # # # # #
+# PLOT BOTH
+
+
 
 #TODO can add nice names at some point
 # STANDARD DEVIATION AND PERCENT DEVIANCE EXPLAINED
@@ -100,6 +115,35 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_EFbeta_tresholds_var_expl_and_sd.p
        width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 
+
+
+# CALCULATE AVERAGE MODELS
+
+
+
+
+
+
+
+
+
+# DEPRECIATED
+requirements : 
+- TODO user : connect to planteco and nsch to get input files
+- GDM output as .rds, e.g. gdm_EFnestedness_LUI_input.Rds
+    - find at planteco/.../BetaDivMultifun/analysis/output_datasets
+- cluster output as .rds, e.g. gdm_EFnestedness_LUI_permutation.Rds
+- run `results_nonpublic.R` : load pathtodata, nicenames and model_names
+  - pathtodata : path to location where gdm input of model is stored. points to a folder, where the folder cluster witht the model input is. *note : was pathtoout before.*
+  - nicenames : helper file to get nice names of functions and trophic levels
+  - model_names : helper file for automation. Contains 3 columns : `name`  contains the all model names for `model_name`, `luiinput` contains either "lui" or "components" as LUI input for `luiinput` and `permut` is either TRUE or FALSE.
+- `analysis_nonpublic.R` loads `EFmaster_all_thresholds.Rds`
+
+
+
+
+
+# TODO HERE
 
 
 # thresholds EF heatmap
@@ -257,6 +301,7 @@ p_ov_tn_thres <- create_single_funs_overviewbar_plot(singleF_restab = ov_tn_allt
 p_ov_abtn_thres <- plot_grid(p_ov_ab_thres, p_ov_tn_thres, labels = c("A", "B"))
 # saved as : <date>_GDM_multifun_thresholds_allthresholds_overview_bars<_dodge>
 ```
+
 
 
 
