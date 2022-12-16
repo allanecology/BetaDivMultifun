@@ -42,7 +42,7 @@ Loop through all models. Dont forget to transfer the output from vignettes/out t
 source("vignettes/analysis_nonpublic.R")
 
 # run all single function and multifunctionality models
-for(mod in model_names[lui == "LUI", modelname]){
+for(mod in model_names[model_class %in% c("multifun", "singlefun") & lui == "LUI", modelname]){
   model_names_selection <- model_names[which(model_names$modelname == mod), ]
   # run analysis and create results
   ksource("vignettes/prepare_and_run_GDM.Rmd") 
