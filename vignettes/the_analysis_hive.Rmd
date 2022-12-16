@@ -41,16 +41,14 @@ Loop through all models. Dont forget to transfer the output from vignettes/out t
 ```{r, eval = F}
 source("vignettes/analysis_nonpublic.R")
 
-for(m in model_names[model_class %in% "multifun" & lui == "LUI", modelname]){
-  #TODO implement for single functions
-  m <- model_names[model_class %in% "multifun" & lui == "LUI", modelname][10]
-  
-  model_names_selection <- model_names[which(model_names$modelname == m), ]
+# run all single function and multifunctionality models
+for(mod in model_names[lui == "LUI", modelname]){
+  model_names_selection <- model_names[which(model_names$modelname == mod), ]
   # run analysis and create results
   ksource("vignettes/prepare_and_run_GDM.Rmd") 
   ksource("vignettes/check_GDM_input.Rmd") # produce nice plots/ results about correlations among input variables
   ksource("vignettes/plot_modelwise_GDM.Rmd") # produce bar and line plots of the current model
-  #TODO HERE make run for all m! and use output data to produce overview over thresholds
+  #TODO use output data to produce overview over thresholds
 }
 ```
 
@@ -59,8 +57,8 @@ for(m in model_names[model_class %in% "multifun" & lui == "LUI", modelname]){
 Note : some scripts only have to be runned once, after the above scripts have been runned for all models. 
 ```{r}
 ksource("vignettes/check_GDM_diagnostics.Rmd") # 1 script for all model diagnostics
-ksource("plot_unique_GDM.Rmd") # plot single EF models
-ksource("summarise_GDM_results.Rmd") # create summary tables of all model results
+ksource("vignettes/plot_unique_GDM.Rmd") # plot single EF models
+ksource("vignettes/summarise_GDM_results.Rmd") # create summary tables of all model results
 ```
 
 
