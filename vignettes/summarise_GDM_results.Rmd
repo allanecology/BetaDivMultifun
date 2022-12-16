@@ -19,11 +19,11 @@ Serves as input for assessing the thresholds and comparing quality of the models
 ## Summarise deviance explained
 Aim : Summarise deviance explained for all single predictors.
 
-*NOTE* : here, potentially, we could include the maxsplines values as well. But they are already included in the table "isplines_all_models". No need to duplicate its calculation.
+*NOTE* : here, potentially, we could include the maxsplines values as well. But they are already included in the table "isplines_all_models". No need to duplicate its calculation. If wanted, check version control of 16.12.22 for keywords MAJOR CHANGE and "maxsplines" in this script.
 ```{r}
-# Prepare one table for the maxpsplines values
-GDM_results <- nicenames[, .(names, nicenames)]
-rbindlist(list(data.table(names = "explained", nicenames = "deviance explained by GDM"), GDM_results))
+# Prepare table for deviance explained and variance of response by model
+devexpl <- data.table(modelname = model_names[model_class %in% c("multifun", "singlefun") & lui == "LUI", modelname],
+           GDM_dev_expl = NA)
 
 for(mod in model_names[model_class %in% c("multifun", "singlefun") & lui == "LUI", modelname]){
   mod <- model_names[model_class %in% c("multifun", "singlefun") & lui == "LUI", modelname][2]
@@ -31,14 +31,8 @@ for(mod in model_names[model_class %in% c("multifun", "singlefun") & lui == "LUI
   sections_to_be_loaded <- c("gdmoutput") # loads `gdmoutput` and `model_specs`
   source("vignettes/analysis_nonpublic.R")
   
-  # calculate maxsplines
-  exSplines <- gdm::isplineExtract(gdmoutput)
-  maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE) #TODO add later
-  maxsplines <- data.table(names = names(maxsplines), maxsplines = maxsplines)
-  setnames(maxsplines, old = "maxsplines", new = mod)
-  
-  # merge to results table
-  merge(GDM_results, maxsplines, by = "names")
+  # add values to results table
+  devexpl[modelname == mod, GDM_dev_expl := gdmoutput$explained]
 }
 ```
 
