@@ -32,8 +32,10 @@ if(!exists("sections_to_be_loaded")){
 
 
 # PACKAGE
-# load functions and small helper datasets from the package
-devtools::load_all()
+# load functions and small helper datasets from the package in case not already loaded
+if(!"BetaDivMultifun" %in% (.packages())){
+  devtools::load_all()
+}
 
 
 # LOCAL ABSOLUTE PATHS
@@ -194,10 +196,9 @@ if("gdminput" %in% sections_to_be_loaded){
 
 
 if("gdmoutput" %in% sections_to_be_loaded){
-  if(all(c(funs, lui) < 0)){
-    print("using default model : EFdistance LUI")
-    funs <- "EFdistance"
-    lui <- "LUI" #"components"
+  if(!exists("model_names_selection")){
+    print("model selection is not given, default is EFturnover_0.7")
+    model_names_selection <- model_names[which(model_names$modelname == "gdm_EFturnover_0.7_LUI"), ]
   }
   # model_name <- paste("gdm", funs, lui, sep = "_") #TODO delete soon if realise that not needed (Nov 2022)
   gdmoutput <- readRDS(paste_gdm_input_path_together(pathtoout = pathtodata, 
@@ -206,9 +207,17 @@ if("gdmoutput" %in% sections_to_be_loaded){
                                                                   sep = "")))
   model_specs <- data.table::fread(paste(pathtodata, "/analysis/output_datasets/", 
                           model_names_selection$modelname, "_GDM_model_specs.csv", sep = ""))
+  # overviewbar_data <- readRDS(paste(pathtodata, "/analysis/output_datasets/", 
+                                  # model_names_selection$modelname, "_overviewbar_data.RDS", sep = ""))
 }
 
 if("thresholds" %in% sections_to_be_loaded){
   EFmaster <- readRDS(paste(pathtodata, "/data_assembly/output_data/EFmaster_all_thresholds.rds", sep = ""))
   # note : overwrites current EFmaster in case "functions_dissimilarity" is also loaded
+  
+  # deviance explained of all models
+  devexpl <- readRDS(paste(pathtodata, "/analysis/output_datasets/devexpl_all_models.RDS", sep = ""))
+  
+  # isplines of all models
+  isplines_all_models <- readRDS(paste(pathtodata, "/analysis/output_datasets/isplines_all_threshold_models.RDS", sep = ""))
 }

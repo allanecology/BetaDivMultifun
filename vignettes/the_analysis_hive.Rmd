@@ -58,7 +58,9 @@ Note : some scripts only have to be runned once, after the above scripts have be
 ```{r}
 ksource("vignettes/check_GDM_diagnostics.Rmd") # 1 script for all model diagnostics
 ksource("vignettes/plot_unique_GDM.Rmd") # plot single EF models
-ksource("vignettes/summarise_GDM_results.Rmd") # create summary tables of all model results
+ksource("vignettes/summarise_GDM_results.Rmd") # create summary tables of all model results (deviance explained and isplines)
+
+#TODO threshold stuff
 ```
 
 
