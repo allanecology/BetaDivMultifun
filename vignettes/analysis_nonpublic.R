@@ -2,8 +2,7 @@
 
 # Usage : 
 # - in header of each script, the variables needed to be loaded are specified (elements of vector sections_to_be_loaded)
-#    save the analysis_nonpublic.R with the analysis and source it with this specified vector in order to load the
-#    needed variables
+#    (is done automatically) : source analysis_nonpublic.R with this specified vector in order to load the needed variables
 
 #TODO user : connect to planteco and nsch to get input files
 
