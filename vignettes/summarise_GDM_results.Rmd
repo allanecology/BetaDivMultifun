@@ -23,10 +23,9 @@ Aim : Summarise deviance explained for all single predictors.
 ```{r}
 # Prepare table for deviance explained and variance of response by model
 devexpl <- data.table(modelname = model_names[model_class %in% c("multifun", "singlefun") & lui == "LUI", modelname],
-           GDM_dev_expl = NA)
+           GDM_dev_expl = as.numeric(NA))
 
 for(mod in model_names[model_class %in% c("multifun", "singlefun") & lui == "LUI", modelname]){
-  mod <- model_names[model_class %in% c("multifun", "singlefun") & lui == "LUI", modelname][2]
   model_names_selection <- model_names[which(model_names$modelname == mod), ]
   sections_to_be_loaded <- c("gdmoutput") # loads `gdmoutput` and `model_specs`
   source("vignettes/analysis_nonpublic.R")
@@ -34,6 +33,9 @@ for(mod in model_names[model_class %in% c("multifun", "singlefun") & lui == "LUI
   # add values to results table
   devexpl[modelname == mod, GDM_dev_expl := gdmoutput$explained]
 }
+rm(mod, model_names_selection, sections_to_be_loaded, gdmoutput, model_specs)
+
+saveRDS(devexpl, file = paste(pathtoout, "/devexpl_all_models.RDS", sep = "")) # note this dataset has been called "model_results.CSV" in the past.
 ```
 
 
