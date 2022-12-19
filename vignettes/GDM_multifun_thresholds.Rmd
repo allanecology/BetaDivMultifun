@@ -4,10 +4,6 @@ author: 'Noëlle Schenk'
 date: "5/27/2021"
 output: html_document
 ---
-```{r}
-theme_set(theme_half_open())
-```
-
 # Aim
 
 Content
@@ -19,6 +15,8 @@ Content
 ```{r}
 sections_to_be_loaded <- c("thresholds", "results", "gdminput", "gdmoutput")
 source("vignettes/analysis_nonpublic.R")
+#TODO : model_results.csv wants to be read, but doesn't exist. Put new name
+theme_set(theme_half_open())
 ```
 
 
@@ -74,47 +72,43 @@ model_results[, modelname := NULL]
 setorder(model_results, cols = "funs")
 model_results[, type := factor(type, ordered = T, levels = c("EFdistance", "singleEF", "abund", "beta", "turnover", "nestedness"))] # assign order for plotting
 model_results <- model_results[!is.na(GDM_dev_expl)]
-
-
-#TODO HERE continue plotting, make same colors as before
-
+model_results$funs <- sub("_", " ", model_results$funs)
 
 # # # # # # # # #
+# PLOT
+#
+# # # # # #
+# PLOT RESPONSE VARIANCE
+#
+sd_plot <- ggplot(model_results, aes(x = funs, y = sd, fill = type)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggsave(filename = paste(pathtoout, "/plot_GDM_EFbeta_tresholds_sd.pdf", sep = ""), 
+       plot = sd_plot, device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
+
+# # # # # #
 # PLOT DEVIANCE EXPLAINED
 #
 devexpl_plot <- ggplot(model_results, aes(x = funs, y = GDM_dev_expl, fill = type)) +
   geom_bar(stat = "identity") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
-
 ggsave(filename = paste(pathtoout, "/plot_GDM_EFbeta_tresholds_var_expl.pdf", sep = ""), 
        plot = devexpl_plot, device=cairo_pdf,
        width = 11.96, height = 8.27, units = "in", dpi = 900)
 
-
-
-
-
-# # # # # # # # #
+# # # # # #
 # PLOT BOTH
-
-
-
-#TODO can add nice names at some point
+#
 # STANDARD DEVIATION AND PERCENT DEVIANCE EXPLAINED
-model_results[, name := gsub("_LUI", "", model_results$name)]
-model_results[, name := gsub("gdm_", "", model_results$name)]
-model_results <- merge(model_results, EFmaster, by = "name")
-
-sdplot <- ggplot(model_results, aes(x = name, y = sd, fill = EF)) + 
-  geom_bar(stat = "identity") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
-threshold_selection <- plot_grid(sdplot, devexpl, nrow = 2)
+threshold_selection <- plot_grid(sd_plot, devexpl_plot, nrow = 2)
 
 ggsave(filename = paste(pathtoout, "/plot_GDM_EFbeta_tresholds_var_expl_and_sd.pdf", sep = ""), 
        plot = threshold_selection, device=cairo_pdf,
        width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 
+Based on this plot, no ideal model can be selected. Therefore, we use all thresholds.
 
 
 # CALCULATE AVERAGE MODELS
