@@ -6,11 +6,84 @@ output: html_document
 ---
 # Aim
 
-Content
-- **Threshold selection** : produce plots that show that a selection of a given threshold is impossible
-- **calculate Threshold averages** : 
 
-# Requirements
+
+# Procedure
+1. **calculate Threshold averages** : with script `cluster_scripts_documentation.Rmd` in order to prodcue the input datasets for this script
+2. Quality check of step 1
+  1. calculate threshold averages for maxspline
+  2. calculate threshold averages for whole ispline
+
+
+
+# Produce input data
+
+Please run the procedure described in `cluster_scripts_documentation.Rmd`, under plot Uncertainty : get sd of maxspline values. The procedure consists of running the edited function `gdm::plotUncertainty_slim` on each of the  thresholds 0.1-0.9 on the models for EFturnover and EFnestedness. The output datasets are "gdm_EFturnover_0.<?>_LUI_uncertainty.Rds" (respectively for all thresholds, and for EFnestedness as well.)
+
+```{r, eval=F}
+# dummy code to test if output can be generated in principle
+# test <- plotUncertainty_slim(gdminput, sampleSites = 0.3, bsIters = 5, geo = T, cores = 2)
+```
+
+
+
+
+# Quality check
+
+Aim of this section : assess the quality of the uncertainty calculation done in `cluster_scripts_documentation.Rmd`. Are the datasets complete? Do the values make sense?
+
+```{r}
+# Quality check of cluster stuff
+par(mfrow = c(1, 2))
+put01 <- readRDS("~/Desktop/BEF_cluster/gdm_EFturnover_0.8_LUI_uncertainty.Rds")
+# # plot to see if makes sense
+# plot(put01$autotroph.beta.sim_fullModel_X, put01$autotroph.beta.sim_fullModel_Y)
+# lines(put01$autotroph.beta.sim_fullModel_X, put01$autotroph.beta.sim_minusSD_Y)
+# lines(put01$autotroph.beta.sim_fullModel_X, put01$autotroph.beta.sim_plusSD_Y)
+#
+#TODO does the package has a problem here?
+# the first plot just looks correct, and the second plot not.
+plot(put01$LUI_fullModel_X, put01$LUI_fullModel_Y, type = "l", ylim = range(put01$LUI_fullModel_Y) + c(-0.02, 0.05))
+polygon(c(put01$LUI_fullModel_X, rev(put01$LUI_fullModel_X)), c(put01$LUI_minusSD_Y, rev(put01$LUI_plusSD_Y)), col = "gray", border = NA)
+# lines(put01$LUI_fullModel_X, put01$LUI_minusSD_Y)
+# lines(put01$LUI_fullModel_X, put01$LUI_plusSD_Y)
+lines(put01$LUI_fullModel_X, put01$LUI_fullModel_Y)
+#
+plot(put01$LUI_fullModel_X, put01$LUI_fullModel_Y, type = "l", ylim = range(put01$LUI_fullModel_Y) + c(-0.02, 0.05))
+polygon(c(put01$LUI_minusSD_X, rev(put01$LUI_plusSD_X)), c(put01$LUI_minusSD_Y, rev(put01$LUI_plusSD_Y)), col = "gray", border = NA)
+lines(put01$LUI_fullModel_X, put01$LUI_fullModel_Y)
+```
+
+
+
+
+
+
+
+
+
+
+**average effects over all thresholds weighted by model sd**
+
+from Gossner 2016
+We also calculated a bootstrapped P value
+for each term in the full GDM, using the gdm.varImp function in the gdm library
+(Supplementary Table 5-2). Additionally we estimated uncertainty for the GDM
+plots by using 100 bootstraps for each model, each time removing 30% of the plot
+pairs and then fitting a GDM and extracting the predictions. We then calculated the
+s.d. of the predictions and added this (±-) to the fitted line (Extended Data Fig. 6).
+
+runned permutations on the cluster with following parameters :
+`plotUncertainty_getsd(gdm_model, sampleSites = 0.3, bsIters = 100, geo = T, splineCol = "black", cores = 2)`
+results are stored at :
+planteco/.../BetaDivMultifun/analysis/output_datasets/uncertainty_calc
+
+
+Calculate weighted average over all models. The GDM models are not all of the same quality. They are weighted based on their XXX
+
+$$wa = \frac{e_{1}*w_{1} + e_{2}*w_{2} + ... + e_{9}*w_{9}}{w_{1}+w_{2} + ... + w_{9}} = \frac{\sum_{i=1}^{n} e_{n}+\frac{1}{sd_{n}}}{\sum_{i=1}^{n} \frac{1}{sd_{n}}} ;  w_{n} = \frac{1}{sd_{n}} $$
+
+## Requirements
 
 ```{r}
 sections_to_be_loaded <- c("thresholds", "results", "gdminput", "gdmoutput")
@@ -19,103 +92,59 @@ source("vignettes/analysis_nonpublic.R")
 theme_set(theme_half_open())
 ```
 
+## Calculate average models
+```{r}
+# select relevant columns from isplines all models
+names <- model_names[model_class %in% c("multifun") & lui == "LUI", modelname]
+names <- sort(names[grep("distance", names, invert = T)]) # exclude EFdist from the selection
+names <- c("predictor", "Xpredictor", names)
+isplines_all_models[, ..names]
 
-# THRESHOLD SELECTION
-
-Aim : Show that a selection of a given threshold is impossible.
 
 
 
-## Variability in Response vs. deviance explained
 
-Aim : over all thresholds, show the varaibility of the response variable as well as the percent deviance explained of the fitted model.
-
-Included are EFnes and EFturnover model, thresholds 0.1 - 0.9.
-
-We prefer a selection based on variability of the response variable, because this is not a post-hoc decision.
-
-```{r, eval = F}
-# # # # # # # # #
-# CALC VARIABILITY OF RESPONSE VARIABLE
+# # #
+# Calculate average over all tresholds EFturnover
+# the resulting column has the identical number of rows than isplines_all_models
+turnover_columns <- grep("turnover", names, value = T)
+turnover_mean <- rowMeans(isplines_all_models[, ..turnover_columns])
+isplines_all_models[, turnover_mean := turnover_mean]
+rm(turnover_mean, turnover_columns)
 #
-# require : input data : EFmaster_all_thresholds.Rds : load from script "analysis_nonpublic.R"
-# is the response variable of all the models including a threshold
-names <- model_names[model_class %in% c("multifun") & lui == "LUI", funs]
-# EFmaster[, ..names]
-
-EFmaster_sd <- apply(EFmaster[, ..names], 2, function(x) sd(x, na.rm = F))
-EFmaster_var <- apply(EFmaster[, ..names], 2, function(x) var(x, na.rm = F))
-
-RespVar <- data.table(funs = names(EFmaster_var), sd = EFmaster_sd, var = EFmaster_var)
-
-# add column with type of model
-RespVar[, type := "EFdistance"]
-RespVar[grep("nestedness", RespVar$funs), type := "nestedness"]
-RespVar[grep("turnover", RespVar$funs), type := "turnover"]
-# EFmaster[grep("beta", EFmaster$funs), type := "beta"] # note that this is not currently included
-
-ggplot(RespVar[type != "beta"], aes(x = funs, y = sd, fill = type)) +
-  geom_bar(stat = "identity") +
-  scale_fill_brewer(palette = "Dark2") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+# # Plot (shitty plot, just to see if values are +- possible)
+# ggplot(isplines_all_models[predictor %in% grep("beta", isplines_all_models$predictor, value = T), ],
+#        aes(x = Xpredictor, y = turnover_mean, col = predictor)) +
+#   geom_line() +
+#   theme(legend.position = "none")
+# 
+# ggplot(isplines_all_models[!predictor %in% grep("beta", isplines_all_models$predictor, value = T), ], aes(x = Xpredictor, y = turnover_mean)) +
+#   geom_line() +
+#   theme(legend.position = "none") +
+#   facet_grid(cols = vars(predictor), scales = "free")
 
 
-
-# # # # # # # # #
-# ADD DEVIANCE EXPLAINED
+# # #
+# Calculate average over all tresholds EFturnover
 #
-# Read in output from the script "summarise_GDM_results.Rmd" (is done automatically)
-devexpl <- merge(devexpl, model_names[, modelname, funs], by = "modelname")
-#
-model_results <- merge(RespVar, devexpl, by = "funs")
-model_results[, modelname := NULL]
-setorder(model_results, cols = "funs")
-model_results[, type := factor(type, ordered = T, levels = c("EFdistance", "singleEF", "abund", "beta", "turnover", "nestedness"))] # assign order for plotting
-model_results <- model_results[!is.na(GDM_dev_expl)]
-model_results$funs <- sub("_", " ", model_results$funs)
+nestedness_columns <- grep("nestedness", names, value = T)
+nestedness_mean <- rowMeans(isplines_all_models[, ..nestedness_columns])
+isplines_all_models[, nestedness_mean := nestedness_mean]
+#TODO
+isplines_all_models[, nestedness_sd := lapply(.SD, sd), .SDcols = nestedness_columns]
 
-# # # # # # # # #
-# PLOT
-#
-# # # # # #
-# PLOT RESPONSE VARIANCE
-#
-sd_plot <- ggplot(model_results, aes(x = funs, y = sd, fill = type)) +
-  geom_bar(stat = "identity") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
-ggsave(filename = paste(pathtoout, "/plot_GDM_EFbeta_tresholds_sd.pdf", sep = ""), 
-       plot = sd_plot, device=cairo_pdf,
-       width = 11.96, height = 8.27, units = "in", dpi = 900)
-
-# # # # # #
-# PLOT DEVIANCE EXPLAINED
-#
-devexpl_plot <- ggplot(model_results, aes(x = funs, y = GDM_dev_expl, fill = type)) +
-  geom_bar(stat = "identity") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
-ggsave(filename = paste(pathtoout, "/plot_GDM_EFbeta_tresholds_var_expl.pdf", sep = ""), 
-       plot = devexpl_plot, device=cairo_pdf,
-       width = 11.96, height = 8.27, units = "in", dpi = 900)
-
-# # # # # #
-# PLOT BOTH
-#
-# STANDARD DEVIATION AND PERCENT DEVIANCE EXPLAINED
-threshold_selection <- plot_grid(sd_plot, devexpl_plot, nrow = 2)
-
-ggsave(filename = paste(pathtoout, "/plot_GDM_EFbeta_tresholds_var_expl_and_sd.pdf", sep = ""), 
-       plot = threshold_selection, device=cairo_pdf,
-       width = 11.96, height = 8.27, units = "in", dpi = 900)
+rm(nestedness_mean, nestedness_columns)
+# # Plot (shitty plot, just to see if values are +- possible)
+# ggplot(isplines_all_models[predictor %in% grep("beta", isplines_all_models$predictor, value = T), ],
+#        aes(x = Xpredictor, y = nestedness_mean, col = predictor)) +
+#   geom_line() +
+#   theme(legend.position = "none")
+# 
+# ggplot(isplines_all_models[!predictor %in% grep("beta", isplines_all_models$predictor, value = T), ], aes(x = Xpredictor, y = nestedness_mean)) +
+#   geom_line() +
+#   theme(legend.position = "none") +
+#   facet_grid(cols = vars(predictor), scales = "free")
 ```
-
-Based on this plot, no ideal model can be selected. Therefore, we use all thresholds.
-
-
-# CALCULATE AVERAGE MODELS
-
-
-
-
 
 
 
@@ -519,7 +548,7 @@ permut <- F
 #TODO HACK to have stacked bars : 
 # NEEDS TO BE CLEANED URGENTLY!!!
 # instead of plotting with aes(x = nicenames) we use : aes(x = legendnames)
-# hack to use oritinal code : rename the according column in the data.table restab
+# hack to use original code : rename the according column in the data.table restab
 setnames(restab, old = c("nicenames", "legendnames"), new = c("former_nicenames", "nicenames"))
 # -----------------------------
 
