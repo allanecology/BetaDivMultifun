@@ -61,6 +61,12 @@ names need to be cleaned!
 
 -   `model_names` column `luiinput` will not be used in the future any more : there will not be a model with all 3 components together, but only with individual ones. (because LUI components are correlated.)
 
+### thresholds
+
+-   Dec 22 Implemented new calculation of average over all threshold : NEW is that the avearage is not only calcluated for the maximum values, but across all 200 values of each predictor. Therefore, the function `plotUncertainty_sd` has been depreciated, and a new function `plotUncertainty_slim` was implemented.
+
+    -   all models have to be re-runned on the cluster. (including updater of the cluster scripts documentation.
+
 ## Problematic scripts
 
 -   GDM_multifun_thresholds

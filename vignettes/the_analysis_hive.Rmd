@@ -48,7 +48,6 @@ for(mod in model_names[model_class %in% c("multifun", "singlefun") & lui == "LUI
   ksource("vignettes/prepare_and_run_GDM.Rmd") 
   ksource("vignettes/check_GDM_input.Rmd") # produce nice plots/ results about correlations among input variables
   ksource("vignettes/plot_modelwise_GDM.Rmd") # produce bar and line plots of the current model
-  #TODO use output data to produce overview over thresholds
 }
 ```
 
@@ -59,9 +58,15 @@ Note : some scripts only have to be runned once, after the above scripts have be
 ksource("vignettes/check_GDM_diagnostics.Rmd") # 1 script for all model diagnostics
 ksource("vignettes/plot_unique_GDM.Rmd") # plot single EF models
 ksource("vignettes/summarise_GDM_results.Rmd") # create summary tables of all model results (deviance explained and isplines)
-
-#TODO threshold stuff
 ```
 
+## Threshold overview
 
+
+Run the thresholds part of `cluster_scripts_documentation.Rmd` on the cluster..
+```{r}
+# ksource("cluster_scripts_documentation.Rmd") # Note : this script is not runned here, but on a cluster.
+#    in case no cluster is available, run here, but be aware the computation time is high.
+#TODO threshold stuff
+```
 
