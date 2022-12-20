@@ -45,6 +45,6 @@ Imports:
     mgcv,
     markdown,
     rmarkdown
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.3
 Suggests: 
     testthat (>= 2.1.0)

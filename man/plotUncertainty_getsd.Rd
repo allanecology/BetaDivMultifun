@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotUncertainty_getsd_GDM.R
 \name{plotUncertainty_getsd}
 \alias{plotUncertainty_getsd}
-\title{plotUncertainty_getsd : Get GDM sd at max height}
+\title{plotUncertainty_getsd : Get GDM sd at max height DEPRECIATED}
 \usage{
 plotUncertainty_getsd(
   spTable,
@@ -22,19 +22,25 @@ plotUncertainty_getsd(
 \arguments{
 \item{spTable}{same as in gdm::plotUncertainty}
 
+\item{sampleSites}{same as in gdm::plotUncertainty. 0.3 was used in Gossner 2016.}
+
 \item{bsIters}{same as in gdm::plotUncertainty. 100 were used in Gossner 2016.}
 
 \item{geo}{same as in gdm::plotUncertainty}
 
 \item{splines}{same as in gdm::plotUncertainty}
-
-\item{sampleSiets}{same as in gdm::plotUncertainty. 0.3 was used in Gossner 2016.}
 }
 \value{
 a data.table with 3 columns : the names of the predictors, the maximum effect
 size and its standard deviation
 }
 \description{
+*Depreciation note* : This function is no longer used, because (1) the new version
+of the package `gdm` allows extracting output data from this function, and
+(2) because we need the uncertainty not only at the maximum value, but throughout
+the 200 x values.
+}
+\details{
 To get an uncertainty at the maximum x value of a GDM model (corresponds to max y), 
 the function `plotUncertainty` from the `gdm` package was slightly modified : 
 all input stays the same. New : a table is generated which contains
