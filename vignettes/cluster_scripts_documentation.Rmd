@@ -14,13 +14,18 @@ In order to run R code on the cluster, please follow the instructions on the [UB
 module load vital-it
 module avail 2>&1 | grep " R\/"
 # check if your R version is there, e.g. 3.6.1 for me
-module load R/3.6.1
+# module load R/3.6.1
+module load R/latest
 
 # install packages
 R # open R and within R, type : 
 install.packages("gdm")
 # accept using personal library
 # select CRAN
+quit()
+
+# check how far the job is
+squeue -u <username>
 ```
 
 
@@ -131,7 +136,7 @@ gdmperm[[4]][,1]
 
 
 
-# plot Uncertainty : get sd of max values
+# plot Uncertainty : get sd of maxspline values
 
 use **Rbatch.sh** from above, and only modify last line and cpus per task: 
 ```{bash}
@@ -161,18 +166,17 @@ require(gdm)
 name <- "gdm_EFturnover_0.1_LUI"
 gdm_model <- readRDS(paste("data/", name, "_input.Rds", sep = ""))
 # load the required function
-source("plotUncertainty_getsd_GDM.R")
-exists("plotUncertainty_getsd")
+source("plotUncertainty_slim_GDM.R")
+exists("plotUncertainty_slim")
 
-plotuncertainty_output <- plotUncertainty_getsd(gdm_model, sampleSites = 0.3, bsIters = 100,
-    geo = T, splineCol = "black", cores = 2)
+plotuncertainty_output <- plotUncertainty_slim(gdm_model, sampleSites = 0.3, bsIters = 100, geo = T, cores = 2)
 
 saveRDS(plotuncertainty_output, file = paste("out/", name, "_uncertainty.Rds", sep = ""))
 ```
 note : 2 cores, 50 iterations took 40 seconds
+if something does not work : (1) check if you loaded the required modules and (2) check what's written in the *.Rout file! (not the .err and .out files, but the .Rout one with the output from R)
 
-
-running for EFturnover
+running for EFturnover (rename the model names in both scripts automatically)
 ```{bash}
 sed -i 's/gdm_EFturnover_0.1_LUI/gdm_EFturnover_0.2_LUI/g' gdm_uncertainty.R Rbatch.sh
 sbatch Rbatch.sh
@@ -194,6 +198,8 @@ sbatch Rbatch.sh
 
 running for EFnestedness
 ```{bash}
+sed -i 's/gdm_EFturnover_0.9_LUI/gdm_EFnestedness_0.1_LUI/g' gdm_uncertainty.R Rbatch.sh
+sbatch Rbatch.sh
 sed -i 's/gdm_EFnestedness_0.1_LUI/gdm_EFnestedness_0.2_LUI/g' gdm_uncertainty.R Rbatch.sh
 sbatch Rbatch.sh
 sed -i 's/gdm_EFnestedness_0.2_LUI/gdm_EFnestedness_0.3_LUI/g' gdm_uncertainty.R Rbatch.sh
@@ -211,4 +217,25 @@ sbatch Rbatch.sh
 sed -i 's/gdm_EFnestedness_0.8_LUI/gdm_EFnestedness_0.9_LUI/g' gdm_uncertainty.R Rbatch.sh
 ```
 
-all permutation results are stored at BetaDivMultifun/analysis/output_datasets/uncertainty_calc
+the results are stored at BetaDivMultifun/analysis/output_datasets/uncertainty_calc
+
+Observation : some models fail, with the following warning : "The algorithm was unable to fit a model to your data. The sum of all spline coefficients = 0 and deviance explained = NULL. Returning NULL object." Which can be interpreted as a convergence error of a very poor model.
+The following two models often failed : 
+- EFturnover 0.8 and EFturnover 0.9
+
+**Notes**
+```{bash}
+sed -i 's/gdm_EFturnover_0.9_LUI/gdm_EFturnover_0.8_LUI/g' gdm_uncertainty.R Rbatch.sh
+sbatch Rbatch.sh
+sed -i 's/gdm_EFturnover_0.8_LUI/gdm_EFturnover_0.9_LUI/g' gdm_uncertainty.R Rbatch.sh
+sbatch Rbatch.sh
+
+
+# nur no turnover 8 u 9
+
+
+sed -i 's/gdm_EFturnover_0.9_LUI/gdm_EFnestedness_0.2_LUI/g' gdm_uncertainty.R Rbatch.sh
+sed -i 's/gdm_EFnestedness_0.2_LUI/gdm_EFnestedness_0.6_LUI/g' gdm_uncertainty.R Rbatch.sh
+sed -i 's/gdm_EFnestedness_0.6_LUI/gdm_EFnestedness_0.7_LUI/g' gdm_uncertainty.R Rbatch.sh
+```
+
