@@ -221,7 +221,10 @@ the results are stored at BetaDivMultifun/analysis/output_datasets/uncertainty_c
 
 Observation : some models fail, with the following warning : "The algorithm was unable to fit a model to your data. The sum of all spline coefficients = 0 and deviance explained = NULL. Returning NULL object." Which can be interpreted as a convergence error of a very poor model.
 The following two models often failed : 
-- EFturnover 0.8 and EFturnover 0.9
+- EFturnover 0.8 and EFturnover 0.9, failed directly or took longer than 1h.
+
+
+
 
 **Notes**
 ```{bash}
@@ -229,13 +232,6 @@ sed -i 's/gdm_EFturnover_0.9_LUI/gdm_EFturnover_0.8_LUI/g' gdm_uncertainty.R Rba
 sbatch Rbatch.sh
 sed -i 's/gdm_EFturnover_0.8_LUI/gdm_EFturnover_0.9_LUI/g' gdm_uncertainty.R Rbatch.sh
 sbatch Rbatch.sh
-
-
-# nur no turnover 8 u 9
-
-
-sed -i 's/gdm_EFturnover_0.9_LUI/gdm_EFnestedness_0.2_LUI/g' gdm_uncertainty.R Rbatch.sh
-sed -i 's/gdm_EFnestedness_0.2_LUI/gdm_EFnestedness_0.6_LUI/g' gdm_uncertainty.R Rbatch.sh
-sed -i 's/gdm_EFnestedness_0.6_LUI/gdm_EFnestedness_0.7_LUI/g' gdm_uncertainty.R Rbatch.sh
+#TODO nur no turnover 8 u 9
 ```
 
