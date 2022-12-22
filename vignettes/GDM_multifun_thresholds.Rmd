@@ -3,39 +3,62 @@ title: "GDM Threshold considerations"
 author: 'Noëlle Schenk'
 date: "5/27/2021"
 output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
+
 # Aim
 
-
-
 # Procedure
-1. **calculate Threshold averages** : with script `cluster_scripts_documentation.Rmd` in order to prodcue the input datasets for this script
-2. Quality check of step 1
-  1. calculate threshold averages for maxspline
-  2. calculate threshold averages for whole ispline
 
-
+1.  **calculate Threshold averages** : with script
+    `cluster_scripts_documentation.Rmd` in order to prodcue the input
+    datasets for this script
+2.  Quality check of step 1
+3.  calculate threshold averages for maxspline
+4.  calculate threshold averages for whole ispline
 
 # Produce input data
 
-Please run the procedure described in `cluster_scripts_documentation.Rmd`, under plot Uncertainty : get sd of maxspline values. The procedure consists of running the edited function `gdm::plotUncertainty_slim` on each of the  thresholds 0.1-0.9 on the models for EFturnover and EFnestedness. The output datasets are "gdm_EFturnover_0.<?>_LUI_uncertainty.Rds" (respectively for all thresholds, and for EFnestedness as well.)
+Please run the procedure described in
+`cluster_scripts_documentation.Rmd`, under plot Uncertainty : get sd of
+maxspline values. The procedure consists of running the edited function
+`gdm::plotUncertainty_slim` on each of the thresholds 0.1-0.9 on the
+models for EFturnover and EFnestedness. The output datasets are
+"gdm_EFturnover_0.\<?\>\_LUI_uncertainty.Rds" (respectively for all
+thresholds, and for EFnestedness as well.)
 
 ```{r, eval=F}
 # dummy code to test if output can be generated in principle
 # test <- plotUncertainty_slim(gdminput, sampleSites = 0.3, bsIters = 5, geo = T, cores = 2)
 ```
 
-
-
-
 # Quality check
 
-Aim of this section : assess the quality of the uncertainty calculation done in `cluster_scripts_documentation.Rmd`. Are the datasets complete? Do the values make sense?
+Aim of this section : assess the quality of the uncertainty calculation
+done in `cluster_scripts_documentation.Rmd`. Are the datasets complete?
+Do the values make sense?
+
+Read input data
+
+```{r}
+# Load requirements from <..>nonpublic.R file
+sections_to_be_loaded <- c("thresholds")
+# sections_to_be_loaded <- c("thresholds", "results", "gdminput", "gdmoutput")
+#TODO : model_results.csv wants to be read, but doesn't exist. Put new name
+source("vignettes/analysis_nonpublic.R")
+theme_set(theme_half_open())
+```
+
+The list `ispline_uncertainty_all_thresholds` contains the deviance of
+each ispline separately. Elements of the list are named accordingly.
 
 ```{r}
 # Quality check of cluster stuff
 par(mfrow = c(1, 2))
-put01 <- readRDS("~/Desktop/BEF_cluster/gdm_EFturnover_0.8_LUI_uncertainty.Rds")
+# put07 <- ispline_uncertainty_all_thresholds[["gdm_EFturnover_0.7"]]
+put01 <- ispline_uncertainty_all_thresholds[["gdm_EFturnover_0.1"]]
 # # plot to see if makes sense
 # plot(put01$autotroph.beta.sim_fullModel_X, put01$autotroph.beta.sim_fullModel_Y)
 # lines(put01$autotroph.beta.sim_fullModel_X, put01$autotroph.beta.sim_minusSD_Y)
@@ -57,116 +80,170 @@ lines(put01$LUI_fullModel_X, put01$LUI_fullModel_Y)
 
 
 
+# Calculate weighted average models
 
+**average effects over all thresholds weighted by ispline sd**
 
+from Gossner 2016: 
+- We also calculated a bootstrapped P value for each term in the full GDM, using the gdm.varImp function in the gdm library (Supplementary Table 5-2). Additionally we estimated uncertainty for the GDM plots by using 100 bootstraps for each model, each time removing 30% of the plot pairs and then fitting a GDM and extracting the predictions. We then calculated the s.d. of the predictions and added this (±-) to the fitted line (Extended Data Fig. 6).
 
-
-
-
-**average effects over all thresholds weighted by model sd**
-
-from Gossner 2016
-We also calculated a bootstrapped P value
-for each term in the full GDM, using the gdm.varImp function in the gdm library
-(Supplementary Table 5-2). Additionally we estimated uncertainty for the GDM
-plots by using 100 bootstraps for each model, each time removing 30% of the plot
-pairs and then fitting a GDM and extracting the predictions. We then calculated the
-s.d. of the predictions and added this (±-) to the fitted line (Extended Data Fig. 6).
 
 runned permutations on the cluster with following parameters :
 `plotUncertainty_getsd(gdm_model, sampleSites = 0.3, bsIters = 100, geo = T, splineCol = "black", cores = 2)`
 results are stored at :
-planteco/.../BetaDivMultifun/analysis/output_datasets/uncertainty_calc
+planteco/.../BetaDivMultifun/analysis/output_datasets/uncertainty_calc/
 
-
-Calculate weighted average over all models. The GDM models are not all of the same quality. They are weighted based on their XXX
+Calculate weighted average over all models. The GDM models are not all of the same quality. They are weighted based on the uncertainty of each ispline ($w$).
 
 $$wa = \frac{e_{1}*w_{1} + e_{2}*w_{2} + ... + e_{9}*w_{9}}{w_{1}+w_{2} + ... + w_{9}} = \frac{\sum_{i=1}^{n} e_{n}+\frac{1}{sd_{n}}}{\sum_{i=1}^{n} \frac{1}{sd_{n}}} ;  w_{n} = \frac{1}{sd_{n}} $$
 
-## Requirements
+
+
+## Clean the uncertainty ispline table
+For each Predictor : 
+- get X values : are the same in all models --> merge by this value
+- get Y values : model specific _minusSD_Y, fullModel_Y and _plusSD_Y
 
 ```{r}
-sections_to_be_loaded <- c("thresholds", "results", "gdminput", "gdmoutput")
-source("vignettes/analysis_nonpublic.R")
-#TODO : model_results.csv wants to be read, but doesn't exist. Put new name
-theme_set(theme_half_open())
+# names(ispline_uncertainty_all_thresholds) # names of the list correspond to model names
+# To each element of the list (each data frame), add a column with the respective model name
+# use workaround : lapply only gives you the elements of the vector you pass it. 
+#    The usual work-around is to pass it the names or indices of the vector instead 
+#    of the vector itself.
+# The list is assigned to an additional argument of the function. i corresponds to the unassigned
+#    function argument, which is the sequ_along().
+ispline_uncertainty_all_thresholds <- lapply(seq_along(ispline_uncertainty_all_thresholds), 
+                function(y, n, i) {y[[i]]$model_name <- n[i]; y[[i]]$value_ID <- seq(1, 200); return(y[[i]])},
+       y = ispline_uncertainty_all_thresholds,
+       n = names(ispline_uncertainty_all_thresholds))
+# pile all datasets on top of each other
+ispline_uncertainty_all_thresholds <- rbindlist(ispline_uncertainty_all_thresholds)
+# filter out the relevant columns : exclude x uncertainties
+relevant_column_names <- c("model_name", "value_ID", grep("_fullModel_X|_minusSD_Y|fullModel_Y|_plusSD_Y", names(ispline_uncertainty_all_thresholds), value = T))
+ispline_uncertainty_all_thresholds <- ispline_uncertainty_all_thresholds[, ..relevant_column_names]
+rm(relevant_column_names)
+
+# # #
+# quality control
+# plot individual predictor of one model
+ggplot(ispline_uncertainty_all_thresholds[model_name == "gdm_EFturnover_0.2", .(autotroph.beta.sne_fullModel_X, autotroph.beta.sne_fullModel_Y)], aes(x = autotroph.beta.sne_fullModel_X, autotroph.beta.sne_fullModel_Y)) +
+  geom_point()
+ggplot(ispline_uncertainty_all_thresholds[model_name == "gdm_EFnestedness_0.5", .(autotroph.beta.sne_fullModel_X, autotroph.beta.sne_fullModel_Y)], aes(x = autotroph.beta.sne_fullModel_X, autotroph.beta.sne_fullModel_Y)) +
+  geom_point()
+# plot individual predictor of all models
+ggplot(ispline_uncertainty_all_thresholds, aes(x = autotroph.beta.sne_fullModel_X, autotroph.beta.sne_fullModel_Y, col = model_name)) +
+  geom_point()
+ggplot(ispline_uncertainty_all_thresholds, aes(x = autotroph.beta.sim_fullModel_X, autotroph.beta.sim_fullModel_Y, col = model_name)) +
+  geom_point()
+
+
+
 ```
 
-## Calculate average models
+Calculate $w$ for each value of X for each predictor for each model individuall. In other words, calculate how wide the confidence interval is at a given place in X for a given predictor and model.
+Speciality : All models have the same X values, which are identified with value_ID.
+
+Calculate $w$ : $\text{minusSD_Y} = \mu - \sigma$ and $\text{plusSD_Y} = \mu + \sigma$ . Therefore : $\mu + \sigma - (\mu - \sigma) = \mu + \sigma - \mu + \sigma = 2\sigma$ And thus : $w = \sigma = \frac{\text{plusSD_Y} - \text{minusSD_Y}}{2}$
+
 ```{r}
-# select relevant columns from isplines all models
-names <- model_names[model_class %in% c("multifun") & lui == "LUI", modelname]
-names <- sort(names[grep("distance", names, invert = T)]) # exclude EFdist from the selection
-names <- c("predictor", "Xpredictor", names)
-isplines_all_models[, ..names]
+ispline_uncertainty_all_thresholds <- melt(ispline_uncertainty_all_thresholds, id.vars = c("model_name", "value_ID"))
+ispline_uncertainty_all_thresholds[, predictor := sub("_[a-zA-Z]+_[XY]$", "", variable, perl = T)]
+ispline_uncertainty_all_thresholds[, Variable_type := sub("soil_|isolation_", "", sub("^[a-zA-Z.]+_", "", variable, perl = T), perl = T)] 
+ispline_uncertainty_all_thresholds[, variable := NULL]
+ispline_uncertainty_all_thresholds[grep("X", ispline_uncertainty_all_thresholds$Variable_type), XY := "X"]
+ispline_uncertainty_all_thresholds[grep("Y", ispline_uncertainty_all_thresholds$Variable_type), XY := "Y"]
+ispline_uncertainty_all_thresholds[, Model_type := "nestedness"]
+ispline_uncertainty_all_thresholds[grep("turnover", model_name), Model_type := "turnover"]
+
+# 1. create dataset with X values which will be used to get the rest
+Xtest <- ispline_uncertainty_all_thresholds[XY == "X", ]
+setnames(Xtest, old = "value", new = "Xvalue")
+Xtest <- Xtest[, .(model_name, Model_type, predictor, Xvalue, value_ID)]
+
+# 2. merge the Y values to this one
+ispline_uncertainty_all_thresholds <- merge(Xtest, ispline_uncertainty_all_thresholds[XY == "Y", .(model_name, Model_type, predictor, value_ID, value, Variable_type)],
+      by = c("model_name", "predictor", "value_ID", "Model_type"))
+rm(Xtest)
+
+ispline_uncertainty_all_thresholds <- dcast(ispline_uncertainty_all_thresholds, model_name + Model_type + predictor + value_ID + Xvalue ~ Variable_type)
+
+# Calculate the weight SD_Y
+ispline_uncertainty_all_thresholds[, weight := (plusSD_Y - minusSD_Y)/2]
 
 
 
 
+#TODO HERE : mission accomplished! reformated huge table.
+#    next steps : 
+#        - [DONE] calculate $w$ = SD, calculate from minusSD_Y and plusSDY.
+#        - aggregate the mean (fullModel_Y) weighted by SD over all thresholds.
 
-# # #
-# Calculate average over all tresholds EFturnover
-# the resulting column has the identical number of rows than isplines_all_models
-turnover_columns <- grep("turnover", names, value = T)
-turnover_mean <- rowMeans(isplines_all_models[, ..turnover_columns])
-isplines_all_models[, turnover_mean := turnover_mean]
-rm(turnover_mean, turnover_columns)
-#
-# # Plot (shitty plot, just to see if values are +- possible)
-# ggplot(isplines_all_models[predictor %in% grep("beta", isplines_all_models$predictor, value = T), ],
-#        aes(x = Xpredictor, y = turnover_mean, col = predictor)) +
-#   geom_line() +
-#   theme(legend.position = "none")
+stats::aggregate(fullModel_Y ~ predictor + Model_type + value_ID, 
+                 FUN = mean,
+                 data = ispline_uncertainty_all_thresholds)
+
+
+
+# BELOW : testing around
 # 
-# ggplot(isplines_all_models[!predictor %in% grep("beta", isplines_all_models$predictor, value = T), ], aes(x = Xpredictor, y = turnover_mean)) +
-#   geom_line() +
-#   theme(legend.position = "none") +
-#   facet_grid(cols = vars(predictor), scales = "free")
-
-
-# # #
-# Calculate average over all tresholds EFturnover
-#
-nestedness_columns <- grep("nestedness", names, value = T)
-nestedness_mean <- rowMeans(isplines_all_models[, ..nestedness_columns])
-isplines_all_models[, nestedness_mean := nestedness_mean]
-#TODO
-isplines_all_models[, nestedness_sd := lapply(.SD, sd), .SDcols = nestedness_columns]
-
-rm(nestedness_mean, nestedness_columns)
-# # Plot (shitty plot, just to see if values are +- possible)
-# ggplot(isplines_all_models[predictor %in% grep("beta", isplines_all_models$predictor, value = T), ],
-#        aes(x = Xpredictor, y = nestedness_mean, col = predictor)) +
-#   geom_line() +
-#   theme(legend.position = "none")
+# dcast(test, id.vars = c("predictor", "model_name"))
+# dcast(test, predictor + model_name ~ Variable_type + XY, value.var = "value")
+# #fullModel_X needs to be a new column
 # 
-# ggplot(isplines_all_models[!predictor %in% grep("beta", isplines_all_models$predictor, value = T), ], aes(x = Xpredictor, y = nestedness_mean)) +
-#   geom_line() +
-#   theme(legend.position = "none") +
-#   facet_grid(cols = vars(predictor), scales = "free")
+# relevant_column_names <- relevant_column_names <- grep("_fullModel_X", names(ispline_uncertainty_all_thresholds), value = T, invert = T)
+# test2 <- melt(ispline_uncertainty_all_thresholds, id.vars = c(relevant_column_names)) #measure.vars = relevant_column_names)
+# # # quality check
+# # test3 <- test2[, .(model_name, variable, value, autotroph.beta.sim_fullModel_Y)]
+# # setorder(test3, cols = "value")
+# # test3
+# setnames(test2, old = "variable", new = "predictorX")
+# test2
+# 
+# 
+# # # Bring dataset to long format
+# # ispline_uncertainty_all_thresholds <- melt(ispline_uncertainty_all_thresholds, id.vars = "model_name")
+# # # assign additional variable "model_class" to distinguish turnover and nestedness
+# # ispline_uncertainty_all_thresholds[grep("turnover", ispline_uncertainty_all_thresholds$model_name), 
+# #                                    model_class := "turnover"]
+# # ispline_uncertainty_all_thresholds[grep("nestedness", ispline_uncertainty_all_thresholds$model_name), 
+# #                                    model_class := "nestedness"]
 ```
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+# ...
+# ...
 
 # DEPRECIATED
-requirements : 
-- TODO user : connect to planteco and nsch to get input files
-- GDM output as .rds, e.g. gdm_EFnestedness_LUI_input.Rds
-    - find at planteco/.../BetaDivMultifun/analysis/output_datasets
-- cluster output as .rds, e.g. gdm_EFnestedness_LUI_permutation.Rds
-- run `results_nonpublic.R` : load pathtodata, nicenames and model_names
-  - pathtodata : path to location where gdm input of model is stored. points to a folder, where the folder cluster witht the model input is. *note : was pathtoout before.*
-  - nicenames : helper file to get nice names of functions and trophic levels
-  - model_names : helper file for automation. Contains 3 columns : `name`  contains the all model names for `model_name`, `luiinput` contains either "lui" or "components" as LUI input for `luiinput` and `permut` is either TRUE or FALSE.
-- `analysis_nonpublic.R` loads `EFmaster_all_thresholds.Rds`
 
-
-
-
+requirements : - TODO user : connect to planteco and nsch to get input
+files - GDM output as .rds, e.g. gdm_EFnestedness_LUI_input.Rds - find
+at planteco/.../BetaDivMultifun/analysis/output_datasets - cluster
+output as .rds, e.g. gdm_EFnestedness_LUI_permutation.Rds - run
+`results_nonpublic.R` : load pathtodata, nicenames and model_names -
+pathtodata : path to location where gdm input of model is stored. points
+to a folder, where the folder cluster witht the model input is. *note :
+was pathtoout before.* - nicenames : helper file to get nice names of
+functions and trophic levels - model_names : helper file for automation.
+Contains 3 columns : `name` contains the all model names for
+`model_name`, `luiinput` contains either "lui" or "components" as LUI
+input for `luiinput` and `permut` is either TRUE or FALSE. -
+`analysis_nonpublic.R` loads `EFmaster_all_thresholds.Rds`
 
 # TODO HERE
+
+
 
 
 # thresholds EF heatmap
@@ -218,8 +295,8 @@ restab <- merge(restab, nicenames[, .(names, nicenames, ground, component)], by 
 fwrite(restab, file = paste(pathtoout, "/all_LUI_mods_results_overview.csv", sep = ""), sep = ",") # write for supplementary
 ```
 
-
 create heatmap
+
 ```{r, eval = F}
 include <- c("nicenames", names(restab)[grep("gdm", names(restab))])
 # pal <- rev(RColorBrewer::brewer.pal(9, "RdYlBu"))
@@ -286,6 +363,7 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap.pdf", sep = "")
 ```
 
 clustered heatmap
+
 ```{r, eval = F}
 restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
 
@@ -301,7 +379,9 @@ colnames(restab1) <- gsub("EFnestedness_", "NES ", gsub("EFturnover_", "TO ",
 heatmap(restab1, hclustfun = hclust)
 # manually saved as "plot_GDM_thresholds_heatmap_cluster.pdf
 ```
+
 Create overviewbars
+
 ```{r, eval = F}
 # Load data :
 restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
@@ -325,10 +405,8 @@ p_ov_abtn_thres <- plot_grid(p_ov_ab_thres, p_ov_tn_thres, labels = c("A", "B"))
 # saved as : <date>_GDM_multifun_thresholds_allthresholds_overview_bars<_dodge>
 ```
 
-
-
-
 # calc average effects over all thresholds
+
 ```{r, eval = F}
 # created dataset which is read in in next chunk
 restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
@@ -365,6 +443,7 @@ saveRDS(restab, file = "vignettes/out/plot_GDM_results_EFthresholds_mean_se.rds"
 ```
 
 ## Heatmap
+
 ```{r, eval = F}
 restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds_mean_se.rds", sep = ""))
 restab <- merge(nicenames[, .(nicenames, ground)], restab, by = "nicenames")
@@ -436,18 +515,15 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap_mean_se.pdf", s
        width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 
-
-
-
 ## average effects over all thresholds weighted by model sd
 
-from Gossner 2016
-We also calculated a bootstrapped P value
-for each term in the full GDM, using the gdm.varImp function in the gdm library
-(Supplementary Table 5-2). Additionally we estimated uncertainty for the GDM
-plots by using 100 bootstraps for each model, each time removing 30% of the plot
-pairs and then fitting a GDM and extracting the predictions. We then calculated the
-s.d. of the predictions and added this (±-) to the fitted line (Extended Data Fig. 6).
+from Gossner 2016 We also calculated a bootstrapped P value for each
+term in the full GDM, using the gdm.varImp function in the gdm library
+(Supplementary Table 5-2). Additionally we estimated uncertainty for the
+GDM plots by using 100 bootstraps for each model, each time removing 30%
+of the plot pairs and then fitting a GDM and extracting the predictions.
+We then calculated the s.d. of the predictions and added this (±-) to
+the fitted line (Extended Data Fig. 6).
 
 runned permutations on the cluster with following parameters :
 `plotUncertainty_getsd(gdm_model, sampleSites = 0.3, bsIters = 100, geo = T, splineCol = "black", cores = 2)`
@@ -455,6 +531,7 @@ results are stored at :
 planteco/.../BetaDivMultifun/analysis/output_datasets/uncertainty_calc
 
 reading in data
+
 ```{r}
 # Note : go through code and either chose to work with EFnestedness, or EFturnover. (by outcommenting respective lines)
 
@@ -470,7 +547,9 @@ for(i in 2:9){
   res <- rbindlist(list(res, t))
 }
 ```
+
 plotting
+
 ```{r, eval = F}
 a <- ggplot(res[varname %in% nicenames[ground == "a", names]], aes(x = varname, y = yatmax, fill = component)) +
   geom_bar(stat = "identity", position="dodge") +
@@ -503,9 +582,11 @@ x <- ggplot(res[varname %in% nicenames[ground == "x", names]], aes(x = varname, 
 # saved by hand and combined to 1 pdf with the name :
 #  "GDM_multifun_thresholds_weighted_avg_over_all_thresholds_plotUncertainty_test_intermediate.pdf"
 ```
+
 Calculate weighted average
 $$wa = \frac{e_{1}*w_{1} + e_{2}*w_{2} + ... + e_{9}*w_{9}}{w_{1}+w_{2} + ... + w_{9}} = \frac{\sum_{i=1}^{n} e_{n}+\frac{1}{sd_{n}}}{\sum_{i=1}^{n} \frac{1}{sd_{n}}} ;  w_{n} = \frac{1}{sd_{n}} $$
 uncertainty-weighted average effect size.
+
 ```{r, eval = F}
 ######
 # calculate WEIGHTED AVERAGE
@@ -534,7 +615,9 @@ setnames(wres, old = c("wres"), new = c("maxsplines")) #TODO this line was added
 # saveRDS(wres, file = "vignettes/out/weighted_avg_over_all_thresholds_EFturnover.Rds")
 # saveRDS(wres, file = "vignettes/out/weighted_avg_over_all_thresholds_EFnestedness.Rds")
 ```
+
 prepare for plotting
+
 ```{r}
 restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFturnover.Rds", sep = ""))
 # restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFnestedness.Rds", sep = ""))
@@ -574,17 +657,18 @@ multipanel_with_overview_bars
 # saved as : "EFturnover_WEIGHTED_mean_across_tresholds_multipanel_barplot_intecol_presentation_22-08-25.pdf"
 ```
 
-
-
-
 # Create synthesis plot
-Create a plot with average effect sizes across the 3 main models : EFturnover_WEIGHTED_mean, EFnestedness_WEIGHTED_mean, EFdistance.
 
-Only biotic effects, because we add turnover and nestedness together, and a comparison with LUI would not be fair (2 effects vs. 1 effect).
+Create a plot with average effect sizes across the 3 main models :
+EFturnover_WEIGHTED_mean, EFnestedness_WEIGHTED_mean, EFdistance.
 
-Average effect size : Depreciated, because it is almost exclusively driven by EFdist model, because it is on a different scale.
-- either scale and average (not done)
-- or take average rank (done)
+Only biotic effects, because we add turnover and nestedness together,
+and a comparison with LUI would not be fair (2 effects vs. 1 effect).
+
+Average effect size : Depreciated, because it is almost exclusively
+driven by EFdist model, because it is on a different scale. - either
+scale and average (not done) - or take average rank (done)
+
 ```{r}
 d1 <- fread(paste(pathtodata, "/analysis/output_datasets/all_LUI_mods_results_overview.csv", sep = ""))
 d2 <- fread(paste(pathtodata, "/analysis/output_datasets/EFnestedness_turnover_WEIGTHED_mean_across_thresholds_maxsplines.csv", sep = ""))
@@ -646,3 +730,59 @@ p
 ```
 
 
+
+
+
+
+
+# DEPRECIATED Calculate unweighted average models
+newer code
+
+```{r}
+# select relevant columns from isplines all models
+names <- model_names[model_class %in% c("multifun") & lui == "LUI", modelname]
+names <- sort(names[grep("distance", names, invert = T)]) # exclude EFdist from the selection
+names <- c("predictor", "Xpredictor", names)
+isplines_all_models[, ..names]
+
+# # #
+# Calculate average over all tresholds EFturnover
+# the resulting column has the identical number of rows than isplines_all_models
+turnover_columns <- grep("turnover", names, value = T)
+turnover_mean <- rowMeans(isplines_all_models[, ..turnover_columns])
+isplines_all_models[, turnover_mean := turnover_mean]
+rm(turnover_mean, turnover_columns)
+#
+# # Plot (shitty plot, just to see if values are +- possible)
+# ggplot(isplines_all_models[predictor %in% grep("beta", isplines_all_models$predictor, value = T), ],
+#        aes(x = Xpredictor, y = turnover_mean, col = predictor)) +
+#   geom_line() +
+#   theme(legend.position = "none")
+# 
+# ggplot(isplines_all_models[!predictor %in% grep("beta", isplines_all_models$predictor, value = T), ], aes(x = Xpredictor, y = turnover_mean)) +
+#   geom_line() +
+#   theme(legend.position = "none") +
+#   facet_grid(cols = vars(predictor), scales = "free")
+
+
+# # #
+# Calculate average over all tresholds EFturnover
+#
+nestedness_columns <- grep("nestedness", names, value = T)
+nestedness_mean <- rowMeans(isplines_all_models[, ..nestedness_columns])
+isplines_all_models[, nestedness_mean := nestedness_mean]
+#TODO
+isplines_all_models[, nestedness_sd := lapply(.SD, sd), .SDcols = nestedness_columns]
+
+rm(nestedness_mean, nestedness_columns)
+# # Plot (shitty plot, just to see if values are +- possible)
+# ggplot(isplines_all_models[predictor %in% grep("beta", isplines_all_models$predictor, value = T), ],
+#        aes(x = Xpredictor, y = nestedness_mean, col = predictor)) +
+#   geom_line() +
+#   theme(legend.position = "none")
+# 
+# ggplot(isplines_all_models[!predictor %in% grep("beta", isplines_all_models$predictor, value = T), ], aes(x = Xpredictor, y = nestedness_mean)) +
+#   geom_line() +
+#   theme(legend.position = "none") +
+#   facet_grid(cols = vars(predictor), scales = "free")
+```
