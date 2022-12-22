@@ -224,7 +224,7 @@ if("thresholds" %in% sections_to_be_loaded){
   # #
   # ispline uncertainty of all threshold models
   threshold_model_names <- c(paste("gdm_EFturnover_", seq(0.1, 0.7, 0.1), sep = ""), 
-    paste("gdm_EFturnover_", seq(0.1, 0.7, 0.1), sep = "")) #TODO change 0.7 to 0.9 once it runned
+    paste("gdm_EFnestedness_", seq(0.1, 0.7, 0.1), sep = "")) #TODO change 0.7 to 0.9 once it runned
   # create vector with all paths of the expected models
   threshold_model_paths <- paste(pathtodata, "/analysis/output_datasets/uncertainty_calc/", threshold_model_names, "_LUI_uncertainty.Rds",sep = "")
   ispline_uncertainty_all_thresholds <- lapply(threshold_model_paths, readRDS) # read all threshold files in a list
