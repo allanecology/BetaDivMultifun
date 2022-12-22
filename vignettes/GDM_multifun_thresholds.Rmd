@@ -176,6 +176,7 @@ ispline_uncertainty_all_thresholds[, weight := (plusSD_Y - minusSD_Y)/2]
 #TODO HERE : mission accomplished! reformated huge table.
 #    next steps : 
 #        - [DONE] calculate $w$ = SD, calculate from minusSD_Y and plusSDY.
+#        - include the missing two models turnover 0.8 and 0.9 --> calc by hand!
 #        - aggregate the mean (fullModel_Y) weighted by SD over all thresholds.
 
 stats::aggregate(fullModel_Y ~ predictor + Model_type + value_ID, 
