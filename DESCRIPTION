@@ -15,7 +15,7 @@ Authors@R: c(
            role = c("aut"),
            email = "first.last@example.com")
            )
-Description: Runs a GDM on data from the biodiversity exploratories dataset. Full Analysis.
+Description: WARNING : Code under development, this code is not officially published yet. Runs a GDM on data from the biodiversity exploratories dataset. Full Analysis.
 License: GPL
 Encoding: UTF-8
 LazyData: true
