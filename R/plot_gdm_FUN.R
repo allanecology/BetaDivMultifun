@@ -164,7 +164,7 @@ NULL
 
 
 
-#' DEPRECIATED create plot Overview : Aboveground - belowground - abiotic
+#' DEPRECATED create plot Overview : Aboveground - belowground - abiotic
 #' TODO delete this function, use now : `create_overview_barplot` 18.11.22
 #' 
 #' code to create overview
@@ -208,7 +208,7 @@ create_overview_above_below_abiotic_barplot <- function(df, legend = F){
 NULL
 
 
-#' DEPRECIATED create plot Overview : turnover - newtedness - abiotic
+#' DEPRECATED create plot Overview : turnover - newtedness - abiotic
 #' TODO delete this function, use now : `create_overview_barplot` 18.11.22
 #' code to create overview
 #' 

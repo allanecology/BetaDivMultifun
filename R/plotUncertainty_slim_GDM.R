@@ -11,7 +11,7 @@
 #' cluster surrounding.
 #' 
 #' All parameters are the same as in the original function, but a few of them are 
-#' depreciated :
+#' deprecated :
 #' unneeded plotting variables are : `splineCol`, `errCol`, `plot.linewidth`, `plot.layout`
 #' unneeded saving variables are : `save`, `fileName`
 #' Please consult the original description of the function by the `gdm` package authors,

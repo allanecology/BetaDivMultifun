@@ -20,7 +20,6 @@ This is a documenation of the cleaning round in October 2022. Mainly serves to c
     -   Add description in the powerpoint readme about plot_modelwise_GDM which iterates over model_names, and plot_unique which is only runned once.
 -   TODO HERE GDM_multifun_thresholds : almost finished runningt he plotUncertainty. Need 2 more, and TODO TODO TODO important \*\*GDM_multifun_thresholds.Rmd\*\* : check if there is an error in the plotting function of gdm. Why do x values vary??
     -   Run the missing 2 models by hand TODO TODO TODODELIDU
-
 -   merge scripts alpha_plots.Rmd and introductory_plots.Rmd
 
 ## Major topics of scripts
@@ -65,7 +64,7 @@ names need to be cleaned!
 
 ### thresholds
 
--   Dec 22 Implemented new calculation of average over all threshold : NEW is that the avearage is not only calcluated for the maximum values, but across all 200 values of each predictor. Therefore, the function `plotUncertainty_sd` has been depreciated, and a new function `plotUncertainty_slim` was implemented.
+-   Dec 22 Implemented new calculation of average over all threshold : NEW is that the avearage is not only calcluated for the maximum values, but across all 200 values of each predictor. Therefore, the function `plotUncertainty_sd` has been deprecated, and a new function `plotUncertainty_slim` was implemented.
 
     -   all models have to be re-runned on the cluster. (including updater of the cluster scripts documentation.
 
@@ -79,7 +78,7 @@ implement the use of the `model_names` table. Select used models with `model_nam
 
 -   `funs` needs to be changed to `model_names_selection$funs`
 
--   compon_luli is depreciated: use `lui` instead
+-   compon_luli is deprecated: use `lui` instead
 
 -   replaced `modelname` with `model_names_selection$modelname`
 

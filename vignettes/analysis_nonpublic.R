@@ -99,7 +99,7 @@ if("functions_dissimilarity" %in% sections_to_be_loaded){
   } else {
     stop("Error : unclear which Functions input should be read, please indicate in model_names_selection.
          In case EFbeta or EFbeta abundance was intented, please run by hand or implement, the automatic running
-         of these response variables is depreciated.")
+         of these response variables is deprecated.")
   }
   # EFmaster <- readRDS(paste(pathtodata, "/data_assembly/output_data/EFbeta_abund.rds", sep = "")) # EFbeta abund
   # EFmaster <- readRDS(paste(pathtodata, "/data_assembly/output_data/EFquantile_median.rds", sep = "")) # EFbeta abund

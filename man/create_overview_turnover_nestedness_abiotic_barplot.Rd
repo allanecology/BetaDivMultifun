@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_gdm_FUN.R
 \name{create_overview_turnover_nestedness_abiotic_barplot}
 \alias{create_overview_turnover_nestedness_abiotic_barplot}
-\title{DEPRECIATED create plot Overview : turnover - newtedness - abiotic
+\title{DEPRECATED create plot Overview : turnover - newtedness - abiotic
 TODO delete this function, use now : `create_overview_barplot` 18.11.22
 code to create overview}
 \usage{
@@ -16,7 +16,7 @@ is the output of `create_overviewbar_restab`}
 only plot is returned.}
 }
 \description{
-DEPRECIATED create plot Overview : turnover - newtedness - abiotic
+DEPRECATED create plot Overview : turnover - newtedness - abiotic
 TODO delete this function, use now : `create_overview_barplot` 18.11.22
 code to create overview
 }

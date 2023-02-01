@@ -57,6 +57,15 @@ What is different compared to the beta.pair function?
 Cases of plots with zero species are catched by the output of betapart.core.
 The cases are set to 0 or 1, as described above.
 
+Please note, that the Baselga 2010 pairwise framework used in betapart::beta-pair
+"sorensen" family is independent of richness. 
+This can be an advantage, but has the following consequence : 
+A plot without species (empty plot) differs from a plot with 2 species by 
+beta = 1. It differs from a plot with 200 species with beta = 1 as well.
+Thus regardless of the number of species lost, beta-diversity is at it's 
+maximum of 1. This has to be taken into account in the interpretation 
+of the results.
+
 note that some tests of the function are provided as example.
 }
 \examples{
