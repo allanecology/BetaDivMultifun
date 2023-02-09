@@ -4,6 +4,16 @@ output:
   pdf_document: default
   html_document: default
 ---
+# Updates 09.02.23
+```{r}
+#TODO : tune the mty parameter (probably around 20 would be good)
+#TODO : calculate the assembled functions AFTER imputation
+#TODO : recheck negative values
+#TODO : note that the variable-wise error depends on the scale --> keep in mind
+# note : impute response and explanatory separately
+```
+
+
 
 This script : 
 - uses raw functions from the synthesis dataset (loaded with `analysis_nonpublic.R`, variable `raw_grlfuns`)
