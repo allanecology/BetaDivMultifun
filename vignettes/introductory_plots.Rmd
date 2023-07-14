@@ -215,6 +215,42 @@ plot_grid(a, legend, b, NULL, rel_widths = c(0.6, 0.3))
 
 # Functions
 
+## Violin plot overview EFturnover
+```{r}
+#TODO probably remove this, only done for seminar presentation april 2023
+select_col <- grep("turnover", names(EFmaster), value = T)
+select_to <- EFmaster[, ..select_col]
+select_to <- melt(select_to, measure.vars = select_col)
+select_to$threshold <- as.numeric(sub("EFturnover_", "", select_to$variable))
+select_to$names <- as.character(select_to$threshold)
+
+vp_to <- ggplot(select_to, aes(x = names, y = value, fill = threshold)) +
+  geom_violin() +
+  scale_fill_gradient(low = "chartreuse2", high = "chartreuse4") +
+  geom_point(position = position_jitter(seed = 1, width = 0.35), size = 0.4, colour = "gray") +
+  theme_half_open() +
+  theme(legend.position = "none", text = element_text(size = 20)) +
+  xlab("") + ylab("beta-multifunctionality turnover")
+
+# violin plot of single functoins
+#TODO need to chose by hand single functions EFmaster
+select_col <- grep("Var1|Var2", names(EFmaster), value = T, invert = T)
+select_single <- melt(EFmaster, measure.vars = select_col)
+
+vp_sf <- ggplot(select_single, aes(x = variable, y = value, fill = variable)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.4), size = 0.4, colour = "gray") +
+  geom_violin() +
+  scale_fill_hue(c = 45, l = 55) +
+  theme_half_open() +
+  theme(legend.position = "none", text = element_text(size = 20)) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5)) +
+  xlab("") + ylab("distance in single functions")
+  # scale_fill_brewer(palette = "Dark2")
+
+plot_grid(plotlist = list(vp_to, vp_sf), nrow = 2)
+```
+
+
 ## Violin plot overview all functions
 ```{r}
 # summary stats over EFmaster

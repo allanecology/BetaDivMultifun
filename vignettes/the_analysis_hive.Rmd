@@ -10,9 +10,16 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Aim
-The analysis consists of various small (drone) scripts. The order is indicated, but instead of calling them by hand, giving the model names as inputs, this script does this job for you, as the hive does the coordination job for the drones. (source for hive-drone terminology : https://www.theserverside.com/opinion/Master-slave-terminology-alternatives-you-can-use-right-now)
+The analysis consists of various small (drone) scripts. The order is indicated, but instead of calling them by hand, giving the model names as inputs, this script does this job for you, as the hive does the coordination job for the drones. ([source](https://www.theserverside.com/opinion/Master-slave-terminology-alternatives-you-can-use-right-now) for hive-drone terminology).
 
 The conductor script here calls the drone scripts of the analysis in order to run the full analysis from one place.
+
+# Requirements
+
+The script `vignettes/analysis_nonpublic.R` loads the necessary requirements, specifying the specific requirements by variable `sections_to_be_loaded`. Each section includes an option to load the requirements.
+
+Requires access to the Plant Ecology Group (Fischer) drive "planteco" at the IPS Bern. See header of the `analysis_nonpublic.R` file.
+
 
 # Sequence of analysis
 
@@ -25,6 +32,15 @@ The conductor script here calls the drone scripts of the analysis in order to ru
 
 ## Run modelwise
 Scripts depending on output of each other, need to run per model.
+
+Requirements
+```{r}
+if(!exists("model_names")){
+  sections_to_be_loaded <- c()
+  source("vignettes/analysis_nonpublic.R")
+}
+```
+
 
 Chose model by hand
 ```{r}
@@ -68,5 +84,7 @@ Run the thresholds part of `cluster_scripts_documentation.Rmd` on the cluster..
 # ksource("cluster_scripts_documentation.Rmd") # Note : this script is not runned here, but on a cluster.
 #    in case no cluster is available, run here, but be aware the computation time is high.
 #TODO threshold stuff
+
+#TODO probably add script : GDM_multifun_thresholds.Rmd
 ```
 

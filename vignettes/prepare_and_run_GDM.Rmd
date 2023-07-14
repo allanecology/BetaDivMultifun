@@ -34,7 +34,8 @@ Depending on the model intented to run, chose the appropriate variables below.
 # select a model to run, from the table `model_names` which is part of the R package data (see how to load in `analysis_nonpublic.R`)
 if(exists("model_names_selection")){
   # model_names_selection is given from outside the script
-  print("using selection of the model from outside the script")
+  print("using selection of the model from outside the script :")
+  print(model_names_selection)
 } else {
   print("model selection is not given, default is EFturnover_0.7")
   model_names_selection <- model_names[which(model_names$modelname == "gdm_EFturnover_0.7_LUI"), ]
