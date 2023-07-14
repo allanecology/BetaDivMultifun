@@ -15,7 +15,7 @@ create_overviewbar_restab(restab, fun = c("mean", "sum"))
 a data.table containing values ready for plotting
 }
 \description{
-calculates scaled averages OR summed effect sizes per category, either (1) above- or belowground
+calculates scaled mean OR summed effect sizes per category, either (1) above- or belowground
 or (2) turnover or nestedness, as well as LUI and abiotic effects. The categories correspond
 to the categories given in the table `nicenames` in columns`lui_ground` and `lui_component`.
 }
@@ -23,11 +23,11 @@ to the categories given in the table `nicenames` in columns`lui_ground` and `lui
 *Note for developers* : This function was built from `create_restab2()` and `create_restab_3()`
 which were deleted (available in git history, date : 22.06.22)
 
-**averaged scaled** : calculating the average, scaled effect. The mean 
+**scaled mean** : calculating the mean, scaled effect. The mean 
 contribution of a given group, represented as percentage of the total 
 contribution of 100%.
 
-**summed scaled** : calculates the summed effect, scaled to the total effect.
+**scaled sum** : calculates the summed effect, scaled to the total effect.
 There are more biotic than abiotic effects, but the biotic effect is "distilled"
 across more variables. Summing the effects shows which groups are driving the
 patterns dominantly.
