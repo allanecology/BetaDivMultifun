@@ -13,11 +13,11 @@ editor_options:
 # Procedure
 
 1.  **calculate Threshold averages** : with script
-    `cluster_scripts_documentation.Rmd` in order to prodcue the input
+    `cluster_scripts_documentation.Rmd` in order to produce the input
     datasets for this script
 2.  Quality check of step 1
-3.  calculate threshold averages for maxspline
-4.  calculate threshold averages for whole ispline
+3.  calculate threshold averages for maxspline (--> average barplots)
+4.  calculate threshold averages for whole ispline (--> average lineplots)
 
 # Produce input data
 
@@ -137,10 +137,9 @@ ggplot(ispline_uncertainty_all_thresholds, aes(x = autotroph.beta.sim_fullModel_
   geom_point()
 
 
-
 ```
 
-Calculate $w$ for each value of X for each predictor for each model individuall. In other words, calculate how wide the confidence interval is at a given place in X for a given predictor and model.
+Calculate $w$ for each value of X for each predictor for each model individually. In other words, calculate how wide the confidence interval is at a given place in X for a given predictor and model.
 Speciality : All models have the same X values, which are identified with value_ID.
 
 Calculate $w$ : $\text{minusSD_Y} = \mu - \sigma$ and $\text{plusSD_Y} = \mu + \sigma$ . Therefore : $\mu + \sigma - (\mu - \sigma) = \mu + \sigma - \mu + \sigma = 2\sigma$ And thus : $w = \sigma = \frac{\text{plusSD_Y} - \text{minusSD_Y}}{2}$
@@ -171,19 +170,16 @@ ispline_uncertainty_all_thresholds <- dcast(ispline_uncertainty_all_thresholds, 
 ispline_uncertainty_all_thresholds[, weight := (plusSD_Y - minusSD_Y)/2]
 
 
-
-
 #TODO HERE : mission accomplished! reformated huge table.
 #    next steps : 
 #        - [DONE] calculate $w$ = SD, calculate from minusSD_Y and plusSDY.
 #        - include the missing two models turnover 0.8 and 0.9 --> calc by hand!
 #        - aggregate the mean (fullModel_Y) weighted by SD over all thresholds.
 
+# note : old code below, no idea if needed
 stats::aggregate(fullModel_Y ~ predictor + Model_type + value_ID, 
                  FUN = mean,
                  data = ispline_uncertainty_all_thresholds)
-
-
 
 # BELOW : testing around
 # 
@@ -214,6 +210,30 @@ stats::aggregate(fullModel_Y ~ predictor + Model_type + value_ID,
 
 
 
+```{r}
+#unsure : aggregating only the max value ID, because I want to have only the
+# barplots for the PES presentation 26.04.23
+test <- ispline_uncertainty_all_thresholds[value_ID == 200, ]
+
+# weigh the effect size and average to get summary over all thresholds!
+# (1) get the weighted effect size for each effect
+test[, weighted_effect := fullModel_Y * weight]
+# (2) aggregate two things : 
+#    (2.1.) aggregate the weighted effect across all thresholds
+#    (2.2.) aggregate the weigh across all thresholds
+test1 <- aggregate(weighted_effect ~ predictor + Model_type, FUN = sum, na.rm = T, data = test)
+test2 <- aggregate(weight ~ predictor + Model_type, FUN = sum, na.rm = T, data = test)
+test3 <- merge(test1, test2, by = c("predictor", "Model_type"))
+rm(test1, test2)
+test3$weighted_avg_effect <- test3$weighted_effect / test3$weight
+test3 <- as.data.table(test3)
+
+
+# plot
+ggplot(test3[Model_type == "turnover", ], aes(x = predictor, y = weighted_avg_effect)) +
+  geom_bar(stat = "identity") + 
+  coord_flip()
+```
 
 
 
@@ -620,21 +640,39 @@ setnames(wres, old = c("wres"), new = c("maxsplines")) #TODO this line was added
 prepare for plotting
 
 ```{r}
-restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFturnover.Rds", sep = ""))
-# restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFnestedness.Rds", sep = ""))
+# restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFturnover.Rds", sep = ""))
+restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFnestedness.Rds", sep = ""))
 setnames(restab, old = c("wres"), new = c("maxsplines")) #TODO : this line is maybe not needed any more
-model_name <- "EFturnover_WEIGTHED_mean_across_thresholds"
-# model_name <- "EFnestedness_WEIGTHED_mean_across_thresholds"
+# model_name <- "EFturnover_WEIGTHED_mean_across_thresholds"
+model_name <- "EFnestedness_WEIGTHED_mean_across_thresholds"
 luiinput <- "lui"
 permut <- F
+model_names_selection <- data.frame(model_name, luiinput, permut)
 
 # ----------------------------- change for presentation at INTECOL
 #TODO HACK to have stacked bars : 
 # NEEDS TO BE CLEANED URGENTLY!!!
 # instead of plotting with aes(x = nicenames) we use : aes(x = legendnames)
 # hack to use original code : rename the according column in the data.table restab
-setnames(restab, old = c("nicenames", "legendnames"), new = c("former_nicenames", "nicenames"))
+# setnames(restab, old = c("nicenames", "legendnames"), new = c("former_nicenames", "nicenames"))
+p <- create_bio_aboveground_barplot(type = "stacked") + ylim(c(0, 0.15))# type is  in c("stacked", "grouped")
+b <- create_bio_belowground_barplot(type = "stacked")+ ylim(c(0, 0.15))
+q <- create_abio_barplot(type = "stacked") + ylim(c(0, 0.15))# here it does not matter if "stacked" or "grouped" is given.
+# ----------------------------- change for presentation at PES End
+# creat lui_component to make overviewbars
+restab[, lui_component := component]
+restab[lui_component == "abio" & names %in% c("deltaLUI", "LUI", "plot_isolation"), lui_component := "LUI"]
+restab[lui_component == "abio", lui_component := "abiotic"]
+restab[, lui_ground := ground]
+restab[lui_ground == "x" & lui_component == "lui", lui_ground := "lui"]
+restab[lui_ground == "x", lui_ground_nicenames := "abiotic"]
+restab[lui_ground == "a", lui_ground_nicenames := "aboveground"]
+restab[lui_ground == "b", lui_ground_nicenames := "belowground"]
+restab[lui_ground == "lui", lui_ground_nicenames := "LUI"]
 # -----------------------------
+# ----------------------------- change for presentation at PES
+
+
 
 p <- create_bio_aboveground_barplot() + ylim(c(0, 0.15))
 b <- create_bio_belowground_barplot() + ylim(c(0, 0.15))
@@ -655,7 +693,10 @@ q <- create_abio_barplot() + ylim(c(0, 0.15))
 multipanel_with_overview_bars <- plot_grid(p, b, q, labels = c('A', 'B', 'C'), label_size = 12, nrow = 3,
                                              rel_heights = c(0.31, 0.49, 0.33), align = "v")
 multipanel_with_overview_bars
+test <- plot_grid(ov, ovL, nrow = 2)
 # saved as : "EFturnover_WEIGHTED_mean_across_tresholds_multipanel_barplot_intecol_presentation_22-08-25.pdf"
+# saved as : "EFnestedness_WEIGHTED_mean_across_tresholds_multipanel_barplot_PES_presentation_23-04-26.pdf"
+# saved as : "EFnestedness_WEIGHTED_mean_across_tresholds_multipanel_barplot_PES_presentation_23-04-26_overviewbars.pdf"
 ```
 
 # Create synthesis plot
