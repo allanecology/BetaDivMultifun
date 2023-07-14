@@ -24,7 +24,7 @@ Check if the output format of the average over threshold models can be used as i
 Check if the ouptut format of singleEFdist models can be used as input here (probably could be, but we anyway show results in a summary) Maybe just use summary functions used here for those as well.
 --> Philosophy : use more scripts, that contain similar things.
 
-- Move the creation of the average-threshold computation to a separate file and put that to the group of scripts that only need to be runned once.
+- [x] Move the creation of the average-threshold computation to a separate file and put that to the group of scripts that only need to be runned once. DONE : threshold script
 
 
 
@@ -102,9 +102,11 @@ restab2 <- data.table::data.table(restab2)
 
 # report the number of functions affected by each group / affected by above- belowground / abiotic
 singleEFnames <- names(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")]
-x <- apply(restab2[, ..singleEFnames], 1, function(x) sum(x > 0))
+x <- apply(restab2[, ..singleEFnames], 1, function(x) sum(x > 0)) # count how many models have effect size > 0
 restab2[, n_affected_fun := x]
 rm(x)
+#TODO save this dataset?? (July 2023)
+#TODO HERE
 ```
 
 Create heatmap
@@ -133,10 +135,17 @@ a <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
     axis.ticks.x = element_blank(),
     panel.grid.major.x = element_line(color = "grey"),
     axis.title = element_blank(),
-    legend.position = "top") +
+    legend.position = "left", # note : put legend left, remove below and put again after.
+    legend.title = element_blank(),
+    legend.text = element_text(size = 9)) +
   scale_x_discrete(position = "top") +
   coord_cartesian(clip = 'off') +  
   geom_text(data = unique(df[, .(nicenames, n_affected_fun)]), aes(label = n_affected_fun, x = length(unique(df$variable)) + 1, y = nicenames), color="black", size=3, inherit.aes = FALSE)
+# get legend
+legend_a <- get_legend(a)
+# plot(legend_a)
+# remove legend from plot
+a <- a + theme(legend.position = "none")
 
 df <- restab2[ground == "b", ]
 df <- data.table::melt(df[, ..include], id.vars = c("nicenames", "n_affected_fun"))
@@ -175,6 +184,8 @@ c <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
 
 # plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
 heatmap <- plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.49, 0.42, 0.09), align = "v")
+
+plot_grid(heatmap, legend_a, nrow = 1, rel_widths = c(0.9, 0.1))
 # plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.58, 0.44, 0.10), align = "v") # grayscale with legend
 
 # plot_grid(p, b, q, labels = c('aboveground', 'belowground', 'abiotic'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
