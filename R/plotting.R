@@ -60,7 +60,8 @@ NULL
 #' to the categories given in the table `nicenames` in columns`lui_ground` and `lui_component`.
 #' 
 #' *Note for developers* : This function was built from `create_restab2()` and `create_restab_3()`
-#' which were deleted (available in git history, date : 22.06.22)
+#' which were deleted (available in git history, date : 22.06.22, see commit 6f232cb from Aug 25, 2022
+#' and commit from Jul 14, 2023)
 #' 
 #' **scaled mean** : calculating the mean, scaled effect. The mean 
 #' contribution of a given group, represented as percentage of the total 
@@ -132,118 +133,8 @@ create_overviewbar_restab <- function(restab, fun = c("mean", "sum")){
   res[, bar_name := paste(type, groups, sep = "_")]
   return(res)
 }
-
-
-
-
-#' Create the table 2 for plotting
-#'
-#' 
-#' @return A data.table ready for plotting
-#' @examples
-#' blabla TODO
-#' @import data.table
-#' 
-#' @export
-create_restab2 <- function(x=1, restab){
-  if(permut == T){
-    print("removing non-significant effects from summary ...")
-    restab[sign > 0.05 , maxsplines := 0]
-  }
-  # divide plants by 2 and half to each overview bar above- and belowground
-  auto <- restab[legendnames == "autotroph",]
-  auto[, ground := "b"]
-  auto <- rbind(restab[legendnames == "autotroph"], auto)
-  auto[, maxsplines := maxsplines / 2]
-  restab <- rbindlist(list(auto, restab[legendnames != "autotroph",]))
-  
-  lui_restab <- data.table::copy(restab)
-  lui_restab[names %in% c("LUI", "deltaLUI"), ground := "lui"]
-  
-  # unscaled
-  unscaled <- data.table::data.table(aggregate(maxsplines ~ ground, lui_restab, sum))
-
-  unscaled[, type := "unscaled"]
-  unscaled[, nicenames := "x"]
-  unscaled[ground == "a", nicenames := "aboveground"]; unscaled[ground == "b", nicenames := "belowground"]; unscaled[ground == "lui", nicenames := "LUI"]; unscaled[ground == "x", nicenames := "abiotic"]
-  
-  unscaled[, color := "x"]
-  unscaled[nicenames == "aboveground", color := "#66A61E"]; unscaled[nicenames == "belowground", color := "#A65628"]; unscaled[nicenames == "abiotic", color := "#666666"]; unscaled[nicenames == "LUI", color := "#0072B2"]
-  restab2 <- data.table::copy(unscaled)
-  
-  # mean (average)
-  temp <- data.table(aggregate(maxsplines ~ ground, lui_restab, mean)) # get means from original restab
-  temp <- cbind(temp, unscaled[, .(type, nicenames, color)]) # add color and stuff
-  temp[, type := "average"]
-  restab2 <- rbindlist(list(restab2, temp)) # add to unscaled (rbind)
-  
-  # scale
-  temp <- data.table::copy(unscaled)
-  temp[, maxsplines := maxsplines / sum(temp$maxsplines)]
-  temp[, type := "scaled"]
-  restab2 <- rbindlist(list(restab2, temp)) # add to unscaled (rbind)
-  
-  # scale the averaged
-  temp <- data.table::copy(restab2[type == "average",])
-  temp[, maxsplines := maxsplines / sum(temp$maxsplines)]
-  temp[, type := "averaged_scaled"]
-  restab2 <- rbindlist(list(restab2, temp)) # add to unscaled (rbind)
-  return(restab2)
-}
 NULL
 
-
-
-
-#' Create the table 3 for plotting
-#'
-#' 
-#' @return A data.table ready for plotting
-#' @examples
-#' blabla TODO
-#' 
-#' @import data.table
-#' 
-#' @export
-create_restab_3 <- function(x=1){
-  lui_restab <- data.table::copy(restab)
-  if(permut == T){
-    print("removing non-significant effects from summary ...")
-    lui_restab[sign > 0.05 , maxsplines := 0]
-  }
-  lui_restab[names %in% c("LUI", "deltaLUI"), component := "lui"]
-  # unscaled
-  unscaled <- data.table(aggregate(maxsplines ~ component, lui_restab, sum))
-  
-  unscaled[, type := "unscaled"]
-  unscaled[, nicenames := "x"]
-  unscaled[component == "turnover", nicenames := "turnover"]; unscaled[component == "nestedness", nicenames := "nestedness"]; unscaled[component == "abio", nicenames := "abiotic"]; unscaled[component == "lui", nicenames := "LUI"]
-  
-  unscaled[, color := "x"]
-  unscaled[nicenames == "turnover", color := "#E6AB02"]; unscaled[nicenames == "nestedness", color := "#984EA3"]; unscaled[nicenames == "abiotic", color := "#666666"]; unscaled[nicenames == "LUI", color := "#0072B2"]
-  restab3 <- data.table::copy(unscaled)
-  
-  # mean (average)
-  temp <- data.table(aggregate(maxsplines ~ component, lui_restab, mean)) # get means from original restab
-  temp <- cbind(temp, unscaled[, .(type, nicenames, color)]) # add color and stuff
-  temp[, type := "average"]
-  restab3 <- rbindlist(list(restab3, temp)) # add to unscaled (rbind)
-  
-  # scale
-  temp <- data.table::copy(unscaled)
-  temp[, maxsplines := maxsplines / sum(temp$maxsplines)]
-  temp[, type := "scaled"]
-  restab3 <- rbindlist(list(restab3, temp)) # add to unscaled (rbind)
-  
-  # scale the averaged
-  temp <- data.table::copy(restab3[type == "average",])
-  temp[, maxsplines := maxsplines / sum(temp$maxsplines)]
-  temp[, type := "averaged_scaled"]
-  restab3 <- rbindlist(list(restab3, temp)) # add to unscaled (rbind)
-  
-  return(restab3)
-}
-NULL
 
 
 #' Create the overview table for single functions models
