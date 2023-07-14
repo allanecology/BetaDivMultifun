@@ -15,7 +15,11 @@ This is a documenation of the cleaning round in October 2022 - summer 2023. Main
 
 ## next step
 
--   TODO HERE going on producing output for each model in order to summarise it into a common document and use for average barplots
+-   
+
+    DONE HERE going on producing output for each model in order to summarise it into a common document and use for average barplots
+
+    :   saved restab output for that
 
 -   TODO HERE go on with plotting things : currently : `plot_modelwise_GDM` and `plot_unique_GDM` . Need to create input for average over threshold plots, and either move to separate script or include in plot_modelwise_GDM.
 
@@ -27,14 +31,7 @@ This is a documenation of the cleaning round in October 2022 - summer 2023. Main
 
 -   merge scripts alpha_plots.Rmd and introductory_plots.Rmd
 
--   address package error of a map-related package:
-
-    ```         
-    The legacy packages maptools, rgdal, and rgeos, underpinning this package
-    will retire shortly. Please refer to R-spatial evolution reports on
-    https://r-spatial.org/r/2023/05/15/evolution4.html for details.
-    This package is now running under evolution status 0 
-    ```
+-   [x] DONE address package error of a map-related package
 
 ## Major topics of scripts
 

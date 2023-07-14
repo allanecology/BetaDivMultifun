@@ -49,3 +49,5 @@ Imports:
 RoxygenNote: 7.2.3
 Suggests: 
     testthat (>= 2.1.0)
+Remotes: 
+  geosphere, !raster

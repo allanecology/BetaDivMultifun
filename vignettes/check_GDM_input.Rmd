@@ -59,6 +59,8 @@ if(length(grep("Gstd", lui)) > 1){
   checkgdminput[, (luicols) := NULL]
 }
 
+#TODO keep an eye on distGeo, removed the suggestion to "raster" package which 
+# depends on retired packages.
 checkgdminput[, geosphere_distgeo := geosphere::distGeo(
   p1 = as.matrix(checkgdminput[, .(s1.yCoord, s1.xCoord)]),
   p2 = as.matrix(checkgdminput[, .(s2.yCoord, s2.xCoord)])
