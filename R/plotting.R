@@ -61,7 +61,7 @@ NULL
 #' 
 #' *Note for developers* : This function was built from `create_restab2()` and `create_restab_3()`
 #' which were deleted (available in git history, date : 22.06.22, see commit 6f232cb from Aug 25, 2022
-#' and commit from Jul 14, 2023)
+#' and commit from Jul 14, 2023 3dcec35)
 #' 
 #' **scaled mean** : calculating the mean, scaled effect. The mean 
 #' contribution of a given group, represented as percentage of the total 
