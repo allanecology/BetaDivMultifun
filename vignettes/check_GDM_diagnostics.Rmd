@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 sections_to_be_loaded <- c()
 source("vignettes/analysis_nonpublic.R")
 ```
+
 # Header
 Aim : create diagnostic plots of the models and compare.
 
@@ -35,6 +36,8 @@ dev.off()
 
 
 ## EF turnover
+
+Saving diagnostic plot of each model to a separate pdf file.
 ```{r, eval = F, include = T}
 efto0.5 <- readRDS(paste(pathtodata, "/analysis/output_datasets/gdm_EFturnover_0.5_LUI_output.Rds", sep = ""))
 efto0.5$explained # 12.19
@@ -51,11 +54,14 @@ for(i in seq(0.1, 0.9, 0.1)){
   plot_diagn_gdm(mod, title = paste("EFturnover", i))
   dev.off()
 }
+# note : don't need to save variance explained as this is saved in script "summarise_GDM_results.Rmd"
 # EFturnover_varexpl
 ```
 
 
-# EF nestedness
+## EF nestedness
+
+Saving diagnostic plot of each model to a separate pdf file.
 ```{r}
 # 9 plots
 EFnestedness_varexpl <- list()
@@ -63,13 +69,29 @@ for(i in seq(0.1, 0.9, 0.1)){
   print(i)
   mod <- readRDS(paste(pathtodata, "/analysis/output_datasets/gdm_EFnestedness_", i, "_LUI_output.Rds", sep = ""))
   EFnestedness_varexpl <- append(EFnestedness_varexpl, mod$explained)
+  # plot and save
+  cairo_pdf(paste("vignettes/out/gdm_EFnestedness_",i ,"_LUI_diagnostic_plot.pdf", sep = ""), width = 11.7, height = 8.3)
   plot_diagn_gdm(mod, title = paste("EFnestedness", i))
+  dev.off()
 }
+# note : don't need to save variance explained as this is saved in script "summarise_GDM_results.Rmd"
 # EFnestedness_varexpl
 ```
 
 
-```{r}
-#TODO add diagnostics for single Functions models
-```
+## single EF models
 
+Saving all diagnostic plots of single function models to one pdf file
+```{r}
+singleEF_varexpl <- list()
+cairo_pdf(paste("vignettes/out/gdm_ALL_singleEFmodels_LUI_diagnostic_plot.pdf", sep = ""), width = 11.7, height = 8.3, onefile=T)
+for(i in model_names[model_class == "singlefun", modelname]){
+  print(i)
+  mod <- readRDS(paste(pathtodata, "/analysis/output_datasets/", i, "_output.Rds", sep = ""))
+  singleEF_varexpl <- append(singleEF_varexpl, mod$explained)
+  plot_diagn_gdm(mod, title = i)
+}
+names(singleEF_varexpl) <- model_names[model_class == "singlefun", modelname]
+dev.off()
+# note : don't need to save variance explained as this is saved in script "summarise_GDM_results.Rmd"
+```
