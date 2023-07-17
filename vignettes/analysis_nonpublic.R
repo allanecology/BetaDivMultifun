@@ -157,19 +157,6 @@ if("additional" %in% sections_to_be_loaded){
   }
 }
 
-if("results" %in% sections_to_be_loaded){
-  # variable `model_names` will be loaded by lazy-loading from /data
-  # for(i in nrow(model_names)){
-  #   source("vignettes/plot_GDM.Rmd") # by hand! no automation
-  # }
-  # i <- 30
-  #TODO remove above code?
-  
-  model_results <- readRDS(file = paste(pathtodata, "/analysis/output_datasets/devexpl_all_models.RDS", sep = ""))
-  # model_results <- data.table::fread(paste(pathtodata, "/analysis/output_datasets/model_results.csv", sep = ""), header = T, skip = 0)
-  # note : previously called model_results.csv.
-}
-
 if("gdminput" %in% sections_to_be_loaded){
   # gdminput
   # if not specified differently, will read in the results from the GDM model EFturnover 0.7 with LUI
@@ -207,6 +194,7 @@ if("thresholds" %in% sections_to_be_loaded){
   
   # deviance explained of all models
   devexpl <- readRDS(paste(pathtodata, "/analysis/output_datasets/devexpl_all_models.RDS", sep = ""))
+  # note : previously called model_results.csv and read in by "results" section of analysis_nonpublic.R.
   
   # isplines of all models
   isplines_all_models <- readRDS(paste(pathtodata, "/analysis/output_datasets/isplines_all_threshold_models.RDS", sep = ""))
