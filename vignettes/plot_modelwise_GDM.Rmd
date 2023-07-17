@@ -4,11 +4,6 @@ author: "Noelle Schenk"
 date: "August 20, 2019"
 output: html_document
 ---
-```{r, eval = T}
-suppressPackageStartupMessages(require(ggplot2))
-suppressPackageStartupMessages(require(cowplot))
-theme_set(theme_half_open())
-```
 
 ```{r}
 #TODO :  fill in code to work with significances, e.g. take out the non-significant maxsplines

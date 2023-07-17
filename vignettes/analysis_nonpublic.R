@@ -54,6 +54,10 @@ data("colorder_gdm_input")
 data("usefulplotids")
 data("model_names")
 data("nicenames")
+# settings for plotting
+suppressPackageStartupMessages(require(ggplot2))
+suppressPackageStartupMessages(require(cowplot))
+theme_set(theme_half_open())
 
 ######################
 # CONSTRUCTION OF ASSEMBLED DATA FROM RAW
