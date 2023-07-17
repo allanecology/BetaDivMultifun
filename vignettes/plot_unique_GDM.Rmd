@@ -9,34 +9,33 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Aim
+
+Create plots which are bulit from multiple models. This script is only runned once.
+
+Once-in lifetime plots (only run once)
+
+## Requirements
+
+```{r}
+if(!exists("model_names")){
+  sections_to_be_loaded <- c()
+  source("vignettes/analysis_nonpublic.R")
+}
+```
+
+Reads input from the GDM modelling as well as potentially from the modelwise plots.
 
 
+# TODO
 
-
-
-
-#TODO HERE
-the below part is mostly appendix figures. 
-Probably move that?
-Also here : only include figures that are done model-wise and that have an input data format which matches the
-examples here.
-Check if the output format of the average over threshold models can be used as input here.
-Check if the ouptut format of singleEFdist models can be used as input here (probably could be, but we anyway show results in a summary) Maybe just use summary functions used here for those as well.
---> Philosophy : use more scripts, that contain similar things.
-
+- split into main and appendix figures
 - [x] Move the creation of the average-threshold computation to a separate file and put that to the group of scripts that only need to be runned once. DONE : threshold script
+- Check if the output format of the average over threshold models can be used as input here.
 
 
 
-
-
-
-
-
-
-# Once-in lifetime plots (only run once)
-
-## get all legends
+# Legends
 ```{r, eval = F}
 ###########
 # legends
@@ -52,7 +51,12 @@ ggsave(filename = paste(pathtoout, "/", "all_legends_incl_overview.pdf", sep = "
 
 
 
-## single EFs heatmap
+# single Ecosystem Functions
+
+## heatmap single EF
+
+1. Get dataset of effects sizes at maximum distance (variable importane) for all single EF models.
+2. Plot a heatmap from this dataset.
 
 ```{r, eval = F}
 ###########
@@ -111,15 +115,19 @@ rm(x)
 
 Create heatmap
 ```{r, eval = F}
+###########
 # Create heatmap
+###########
 include <- c("nicenames", colnames(singleEFdist)[!colnames(singleEFdist) %in% c("Var1", "Var2")], "n_affected_fun")
 
+## chose colour palette ----
 # pal <- rev(RColorBrewer::brewer.pal(9, "RdYlBu"))
 pal <- RColorBrewer::brewer.pal(9, "YlOrRd")
 # pal <- c("white", RColorBrewer::brewer.pal(9, "YlOrRd"))[-2]
 # colgrad <- melt(restab2[, ..include], id.vars = c("nicenames", "n_affected_fun"))
 # colgrad <- colgrad$value  
 
+## biotic aboveground sub-plot ----
 df <- restab2[ground == "a", ]
 df <- data.table::melt(df[, ..include], id.vars = c("nicenames", "n_affected_fun"))
 df[value == 0, value := NA] # 0 values are set to NA to make them appear grey in the plot
@@ -147,6 +155,7 @@ legend_a <- get_legend(a)
 # remove legend from plot
 a <- a + theme(legend.position = "none")
 
+## biotic belowground sub-plot ----
 df <- restab2[ground == "b", ]
 df <- data.table::melt(df[, ..include], id.vars = c("nicenames", "n_affected_fun"))
 df[value == 0, value := NA]
@@ -164,7 +173,7 @@ b <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
     coord_cartesian(clip = 'off') +  
   geom_text(data = unique(df[, .(nicenames, n_affected_fun)]), aes(label = n_affected_fun, x = length(unique(df$variable)) + 1, y = nicenames), color="black", size=3, inherit.aes = FALSE)
 
-
+## abiotic sub-plot ----
 df <- restab2[ground == "x", ]
 df <- data.table::melt(df[, ..include], id.vars = c("nicenames", "n_affected_fun"))
 df[value == 0, value := NA]
@@ -182,10 +191,11 @@ c <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
       coord_cartesian(clip = 'off') +  
   geom_text(data = unique(df[, .(nicenames, n_affected_fun)]), aes(label = n_affected_fun, x = length(unique(df$variable)) + 1, y = nicenames), color="black", size=3, inherit.aes = FALSE)
 
+## combining plot ----
 # plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
-heatmap <- plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.49, 0.42, 0.09), align = "v")
+heatmap <- plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.46, 0.42, 0.09), align = "v")
 
-plot_grid(heatmap, legend_a, nrow = 1, rel_widths = c(0.9, 0.1))
+heatmap <- plot_grid(heatmap, legend_a, nrow = 1, rel_widths = c(0.9, 0.1))
 # plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, nrow = 3, rel_heights = c(0.58, 0.44, 0.10), align = "v") # grayscale with legend
 
 # plot_grid(p, b, q, labels = c('aboveground', 'belowground', 'abiotic'), label_size = 12, nrow = 3, rel_heights = c(0.31, 0.51, 0.18), align = "v")
@@ -194,26 +204,35 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_singleEFdist_heatmap.pdf", sep = "
        width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 
-Create overview bars
+## overview bars of single EFs
+
+Summarise the effects on single EFs per group (biotic above/ belowground, abiotic).
+
+Visualisation as stacked barplots.
 ```{r}
 # requires : restab2, created in chunk 1 under "# single EFs heatmap"
-a <- create_single_funs_overviewbars(restab2 = restab2, rel_colnames = singleEFnames)
+singfun_ovbar <- create_single_funs_overviewbars(restab2 = restab2, rel_colnames = singleEFnames)
 
 # bring to ggplot format
-ov_ab_singleEFmods <- melt(a$above_below, id.vars = c("ground", "color"))
-ov_tn_singleEFmods <- melt(a$turnover_nestedess, id.vars = c("component", "color"))
+ov_ab_singleEFmods <- melt(singfun_ovbar$above_below, id.vars = c("ground", "color"))
+ov_tn_singleEFmods <- melt(singfun_ovbar$turnover_nestedess, id.vars = c("component", "color"))
 # create plots
-p_ov_ab <- create_single_funs_overviewbar_plot(singleF_restab = ov_ab_singleEFmods, pos = "dodge")
-p_ov_tn <- create_single_funs_overviewbar_plot(singleF_restab = ov_tn_singleEFmods, pos = "dodge")
+p_ov_ab <- create_single_funs_overviewbar_plot(singleF_restab = ov_ab_singleEFmods, pos = "stack") # note dodged barplots would be possible by setting pos = "dodge"
+p_ov_tn <- create_single_funs_overviewbar_plot(singleF_restab = ov_tn_singleEFmods, pos = "stack")
 
 p_ov_abtn <- plot_grid(p_ov_ab, p_ov_tn, labels = c("A", "B"))
+
 # saved as : <date>_plot_GDM_singleEFdist_overview_bars
+ggsave(filename = paste(pathtoout, "/plot_GDM_singleEFdist_overview_bars.pdf", sep = ""), 
+       plot = p_ov_abtn, 
+       device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 
 Summary numbers about number of average biotic/ abiotic/ LUI drivers driving
 single functions
 ```{r}
-# use vector "singleEFnames" to get names of single functions to address each column separately
+# use vector "singleEFnames" (created above) to get names of single functions to address each column separately
 
 # add column to restab2 with needed categories
 restab2[, bio_abio_lui := lui_ground]
@@ -225,9 +244,66 @@ calc_avg_number_of_biotic_abiotic_drivers_of_single_functions(restab2 = restab2,
 table(restab2$bio_abio_lui)
 ```
 
+Result : on average, 13.235294 biotic drivers, 1.666667 lui and 1.214286 abiotic drivers per single function.
+
+Of total 30 biotic drivers, 2 lui and 2 abiotic drivers in the model.
+
+## Heatmap with overviewbars
+
+Creation of a figure of single EF heatmaps, combined with the overviewbars.
+```{r}
+# remove geom_text layer in order to get nice alignment
+a_test <- a
+a_test$layers[[2]] <- NULL
+
+b_test <- b
+b_test$layers[[2]] <- NULL
+
+c_test <- c
+c_test$layers[[2]] <- NULL
+
+p_ov_ab_test <- p_ov_ab + theme(axis.title.x = element_blank(),
+                              axis.line.x = element_blank(),
+                              axis.text.x = element_blank(),
+                              axis.ticks.x = element_blank(),
+                              axis.text.y = element_text(size=9)) +
+                        theme(plot.margin = unit(rep(0, 4), "pt"))
+# p_ov_tn_test <- p_ov_tn + theme(axis.text.x = element_text(size=9))
+p_ov_tn_test <- p_ov_tn + theme(axis.title.x = element_blank(),
+                              axis.line.x = element_blank(),
+                              axis.text.x = element_blank(),
+                              axis.ticks.x = element_blank(),
+                              axis.text.y = element_text(size=9)) +
+                        theme(plot.margin = unit(rep(0, 4), "pt"))
+
+singlefun_fullplot <- plot_grid(a_test,
+                      b_test,
+                      c_test,
+                      p_ov_ab_test,
+                      p_ov_tn_test,
+                      ncol = 1,
+                      align = "v",
+                      rel_heights = c(0.2, 0.18, 0.05, 0.05, 0.05))
+singlefun_fullplot
+
+ggsave(filename = paste(pathtoout, "/plot_GDM_singleEFdist_heatmap_overview_bars.pdf", sep = ""), 
+       plot = singlefun_fullplot,
+       device=cairo_pdf,
+       width = 11.96, height = 8.27, units = "in", dpi = 900)
+```
+
+## clean up
+```{r}
+# clean workspace
+rm(a_test, b_test, c_test, p_ov_ab_test, p_ov_tn_test)
+rm(a, b, c, df, exSplines, gdm_output, gdmin, heatmap, legend_a, ov_ab_singleEFmods, ov_tn_singleEFmods,
+   p_ov_ab, p_ov_abtn, p_ov_tn, restab, restab2, singfun_ovbar, singlefun_fullplot, i, include, 
+   ni, pal, singleEFdist, singleEFnames)
+```
 
 
-# THRESHOLD SELECTION
+
+# Threshold selection
 
 Aim : Show that a selection of a given threshold is impossible.
 
