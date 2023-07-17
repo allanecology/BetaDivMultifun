@@ -13,8 +13,17 @@ knitr::opts_chunk$set(echo = TRUE)
 Summarise the results of all GDM models listed in the table `model_names` and create a results table `GDM_devexpl`, as well as a table of all isplines in the table `isplines_all_models`.
 Serves as input for assessing the thresholds and comparing quality of the models, and the summary models across thresholds.
 
+
 # Requirements
-- run all the previous scripts to generate necessary output
+
+run all the previous scripts to generate necessary output (see "the_analysis_hive.Rmd")
+```{r}
+if(!exists("pathtodata")){
+  sections_to_be_loaded <- c()
+  source("vignettes/analysis_nonpublic.R")
+}
+```
+
 
 ## Summarise deviance explained
 Aim : Summarise deviance explained for all single predictors.
@@ -26,6 +35,7 @@ devexpl <- data.table(modelname = model_names[model_class %in% c("multifun", "si
            GDM_dev_expl = as.numeric(NA))
 
 for(mod in model_names[model_class %in% c("multifun", "singlefun") & lui == "LUI", modelname]){
+  print(mod) # note : added this print statement because recently problems with readRDS() function (July 2023)
   model_names_selection <- model_names[which(model_names$modelname == mod), ]
   sections_to_be_loaded <- c("gdmoutput") # loads `gdmoutput` and `model_specs`
   source("vignettes/analysis_nonpublic.R")
