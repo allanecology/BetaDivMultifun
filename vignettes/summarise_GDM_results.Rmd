@@ -36,6 +36,7 @@ for(mod in model_names[model_class %in% c("multifun", "singlefun") & lui == "LUI
 rm(mod, model_names_selection, sections_to_be_loaded, gdmoutput, model_specs)
 
 saveRDS(devexpl, file = paste(pathtoout, "/devexpl_all_models.RDS", sep = "")) # note this dataset has been called "model_results.CSV" in the past.
+# is read in by analysis_nonpublic.R, "results" section into variable `model_results`)
 ```
 
 

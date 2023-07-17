@@ -157,31 +157,17 @@ if("additional" %in% sections_to_be_loaded){
   }
 }
 
-
-if("plotting" %in% sections_to_be_loaded){
-  # get nicenames
-  # is already loaded by package per default (lazy-loading)
-  # data(nicenames, package = "BetaDivMultifun")
-  # note : update data with : 
-  # usethis::use_data(nicenames)
-  
-  #TODO add overview colors
-  #   - check if gray is working well
-  #TODO remove "plotting" section - does not need to load anything anymore
-}
-
 if("results" %in% sections_to_be_loaded){
   # variable `model_names` will be loaded by lazy-loading from /data
   # for(i in nrow(model_names)){
   #   source("vignettes/plot_GDM.Rmd") # by hand! no automation
   # }
   # i <- 30
+  #TODO remove above code?
   
-  # #TODO : produce new deviance explained
-  #TODO will be named GDM_results.csv and produced by script "summarise_GDM_results.Rmd"
-  # # note : save from model_overview.ods
-  model_results <- data.table::fread(paste(pathtodata, "/analysis/output_datasets/model_results.csv", sep = ""), header = T, skip = 0)
-  # model_results <- model_results[1:(nrow(model_results)-1)] # skipt last line
+  model_results <- readRDS(file = paste(pathtodata, "/analysis/output_datasets/devexpl_all_models.RDS", sep = ""))
+  # model_results <- data.table::fread(paste(pathtodata, "/analysis/output_datasets/model_results.csv", sep = ""), header = T, skip = 0)
+  # note : previously called model_results.csv.
 }
 
 if("gdminput" %in% sections_to_be_loaded){

@@ -312,8 +312,6 @@ Aim : Show that a selection of a given threshold is impossible.
 ```{r}
 sections_to_be_loaded <- c("thresholds", "results", "gdminput", "gdmoutput")
 source("vignettes/analysis_nonpublic.R")
-#TODO : model_results.csv wants to be read, but doesn't exist. Put new name
-theme_set(theme_half_open())
 ```
 
 
