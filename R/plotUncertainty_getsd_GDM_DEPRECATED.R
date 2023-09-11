@@ -1,4 +1,4 @@
-#' plotUncertainty_getsd : Get GDM sd at max height DEPRECIATED
+#' plotUncertainty_getsd : Get GDM sd at max height DEPRECATED
 #' 
 #' *Depreciation note* : This function is no longer used, because (1) the new version
 #' of the package `gdm` allows extracting output data from this function, and
