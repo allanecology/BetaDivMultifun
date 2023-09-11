@@ -1,12 +1,25 @@
-# model <- gdmoutput
-#TODO : do I really need this function? Evaluate with the script GDM_predict
+#' isplineExtract.edit
+#' 
+#' This is an edit of the function in order to "handle" NULL input
+#'  returns NULL output for NULL input.
+#'  
+#'  
+#'  
 
 isplineExtract.edit <- function (model){
   if (!is(model, "gdm")) {
-    stop("model argument must be of class = 'gdm'.")
+    if(is.null(model)){
+      outData <- list(NULL)
+      print("function isplineExtract.edit : special case of NULL model. returning NULL")
+      return(outData)
+    } else {
+      stop("model argument must be of class = 'gdm'.")
+    }
   }
   options(warn.FPU = FALSE)
-  PSAMPLE <- 8350
+  PSAMPLE <- 8350 # edit: why is this not 200 any more?
+  #                had been set to 8350 to have higher xaxis resolution in june 2022.
+  #                also changed in plotUncertainty edit to have 8350 rows.
   preddata <- rep(0, times = PSAMPLE)
   pn <- model$predictors
   nPreds <- length(pn)
