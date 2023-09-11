@@ -127,7 +127,6 @@ plotUncertainty_slim <- function (spTable, sampleSites, bsIters, geo = FALSE, sp
     gdmMods <- lapply(subSamps, gdm::gdm, geo = geo, splines = splines, 
                       knots = knots) # create a GDM model for each subsampled dataset
   }
-  print("checkpoint 1")
   fullGDMmodel <- gdm(spTable, geo = geo, splines = splines, 
                       knots = knots) # the model on the full dataset
   devExps <- lapply(gdmMods, function(x) {
@@ -139,16 +138,8 @@ plotUncertainty_slim <- function (spTable, sampleSites, bsIters, geo = FALSE, sp
       # The sum of all spline coefficients = 0 and deviance explained = NULL.
       # Returning NULL object.
   exUncertSplines <- lapply(gdmMods, isplineExtract.edit) # extract splines from each model of the subsampled datasets
-  print("checkpoint 2")
   fullGDMsplines <- isplineExtract.edit(fullGDMmodel)
-  print("checkpoint 2 b")
   predVars <- colnames(exUncertSplines[[1]][[1]]) # create vector of names of predictors
-  print("checkpoint 3")
-  # -- temporal edit below
-  # saveRDS(predVars, file = "~/Desktop/gdm_plotuncertainty_testout.Rds")
-  # saveRDS(exUncertSplines, file = "~/Desktop/gdm_plotuncertainty_testoutexsp.Rds")
-  #TODO delete this edit
-  # -- temporal edit end
   # edit below : outcommented plotting code, just setting the layout of the resulting plot
   # thisplot <- 0
   # one_page_per_plot <- FALSE
@@ -168,7 +159,7 @@ plotUncertainty_slim <- function (spTable, sampleSites, bsIters, geo = FALSE, sp
       selPlot <- exUncertSplines[[nm]]
       # edit : added handling of NULL cases here
       if(is.null(selPlot[[1]])){
-        print("element is NULL. Returning NA")
+        # print("element is NULL. Returning NA")
         spYmax <- NA
         spYmin <- NA
         # neither totalYmax nor totalYmin will change
@@ -180,21 +171,18 @@ plotUncertainty_slim <- function (spTable, sampleSites, bsIters, geo = FALSE, sp
       }
     }
   }
-  print("checkpoint 4")
   # create empty outdata table and fill it (with the loop)
   outData <- data.frame(matrix(nrow = 8350, ncol = length(predVars) * 8)) 
   for (p in 1:length(predVars)) {
     predV <- predVars[p]
     totalXmin <- Inf
     totalXmax <- -Inf
-    print("checkpoint 5")
     for (nm in 1:length(exUncertSplines)) {
       selPlot <- exUncertSplines[[nm]]
       # note : added the if clause below to handle NULL objects.
       if(is.null(selPlot[[1]])){
         spXmax <- NA
         spXmin <- NA
-        #TODO keep NA, or better NULL?
       } else {
         spXmax <- max(selPlot[[1]][, predV], na.rm = T)
         spXmin <- min(selPlot[[1]][, predV], na.rm = T)
@@ -206,7 +194,6 @@ plotUncertainty_slim <- function (spTable, sampleSites, bsIters, geo = FALSE, sp
         }
       }
     }
-    print("checkpoint 6")
     if (totalYmax != 0) {
       plotX <- NULL
       plotY <- NULL
@@ -226,7 +213,6 @@ plotUncertainty_slim <- function (spTable, sampleSites, bsIters, geo = FALSE, sp
           byVarMatX <- cbind(byVarMatX, plotX[[nn]][, predV])
         }
       }
-      print("checkpoint 7")
       fullPlotX <- fullGDMsplines[[1]]
       fullPlotX <- fullPlotX[, predV]
       fullPlotY <- fullGDMsplines[[2]]
@@ -251,7 +237,6 @@ plotUncertainty_slim <- function (spTable, sampleSites, bsIters, geo = FALSE, sp
         start <- end + 1
         end <- p * 8
       }
-      print("checkpoint 8")
       # fill in values to outData
       outData[, start:end] <- cbind(lowBoundX, fullPlotX, 
                                     highBoundX, lowBoundY, fullPlotY, highBoundY,
@@ -269,7 +254,6 @@ plotUncertainty_slim <- function (spTable, sampleSites, bsIters, geo = FALSE, sp
         rugData <- unique(c(spTable[, c(varDat[1])], 
                             spTable[, c(varDat[2])]))
       }
-      print("checkpoint 9")
       # edit below : outcommented plotting part
       # if (one_page_per_plot) {
       #   dev.new()
