@@ -2,10 +2,12 @@
 #' 
 #' This function is a "slim" version of the `gdm::plotUncertainty` function.
 #' 
-#' Two changes have been applied to the functio : (1)
+#' Two changes have been applied to the function : (1)
 #' The plotting has been disabled, because the function is runned on a cluster
 #' and no plotting output is desired (or can later be done based on the extracted)
-#' values.
+#' values. Additionally, the number of points for predictions is enhanced from 200
+#' to 8350 points (the number of observations in the dataset). Note that this change
+#' is hard-coded, and is also changed in the function `isplineExtract.edit`
 #' (2) The saving option is edited, such that the output of the function is returned
 #' to a variable rather than saved as .csv. This is more appropriate in the
 #' cluster surrounding.
@@ -121,19 +123,32 @@ plotUncertainty_slim <- function (spTable, sampleSites, bsIters, geo = FALSE, sp
                                                          geo = geo, splines = splines, knots = knots)
     stopCluster(cl)
   } else {
-    subSamps <- lapply(lstSP, subsample.sitepair, sampleSites = sampleSites) # subsample the tables to form subsampled (reduced) datasets
-    gdmMods <- lapply(subSamps, gdm, geo = geo, splines = splines, 
+    subSamps <- lapply(lstSP, gdm::subsample.sitepair, sampleSites = sampleSites) # subsample the tables to form subsampled (reduced) datasets
+    gdmMods <- lapply(subSamps, gdm::gdm, geo = geo, splines = splines, 
                       knots = knots) # create a GDM model for each subsampled dataset
   }
+  print("checkpoint 1")
   fullGDMmodel <- gdm(spTable, geo = geo, splines = splines, 
                       knots = knots) # the model on the full dataset
   devExps <- lapply(gdmMods, function(x) {
     x$explained
   }) # collect deviance explained of each subsampled dataset
   devExps <- unlist(devExps)
-  exUncertSplines <- lapply(gdmMods, isplineExtract) # extract splines from each model of the subsampled datasets
-  fullGDMsplines <- isplineExtract(fullGDMmodel)
+  # Capture case if NULL model is returned : with function isplineExtract.edit
+      # The algorithm was unable to fit a model to your data.
+      # The sum of all spline coefficients = 0 and deviance explained = NULL.
+      # Returning NULL object.
+  exUncertSplines <- lapply(gdmMods, isplineExtract.edit) # extract splines from each model of the subsampled datasets
+  print("checkpoint 2")
+  fullGDMsplines <- isplineExtract.edit(fullGDMmodel)
+  print("checkpoint 2 b")
   predVars <- colnames(exUncertSplines[[1]][[1]]) # create vector of names of predictors
+  print("checkpoint 3")
+  # -- temporal edit below
+  # saveRDS(predVars, file = "~/Desktop/gdm_plotuncertainty_testout.Rds")
+  # saveRDS(exUncertSplines, file = "~/Desktop/gdm_plotuncertainty_testoutexsp.Rds")
+  #TODO delete this edit
+  # -- temporal edit end
   # edit below : outcommented plotting code, just setting the layout of the resulting plot
   # thisplot <- 0
   # one_page_per_plot <- FALSE
@@ -146,67 +161,105 @@ plotUncertainty_slim <- function (spTable, sampleSites, bsIters, geo = FALSE, sp
   totalYmax <- -Inf
   # the plotting is done on 200 values which are equally distributed across the 
   # range of the predictor. Set variables to capture those 200 variables
+  # new : the resolution is enhanced to ALL 8350 rows!
   for (p in 1:length(predVars)) {
     predV <- predVars[p]
     for (nm in 1:length(exUncertSplines)) {
       selPlot <- exUncertSplines[[nm]]
-      spYmax <- max(selPlot[[2]][, predV])
-      spYmin <- min(selPlot[[2]][, predV])
-      totalYmax <- max(c(totalYmax, spYmax))
-      totalYmin <- min(c(totalYmin, spYmin))
+      # edit : added handling of NULL cases here
+      if(is.null(selPlot[[1]])){
+        print("element is NULL. Returning NA")
+        spYmax <- NA
+        spYmin <- NA
+        # neither totalYmax nor totalYmin will change
+      } else {
+        spYmax <- max(selPlot[[2]][, predV], na.rm = T)
+        spYmin <- min(selPlot[[2]][, predV], na.rm = T)
+        totalYmax <- max(c(totalYmax, spYmax), na.rm = T)
+        totalYmin <- min(c(totalYmin, spYmin), na.rm = T)
+      }
     }
   }
+  print("checkpoint 4")
   # create empty outdata table and fill it (with the loop)
-  outData <- data.frame(matrix(nrow = 200, ncol = length(predVars) * 6)) 
+  outData <- data.frame(matrix(nrow = 8350, ncol = length(predVars) * 8)) 
   for (p in 1:length(predVars)) {
     predV <- predVars[p]
     totalXmin <- Inf
     totalXmax <- -Inf
+    print("checkpoint 5")
     for (nm in 1:length(exUncertSplines)) {
       selPlot <- exUncertSplines[[nm]]
-      spXmax <- max(selPlot[[1]][, predV])
-      spXmin <- min(selPlot[[1]][, predV])
-      if (spXmax > totalXmax) {
-        totalXmax = spXmax
-      }
-      if (spXmin < totalXmin) {
-        totalXmin = spXmin
+      # note : added the if clause below to handle NULL objects.
+      if(is.null(selPlot[[1]])){
+        spXmax <- NA
+        spXmin <- NA
+        #TODO keep NA, or better NULL?
+      } else {
+        spXmax <- max(selPlot[[1]][, predV], na.rm = T)
+        spXmin <- min(selPlot[[1]][, predV], na.rm = T)
+        if (spXmax > totalXmax) {
+          totalXmax = spXmax
+        }
+        if (spXmin < totalXmin) {
+          totalXmin = spXmin
+        }
       }
     }
+    print("checkpoint 6")
     if (totalYmax != 0) {
       plotX <- NULL
       plotY <- NULL
       byVarMatX <- NULL
       byVarMatY <- NULL
       for (nn in 1:length(exUncertSplines)) {
-        plotX[[nn]] <- exUncertSplines[[nn]][[1]]
-        plotY[[nn]] <- exUncertSplines[[nn]][[2]]
-        byVarMatY <- cbind(byVarMatY, plotY[[nn]][, predV])
-        byVarMatX <- cbind(byVarMatX, plotX[[nn]][, predV])
+        if(is.null(exUncertSplines[[nn]][[1]])){
+          # edit : handled NULL cases
+          plotX[[nn]] <- NULL
+          plotY[[nn]] <- NULL
+          byVarMatY <- cbind(byVarMatY, NULL)
+          byVarMatX <- cbind(byVarMatX, NULL)
+        } else {
+          plotX[[nn]] <- exUncertSplines[[nn]][[1]]
+          plotY[[nn]] <- exUncertSplines[[nn]][[2]]
+          byVarMatY <- cbind(byVarMatY, plotY[[nn]][, predV])
+          byVarMatX <- cbind(byVarMatX, plotX[[nn]][, predV])
+        }
       }
+      print("checkpoint 7")
       fullPlotX <- fullGDMsplines[[1]]
       fullPlotX <- fullPlotX[, predV]
       fullPlotY <- fullGDMsplines[[2]]
       fullPlotY <- fullPlotY[, predV]
       sdX <- apply(as.matrix(byVarMatX), 1, sd)
       sdY <- apply(as.matrix(byVarMatY), 1, sd)
+      # edit below ---
+      # record number of values used to calculate sd
+      sdXn <- apply(as.matrix(byVarMatX), 1, function(x) sum(!is.na(x)))
+      sdYn <- apply(as.matrix(byVarMatY), 1, function(x) sum(!is.na(x)))
+      # edit above ---
       highBoundX <- fullPlotX + sdX
       lowBoundX <- fullPlotX - sdX
       highBoundY <- fullPlotY + sdY
       lowBoundY <- fullPlotY - sdY
       if (p == 1) {
+        # edit : changed 6 to 8, because 2 additional columns with number of 
+        #    non-null models used to calculate sd.
         start <- p
-        end <- p * 6
+        end <- p * 8
       } else {
         start <- end + 1
-        end <- p * 6
+        end <- p * 8
       }
+      print("checkpoint 8")
       # fill in values to outData
       outData[, start:end] <- cbind(lowBoundX, fullPlotX, 
-                                    highBoundX, lowBoundY, fullPlotY, highBoundY)
+                                    highBoundX, lowBoundY, fullPlotY, highBoundY,
+                                    sdXn, sdYn)
       colnames(outData)[start:end] <- paste(predV, c("minusSD_X", 
                                                      "fullModel_X", "plusSD_X", "minusSD_Y", "fullModel_Y", 
-                                                     "plusSD_Y"), sep = "_")
+                                                     "plusSD_Y",
+                                                     "SDn", "SDn"), sep = "_")
       if (predV == "Geographic") {
         rugData <- unique(sqrt(((spTable$s1.xCoord - 
                                    spTable$s2.xCoord)^2) + ((spTable$s1.yCoord - 
@@ -216,6 +269,7 @@ plotUncertainty_slim <- function (spTable, sampleSites, bsIters, geo = FALSE, sp
         rugData <- unique(c(spTable[, c(varDat[1])], 
                             spTable[, c(varDat[2])]))
       }
+      print("checkpoint 9")
       # edit below : outcommented plotting part
       # if (one_page_per_plot) {
       #   dev.new()
