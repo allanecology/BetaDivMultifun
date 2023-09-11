@@ -5,7 +5,7 @@ date: "July 10, 2019"
 output: html_document
 ---
 # Cluster
-In order to run R code on the cluster, please follow the instructions on the [UBELIX help page](https://hpc-unibe-ch.github.io//). There is a great documentation (also about using R on the cluster).
+In order to run R code on the cluster of the University of Bern, please follow the instructions on the [UBELIX help page](https://hpc-unibe-ch.github.io//). There is a great documentation (also about using R on the cluster).
 - get user profile
     - log in with `ssh <username>@submit.unibe.ch`
 - install R and the required packages
@@ -30,7 +30,7 @@ squeue -u <username>
 
 
 # Data
-model results need to be uploaded : <modelname>_input.Rds files which contian site-pair tables, as used for gdm models.
+model results need to be uploaded : <modelname>_input.Rds files which contain site-pair tables, as used for gdm models.
 ```{bash}
 ssh <username>@submit.unibe.ch
 
@@ -41,7 +41,7 @@ scp <username>@submit.unibe.ch:path/to/file /path/to/target_dir/
 source : https://docs.id.unibe.ch/ubelix/getting-started
 
 
-# Scripts
+# Varimp (p-values)
 2 scripts are required : an R script which contains the R code and a SLURM script which contains the cluster code.
 - R script : `gdm.R`
 - cluster script : `Rbatch.sh`
@@ -95,7 +95,7 @@ squeue -u <username>
 ```
 
 
-# workflow
+## workflow
 cluster workflow 
 1. change name in gdm.R to current .Rds file
 2. change job name ,
@@ -136,10 +136,12 @@ gdmperm[[4]][,1]
 
 
 
-# plot Uncertainty : get sd of maxspline values
+# thesholds : sd of maxspline
+
+with `plotUncertainty` : get sd of maxspline values
 
 use **Rbatch.sh** from above, and only modify last line and cpus per task: 
-```{bash}
+```{bash, eval = F}
 #!/bin/sh
 #SBATCH --mail-user=noelle.schenk@ips.unibe.ch
 #SBATCH --mail-type=end,fail
@@ -161,20 +163,27 @@ R CMD BATCH --no-save -no-restore gdm_uncertainty.R
 ```
 
 **gdm_uncertainty.R**
-```{r}
-require(gdm)
-name <- "gdm_EFturnover_0.1_LUI"
+```{r, eval =F}
+library(gdm)
+name <- "gdm_EFturnover_0.8_LUI"
 gdm_model <- readRDS(paste("data/", name, "_input.Rds", sep = ""))
 # load the required function
 source("plotUncertainty_slim_GDM.R")
 exists("plotUncertainty_slim")
 
-plotuncertainty_output <- plotUncertainty_slim(gdm_model, sampleSites = 0.3, bsIters = 100, geo = T, cores = 2)
+plotuncertainty_output <- plotUncertainty_slim(spTable = gdm_model, sampleSites = 0.3, bsIters = 100, geo = T, cores = 2)
 
-saveRDS(plotuncertainty_output, file = paste("out/", name, "_uncertainty.Rds", sep = ""))
+# saveRDS(plotuncertainty_output, file = paste("out/", name, "_uncertainty.Rds", sep = "")) # uncomment me
+saveRDS(plotuncertainty_output, file = paste("vignettes/out/", name, "_uncertainty.Rds", sep = "")) # deleteme
 ```
 note : 2 cores, 50 iterations took 40 seconds
 if something does not work : (1) check if you loaded the required modules and (2) check what's written in the *.Rout file! (not the .err and .out files, but the .Rout one with the output from R)
+
+Run permutations by: 
+```{bash, eval = F}
+sbatch Rbatch.sh
+```
+
 
 running for EFturnover (rename the model names in both scripts automatically)
 ```{bash}
@@ -223,15 +232,5 @@ Observation : some models fail, with the following warning : "The algorithm was 
 The following two models often failed : 
 - EFturnover 0.8 and EFturnover 0.9, failed directly or took longer than 1h.
 
-
-
-
-**Notes**
-```{bash}
-sed -i 's/gdm_EFturnover_0.9_LUI/gdm_EFturnover_0.8_LUI/g' gdm_uncertainty.R Rbatch.sh
-sbatch Rbatch.sh
-sed -i 's/gdm_EFturnover_0.8_LUI/gdm_EFturnover_0.9_LUI/g' gdm_uncertainty.R Rbatch.sh
-sbatch Rbatch.sh
-#TODO nur no turnover 8 u 9
-```
+The models were run as long as it took them to converge. Not 100% convergence was required, but the number of converged models is reported in the output.
 
