@@ -47,10 +47,12 @@ y values. For each x and y, there are the full model values, the upper and the l
 This function is a "slim" version of the `gdm::plotUncertainty` function.
 }
 \details{
-Two changes have been applied to the functio : (1)
+Two changes have been applied to the function : (1)
 The plotting has been disabled, because the function is runned on a cluster
 and no plotting output is desired (or can later be done based on the extracted)
-values.
+values. Additionally, the number of points for predictions is enhanced from 200
+to 8350 points (the number of observations in the dataset). Note that this change
+is hard-coded, and is also changed in the function `isplineExtract.edit`
 (2) The saving option is edited, such that the output of the function is returned
 to a variable rather than saved as .csv. This is more appropriate in the
 cluster surrounding.
