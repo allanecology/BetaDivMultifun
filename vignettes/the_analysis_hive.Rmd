@@ -30,7 +30,7 @@ Requires access to the Plant Ecology Group (Fischer) drive "planteco" at the IPS
 ```
 
 
-## Run modelwise
+## Fit models
 Scripts depending on output of each other, need to run per model.
 
 Requirements
@@ -41,7 +41,7 @@ if(!exists("model_names")){
 }
 ```
 
-
+### single model
 Chose model by hand
 ```{r}
 # select a given model
@@ -53,6 +53,7 @@ ksource("vignettes/check_GDM_input.Rmd") # produce nice plots/ results about cor
 ksource("vignettes/plot_modelwise_GDM.Rmd") # produce bar and line plots of the current model
 ```
 
+### all models
 Loop through all models. Dont forget to transfer the output from vignettes/out to `pathtodata`.
 ```{r, eval = F}
 source("vignettes/analysis_nonpublic.R")
@@ -68,24 +69,45 @@ for(mod in model_names[model_class %in% c("multifun", "singlefun") & lui == "LUI
 ```
 
 
-## Run unique
-Note : some scripts only have to be runned once, after the above scripts have been runned for all models. 
+
+
+## Permutations
+Run on cluster
+```{r}
+# run cluster_scripts by hand on cluster!
+print("run cluster_scripts_documentation.Rmd by hand on cluster!")
+```
+
+
+
+
+## Model output
+
+Note : the below scripts only need to be run once, after the above scripts have been run for all models. 
 ```{r}
 ksource("vignettes/check_GDM_diagnostics.Rmd") # 1 script for all model diagnostics
-#TODO HERE at plot_unique
 ksource("vignettes/plot_unique_GDM.Rmd") # plot single EF models 
 ksource("vignettes/summarise_GDM_results.Rmd") # create summary tables of all model results (deviance explained and isplines)
 ```
 
+
 ## Threshold overview
 
+### calculate sd
 
-Run the thresholds part of `cluster_scripts_documentation.Rmd` on the cluster..
+In order to calculate a summary model over all thresholds over all x values (not just maximum x, but a full line), the sd needs to be calculated everywhere.
+
+Run the thresholds part of `cluster_scripts_documentation.Rmd` on the cluster.
+If no cluster is available : create a script "**gdm_uncertainty.R**". Copy paste the part from `cluster_scripts_documentation.Rmd` in this file. Run it through all nestedness and turnover tresholds with LUI. Note that this script calculates sd for 1 model. In order to run through all, the input has been changed manually (you find code to change automatically in `cluster_scripts_documentation.Rmd`).
+```{r, eval = F}
+source("gdm_uncertainty.R")
+```
+
+The output are 18 .Rds files for thresholds 0.1 - 0.9 for turnover and nestedness. E.g. "analysis/output_datasets/uncertainty_calc/gdm_EFnestedness_0.8_LUI_uncertainty.Rds"
+
+
+
 ```{r}
-# ksource("cluster_scripts_documentation.Rmd") # Note : this script is not runned here, but on a cluster.
-#    in case no cluster is available, run here, but be aware the computation time is high.
-#TODO threshold stuff
-
 #TODO probably add script : GDM_multifun_thresholds.Rmd
 ```
 
