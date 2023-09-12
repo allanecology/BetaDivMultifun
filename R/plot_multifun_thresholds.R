@@ -19,6 +19,7 @@
 #' @param data data.table, produced in `GDM_multifun_thresholds.Rmd`).
 #' @param legend logical T or F, indicating if the plot or the legend should be returned.
 #' @param ymax the maximum y value shown. Defaults to 1.
+#' @param plottitle a character giving the title of the plot. Defaults to no title.
 #' @return a ggplot2 plot element, with lineplots.
 #'
 #' @import ggplot2
@@ -26,17 +27,20 @@
 #' @import data.table
 #'
 #' @export
-create_gdm_lineplot <- function(data, legend = F, ymax = 1){
+create_gdm_lineplot_predictorwise_thresholds <- function(data, legend = F, ribbon = T, ymax = 1, plottitle = ""){
   test <- unique(data[, .(color, nicenames)])
-  p <- ggplot(data, aes(x = xaxis, y = value, fill = names, linetype = linetypeto)) +
-    geom_line(aes(linetype=linetypeto, color=color), size = 1.6) +
-    ylim(0, ymax) +
-    scale_linetype_identity() + 
-    scale_color_identity(name = "", guide = "legend", 
-                         breaks = test$color,
-                         labels = test$nicenames) +
-    theme(axis.title = element_blank()) +
-    background_grid()
+  
+  p <- ggplot(data, aes(x = xaxis, y = value, fill = model_name, color = model_name)) +
+    {if(ribbon)geom_ribbon(aes(ymin = minusSD_Y, ymax = plusSD_Y), alpha = 0.1, linetype = 0)} +
+    geom_line(aes(linewidth = lwd)) +
+    scale_colour_brewer(palette = "PuOr") +
+    coord_cartesian(ylim = c(0, ymax)) +
+    scale_linewidth_identity() +
+    theme(axis.title = element_blank(),
+          legend.title = element_blank()) +
+    background_grid() +
+    ggtitle(plottitle)
+    
   if(!legend){
     p <- p + theme(legend.position = "none")
   }

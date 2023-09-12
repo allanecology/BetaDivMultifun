@@ -335,19 +335,26 @@ ispline_uncertainty_all_thresholds <- merge(test, nicenames, by = c("names"))
 setnames(ispline_uncertainty_all_thresholds, 
          old = c("Xvalue"),
          new = c("xaxis"))
+# add linewidth for mean model
+ispline_uncertainty_all_thresholds[, lwd := 1]
+ispline_uncertainty_all_thresholds[grep("weighted_mean", ispline_uncertainty_all_thresholds$model_name), lwd := 2]
 ```
 
 Plot each predictor individually, showing all model lines
 ```{r}
-type <- "nestedness"
-p <- "LUI"
-for(type in c("nestedness", "turnover")){
-  for(p in unique(ispline_uncertainty_all_thresholds$names)){
-    
+pdf("GDM_weighted_avg_over_thresholds_allmods.pdf", onefile = T, paper = "a4r")
+for(mtype in c("nestedness", "turnover")){
+  for(pred in unique(ispline_uncertainty_all_thresholds$names)){
+    p <- create_gdm_lineplot_predictorwise_thresholds(
+      data = ispline_uncertainty_all_thresholds[Model_type == mtype & names == pred, ], #TODO here isch komisch
+      ribbon = T,
+      legend = T,
+      plottitle = paste(pred, mtype),
+      ymax = min(1, max(ispline_uncertainty_all_thresholds[Model_type == mtype & names == pred, plusSD_Y], na.rm = T), na.rm = T))
+    plot(p)
   }
 }
-
-
+dev.off()
 ```
 
 
