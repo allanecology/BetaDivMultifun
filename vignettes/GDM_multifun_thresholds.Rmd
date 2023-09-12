@@ -34,9 +34,15 @@ thresholds, and for EFnestedness as well.)
 # test <- plotUncertainty_slim(gdminput, sampleSites = 0.3, bsIters = 5, geo = T, cores = 2)
 ```
 
+Requirements
+```{r}
+library(corrplot)
+```
+
+
 # Quality check
 
-Aim of this section : assess the quality of the uncertainty calculation
+Aim of this section : assess the quality of the uncertainty calculation which is
 done in `cluster_scripts_documentation.Rmd`. Are the datasets complete?
 Do the values make sense?
 
@@ -59,22 +65,38 @@ each ispline separately. Elements of the list are named accordingly.
 par(mfrow = c(1, 2))
 # put07 <- ispline_uncertainty_all_thresholds[["gdm_EFturnover_0.7"]]
 put01 <- ispline_uncertainty_all_thresholds[["gdm_EFturnover_0.1"]]
-# # plot to see if makes sense
-# plot(put01$autotroph.beta.sim_fullModel_X, put01$autotroph.beta.sim_fullModel_Y)
-# lines(put01$autotroph.beta.sim_fullModel_X, put01$autotroph.beta.sim_minusSD_Y)
-# lines(put01$autotroph.beta.sim_fullModel_X, put01$autotroph.beta.sim_plusSD_Y)
-#
-#TODO does the package has a problem here?
-# the first plot just looks correct, and the second plot not.
-plot(put01$LUI_fullModel_X, put01$LUI_fullModel_Y, type = "l", ylim = range(put01$LUI_fullModel_Y) + c(-0.02, 0.05))
-polygon(c(put01$LUI_fullModel_X, rev(put01$LUI_fullModel_X)), c(put01$LUI_minusSD_Y, rev(put01$LUI_plusSD_Y)), col = "gray", border = NA)
-# lines(put01$LUI_fullModel_X, put01$LUI_minusSD_Y)
-# lines(put01$LUI_fullModel_X, put01$LUI_plusSD_Y)
+
+# plot to see if makes sense
+
+# PLOT 1
+# autotroph sim
+plot(put01$autotroph.beta.sim_fullModel_X, put01$autotroph.beta.sim_fullModel_Y, 
+     type = "l", ylim = c(-0.1, 1))
+lines(put01$autotroph.beta.sim_fullModel_X, put01$autotroph.beta.sim_minusSD_Y)
+lines(put01$autotroph.beta.sim_fullModel_X, put01$autotroph.beta.sim_plusSD_Y)
+# geodist
+plot(put01$Geographic_fullModel_X, put01$Geographic_fullModel_Y, 
+     type = "l", ylim = c(-0.1, 1))
+lines(put01$Geographic_fullModel_X, put01$Geographic_minusSD_Y)
+lines(put01$Geographic_fullModel_X, put01$Geographic_plusSD_Y)
+
+
+# PLOT 2
+# LUI
+plot(put01$LUI_fullModel_X, put01$LUI_fullModel_Y, type = "l", 
+     ylim = range(put01$LUI_fullModel_Y) + c(-0.02, 0.05))
+polygon(x = c(put01$LUI_fullModel_X, rev(put01$LUI_fullModel_X)), 
+        y = c(put01$LUI_minusSD_Y, rev(put01$LUI_plusSD_Y)), 
+        col = "gray", border = NA)
 lines(put01$LUI_fullModel_X, put01$LUI_fullModel_Y)
-#
-plot(put01$LUI_fullModel_X, put01$LUI_fullModel_Y, type = "l", ylim = range(put01$LUI_fullModel_Y) + c(-0.02, 0.05))
-polygon(c(put01$LUI_minusSD_X, rev(put01$LUI_plusSD_X)), c(put01$LUI_minusSD_Y, rev(put01$LUI_plusSD_Y)), col = "gray", border = NA)
-lines(put01$LUI_fullModel_X, put01$LUI_fullModel_Y)
+```
+
+X values should be the same everywhere
+```{r}
+plot(put01$Geographic_fullModel_X, put01$autotroph.beta.sim_fullModel_X)
+m <- cor(put01[, grep("fullModel_X", names(put01))], method = "spearman")
+corrplot(m, tl.cex = 0.2, type = "lower",
+         method = "number", number.cex = 0.3)
 ```
 
 
@@ -96,7 +118,7 @@ planteco/.../BetaDivMultifun/analysis/output_datasets/uncertainty_calc/
 Calculate weighted average over all models. The GDM models are not all of the same quality. They are weighted based on the uncertainty of each ispline ($w$).
 
 $$wa = \frac{e_{1}*w_{1} + e_{2}*w_{2} + ... + e_{9}*w_{9}}{w_{1}+w_{2} + ... + w_{9}} = \frac{\sum_{i=1}^{n} e_{n}+\frac{1}{sd_{n}}}{\sum_{i=1}^{n} \frac{1}{sd_{n}}} ;  w_{n} = \frac{1}{sd_{n}} $$
-
+where the estimate $e_{n}$ is weighted by its uncertainty $w_{n}$.
 
 
 ## Clean the uncertainty ispline table
@@ -104,7 +126,7 @@ For each Predictor :
 - get X values : are the same in all models --> merge by this value
 - get Y values : model specific _minusSD_Y, fullModel_Y and _plusSD_Y
 
-```{r}
+```{r, eval = T}
 # names(ispline_uncertainty_all_thresholds) # names of the list correspond to model names
 # To each element of the list (each data frame), add a column with the respective model name
 # use workaround : lapply only gives you the elements of the vector you pass it. 
@@ -113,40 +135,61 @@ For each Predictor :
 # The list is assigned to an additional argument of the function. i corresponds to the unassigned
 #    function argument, which is the sequ_along().
 ispline_uncertainty_all_thresholds <- lapply(seq_along(ispline_uncertainty_all_thresholds), 
-                function(y, n, i) {y[[i]]$model_name <- n[i]; y[[i]]$value_ID <- seq(1, 200); return(y[[i]])},
+                function(y, n, i) {y[[i]]$model_name <- n[i]; y[[i]]$value_ID <- seq(1, 8350); return(y[[i]])},
        y = ispline_uncertainty_all_thresholds,
        n = names(ispline_uncertainty_all_thresholds))
 # pile all datasets on top of each other
-ispline_uncertainty_all_thresholds <- rbindlist(ispline_uncertainty_all_thresholds)
+ispline_uncertainty_all_thresholds <- rbindlist(ispline_uncertainty_all_thresholds, use.names = T)
 # filter out the relevant columns : exclude x uncertainties
-relevant_column_names <- c("model_name", "value_ID", grep("_fullModel_X|_minusSD_Y|fullModel_Y|_plusSD_Y", names(ispline_uncertainty_all_thresholds), value = T))
+relevant_column_names <- unique(c("model_name", "value_ID",
+                           grep("_fullModel_X|_minusSD_Y|fullModel_Y|_plusSD_Y|SDn",
+                                names(ispline_uncertainty_all_thresholds), value = T)
+                           ))
 ispline_uncertainty_all_thresholds <- ispline_uncertainty_all_thresholds[, ..relevant_column_names]
 rm(relevant_column_names)
+
+# filter relevant x values
+# 8350 are just too many x values. Is not more correct if I have more values.
+# take around 334 values, plus the max value.
+relevant_rowindices <- c(seq(1, 8350, by = 25), 8350)
+ispline_uncertainty_all_thresholds <- ispline_uncertainty_all_thresholds[value_ID %in% relevant_rowindices, ]
+#TODO rename the rownames to 1 : 335 again --> easier to handle!
 
 # # #
 # quality control
 # plot individual predictor of one model
-ggplot(ispline_uncertainty_all_thresholds[model_name == "gdm_EFturnover_0.2", .(autotroph.beta.sne_fullModel_X, autotroph.beta.sne_fullModel_Y)], aes(x = autotroph.beta.sne_fullModel_X, autotroph.beta.sne_fullModel_Y)) +
-  geom_point()
+ggplot(ispline_uncertainty_all_thresholds[model_name == "gdm_EFturnover_0.2",
+                                          .(autotroph.beta.sne_fullModel_X, autotroph.beta.sne_fullModel_Y)], 
+       aes(x = autotroph.beta.sne_fullModel_X, autotroph.beta.sne_fullModel_Y)) +
+  geom_line()
 ggplot(ispline_uncertainty_all_thresholds[model_name == "gdm_EFnestedness_0.5", .(autotroph.beta.sne_fullModel_X, autotroph.beta.sne_fullModel_Y)], aes(x = autotroph.beta.sne_fullModel_X, autotroph.beta.sne_fullModel_Y)) +
-  geom_point()
+  geom_line()
+
 # plot individual predictor of all models
 ggplot(ispline_uncertainty_all_thresholds, aes(x = autotroph.beta.sne_fullModel_X, autotroph.beta.sne_fullModel_Y, col = model_name)) +
-  geom_point()
-ggplot(ispline_uncertainty_all_thresholds, aes(x = autotroph.beta.sim_fullModel_X, autotroph.beta.sim_fullModel_Y, col = model_name)) +
-  geom_point()
+  geom_line()
 
+ggplot(ispline_uncertainty_all_thresholds, 
+       aes(x = autotroph.beta.sim_fullModel_X, autotroph.beta.sim_fullModel_Y, 
+           col = model_name)) +
+  geom_line()
 
+# save output
+# saveRDS(ispline_uncertainty_all_thresholds, file = paste0(pathtoout, "/allmod_LUI_uncertainty.Rds"))
 ```
 
+## Calculate weighted average
+
 Calculate $w$ for each value of X for each predictor for each model individually. In other words, calculate how wide the confidence interval is at a given place in X for a given predictor and model.
-Speciality : All models have the same X values, which are identified with value_ID.
+Speciality : All models of the same predictor have the same X values, which are identified with value_ID.
 
 Calculate $w$ : $\text{minusSD_Y} = \mu - \sigma$ and $\text{plusSD_Y} = \mu + \sigma$ . Therefore : $\mu + \sigma - (\mu - \sigma) = \mu + \sigma - \mu + \sigma = 2\sigma$ And thus : $w = \sigma = \frac{\text{plusSD_Y} - \text{minusSD_Y}}{2}$
 
 ```{r}
+# ispline_uncertainty_all_thresholds <- readRDS(paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty.Rds"))
 ispline_uncertainty_all_thresholds <- melt(ispline_uncertainty_all_thresholds, id.vars = c("model_name", "value_ID"))
 ispline_uncertainty_all_thresholds[, predictor := sub("_[a-zA-Z]+_[XY]$", "", variable, perl = T)]
+ispline_uncertainty_all_thresholds[, predictor := sub("_SDn", "", predictor)]
 ispline_uncertainty_all_thresholds[, Variable_type := sub("soil_|isolation_", "", sub("^[a-zA-Z.]+_", "", variable, perl = T), perl = T)] 
 ispline_uncertainty_all_thresholds[, variable := NULL]
 ispline_uncertainty_all_thresholds[grep("X", ispline_uncertainty_all_thresholds$Variable_type), XY := "X"]
@@ -166,15 +209,217 @@ rm(Xtest)
 
 ispline_uncertainty_all_thresholds <- dcast(ispline_uncertainty_all_thresholds, model_name + Model_type + predictor + value_ID + Xvalue ~ Variable_type)
 
+# # #
 # Calculate the weight SD_Y
+#
+# (1) calculate uncertainty
 ispline_uncertainty_all_thresholds[, weight := (plusSD_Y - minusSD_Y)/2]
+range(ispline_uncertainty_all_thresholds$weight)
+hist(ispline_uncertainty_all_thresholds$weight, xlim = c(0, 0.95))
+hist(ispline_uncertainty_all_thresholds$weight, xlim = c(0, 0.95), ylim = c(0, 4000))
+# (2) handling 0 cases
+#   the standard deviation is 0 in some cases (where all predictions are 0)
+#   we could replace the 0 and very small values with the second smallest value
+hist(ispline_uncertainty_all_thresholds$weight, xlim = c(0, 0.000001), ylim = c(0, 4000))
+min(ispline_uncertainty_all_thresholds$weight[!(ispline_uncertainty_all_thresholds$weight == 0)]) 
+# is way larger than the machine epsilon (e-12 vs e-16).
+# we could also use a 3-step approach : 
+#     a. normalise standard deviations to values between 0 and 1
+#     b. calculate the weights 1 / sd
+#        and replace the Inf values with 1 (maximum weight)
+#     c. normalise again
+# but also here, at one point we have to replace 0 or Inf values with 
+#   a number. Therefore, we go for the approach where 0 are replaced by epsilon.
+# ispline_uncertainty_all_thresholds[weight == 0, weight := .Machine$double.eps]
+ispline_uncertainty_all_thresholds[weight == 0, weight := min(ispline_uncertainty_all_thresholds$weight[!(ispline_uncertainty_all_thresholds$weight == 0)])]
+#
+# (3) calculate weight
+ispline_uncertainty_all_thresholds[, weight := 1 / weight]
+hist(ispline_uncertainty_all_thresholds$weight)
+# (4) normalise to weights between 0 and 1
+#  the normalisation needs to be done per value_ID, because small values
+#    have smaller standard deviations. the models should get weights according
+#    to the X value. There should not be any dependency between the weith of x = 0.2 and
+#    x = 0.3.
+# normalise weights between 0 and 1
+#   per predictor
+#   per valueID
+#   per model type (turnover vs. nestedness)
+#     each normalisation is a normalisation of 9 values
+nrow(ispline_uncertainty_all_thresholds) == 18 * 35 * 335
+
+# do the normalisation NOT over all, but grouped by
+# note : no shifting to zero needed, because values are already shifted to 0.
+# found this nice data.table code, need to test if does what I want.
+setDT(ispline_uncertainty_all_thresholds)[, Nor := weight / max(weight, na.rm = T), 
+          by = list(predictor, value_ID, Model_type)]
+# leads to NaN values if weight is the minimum --> 
+ispline_uncertainty_all_thresholds[predictor == "Geographic" & value_ID == 1 & Model_type == "nestedness", ] # replace NaN with 1
+ispline_uncertainty_all_thresholds[predictor == "Geographic" & value_ID == 26 & Model_type == "nestedness", ]
+hist(ispline_uncertainty_all_thresholds[predictor == "Geographic" & value_ID == 1 & Model_type == "nestedness", Nor])
+# fuck, so bechömä eifach d 0 wärtä viiu meh gwicht!
+#TODO schauen ob das ein Problem ist. --> ds isch wenigstens immer glich
+
+# clean
+ispline_uncertainty_all_thresholds[, weight := Nor]
+ispline_uncertainty_all_thresholds[, Nor := NULL]
 
 
+# calculate the weighted mean of fullModel_Y
+ispline_uncertainty_all_thresholds[, weighted_Y := fullModel_Y * weight]
+setDT(ispline_uncertainty_all_thresholds)[, sum_of_weight := sum(weight), by = list(predictor, value_ID, Model_type)]
+setDT(ispline_uncertainty_all_thresholds)[, sum_of_weighted_Y := sum(weighted_Y), by = list(predictor, value_ID, Model_type)]
+ispline_uncertainty_all_thresholds[, mean_Y := sum_of_weighted_Y/ sum_of_weight]
+ispline_uncertainty_all_thresholds[, c("sum_of_weight", "sum_of_weighted_Y", "weighted_Y") := NULL]
+
+# save output dataset
+# saveRDS(ispline_uncertainty_all_thresholds, file = paste0(pathtoout, "/allmod_LUI_uncertainty_weighted_avg.Rds"))
+```
+
+## Plotting
+```{r}
+# ispline_uncertainty_all_thresholds <- readRDS(paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg.Rds"))
+
+# Quality checks
+ggplot(ispline_uncertainty_all_thresholds[predictor == "autotroph.beta.sne" & Model_type == "nestedness"], 
+       aes(x = Xvalue, y = fullModel_Y, col = model_name, fill = model_name)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = minusSD_Y, ymax = plusSD_Y), alpha = 0.1, linetype = 0) +
+  scale_fill_brewer(palette="Set1") +
+  scale_color_brewer(palette="Set1") +
+  coord_cartesian(ylim = c(-0.02, 0.1)) + xlab("") + ylab("") +
+  geom_line(aes(x = Xvalue, y = mean_Y), linewidth = 1.5, color = "red")
+
+ggplot(ispline_uncertainty_all_thresholds[predictor == "LUI" & Model_type == "nestedness"], 
+       aes(x = Xvalue, y = fullModel_Y, col = model_name, fill = model_name)) +
+  geom_line() +
+  scale_fill_brewer(palette="Set1") +
+  scale_color_brewer(palette="Set1") +
+  coord_cartesian(ylim = c(-0.02, 0.1)) + xlab("") + ylab("") +
+  geom_line(aes(x = Xvalue, y = mean_Y), linewidth = 1.5, color = "red")
+#
+ggplot(ispline_uncertainty_all_thresholds[predictor == "plot_isolation" & Model_type == "nestedness",], 
+       aes(x = Xvalue, y = fullModel_Y, col = model_name, fill = model_name)) +
+  geom_line() +
+  scale_fill_brewer(palette="Set1") +
+  scale_color_brewer(palette="Set1") +
+  coord_cartesian(ylim = c(-0.02, 0.1)) +
+  geom_line(aes(x = Xvalue, y = mean_Y), linewidth = 1.5, color = "red") +
+  xlab("") + ylab("")
+#
+```
+
+Structured plotting
+
+Match with plotting table `nicenames`
+```{r}
+setnames(ispline_uncertainty_all_thresholds, old = "predictor", new = "names")
+# reshape table : bring mean to it's own row
+test <- melt(ispline_uncertainty_all_thresholds,
+     measure.vars = c("fullModel_Y", "mean_Y"),
+     id.vars = c("model_name", "Model_type", "value_ID", "names", "Xvalue")
+    )
+test[variable == "mean_Y", model_name := paste0("weighted_mean_", Model_type)]
+test[, variable := NULL]
+test <- unique(test)
+nrow(test)  == nrow(ispline_uncertainty_all_thresholds) + 335 * 35 * 2
+# has 335 * 35 * 2 rows more. Should contain 234500 rows.
+# add again the Yvalues from ispline_uncertainty
+test <- merge(test, ispline_uncertainty_all_thresholds, 
+      by = c("model_name", "Model_type", "value_ID", "Xvalue", "names"),
+      all.x = T)
+test[, c("fullModel_Y", "weight", "mean_Y") := NULL]
+
+ispline_uncertainty_all_thresholds <- merge(test, nicenames, by = c("names"))
+
+setnames(ispline_uncertainty_all_thresholds, 
+         old = c("Xvalue"),
+         new = c("xaxis"))
+```
+
+Plot each predictor individually, showing all model lines
+```{r}
+type <- "nestedness"
+p <- "LUI"
+for(type in c("nestedness", "turnover")){
+  for(p in unique(ispline_uncertainty_all_thresholds$names)){
+    
+  }
+}
+
+
+```
+
+
+
+```{r}
+create_gdm_lineplot(ispline_uncertainty_all_thresholds[model_name == "weighted_mean_turnover" & ground == "a", ],
+                        ymax = 0.05)
+create_gdm_lineplot(ispline_uncertainty_all_thresholds[model_name == "weighted_mean_turnover" & ground == "b", ],
+                        ymax = 0.05)
+create_gdm_lineplot(ispline_uncertainty_all_thresholds[model_name == "weighted_mean_turnover" & type == "abio", ],
+                        ymax = 0.05)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+# Quality check
+#    X values of different thresholds of same predictor should be the same
+#
+# secondary consumers nestedness
+qc_dat <- dcast(ispline_uncertainty_all_thresholds[predictor == "secondary.consumer.beta.sne" & model_name %in% c("gdm_EFnestedness_0.1", "gdm_EFnestedness_0.2", "gdm_EFnestedness_0.3"), .(value_ID, Xvalue, model_name)],
+      value_ID ~ model_name, value.var = "Xvalue")
+qc_dat[, qc := gdm_EFnestedness_0.1 - gdm_EFnestedness_0.2 + 
+         gdm_EFnestedness_0.3 - gdm_EFnestedness_0.1]
+sum(qc_dat$qc != 0) == 0 # all xvalues are the same
+#
+# Geographic distance
+qc_dat <- dcast(ispline_uncertainty_all_thresholds[predictor == "Geographic" & model_name %in% c("gdm_EFnestedness_0.1", "gdm_EFnestedness_0.2", "gdm_EFnestedness_0.3"), .(value_ID, Xvalue, model_name)],
+      value_ID ~ model_name, value.var = "Xvalue")
+qc_dat[, qc := gdm_EFnestedness_0.1 - gdm_EFnestedness_0.2 + 
+         gdm_EFnestedness_0.3 - gdm_EFnestedness_0.1]
+sum(qc_dat$qc != 0) == 0 # all xvalues are the same
+#
+# manually checked for 4 further predictors (all types)
+```
+
+
+
+Calculation of 
+
+```{r}
 #TODO HERE : mission accomplished! reformated huge table.
 #    next steps : 
 #        - [DONE] calculate $w$ = SD, calculate from minusSD_Y and plusSDY.
-#        - include the missing two models turnover 0.8 and 0.9 --> calc by hand!
+#        - [DONE] include the missing two models turnover 0.8 and 0.9 --> calc by hand!
 #        - aggregate the mean (fullModel_Y) weighted by SD over all thresholds.
+
+# aggregate mean over all thresholds : 
+# for each predictor individually : 
+
+
+
 
 # note : old code below, no idea if needed
 stats::aggregate(fullModel_Y ~ predictor + Model_type + value_ID, 
@@ -202,10 +447,9 @@ stats::aggregate(fullModel_Y ~ predictor + Model_type + value_ID,
 # # # assign additional variable "model_class" to distinguish turnover and nestedness
 # # ispline_uncertainty_all_thresholds[grep("turnover", ispline_uncertainty_all_thresholds$model_name), 
 # #                                    model_class := "turnover"]
-# # ispline_uncertainty_all_thresholds[grep("nestedness", ispline_uncertainty_all_thresholds$model_name), 
-# #                                    model_class := "nestedness"]
+# # ispline_uncertainty_all_thresholds[grep("nestedness", ispline_uncertainty_all_thresholds$model_name), model_class := "nestedness"]
+# #             
 ```
-
 
 
 
