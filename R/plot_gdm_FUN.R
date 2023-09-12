@@ -349,6 +349,8 @@ NULL
 #' TODO : add vertical grid lines, remove x axis for above plots
 #' @param data data.table, produced by `gdm::isplineExtract` and further
 #' cleaning (as shown in `plot_gdm.Rmd`).
+#' @param legend logical T or F, indicating if the plot or the legend should be returned.
+#' @param ymax the maximum y value shown. Defaults to 1.
 #' @return a ggplot2 plot element, with lineplots.
 #'
 #' @import ggplot2
