@@ -201,11 +201,47 @@ if("thresholds" %in% sections_to_be_loaded){
   
   # #
   # ispline uncertainty of all threshold models
-  threshold_model_names <- c(paste("gdm_EFturnover_", seq(0.1, 0.7, 0.1), sep = ""), 
-    paste("gdm_EFnestedness_", seq(0.1, 0.7, 0.1), sep = "")) #TODO change 0.7 to 0.9 once it runned
+  threshold_model_names <- c(paste("gdm_EFturnover_", seq(0.1, 0.9, 0.1), sep = ""), 
+    paste("gdm_EFnestedness_", seq(0.1, 0.9, 0.1), sep = ""))
   # create vector with all paths of the expected models
   threshold_model_paths <- paste(pathtodata, "/analysis/output_datasets/uncertainty_calc/", threshold_model_names, "_LUI_uncertainty.Rds",sep = "")
-  ispline_uncertainty_all_thresholds <- lapply(threshold_model_paths, readRDS) # read all threshold files in a list
+  
+  # edit start ---
+  # ispline_uncertainty_all_thresholds <- lapply(X = threshold_model_paths,FUN = function(x) readRDS(x)) # read all threshold files in a list
+  # in case the above line does not work (random readRDS error)
+  EFturn01 <- readRDS("/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/analysis/output_datasets/uncertainty_calc/gdm_EFturnover_0.1_LUI_uncertainty.Rds")
+  EFturn02 <- readRDS("/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/analysis/output_datasets/uncertainty_calc/gdm_EFturnover_0.2_LUI_uncertainty.Rds")
+  EFturn03 <- readRDS("/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/analysis/output_datasets/uncertainty_calc/gdm_EFturnover_0.3_LUI_uncertainty.Rds")
+  EFturn04 <- readRDS("/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/analysis/output_datasets/uncertainty_calc/gdm_EFturnover_0.4_LUI_uncertainty.Rds")
+  EFturn05 <- readRDS("/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/analysis/output_datasets/uncertainty_calc/gdm_EFturnover_0.5_LUI_uncertainty.Rds")
+  EFturn06 <- readRDS("/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/analysis/output_datasets/uncertainty_calc/gdm_EFturnover_0.6_LUI_uncertainty.Rds")
+  EFturn07 <- readRDS("/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/analysis/output_datasets/uncertainty_calc/gdm_EFturnover_0.7_LUI_uncertainty.Rds")
+  EFturn08 <- readRDS("/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/analysis/output_datasets/uncertainty_calc/gdm_EFturnover_0.8_LUI_uncertainty.Rds")
+  EFturn09 <- readRDS("/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/analysis/output_datasets/uncertainty_calc/gdm_EFturnover_0.9_LUI_uncertainty.Rds")
+  EFnes01 <- readRDS("/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/analysis/output_datasets/uncertainty_calc/gdm_EFnestedness_0.1_LUI_uncertainty.Rds")
+  EFnes02 <- readRDS("/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/analysis/output_datasets/uncertainty_calc/gdm_EFnestedness_0.2_LUI_uncertainty.Rds")
+  EFnes03 <- readRDS("/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/analysis/output_datasets/uncertainty_calc/gdm_EFnestedness_0.3_LUI_uncertainty.Rds")
+  EFnes04 <- readRDS("/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/analysis/output_datasets/uncertainty_calc/gdm_EFnestedness_0.4_LUI_uncertainty.Rds")
+  EFnes05 <- readRDS("/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/analysis/output_datasets/uncertainty_calc/gdm_EFnestedness_0.5_LUI_uncertainty.Rds")
+  EFnes06 <- readRDS("/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/analysis/output_datasets/uncertainty_calc/gdm_EFnestedness_0.6_LUI_uncertainty.Rds")
+  EFnes07 <- readRDS("/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/analysis/output_datasets/uncertainty_calc/gdm_EFnestedness_0.7_LUI_uncertainty.Rds")
+  EFnes08 <- readRDS("/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/analysis/output_datasets/uncertainty_calc/gdm_EFnestedness_0.8_LUI_uncertainty.Rds")
+  EFnes09 <- readRDS("/run/user/1000/gvfs/smb-share:server=nas-ips,share=ips/groups/planteco/PROJECTS/Exploratories Synthesis/Research Projects/BetaDivMultifun/analysis/output_datasets/uncertainty_calc/gdm_EFnestedness_0.9_LUI_uncertainty.Rds")
+  
+  ispline_uncertainty_all_thresholds <- list(EFturn01, EFturn02, EFturn03,
+                                             EFturn04, EFturn05, EFturn06,
+                                             EFturn07, EFturn08, EFturn09,
+                                             EFnes01, EFnes02, EFnes03,
+                                             EFnes04, EFnes05, EFnes06, 
+                                             EFnes07, EFnes08, EFnes09
+                                             )
+  # -- edit end
   names(ispline_uncertainty_all_thresholds) <- threshold_model_names
   rm(threshold_model_names, threshold_model_paths)
+  rm(EFturn01, EFturn02, EFturn03,
+         EFturn04, EFturn05, EFturn06,
+         EFturn07, EFturn08, EFturn09,
+         EFnes01, EFnes02, EFnes03,
+         EFnes04, EFnes05, EFnes06, 
+         EFnes07, EFnes08, EFnes09)
 }
