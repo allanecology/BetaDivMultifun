@@ -95,7 +95,7 @@ abiotic_legend <- get_nice_legend(type = "abiotic")
 
 
 
-# line plots
+# Line plots
 
 naming convention : `model_names_selection$modelname` + "_lineplot_all_modelspec.pdf"
 
