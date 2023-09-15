@@ -35,7 +35,7 @@ create_gdm_lineplot_predictorwise_thresholds <- function(data, legend = F, ribbo
   test <- unique(data[, .(color, nicenames)])
   
   p <- ggplot(data, aes(x = xaxis, y = value, fill = model_name, color = model_name)) +
-    {if(ribbon)if(ribbontype == "sd")geom_ribbon(aes(ymin = minusSD_Y, ymax = plusSD_Y), alpha = 0.1, linetype = 0)} +
+    {if(ribbon)if(ribbontype == "sd")geom_ribbon(aes(ymin = value - sd, ymax = value + sd), alpha = 0.1, linetype = 0)} +
     {if(ribbon)if(ribbontype == "se")geom_ribbon(aes(ymin = value - se, ymax = value + se), alpha = 0.1, linetype = 0)} +
     geom_line(aes(linewidth = lwd)) +
     scale_colour_brewer(palette = "PiYG") +

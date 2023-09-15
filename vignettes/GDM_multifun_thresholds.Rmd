@@ -392,8 +392,6 @@ ispline_uncertainty_all_thresholds[, se := sd / sqrt(SDn)]
 
 ## Plotting
 ```{r}
-#TODO take care of new SE values
-
 # ispline_uncertainty_all_thresholds <- readRDS(paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg.Rds"))
 
 # Quality checks
@@ -444,19 +442,23 @@ Match with plotting table `nicenames`
 setnames(ispline_uncertainty_all_thresholds, old = "predictor", new = "names")
 # reshape table : bring mean to it's own row
 test <- melt(ispline_uncertainty_all_thresholds,
-     measure.vars = c("fullModel_Y", "mean_Y"),
+     measure.vars = c("fullModel_Y", "mean_Y", "weighted_SD_mean_Y", "weighted_SE_mean_Y"),
      id.vars = c("model_name", "Model_type", "value_ID", "names", "Xvalue")
     )
 test[variable == "mean_Y", model_name := paste0("weighted_mean_", Model_type)]
-test[, variable := NULL]
-test <- unique(test)
+test[variable == "weighted_SD_mean_Y", model_name := paste0("weighted_mean_", Model_type)]
+test[variable == "weighted_SE_mean_Y", model_name := paste0("weighted_mean_", Model_type)]
+test <- unique(test[variable != "fullModel_Y", ])
+test <- dcast(test, model_name + Model_type + value_ID + names + Xvalue ~ variable,
+      value.var = "value")
+# add the source models again (fullModel_Y)
+setnames(test, old = c("mean_Y", "weighted_SD_mean_Y", "weighted_SE_mean_Y"), new = c("value", "sd", "se"))
+setnames(ispline_uncertainty_all_thresholds, old = "fullModel_Y", new = "value")
+test <- rbindlist(list(test,
+          ispline_uncertainty_all_thresholds[, .(model_name, Model_type, value_ID, names, Xvalue, value, sd, se)]),
+          use.names = T)
 nrow(test)  == nrow(ispline_uncertainty_all_thresholds) + 335 * 35 * 2
 # has 335 * 35 * 2 rows more. Should contain 234500 rows.
-# add again the Yvalues from ispline_uncertainty
-test <- merge(test, ispline_uncertainty_all_thresholds, 
-      by = c("model_name", "Model_type", "value_ID", "Xvalue", "names"),
-      all.x = T)
-test[, c("fullModel_Y", "weight", "mean_Y") := NULL]
 
 ispline_uncertainty_all_thresholds <- merge(test, nicenames, by = c("names"))
 
@@ -485,7 +487,6 @@ for(mtype in c("nestedness", "turnover")){
   }
 }
 dev.off()
-#TODO HERE : weiter unten die average plots OHNE individuelle tresholds plotten, analog den individuellen modellen.
 ```
 
 
@@ -496,7 +497,7 @@ create_gdm_lineplot(ispline_uncertainty_all_thresholds[model_name == "weighted_m
 create_gdm_lineplot(ispline_uncertainty_all_thresholds[model_name == "weighted_mean_turnover" & ground == "b", ],
                         ymax = 0.05)
 create_gdm_lineplot(ispline_uncertainty_all_thresholds[model_name == "weighted_mean_turnover" & type == "abio", ],
-                        ymax = 0.05)
+                        ymax = 0.1)
 
 ```
 
