@@ -351,6 +351,8 @@ NULL
 #' cleaning (as shown in `plot_gdm.Rmd`).
 #' @param legend logical T or F, indicating if the plot or the legend should be returned.
 #' @param ymax the maximum y value shown. Defaults to 1.
+#' @param ymin the minimum y value shown. Defaults to 0.
+#' @param ribbon logical. T if error bands should be shown, F otherwise.
 #' @return a ggplot2 plot element, with lineplots.
 #'
 #' @import ggplot2
@@ -358,17 +360,21 @@ NULL
 #' @import data.table
 #'
 #' @export
-create_gdm_lineplot <- function(data, legend = F, ymax = 1){
+create_gdm_lineplot <- function(data, legend = F, ymax = 1, ymin = 0, ribbon = F){
   test <- unique(data[, .(color, nicenames)])
   p <- ggplot(data, aes(x = xaxis, y = value, group = names, linetype = linetypeto)) +
+    {if(ribbon)geom_ribbon(aes(ymin = value - se, ymax = value + se, fill = color), alpha = 0.2, linetype = 0)} +
     geom_line(aes(linetype=linetypeto, color=color), size = 1.6) +
-    ylim(0, ymax) +
+    ylim(ymin, ymax) +
     scale_linetype_identity() + 
     scale_color_identity(name = "", guide = "legend", 
                          breaks = test$color,
                          labels = test$nicenames) +
     theme(axis.title = element_blank()) +
-    background_grid()
+    background_grid() +
+    {if(ribbon)scale_fill_identity(name = "", guide = "legend", 
+                        breaks = test$color,
+                        labels = test$nicenames)}
   if(!legend){
     p <- p + theme(legend.position = "none")
   }
