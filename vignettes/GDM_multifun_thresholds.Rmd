@@ -117,8 +117,11 @@ planteco/.../BetaDivMultifun/analysis/output_datasets/uncertainty_calc/
 
 Calculate weighted average over all models. The GDM models are not all of the same quality. They are weighted based on the uncertainty of each ispline ($w$).
 
-$$wa = \frac{e_{1}*w_{1} + e_{2}*w_{2} + ... + e_{9}*w_{9}}{w_{1}+w_{2} + ... + w_{9}} = \frac{\sum_{i=1}^{n} e_{n}+\frac{1}{sd_{n}}}{\sum_{i=1}^{n} \frac{1}{sd_{n}}} ;  w_{n} = \frac{1}{sd_{n}} $$
+$$\mu = wa = \frac{e_{1}*w_{1} + e_{2}*w_{2} + ... + e_{9}*w_{9}}{w_{1}+w_{2} + ... + w_{9}} = \frac{\sum_{i=1}^{n} e_{n}*\frac{1}{sd_{n}}}{\sum_{i=1}^{n} \frac{1}{sd_{n}}} ;  w_{n} = \frac{1}{sd_{n}} $$
 where the estimate $e_{n}$ is weighted by its uncertainty $w_{n}$.
+
+The weighted standard deviation is calculated as : 
+$$w_sd = \sqrt{\sum_{i = 1}^{n} w_i (x_i - \mu)}$$
 
 
 ## Clean the uncertainty ispline table
@@ -346,6 +349,8 @@ ispline_uncertainty_all_thresholds[is.nan(weight_norm), weight_norm := 1]
 # hist(ispline_uncertainty_all_thresholds[value_ID == 2476 & predictor ==  "autotroph.beta.sne" & Model_type == "turnover", weight_norm],
 #      main = "distribution of normalised weight autotroph.beta.sne turnover\nat 100th Xvalue, of total 335")
 
+
+
 # # # #
 # (5) CALCULATE WEIGHTED MEAN OF FULLMODEL Y
 #
@@ -356,6 +361,18 @@ setDT(ispline_uncertainty_all_thresholds)[, sum_of_weighted_Y := sum(weighted_Y)
 ispline_uncertainty_all_thresholds[, mean_Y := sum_of_weighted_Y/ sum_of_weight]
 ispline_uncertainty_all_thresholds[, c("sum_of_weight", "sum_of_weighted_Y", "weighted_Y") := NULL]
 #
+
+# # # #
+# (6) CALCULATE WEIGHTED SD OF FULLMODEL Y
+#
+ispline_uncertainty_all_thresholds[, weighted_xi_minus_mu := weight_norm * ((fullModel_Y - mean_Y)^2)]
+# sum and  square root
+setDT(ispline_uncertainty_all_thresholds)[, weighted_SD_mean_Y := sqrt(sum(weighted_xi_minus_mu)), by = list(predictor, value_ID, Model_type)]
+# weighted SE
+#    n is 9, because 9 models
+#    every average is calculated by 9 weighted values
+ispline_uncertainty_all_thresholds[, weighted_SE_mean_Y := weighted_SD_mean_Y / sqrt(9)]
+ispline_uncertainty_all_thresholds[, weighted_xi_minus_mu := NULL]
 
 
 # # # #
@@ -375,6 +392,8 @@ ispline_uncertainty_all_thresholds[, se := sd / sqrt(SDn)]
 
 ## Plotting
 ```{r}
+#TODO take care of new SE values
+
 # ispline_uncertainty_all_thresholds <- readRDS(paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg.Rds"))
 
 # Quality checks
