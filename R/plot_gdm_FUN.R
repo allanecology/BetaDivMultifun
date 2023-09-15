@@ -360,7 +360,7 @@ NULL
 #' @export
 create_gdm_lineplot <- function(data, legend = F, ymax = 1){
   test <- unique(data[, .(color, nicenames)])
-  p <- ggplot(data, aes(x = xaxis, y = value, fill = names, linetype = linetypeto)) +
+  p <- ggplot(data, aes(x = xaxis, y = value, group = names, linetype = linetypeto)) +
     geom_line(aes(linetype=linetypeto, color=color), size = 1.6) +
     ylim(0, ymax) +
     scale_linetype_identity() + 
