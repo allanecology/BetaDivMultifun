@@ -187,7 +187,16 @@ Calculate $w$ : $\text{minusSD_Y} = \mu - \sigma$ and $\text{plusSD_Y} = \mu + \
 
 ```{r}
 # ispline_uncertainty_all_thresholds <- readRDS(paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty.Rds"))
+
 ispline_uncertainty_all_thresholds <- melt(ispline_uncertainty_all_thresholds, id.vars = c("model_name", "value_ID"))
+
+# create helper dataset of N
+ispline_iterations <- unique(ispline_uncertainty_all_thresholds[grep("SDn", variable), .(model_name, variable, value)])
+ispline_iterations[, predictor := sub("_SDn", "", variable)]
+setnames(ispline_iterations, old = "value", new = "SDn")
+ispline_iterations[, variable := NULL]
+
+# clean ispline_uncertainty table
 ispline_uncertainty_all_thresholds[, predictor := sub("_[a-zA-Z]+_[XY]$", "", variable, perl = T)]
 ispline_uncertainty_all_thresholds[, predictor := sub("_SDn", "", predictor)]
 ispline_uncertainty_all_thresholds[, Variable_type := sub("soil_|isolation_", "", sub("^[a-zA-Z.]+_", "", variable, perl = T), perl = T)] 
@@ -209,19 +218,76 @@ rm(Xtest)
 
 ispline_uncertainty_all_thresholds <- dcast(ispline_uncertainty_all_thresholds, model_name + Model_type + predictor + value_ID + Xvalue ~ Variable_type)
 
-# # #
+# # # # #
 # Calculate the weight SD_Y
 #
-# (1) calculate uncertainty
-ispline_uncertainty_all_thresholds[, weight := (plusSD_Y - minusSD_Y)/2]
-range(ispline_uncertainty_all_thresholds$weight)
-hist(ispline_uncertainty_all_thresholds$weight, xlim = c(0, 0.95))
-hist(ispline_uncertainty_all_thresholds$weight, xlim = c(0, 0.95), ylim = c(0, 4000))
-# (2) handling 0 cases
-#   the standard deviation is 0 in some cases (where all predictions are 0)
+# # # #
+# (1) CALCULATE UNCERTAINTY (SD)
+ispline_uncertainty_all_thresholds[, sd := (plusSD_Y - minusSD_Y)/2]
+range(ispline_uncertainty_all_thresholds$sd)
+par(mfrow = c(1,2))
+hist(ispline_uncertainty_all_thresholds$sd, xlim = c(0, 0.95), main = "distribution of sd\n along all predictors and values")
+#
+# # CONSIDERATIONS
+# # hist(ispline_uncertainty_all_thresholds$sd, xlim = c(0, 0.95), ylim = c(0, 4000))
+# hist(ispline_uncertainty_all_thresholds$sd, xlim = c(0, 0.95), ylim = c(0, 300), main = "")
+# # save as "GDM_multifun_thresholds_hist_all_sd.pdf"
+# dev.off()
+# # plotting only at value max
+# par(mfrow = c(1,2))
+# hist(ispline_uncertainty_all_thresholds[value_ID == 8350, sd], xlim = c(0, 0.95), ylim = c(0, 300),
+#      main = "distribution of sd\n along all predictors\nat maximum")
+# hist(ispline_uncertainty_all_thresholds[value_ID == 8350, sd], xlim = c(0, 0.95), ylim = c(0, 60), main = "")
+# # save as "GDM_multifun_thresholds_hist_all_sd_at_maximum.pdf"
+# dev.off()
+# # plotting only at min value
+# par(mfrow = c(2,2))
+# hist(ispline_uncertainty_all_thresholds[value_ID == 1, sd], ylim = c(0, 100),
+#      main = "distribution of sd along all predictors\nat min, of total 335")
+# hist(ispline_uncertainty_all_thresholds[value_ID == 76, sd], ylim = c(0, 100),
+#      main = "distribution of sd along all predictors\nat 4th Xvalue, of total 335")
+# hist(ispline_uncertainty_all_thresholds[value_ID == 2476, sd], ylim = c(0, 300),
+#      main = "distribution of sd along all predictors\nat 100th Xvalue, of total 335")
+# hist(ispline_uncertainty_all_thresholds[value_ID == 4976, sd], ylim = c(0, 300),
+#      main = "distribution of sd along all predictors\nat 200th Xvalue, of total 335")
+# # save as "GDM_multifun_thresholds_hist_all_sd_at_selected_xvalues.pdf"
+# dev.off()
+# 
+# # at selected predictors, at 200th value
+# par(mfrow = c(2,2))
+# hist(ispline_uncertainty_all_thresholds[value_ID == 4976 & predictor ==  "LUI" & Model_type == "turnover", sd],
+#      main = "distribution of sd LUI turnover\nat 200th Xvalue, of total 335")
+# hist(ispline_uncertainty_all_thresholds[value_ID == 4976 & predictor ==  "autotroph.beta.sim" & Model_type == "turnover", sd],
+#      main = "distribution of sd autotroph.beta.sim turnover\nat 200th Xvalue, of total 335")
+# hist(ispline_uncertainty_all_thresholds[value_ID == 4976 & predictor ==  "omnivore.protist.beta.sne" & Model_type == "turnover", sd],
+#      main = "distribution of sd omnivore.protist.beta.sne turnover\nat 200th Xvalue, of total 335")
+# hist(ispline_uncertainty_all_thresholds[value_ID == 4976 & predictor ==  "Geographic" & Model_type == "turnover", sd],
+#      main = "distribution of sd Geographic turnover\nat 200th Xvalue, of total 335")
+# # save as "GDM_multifun_thresholds_hist_all_sd_at_selected_xvalues_and_predictors.pdf"
+# dev.off()
+# 
+# 
+# # are the 0 sd cases all cases at yvalue = 0 and xvalue = 0?
+# hist(unique(ispline_uncertainty_all_thresholds[sd == 0, fullModel_Y]))
+# max(unique(ispline_uncertainty_all_thresholds[sd == 0, fullModel_Y]))
+# # no, but all at very low values < 0.0051
+# 
+# # do small sd occurr at small Y predictions?
+# ggplot(ispline_uncertainty_all_thresholds, aes(x = sd, y = fullModel_Y, color = interaction(Model_type, predictor))) +
+#   geom_point() +
+#   theme(legend.position = "none")
+# # one line is one model.
+# #    within a model : correlation of around 1 for sd increases with yvalue
+# # save as "GDM_multifun_thresholds_hist_sd_increase_with_effectsize.pdf"
+
+
+# # # #
+# (2) HANDLING 0 CASES
+#   the standard deviation is 0 in some cases: 
+#       only occurs at very low predictions < 0.0051. Most are 0, but not all.
 #   we could replace the 0 and very small values with the second smallest value
-hist(ispline_uncertainty_all_thresholds$weight, xlim = c(0, 0.000001), ylim = c(0, 4000))
-min(ispline_uncertainty_all_thresholds$weight[!(ispline_uncertainty_all_thresholds$weight == 0)]) 
+hist(ispline_uncertainty_all_thresholds$sd, xlim = c(0, 0.000001), ylim = c(0, 4000))
+min(ispline_uncertainty_all_thresholds$sd[!(ispline_uncertainty_all_thresholds$sd == 0)]) 
 # is way larger than the machine epsilon (e-12 vs e-16).
 # we could also use a 3-step approach : 
 #     a. normalise standard deviations to values between 0 and 1
@@ -231,16 +297,28 @@ min(ispline_uncertainty_all_thresholds$weight[!(ispline_uncertainty_all_threshol
 # but also here, at one point we have to replace 0 or Inf values with 
 #   a number. Therefore, we go for the approach where 0 are replaced by epsilon.
 # ispline_uncertainty_all_thresholds[weight == 0, weight := .Machine$double.eps]
-ispline_uncertainty_all_thresholds[weight == 0, weight := min(ispline_uncertainty_all_thresholds$weight[!(ispline_uncertainty_all_thresholds$weight == 0)])]
+ispline_uncertainty_all_thresholds[sd == 0, sd := min(ispline_uncertainty_all_thresholds$sd[!(ispline_uncertainty_all_thresholds$sd == 0)])]
 #
-# (3) calculate weight
-ispline_uncertainty_all_thresholds[, weight := 1 / weight]
-hist(ispline_uncertainty_all_thresholds$weight)
-# (4) normalise to weights between 0 and 1
-#  the normalisation needs to be done per value_ID, because small values
-#    have smaller standard deviations. the models should get weights according
-#    to the X value. There should not be any dependency between the weith of x = 0.2 and
-#    x = 0.3.
+
+# # # #
+# (3) CALCULATE WEIGHT
+ispline_uncertainty_all_thresholds[, weight := 1 / sd]
+#
+# # visualise
+# hist(ispline_uncertainty_all_thresholds$weight)
+# hist(ispline_uncertainty_all_thresholds[value_ID == 4976 & predictor ==  "LUI" & Model_type == "turnover", weight],
+#      main = "distribution of unstandardised weight LUI turnover\nat 200th Xvalue, of total 335")
+# hist(ispline_uncertainty_all_thresholds[value_ID == 4976 & predictor ==  "autotroph.beta.sim" & Model_type == "turnover", weight],
+#      main = "distribution of unstandardised weight autotroph.beta.sim turnover\nat 200th Xvalue, of total 335")
+range(ispline_uncertainty_all_thresholds$weight)
+
+# # # #
+# (4) NORMALISE WEIGHTS
+#
+#  the normalisation needs to be done : 
+#    - per value_ID, because small values have smaller standard deviations. the models should get weights accordingly
+#    - per predictor : because ranges differ across predictors
+#    - per model type (turnover vs. nestedness) : because ranges can differ
 # normalise weights between 0 and 1
 #   per predictor
 #   per valueID
@@ -251,26 +329,45 @@ nrow(ispline_uncertainty_all_thresholds) == 18 * 35 * 335
 # do the normalisation NOT over all, but grouped by
 # note : no shifting to zero needed, because values are already shifted to 0.
 # found this nice data.table code, need to test if does what I want.
-setDT(ispline_uncertainty_all_thresholds)[, Nor := weight / max(weight, na.rm = T), 
+setDT(ispline_uncertainty_all_thresholds)[, weight_norm := (weight - min(weight, na.rm = T)) / (max(weight, na.rm = T) - min(weight, na.rm = T)), 
           by = list(predictor, value_ID, Model_type)]
-# leads to NaN values if weight is the minimum --> 
-ispline_uncertainty_all_thresholds[predictor == "Geographic" & value_ID == 1 & Model_type == "nestedness", ] # replace NaN with 1
-ispline_uncertainty_all_thresholds[predictor == "Geographic" & value_ID == 26 & Model_type == "nestedness", ]
-hist(ispline_uncertainty_all_thresholds[predictor == "Geographic" & value_ID == 1 & Model_type == "nestedness", Nor])
-# fuck, so bechömä eifach d 0 wärtä viiu meh gwicht!
-#TODO schauen ob das ein Problem ist. --> ds isch wenigstens immer glich
+range(ispline_uncertainty_all_thresholds$weight_norm, na.rm = T) # between 0 and 1
+# some caes lead to NaN : sd is everywhere the same. happens ONLY in fullmodelY = 0 cases.
+# deleteme <- ispline_uncertainty_all_thresholds[is.nan(weight_norm), ][order(predictor, value_ID, Model_type), .(predictor, value_ID, Model_type, fullModel_Y, sd, weight_norm, weight)]
+# nrow(ispline_uncertainty_all_thresholds[is.nan(weight_norm) & fullModel_Y != 0, ][order(predictor, value_ID, Model_type), .(predictor, value_ID, Model_type, fullModel_Y, sd, weight_norm, weight)])
+#
+# replace NaN values with 1
+ispline_uncertainty_all_thresholds[is.nan(weight_norm), weight_norm := 1]
+#
+# # CONSIDERATIONS
+# # is the range within one predictor within one valueID within one model type ok?
+# hist(ispline_uncertainty_all_thresholds[value_ID == 4976 & predictor ==  "LUI" & Model_type == "turnover", weight_norm],
+#      main = "distribution of normalised weight LUI turnover\nat 200th Xvalue, of total 335")
+# hist(ispline_uncertainty_all_thresholds[value_ID == 2476 & predictor ==  "autotroph.beta.sne" & Model_type == "turnover", weight_norm],
+#      main = "distribution of normalised weight autotroph.beta.sne turnover\nat 100th Xvalue, of total 335")
 
-# clean
-ispline_uncertainty_all_thresholds[, weight := Nor]
-ispline_uncertainty_all_thresholds[, Nor := NULL]
-
-
+# # # #
+# (5) CALCULATE WEIGHTED MEAN OF FULLMODEL Y
+#
 # calculate the weighted mean of fullModel_Y
-ispline_uncertainty_all_thresholds[, weighted_Y := fullModel_Y * weight]
-setDT(ispline_uncertainty_all_thresholds)[, sum_of_weight := sum(weight), by = list(predictor, value_ID, Model_type)]
+ispline_uncertainty_all_thresholds[, weighted_Y := fullModel_Y * weight_norm]
+setDT(ispline_uncertainty_all_thresholds)[, sum_of_weight := sum(weight_norm), by = list(predictor, value_ID, Model_type)]
 setDT(ispline_uncertainty_all_thresholds)[, sum_of_weighted_Y := sum(weighted_Y), by = list(predictor, value_ID, Model_type)]
 ispline_uncertainty_all_thresholds[, mean_Y := sum_of_weighted_Y/ sum_of_weight]
 ispline_uncertainty_all_thresholds[, c("sum_of_weight", "sum_of_weighted_Y", "weighted_Y") := NULL]
+#
+
+
+# # # #
+# (5) CALCULATE STANDARD ERROR
+#
+# NOTE : not everywhere 100 iterations were possible. Add SDn which gives the number of
+#  iterations in a given model
+# Calculate SE = sd / sqrt(N)
+table(ispline_iterations$SDn)
+ispline_uncertainty_all_thresholds <- merge(ispline_uncertainty_all_thresholds, ispline_iterations, 
+      by = c("predictor", "model_name"), all = T)
+ispline_uncertainty_all_thresholds[, se := sd / sqrt(SDn)]
 
 # save output dataset
 # saveRDS(ispline_uncertainty_all_thresholds, file = paste0(pathtoout, "/allmod_LUI_uncertainty_weighted_avg.Rds"))
@@ -281,6 +378,7 @@ ispline_uncertainty_all_thresholds[, c("sum_of_weight", "sum_of_weighted_Y", "we
 # ispline_uncertainty_all_thresholds <- readRDS(paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg.Rds"))
 
 # Quality checks
+# with standard deviation
 ggplot(ispline_uncertainty_all_thresholds[predictor == "autotroph.beta.sne" & Model_type == "nestedness"], 
        aes(x = Xvalue, y = fullModel_Y, col = model_name, fill = model_name)) +
   geom_line() +
@@ -289,6 +387,17 @@ ggplot(ispline_uncertainty_all_thresholds[predictor == "autotroph.beta.sne" & Mo
   scale_color_brewer(palette="Set1") +
   coord_cartesian(ylim = c(-0.02, 0.1)) + xlab("") + ylab("") +
   geom_line(aes(x = Xvalue, y = mean_Y), linewidth = 1.5, color = "red")
+
+# with standard error
+ggplot(ispline_uncertainty_all_thresholds[predictor == "autotroph.beta.sne" & Model_type == "nestedness"], 
+       aes(x = Xvalue, y = fullModel_Y, col = model_name, fill = model_name)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = fullModel_Y - se, ymax = fullModel_Y + se), alpha = 0.1, linetype = 0) +
+  scale_fill_brewer(palette="Set1") +
+  scale_color_brewer(palette="Set1") +
+  coord_cartesian(ylim = c(-0.02, 0.1)) + xlab("") + ylab("") +
+  geom_line(aes(x = Xvalue, y = mean_Y), linewidth = 1.5, color = "red")
+
 
 ggplot(ispline_uncertainty_all_thresholds[predictor == "LUI" & Model_type == "nestedness"], 
        aes(x = Xvalue, y = fullModel_Y, col = model_name, fill = model_name)) +
@@ -346,15 +455,18 @@ pdf("GDM_weighted_avg_over_thresholds_allmods.pdf", onefile = T, paper = "a4r")
 for(mtype in c("nestedness", "turnover")){
   for(pred in unique(ispline_uncertainty_all_thresholds$names)){
     p <- create_gdm_lineplot_predictorwise_thresholds(
-      data = ispline_uncertainty_all_thresholds[Model_type == mtype & names == pred, ], #TODO here isch komisch
+      data = ispline_uncertainty_all_thresholds[Model_type == mtype & names == pred, ],
       ribbon = T,
+      ribbontype = "se",
       legend = T,
       plottitle = paste(pred, mtype),
-      ymax = min(1, max(ispline_uncertainty_all_thresholds[Model_type == mtype & names == pred, plusSD_Y], na.rm = T), na.rm = T))
+      ymax = min(1, max(ispline_uncertainty_all_thresholds[Model_type == mtype & names == pred, value + se], na.rm = T), na.rm = T)
+      )
     plot(p)
   }
 }
 dev.off()
+#TODO HERE : weiter unten die average plots OHNE individuelle tresholds plotten, analog den individuellen modellen.
 ```
 
 
