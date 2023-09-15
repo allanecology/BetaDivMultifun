@@ -492,14 +492,56 @@ dev.off()
 
 
 ```{r}
-create_gdm_lineplot(ispline_uncertainty_all_thresholds[model_name == "weighted_mean_turnover" & ground == "a", ],
-                        ymax = 0.05)
-create_gdm_lineplot(ispline_uncertainty_all_thresholds[model_name == "weighted_mean_turnover" & ground == "b", ],
-                        ymax = 0.05)
-create_gdm_lineplot(ispline_uncertainty_all_thresholds[model_name == "weighted_mean_turnover" & type == "abio", ],
-                        ymax = 0.1)
+
+lineplot_data <- ispline_uncertainty_all_thresholds[model_name == "weighted_mean_nestedness"]
+
+p <- create_gdm_lineplot(lineplot_data[ground == "a"], legend = F, ymax = max(lineplot_data$value), 
+                    ymin = min(lineplot_data$value - lineplot_data$se),
+                    ribbon = T)
+q <- create_gdm_lineplot(lineplot_data[ground == "b"], legend = F, ymax = max(lineplot_data$value), 
+                    ymin = min(lineplot_data$value - lineplot_data$se),
+                    ribbon = T)
+
+#TODO HERE create abiotic subplots, if wanted with SE
+# abiotic subplots
+# LUI
+luidat <- lineplot_data[names %in% "LUI",]
+deltaluidat <- lineplot_data[names %in% "deltaLUI",]
+l <- create_gdm_lineplot(luidat, legend = F, ymax = max(lineplot_data$value),
+                         ymin = min(lineplot_data$value - lineplot_data$se),
+                         ribbon = T)
+dl <- create_gdm_lineplot(deltaluidat, legend = F, ymax = max(lineplot_data$value),
+                         ymin = min(lineplot_data$value - lineplot_data$se),
+                         ribbon = T)
+
+lgeo <- create_gdm_lineplot(lineplot_data[names %in% c("Geographic")], legend = F, 
+                            ymax = max(lineplot_data$value),
+                         ymin = min(lineplot_data$value - lineplot_data$se),
+                         ribbon = T)
+lsoil <- create_gdm_lineplot(lineplot_data[names %in% c("edis_soil")], legend = F, 
+                             ymax = max(lineplot_data$value),
+                         ymin = min(lineplot_data$value - lineplot_data$se),
+                         ribbon = T)
+lisol <- create_gdm_lineplot(lineplot_data[names %in% c("plot_isolation")], legend = F, 
+                             ymax = max(lineplot_data$value),
+                         ymin = min(lineplot_data$value - lineplot_data$se),
+                         ribbon = T)
+
 
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
