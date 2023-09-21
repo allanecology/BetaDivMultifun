@@ -102,7 +102,7 @@ corrplot(m, tl.cex = 0.2, type = "lower",
 
 
 
-# Calculate weighted average models
+# Calculate weighted average line models
 
 **average effects over all thresholds weighted by ispline sd**
 
@@ -394,7 +394,7 @@ ispline_uncertainty_all_thresholds[, se := sd / sqrt(SDn)]
 ## Plotting
 ```{r}
 # ispline_uncertainty_all_thresholds <- readRDS(paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg.Rds"))
-# ispline_uncertainty_all_threshoslds <- fread(paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg.csv"))
+# ispline_uncertainty_all_thresholds <- fread(paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg.csv"))
 
 # Quality checks
 # with standard deviation
@@ -438,6 +438,7 @@ ggplot(ispline_uncertainty_all_thresholds[predictor == "plot_isolation" & Model_
 ```
 
 Structured plotting
+
 #### create plot data
 
 Match with plotting table `nicenames`
@@ -471,6 +472,10 @@ setnames(ispline_uncertainty_all_thresholds,
 # add linewidth for mean model
 ispline_uncertainty_all_thresholds[, lwd := 1]
 ispline_uncertainty_all_thresholds[grep("weighted_mean", ispline_uncertainty_all_thresholds$model_name), lwd := 2]
+
+# save output dataset
+# saveRDS(ispline_uncertainty_all_thresholds, file = paste0(pathtoout, "/allmod_LUI_uncertainty_weighted_avg_plotdata.Rds"))
+# fwrite(ispline_uncertainty_all_thresholds, file = paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg_plotdata.csv"))
 ```
 
 #### lineplot with standard error
@@ -573,12 +578,135 @@ all_lines <- plot_grid(lin, lin_abiotic, nrow = 2, rel_heights = c(0.8, 0.2))
 ```
 
 
+
+# Models max height
+
+Many comparisons are done at max height --> better overview.
+
+## Calculate at max height and overviewbars
+
+Dataset can be (1) reduced to max values, and (2) overviewbars are calculated.
+
+(1) reduce to max values
+Create dataset `restab`
+```{r}
+ispline_uncertainty_all_thresholds <- fread(file = paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg_plotdata.csv"))
+
+# reduce to max values
+restab <- ispline_uncertainty_all_thresholds[value_ID == 8350, ]
+restab[, value_ID := NULL]
+restab[, xaxis := NULL]
+
+# keep average models
+restab <- restab[model_name %in% c("weighted_mean_turnover", "weighted_mean_nestedness"), ]
+# 70 rows left, because 35 predictors in 2 models
+
+# reformat table :
+# model results of turnover and nestedness average models should be found in separate columns
+restab <- data.table::dcast(
+  data = restab,
+  formula = paste(paste(names(nicenames), collapse = " + "),"~ model_name"),
+  value.var = c("value", "se"))
+
+# rename value column to model name
+names(restab)[grep("value", names(restab))] <- sub("value_", "", grep("value", names(restab), value = T))
+```
+
+(2) Calculate overviewbars
+Dataset `p_ov_allthres` is produced
+```{r}
+a <- create_single_funs_overviewbars(restab2 = restab, 
+                                     rel_colnames = c("weighted_mean_turnover","weighted_mean_nestedness"))
+
+# bring to ggplot format
+ov_ab_allthresholds <- melt(a$above_below, id.vars = c("ground", "color"))
+ov_tn_allthresholds <- melt(a$turnover_nestedess, id.vars = c("component", "color"))
+# combine to shared datset
+ov_ab_allthresholds[, overviewbar_type := "sum_above_below"]
+ov_tn_allthresholds[, overviewbar_type := "sum_turn_nes"]
+ov_allthresholds <- rbindlist(list(ov_ab_allthresholds, ov_tn_allthresholds), use.names = T, fill = T)
+rm(ov_ab_allthresholds); rm(ov_tn_allthresholds)
+# add id variable
+ov_allthresholds[, mod_ov_id := paste(variable, overviewbar_type, sep = "_")]
+
+# create plots
+p_ov_allthres <- create_single_funs_overviewbar_plot(singleF_restab = ov_allthresholds, 
+  pos = "stack", xvar_name = "mod_ov_id")
+# (earlier) saved as : <date>_GDM_multifun_thresholds_allthresholds_overview_bars<_dodge>
+#TODO potentially delete because not used?
+```
+
+
 #### bar plots
 
-##### overview bars
+##### classic barplots
+
 ```{r}
-#TODO HERE create barplots, and overviewbars of those models.
-# use old code
+# produce barplots
+for(i in c("weighted_mean_nestedness", "weighted_mean_turnover")){
+  p <- create_bio_aboveground_barplot(type = "stacked", # type in c("stacked", "grouped")
+                                    yvar_name = i,
+                                    plottitle = "gdm_EFnestedness_weighted_mean",
+                                    errorbar = F) 
+  b <- create_bio_belowground_barplot(type = "stacked", yvar_name = i)
+  q <- create_abio_barplot(type = "stacked", yvar_name = i)
+
+  # produce overviewbars
+  ov <- create_single_funs_overviewbar_plot(ov_allthresholds[variable == i, ], 
+                                            pos = "stack", xvar_name = "overviewbar_type") +
+    coord_flip()
+  ovL <- create_single_funs_overviewbar_plot(ov_allthresholds[variable == i, ], 
+                                             pos = "stack", xvar_name = "overviewbar_type", legend = T)
+  
+  
+  multipanel_with_overview_bars <- plot_grid(p, b, q, ov, 
+                                             labels = c('A', '', 'B', 'C'), 
+                                             label_size = 12, nrow = 4,
+                                             rel_heights = c(0.22, 0.32, 0.17, 0.13), 
+                                             align = "v") # 2 summary bars
+  # save
+  ggsave(filename = paste(pathtoout, "/GDM_multifun_thresholds_", i, "_barplot.pdf", sep = ""), 
+         plot = multipanel_with_overview_bars, 
+         device=cairo_pdf, width = 11.96, height = 8.27, units = "in", dpi = 900)
+}
+```
+
+
+
+##### barplots with error bars
+
+show standard errors
+```{r}
+for(i in c("weighted_mean_nestedness", "weighted_mean_turnover")){
+  p <- create_bio_aboveground_barplot(type = "grouped", # type in c("stacked", "grouped")
+                                yvar_name = i,
+                                plottitle = "gdm_EFnestedness_weighted_mean",
+                                errorbar = T,
+                                pylim = c(0, 0.44))
+  b <- create_bio_belowground_barplot(type = "grouped", yvar_name = i,
+                                errorbar = T,
+                                pylim = c(0, 0.44))
+  q <- create_abio_barplot(type = "grouped", yvar_name = i, errorbar = T,
+                                pylim = c(0, 0.44))
+
+  # produce overviewbars
+  ov <- create_single_funs_overviewbar_plot(ov_allthresholds[variable == i, ], 
+                                            pos = "stack", xvar_name = "overviewbar_type") +
+    coord_flip()
+  ovL <- create_single_funs_overviewbar_plot(ov_allthresholds[variable == i, ], 
+                                             pos = "stack", xvar_name = "overviewbar_type", legend = T)
+  
+  
+  multipanel_with_overview_bars <- plot_grid(p, b, q, ov, 
+                                             labels = c('A', '', 'B', 'C'), 
+                                             label_size = 12, nrow = 4,
+                                             rel_heights = c(0.24, 0.34, 0.11, 0.105), 
+                                             align = "v") # 2 summary bars
+  # save
+  ggsave(filename = paste(pathtoout, "/GDM_multifun_thresholds_", i, "_barplot_se.pdf", sep = ""), 
+         plot = multipanel_with_overview_bars, 
+         device=cairo_pdf, width = 11.96, height = 8.27, units = "in", dpi = 900)
+}
 ```
 
 
@@ -606,106 +734,6 @@ all_lines <- plot_grid(lin, lin_abiotic, nrow = 2, rel_heights = c(0.8, 0.2))
 
 
 
-
-
-
-
-
-```{r}
-# Quality check
-#    X values of different thresholds of same predictor should be the same
-#
-# secondary consumers nestedness
-qc_dat <- dcast(ispline_uncertainty_all_thresholds[predictor == "secondary.consumer.beta.sne" & model_name %in% c("gdm_EFnestedness_0.1", "gdm_EFnestedness_0.2", "gdm_EFnestedness_0.3"), .(value_ID, Xvalue, model_name)],
-      value_ID ~ model_name, value.var = "Xvalue")
-qc_dat[, qc := gdm_EFnestedness_0.1 - gdm_EFnestedness_0.2 + 
-         gdm_EFnestedness_0.3 - gdm_EFnestedness_0.1]
-sum(qc_dat$qc != 0) == 0 # all xvalues are the same
-#
-# Geographic distance
-qc_dat <- dcast(ispline_uncertainty_all_thresholds[predictor == "Geographic" & model_name %in% c("gdm_EFnestedness_0.1", "gdm_EFnestedness_0.2", "gdm_EFnestedness_0.3"), .(value_ID, Xvalue, model_name)],
-      value_ID ~ model_name, value.var = "Xvalue")
-qc_dat[, qc := gdm_EFnestedness_0.1 - gdm_EFnestedness_0.2 + 
-         gdm_EFnestedness_0.3 - gdm_EFnestedness_0.1]
-sum(qc_dat$qc != 0) == 0 # all xvalues are the same
-#
-# manually checked for 4 further predictors (all types)
-```
-
-
-
-Calculation of 
-
-```{r}
-#TODO HERE : mission accomplished! reformated huge table.
-#    next steps : 
-#        - [DONE] calculate $w$ = SD, calculate from minusSD_Y and plusSDY.
-#        - [DONE] include the missing two models turnover 0.8 and 0.9 --> calc by hand!
-#        - aggregate the mean (fullModel_Y) weighted by SD over all thresholds.
-
-# aggregate mean over all thresholds : 
-# for each predictor individually : 
-
-
-
-
-# note : old code below, no idea if needed
-stats::aggregate(fullModel_Y ~ predictor + Model_type + value_ID, 
-                 FUN = mean,
-                 data = ispline_uncertainty_all_thresholds)
-
-# BELOW : testing around
-# 
-# dcast(test, id.vars = c("predictor", "model_name"))
-# dcast(test, predictor + model_name ~ Variable_type + XY, value.var = "value")
-# #fullModel_X needs to be a new column
-# 
-# relevant_column_names <- relevant_column_names <- grep("_fullModel_X", names(ispline_uncertainty_all_thresholds), value = T, invert = T)
-# test2 <- melt(ispline_uncertainty_all_thresholds, id.vars = c(relevant_column_names)) #measure.vars = relevant_column_names)
-# # # quality check
-# # test3 <- test2[, .(model_name, variable, value, autotroph.beta.sim_fullModel_Y)]
-# # setorder(test3, cols = "value")
-# # test3
-# setnames(test2, old = "variable", new = "predictorX")
-# test2
-# 
-# 
-# # # Bring dataset to long format
-# # ispline_uncertainty_all_thresholds <- melt(ispline_uncertainty_all_thresholds, id.vars = "model_name")
-# # # assign additional variable "model_class" to distinguish turnover and nestedness
-# # ispline_uncertainty_all_thresholds[grep("turnover", ispline_uncertainty_all_thresholds$model_name), 
-# #                                    model_class := "turnover"]
-# # ispline_uncertainty_all_thresholds[grep("nestedness", ispline_uncertainty_all_thresholds$model_name), model_class := "nestedness"]
-# #             
-```
-
-
-
-
-```{r}
-#unsure : aggregating only the max value ID, because I want to have only the
-# barplots for the PES presentation 26.04.23
-test <- ispline_uncertainty_all_thresholds[value_ID == 200, ]
-
-# weigh the effect size and average to get summary over all thresholds!
-# (1) get the weighted effect size for each effect
-test[, weighted_effect := fullModel_Y * weight]
-# (2) aggregate two things : 
-#    (2.1.) aggregate the weighted effect across all thresholds
-#    (2.2.) aggregate the weigh across all thresholds
-test1 <- aggregate(weighted_effect ~ predictor + Model_type, FUN = sum, na.rm = T, data = test)
-test2 <- aggregate(weight ~ predictor + Model_type, FUN = sum, na.rm = T, data = test)
-test3 <- merge(test1, test2, by = c("predictor", "Model_type"))
-rm(test1, test2)
-test3$weighted_avg_effect <- test3$weighted_effect / test3$weight
-test3 <- as.data.table(test3)
-
-
-# plot
-ggplot(test3[Model_type == "turnover", ], aes(x = predictor, y = weighted_avg_effect)) +
-  geom_bar(stat = "identity") + 
-  coord_flip()
-```
 
 
 
@@ -717,27 +745,8 @@ ggplot(test3[Model_type == "turnover", ], aes(x = predictor, y = weighted_avg_ef
 
 # ...
 # ...
-
-# DEPRECIATED
-
-requirements : - TODO user : connect to planteco and nsch to get input
-files - GDM output as .rds, e.g. gdm_EFnestedness_LUI_input.Rds - find
-at planteco/.../BetaDivMultifun/analysis/output_datasets - cluster
-output as .rds, e.g. gdm_EFnestedness_LUI_permutation.Rds - run
-`results_nonpublic.R` : load pathtodata, nicenames and model_names -
-pathtodata : path to location where gdm input of model is stored. points
-to a folder, where the folder cluster witht the model input is. *note :
-was pathtoout before.* - nicenames : helper file to get nice names of
-functions and trophic levels - model_names : helper file for automation.
-Contains 3 columns : `name` contains the all model names for
-`model_name`, `luiinput` contains either "lui" or "components" as LUI
-input for `luiinput` and `permut` is either TRUE or FALSE. -
-`analysis_nonpublic.R` loads `EFmaster_all_thresholds.Rds`
 
 # TODO HERE
-
-
-
 
 # thresholds EF heatmap
 
