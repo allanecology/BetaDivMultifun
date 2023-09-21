@@ -64,28 +64,50 @@ NULL
 #' 
 #' code to create plot p : bio and aboveground
 #' 
-#' @param type is either grouped, where turnover and nestedness components
+#' Prerequisite : a dataset stored in environment called `restab`, containing
+#' the plot data
+#' 
+#' @param type is either "grouped", where turnover and nestedness components
 #' are shown in individual bars, or "stacked", where turnover and 
 #' nestedness components are stacked on top of each other.
+#' @param yvar_name character vector defining the column name of y values. 
+#' Defaults to "maxsplines" as created in `create_restab0`.
+#' @param plottitle defaults to `model_names_selection$modelname` which is
+#' the current model name as comes out of the pipeline in basic GDM barplots.
+#' Can be changed, e.g. to plot threshold avg models
+#' @param errorbar logical T or F. If T, error bars (standard errors) are shown.
+#' The name of the errorbar is assumed to be "se_" yvar_name as in `paste0("se_", yvar_name)`
+#' Note that error bars only look good if type is "grouped"
+#' @param pylim the limits of the y axis. defaults to 0 and 0.44. Note that if errorbars are plotted,
+#' it might be better to set them to ylim = c(-0.22, 0.44)
 #' @import ggplot2
 #' @import cowplot
 #' 
 #' @export
-create_bio_aboveground_barplot <- function(type = c("grouped", "stacked")){
+create_bio_aboveground_barplot <- function(type = c("grouped", "stacked"), 
+                                           yvar_name = "maxsplines",
+                                           plottitle = model_names_selection$modelname,
+                                           errorbar = F,
+                                           pylim = c(0, 0.44)){
+  if(!exists("restab")){
+    stop("Dataset `restab` not found. function requires a dataset `restab` in environment.")
+  }
   df <- restab[type == "bio" & ground == "a", ]
   if(type == "grouped"){
     # plot by nicenmaes, unique names for each trophic level and each component
-    p <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet))
+    p <- ggplot(data = df, aes(x=nicenames, y=get(yvar_name), fill = color, linetype = linetypet))
   } else if(type == "stacked"){
     # plot by legendnames if stacked - unique names for trophic group, but no unique names for
     # turnover and nestedness
-    p <- ggplot(data = df, aes(x=legendnames, y=maxsplines, fill = color, linetype = linetypet))
+    p <- ggplot(data = df, aes(x=legendnames, y = get(yvar_name), fill = color, linetype = linetypet))
   }
   p <- p + geom_bar(stat="identity", color = "black") +
-    coord_flip() + 
     scale_fill_identity() + scale_linetype_identity() + # the best option for customizing linetype, color,...!
-    ylim(0, 0.44) + 
-    ggtitle(model_names_selection$modelname) +
+    ggtitle(plottitle) +
+    {if(errorbar)geom_errorbar(aes(ymin = .data[[yvar_name]] - .data[[paste0("se_", yvar_name)]],
+                                   ymax = .data[[yvar_name]] + .data[[paste0("se_", yvar_name)]],
+                                   linetype = 1))} +
+    coord_flip(ylim = pylim) + 
     theme(legend.position = "none", axis.title = element_blank(),
           axis.text.y = element_text(size=9, angle = 0),
           plot.margin = margin(l = 50), 
@@ -105,18 +127,35 @@ NULL
 #' @import ggplot2
 #' @import cowplot
 #' 
+#' @param type is either grouped, where turnover and nestedness components
+#' are shown in individual bars, or "stacked", where turnover and 
+#' nestedness components are stacked on top of each other.
+#' @param errorbar logical T or F. If T, error bars (standard errors) are shown.
+#' The name of the errorbar is assumed to be "se_" yvar_name as in `paste0("se_", yvar_name)`
+#' Note that error bars only look good if type is "grouped"
+#' @param yvar_name character vector defining the column name of y values. 
+#' Defaults to "maxsplines" as created in `create_restab0`.
+#' @param pylim the limits of the y axis. defaults to 0 and 0.44. Note that if errorbars are plotted,
+#' it might be better to set them to ylim = c(-0.22, 0.44)
+#' 
 #' @export
-create_bio_belowground_barplot <- function(type = c("grouped", "stacked")){
+create_bio_belowground_barplot <- function(type = c("grouped", "stacked"), 
+                                           yvar_name = "maxsplines",
+                                           plottitle = model_names_selection$modelname,
+                                           errorbar = F,
+                                           pylim = c(0, 0.44)){
   df <- restab[type == "bio" & ground == "b", ]
   if(type == "grouped"){
-    b <- ggplot(data = df, aes(x=nicenames, y=maxsplines, fill = color, linetype = linetypet))
+    b <- ggplot(data = df, aes(x=nicenames, y = get(yvar_name), fill = color, linetype = linetypet))
   } else if(type == "stacked"){
-    b <- ggplot(data = df, aes(x = legendnames, y = maxsplines, fill = color, linetype = linetypet))
+    b <- ggplot(data = df, aes(x = legendnames, y = get(yvar_name), fill = color, linetype = linetypet))
   }
   b <- b + geom_bar(stat="identity", color = "black") +
-    coord_flip() +
     scale_fill_identity() + scale_linetype_identity() +
-    ylim(0, 0.44) +
+    {if(errorbar)geom_errorbar(aes(ymin = .data[[yvar_name]] - .data[[paste0("se_", yvar_name)]],
+                                   ymax = .data[[yvar_name]] + .data[[paste0("se_", yvar_name)]],
+                                   linetype = 1))} +
+    coord_flip(ylim = pylim) + 
     theme(legend.position = "none", 
           axis.title = element_blank(),
           axis.text.y = element_text(size=9, angle = 0),
@@ -137,23 +176,35 @@ NULL
 #' bars) or in "stacked" (turnover and nestedness are stacked on top of each
 #' other). This does not matter for abiotic plot, but is kept in order to make
 #' clear it's the same code for abiotic, above and belowground.
+#' @param yvar_name character vector defining the column name of y values. 
+#' Defaults to "maxsplines" as created in `create_restab0`.
+#' @param errorbar logical T or F. If T, error bars (standard errors) are shown.
+#' The name of the errorbar is assumed to be "se_" yvar_name as in `paste0("se_", yvar_name)`
+#' Note that error bars only look good if type is "grouped"
+#' @param pylim the limits of the y axis. defaults to 0 and 0.44. Note that if errorbars are plotted,
+#' it might be better to set them to ylim = c(-0.22, 0.44)
 #' @import ggplot2
 #' @import cowplot
 #' 
 #' @export
-create_abio_barplot <- function(type = c("grouped", "stacked")){
+create_abio_barplot <- function(type = c("grouped", "stacked"),
+                                yvar_name = "maxsplines",
+                                errorbar = F,
+                                pylim = c(0, 0.44)){
   df <- restab[ground == "x"]
   if(type == "grouped"){
-    q <- ggplot(data = df, aes(x = nicenames, y = maxsplines, fill = color, linetype = linetypet))
+    q <- ggplot(data = df, aes(x = nicenames, y = get(yvar_name), fill = color, linetype = linetypet))
   } else if(type == "stacked"){
-    q <- ggplot(data = df, aes(x = legendnames, y = maxsplines, fill = color, linetype = linetypet))
+    q <- ggplot(data = df, aes(x = legendnames, y = get(yvar_name), fill = color, linetype = linetypet))
   }
   q <- q + geom_bar(stat="identity", color = "black") +
-    coord_flip() +
     # scale_fill_manual(values = as.character(df$color)) +
     scale_fill_identity() +
     scale_linetype_identity() +
-    ylim(0, 0.44) +
+    {if(errorbar)geom_errorbar(aes(ymin = .data[[yvar_name]] - .data[[paste0("se_", yvar_name)]],
+                                   ymax = .data[[yvar_name]] + .data[[paste0("se_", yvar_name)]],
+                                   linetype = 1))} +
+    coord_flip(ylim = pylim) +
     theme(legend.position = "none", axis.title = element_blank(),
           axis.text.y = element_text(size=9),
           panel.grid.major.x = element_line(color = "grey"))

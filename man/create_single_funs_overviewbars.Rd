@@ -2,24 +2,22 @@
 % Please edit documentation in R/plotting.R
 \name{create_single_funs_overviewbars}
 \alias{create_single_funs_overviewbars}
-\title{Create the overview table for single functions models}
+\title{Create the overview table for multiple models}
 \usage{
 create_single_funs_overviewbars(restab2, rel_colnames)
 }
 \arguments{
-\item{restab2}{the input table, created in chunk for single functions heatmap}
+\item{restab2}{the input table, created in chunk for single functions heatmap. Expects the model results of each model
+in a separate column.}
 
-\item{rel_colnames}{the names of the columns containing GDM results, for single functions e.g. `singleEFnames`}
+\item{rel_colnames}{the names of the columns containing GDM results, e.g. for single functions : `singleEFnames`.
+Each of those columns contains gdm effect sizes for the given model.}
 }
 \value{
 A list with 2 data.tables ready for plotting
 }
 \description{
-create overview bars of single functions, above- belowground and turnover/ nestedness
-instead of maxsplines as for single models, here we work with all functions. names of all
-functions are stored in vector `singleEFnames`
-}
-\examples{
-blabla TODO
-
+Calculate values for overviewabars of multiple models at once. E.g. for single functions, 
+or across thresholds. Values are the scaled sum effect size of the given group.
+Calculates 2 overviewbars : above- belowground and turnover/ nestedness.
 }

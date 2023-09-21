@@ -4,7 +4,28 @@
 \alias{create_bio_belowground_barplot}
 \title{create plot bio belowground}
 \usage{
-create_bio_belowground_barplot(type = c("grouped", "stacked"))
+create_bio_belowground_barplot(
+  type = c("grouped", "stacked"),
+  yvar_name = "maxsplines",
+  plottitle = model_names_selection$modelname,
+  errorbar = F,
+  pylim = c(0, 0.44)
+)
+}
+\arguments{
+\item{type}{is either grouped, where turnover and nestedness components
+are shown in individual bars, or "stacked", where turnover and 
+nestedness components are stacked on top of each other.}
+
+\item{yvar_name}{character vector defining the column name of y values. 
+Defaults to "maxsplines" as created in `create_restab0`.}
+
+\item{errorbar}{logical T or F. If T, error bars (standard errors) are shown.
+The name of the errorbar is assumed to be "se_" yvar_name as in `paste0("se_", yvar_name)`
+Note that error bars only look good if type is "grouped"}
+
+\item{pylim}{the limits of the y axis. defaults to 0 and 0.44. Note that if errorbars are plotted,
+it might be better to set them to ylim = c(-0.22, 0.44)}
 }
 \description{
 code to create plot p : bio and belowground

@@ -81,12 +81,18 @@ NULL
 #' @import data.table
 #' @param restab exactly the output from the function `create_restab0()`
 #' @param fun the function for aggregating. Is either "mean" or "sum".
+#' @param yvar_name character vector defining the column name of y values. 
+#' Defaults to "maxsplines" as created in `create_restab0`.
 #' 
 #' @export
-create_overviewbar_restab <- function(restab, fun = c("mean", "sum")){
+create_overviewbar_restab <- function(restab, fun = c("mean", "sum"), yvar_name = "maxsplines"){
   if(permut == T){
     print("please implement me...")
     # lui_restab[sign > 0.05 , maxsplines := 0]
+  }
+  if(!"maxsplines" %in% names(restab)){
+    # rename y column to "maxsplines"
+    names(restab)[names(restab) == yvar_name] <- "maxsplines"
   }
   
   #########
@@ -137,17 +143,17 @@ NULL
 
 
 
-#' Create the overview table for single functions models
+#' Create the overview table for multiple models
 #'
-#' create overview bars of single functions, above- belowground and turnover/ nestedness
-#' instead of maxsplines as for single models, here we work with all functions. names of all
-#' functions are stored in vector `singleEFnames`
+#' Calculate values for overviewabars of multiple models at once. E.g. for single functions, 
+#' or across thresholds. Values are the scaled sum effect size of the given group.
+#' Calculates 2 overviewbars : above- belowground and turnover/ nestedness.
 #' 
 #' @return A list with 2 data.tables ready for plotting
-#' @param restab2 the input table, created in chunk for single functions heatmap
-#' @param rel_colnames the names of the columns containing GDM results, for single functions e.g. `singleEFnames`
-#' @examples
-#' blabla TODO
+#' @param restab2 the input table, created in chunk for single functions heatmap. Expects the model results of each model
+#' in a separate column.
+#' @param rel_colnames the names of the columns containing GDM results, e.g. for single functions : `singleEFnames`.
+#' Each of those columns contains gdm effect sizes for the given model.
 #' 
 #' @import data.table
 #' 
@@ -174,6 +180,7 @@ create_single_funs_overviewbars <- function(restab2, rel_colnames){
   # ABOVE- BELOWGROUND
   # get scaled effects
   f <- rel_colnames[1]
+  # sum all effects per group
   d <- data.table::data.table(aggregate(get(f) ~ ground, restab, sum))
   d[, `get(f)` := `get(f)`/ sum(d$`get(f)`)] # scale to 0 1
   setnames(d, old = "get(f)", new = f)
@@ -184,12 +191,15 @@ create_single_funs_overviewbars <- function(restab2, rel_colnames){
   ov_ab_singleEFmods[ground == "x", color := "#666666"]
   ov_ab_singleEFmods[ground == "lui", color := "#0072B2"]
   
-  for(f in rel_colnames[-1]){
-    d <- data.table::data.table(aggregate(get(f) ~ ground, restab, mean))
+  if(length(rel_colnames[-1]) > 0){for(f in rel_colnames[-1]){
+    print("take care, this function has been updated in Sep 2023 only, now calculating sum")
+    d <- data.table::data.table(aggregate(get(f) ~ ground, restab, sum))
+    #TODO changed "mean" to "sum" in above aggregate. Is this correct?
+    #   note that for other rel_colnames (above), it was  already sum 
     d[, `get(f)` := `get(f)`/ sum(d$`get(f)`)] # scale to 0 1
     setnames(d, old = "get(f)", new = f)
     ov_ab_singleEFmods <- merge(ov_ab_singleEFmods, d, by = "ground")
-  }
+  }}
   rm(d); rm(f)
   # create sequence in barplot with ordered levels : below - above - lui - abiotic
   ov_ab_singleEFmods$color <- factor(ov_ab_singleEFmods$color, 
@@ -199,6 +209,7 @@ create_single_funs_overviewbars <- function(restab2, rel_colnames){
   # TURNOVER NESTEDNESS
   # get scaled effects
   f <- rel_colnames[1]
+  # sum all effects per group
   d <- data.table::data.table(aggregate(get(f) ~ component, restab, sum))
   d[, `get(f)` := `get(f)`/ sum(d$`get(f)`)] # scale to 0 1
   setnames(d, old = "get(f)", new = f)
@@ -209,12 +220,13 @@ create_single_funs_overviewbars <- function(restab2, rel_colnames){
   ov_tn_singleEFmods[component == "nestedness", color := "#984EA3"]
   ov_tn_singleEFmods[component == "lui", color := "#0072B2"]
   
-  for(f in rel_colnames[-1]){
-    d <- data.table::data.table(aggregate(get(f) ~ component, restab, mean))
+  if(length(rel_colnames[-1]) > 0){for(f in rel_colnames[-1]){
+    d <- data.table::data.table(aggregate(get(f) ~ component, restab, sum))
+    #TODO changed "mean" to "sum" in above aggregate. Is this correct?
     d[, `get(f)` := `get(f)`/ sum(d$`get(f)`)] # scale to 0 1
     setnames(d, old = "get(f)", new = f)
     ov_tn_singleEFmods <- merge(ov_tn_singleEFmods, d, by = "component")
-  }
+  }}
   rm(d); rm(f)
   # create sequence in barplot with ordered levels : turnover - nestedness - lui - abiotic
   ov_tn_singleEFmods$color <- factor(ov_tn_singleEFmods$color, 
@@ -238,20 +250,20 @@ NULL
 #' 
 #' @return a ggplot element containing the plot
 #' @param singleF_restab the input table, created with `create_single_funs_overviewbars`
-#' @param pos defines the bar position, either stack for bars on top of each other (stacked bars)
-#' or "dodge" for bars next to each other
+#' @param pos defines the bar position, either "stack" for bars on top of each other (stacked bars)
+#' or "dodge" for bars next to each other.
+#' @param xvar_name character vector defining the column name of x values. 
+#' Defaults to "variable".
 #' 
 #' @import data.table
 #' @import ggplot2
 #' 
 #' @export
 ### FUNCTION
-create_single_funs_overviewbar_plot <- function(singleF_restab, legend = F, pos = "stack"){
-  if(legend){
-  # return a plot with legend
-    print("not implemented yet.")
-  } else {
-    sf_ov <- ggplot(singleF_restab, aes(x = variable, y = value, fill = color)) +
+create_single_funs_overviewbar_plot <- function(singleF_restab, legend = F, pos = "stack", 
+                                                xvar_name = "variable"){
+  # create barplot
+  sf_ov <- ggplot(singleF_restab, aes(x = get(xvar_name), y = value, fill = color)) +
       geom_bar(stat = "identity", color = "black", position = pos) +
       scale_fill_identity("", labels = singleF_restab$ground, 
                           breaks = singleF_restab$color,  guide = "legend") +
@@ -261,6 +273,10 @@ create_single_funs_overviewbar_plot <- function(singleF_restab, legend = F, pos 
             axis.title.y=element_blank(),
             axis.text.x = element_text(angle = 90),
             legend.position = "none")
+  
+  if(legend){
+    # return a plot with legend
+    sf_ov <- cowplot::get_legend(sf_ov)
   }
   return(sf_ov)
 }

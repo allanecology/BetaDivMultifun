@@ -4,12 +4,19 @@
 \alias{create_overviewbar_restab}
 \title{Create restab for overview bars}
 \usage{
-create_overviewbar_restab(restab, fun = c("mean", "sum"))
+create_overviewbar_restab(
+  restab,
+  fun = c("mean", "sum"),
+  yvar_name = "maxsplines"
+)
 }
 \arguments{
 \item{restab}{exactly the output from the function `create_restab0()`}
 
 \item{fun}{the function for aggregating. Is either "mean" or "sum".}
+
+\item{yvar_name}{character vector defining the column name of y values. 
+Defaults to "maxsplines" as created in `create_restab0`.}
 }
 \value{
 a data.table containing values ready for plotting
