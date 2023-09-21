@@ -743,10 +743,9 @@ for(i in c("weighted_mean_nestedness", "weighted_mean_turnover")){
 
 
 
-# ...
-# ...
-
 # TODO HERE
+revise code below, keep and update important things
+
 
 # thresholds EF heatmap
 
@@ -882,67 +881,6 @@ heatmap(restab1, hclustfun = hclust)
 # manually saved as "plot_GDM_thresholds_heatmap_cluster.pdf
 ```
 
-Create overviewbars
-
-```{r, eval = F}
-# Load data :
-restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
-# need to add component column
-restab <- merge(restab, nicenames[, .(names, nicenames, ground, component)], by = c("names", "nicenames", "ground"))
-# select the relevant columns
-include <- grep("median", names(restab), value = T, invert = T)
-restab <- restab[, ..include]
-rm(include)
-
-a <- create_single_funs_overviewbars(restab2 = restab, 
-                                     rel_colnames = grep("gdm_", names(restab), value = T))
-# bring to ggplot format
-ov_ab_allthresholds <- melt(a$above_below, id.vars = c("ground", "color"))
-ov_tn_allthresholds <- melt(a$turnover_nestedess, id.vars = c("component", "color"))
-# create plots
-p_ov_ab_thres <- create_single_funs_overviewbar_plot(singleF_restab = ov_ab_allthresholds, pos = "dodge")
-p_ov_tn_thres <- create_single_funs_overviewbar_plot(singleF_restab = ov_tn_allthresholds, pos = "dodge")
-
-p_ov_abtn_thres <- plot_grid(p_ov_ab_thres, p_ov_tn_thres, labels = c("A", "B"))
-# saved as : <date>_GDM_multifun_thresholds_allthresholds_overview_bars<_dodge>
-```
-
-# calc average effects over all thresholds
-
-```{r, eval = F}
-# created dataset which is read in in next chunk
-restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
-include <- c("nicenames", names(restab)[grep("gdm", names(restab))])
-include <- include[-which(include %in% c("gdm_EFdistance_LUI", "gdm_EFturnover_median_LUI", "gdm_EFnestedness_median_LUI"))]
-restab <- restab[, ..include]
-# long format for aggregate
-restab1 <- melt(restab, id.vars = "nicenames")
-restab1[grep("turnover", variable), component := "EFturnover"]
-restab1[grep("nestedness", variable), component := "EFnestedness"]
-
-# calculate average and sd
-EFmean <- data.table(aggregate(value ~ component + nicenames, restab1, function(x) mean(x, na.rm = T)))
-setnames(EFmean, old = "value", new = "mean")
-# EFsd <- data.table(aggregate(value ~ component + nicenames, restab1, sd))
-EFsd <- data.table(aggregate(value ~ component + nicenames, restab1, function(x) sd(x)/sqrt(length(x))))
-setnames(EFsd, old = "value", new = "sd")
-
-# combine to new data table
-EFmean <- merge(EFmean, EFsd, by = c("component", "nicenames"))
-rm(EFsd)
-t1 <- EFmean[component == "EFturnover", -"component"]
-setnames(t1, old = c("mean", "sd"), new = c("EFturnover_mean", "EFturnover_sd"))
-t2 <- EFmean[component == "EFnestedness", -"component"]
-setnames(t2, old = c("mean", "sd"), new = c("EFnestedness_mean", "EFnestedness_sd"))
-EFmean <- merge(t1, t2, by = "nicenames")
-rm(t1); rm(t2)
-
-# add to threshold dataset
-restab <- merge(restab, EFmean, by = "nicenames")
-# save dataset
-saveRDS(restab, file = "vignettes/out/plot_GDM_results_EFthresholds_mean_se.rds")
-# note : there is also "vignettes/out/plot_GDM_results_EFthresholds_mean_sd.rds" with standard deviation
-```
 
 ## Heatmap
 
@@ -1017,168 +955,12 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap_mean_se.pdf", s
        width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 
-## average effects over all thresholds weighted by model sd
-
-from Gossner 2016 We also calculated a bootstrapped P value for each
-term in the full GDM, using the gdm.varImp function in the gdm library
-(Supplementary Table 5-2). Additionally we estimated uncertainty for the
-GDM plots by using 100 bootstraps for each model, each time removing 30%
-of the plot pairs and then fitting a GDM and extracting the predictions.
-We then calculated the s.d. of the predictions and added this (±-) to
-the fitted line (Extended Data Fig. 6).
-
-runned permutations on the cluster with following parameters :
-`plotUncertainty_getsd(gdm_model, sampleSites = 0.3, bsIters = 100, geo = T, splineCol = "black", cores = 2)`
-results are stored at :
-planteco/.../BetaDivMultifun/analysis/output_datasets/uncertainty_calc
-
-reading in data
-
-```{r}
-# Note : go through code and either chose to work with EFnestedness, or EFturnover. (by outcommenting respective lines)
-
-modnames <- paste(paste("gdm_EFturnover_", seq(0.1, 0.9, 0.1), sep = ""), "_LUI", sep = "")
-# modnames <- paste(paste("gdm_EFnestedness_", seq(0.1, 0.9, 0.1), sep = ""), "_LUI", sep = "")
-i <- 1
-res <- readRDS(paste(paste(paste(pathtodata, "/analysis/output_datasets/uncertainty_calc/", sep = ""), modnames[i], sep = ""), "_uncertainty.Rds", sep = ""))
-res[, component := modnames[i]]
-
-for(i in 2:9){
-  t <- readRDS(paste(paste(paste(pathtodata, "/analysis/output_datasets/uncertainty_calc/", sep = ""), modnames[i], sep = ""), "_uncertainty.Rds", sep = ""))
-  t[, component := modnames[i]]
-  res <- rbindlist(list(res, t))
-}
-```
-
-plotting
-
-```{r, eval = F}
-a <- ggplot(res[varname %in% nicenames[ground == "a", names]], aes(x = varname, y = yatmax, fill = component)) +
-  geom_bar(stat = "identity", position="dodge") +
-  coord_flip() +
-  geom_errorbar(aes(ymin = yatmax - sdy, ymax = yatmax + sdy), 
-                  linetype = "solid",
-                position=position_dodge(width=0.9)) +
-  scale_fill_brewer(palette="Set3")
-b1 <- ggplot(res[varname %in% nicenames[ground == "b", names][1:10]], aes(x = varname, y = yatmax, fill = component)) +
-  geom_bar(stat = "identity", position="dodge") +
-  coord_flip() +
-  geom_errorbar(aes(ymin = yatmax - sdy, ymax = yatmax + sdy), 
-                  linetype = "solid",
-                position=position_dodge(width=0.9)) +
-  scale_fill_brewer(palette="Set3")
-b2 <- ggplot(res[varname %in% nicenames[ground == "b", names][11:20]], aes(x = varname, y = yatmax, fill = component)) +
-  geom_bar(stat = "identity", position="dodge") +
-  coord_flip() +
-  geom_errorbar(aes(ymin = yatmax - sdy, ymax = yatmax + sdy), 
-                  linetype = "solid",
-                position=position_dodge(width=0.9)) +
-  scale_fill_brewer(palette="Set3")
-x <- ggplot(res[varname %in% nicenames[ground == "x", names]], aes(x = varname, y = yatmax, fill = component)) +
-  geom_bar(stat = "identity", position="dodge") +
-  coord_flip() +
-  geom_errorbar(aes(ymin = yatmax - sdy, ymax = yatmax + sdy), 
-                  linetype = "solid",
-                position=position_dodge(width=0.9)) +
-  scale_fill_brewer(palette="Set3")
-# saved by hand and combined to 1 pdf with the name :
-#  "GDM_multifun_thresholds_weighted_avg_over_all_thresholds_plotUncertainty_test_intermediate.pdf"
-```
-
-Calculate weighted average
-$$wa = \frac{e_{1}*w_{1} + e_{2}*w_{2} + ... + e_{9}*w_{9}}{w_{1}+w_{2} + ... + w_{9}} = \frac{\sum_{i=1}^{n} e_{n}+\frac{1}{sd_{n}}}{\sum_{i=1}^{n} \frac{1}{sd_{n}}} ;  w_{n} = \frac{1}{sd_{n}} $$
-uncertainty-weighted average effect size.
-
-```{r, eval = F}
-######
-# calculate WEIGHTED AVERAGE
-res[, weights := sdy ^ (-1)]
-# if sdy is zero, set weight to 0
-res[sdy == 0, weights := 0]
-res[, weighted_yatmax := yatmax * weights]
-# every variable has its own weight - calculate sum of weights for each variable:
-sum_of_weights <- aggregate(weights ~ varname, res, sum)
-
-wres <- data.table(aggregate(weighted_yatmax ~ varname, res, sum))
-
-wres <- merge(wres, sum_of_weights, by = "varname")
-wres[, wres := weighted_yatmax / weights]
-
-# test one variable and check results
-i <-  "bacterivore.protist.beta.sim"
-sum(res[varname == i, yatmax] * (1 / res[varname == i, sdy])) / sum((1 / res[varname == i, sdy]))
-# True for Geographic, autotroph.beta.sim, bacterivore.protist.beta.sim
-
-# merge with nicenames to get stuff for barplots
-setnames(wres, old = "varname", new = "names")
-wres <- merge(wres[, .(names, wres)], nicenames, by = "names")
-
-setnames(wres, old = c("wres"), new = c("maxsplines")) #TODO this line was added to get cleaner input
-# saveRDS(wres, file = "vignettes/out/weighted_avg_over_all_thresholds_EFturnover.Rds")
-# saveRDS(wres, file = "vignettes/out/weighted_avg_over_all_thresholds_EFnestedness.Rds")
-```
-
-prepare for plotting
-
-```{r}
-# restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFturnover.Rds", sep = ""))
-restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/weighted_avg_over_all_thresholds_EFnestedness.Rds", sep = ""))
-setnames(restab, old = c("wres"), new = c("maxsplines")) #TODO : this line is maybe not needed any more
-# model_name <- "EFturnover_WEIGTHED_mean_across_thresholds"
-model_name <- "EFnestedness_WEIGTHED_mean_across_thresholds"
-luiinput <- "lui"
-permut <- F
-model_names_selection <- data.frame(model_name, luiinput, permut)
-
-# ----------------------------- change for presentation at INTECOL
-#TODO HACK to have stacked bars : 
-# NEEDS TO BE CLEANED URGENTLY!!!
-# instead of plotting with aes(x = nicenames) we use : aes(x = legendnames)
-# hack to use original code : rename the according column in the data.table restab
-# setnames(restab, old = c("nicenames", "legendnames"), new = c("former_nicenames", "nicenames"))
-p <- create_bio_aboveground_barplot(type = "stacked") + ylim(c(0, 0.15))# type is  in c("stacked", "grouped")
-b <- create_bio_belowground_barplot(type = "stacked")+ ylim(c(0, 0.15))
-q <- create_abio_barplot(type = "stacked") + ylim(c(0, 0.15))# here it does not matter if "stacked" or "grouped" is given.
-# ----------------------------- change for presentation at PES End
-# creat lui_component to make overviewbars
-restab[, lui_component := component]
-restab[lui_component == "abio" & names %in% c("deltaLUI", "LUI", "plot_isolation"), lui_component := "LUI"]
-restab[lui_component == "abio", lui_component := "abiotic"]
-restab[, lui_ground := ground]
-restab[lui_ground == "x" & lui_component == "lui", lui_ground := "lui"]
-restab[lui_ground == "x", lui_ground_nicenames := "abiotic"]
-restab[lui_ground == "a", lui_ground_nicenames := "aboveground"]
-restab[lui_ground == "b", lui_ground_nicenames := "belowground"]
-restab[lui_ground == "lui", lui_ground_nicenames := "LUI"]
-# -----------------------------
-# ----------------------------- change for presentation at PES
 
 
 
-p <- create_bio_aboveground_barplot() + ylim(c(0, 0.15))
-b <- create_bio_belowground_barplot() + ylim(c(0, 0.15))
-q <- create_abio_barplot() + ylim(c(0, 0.15))
 
 
-# go to plot_GDM, and run the part under "# Barplots ". Start with section "produce overview bars" (leave out the upper part)
-# reset the ylims : for EFnestedness : + ylim(c(0, 0.1)), for EFturnover : + ylim(c(0, 0.15))
-#TODO ERROR plotting does not work any more --> make sure it can be plotted normally with plot_GDM. At the moment, create_restab2() is not working.
 
-
-# Additional : loaded both EFturnover and EFnestedness, merged together and saved as : 
-# "EFnestedness_turnover_WEIGTHED_mean_across_thresholds_maxsplines.csv"
-
-
-#TODO URGENTLY CLEAN THAT MESS!
-
-multipanel_with_overview_bars <- plot_grid(p, b, q, labels = c('A', 'B', 'C'), label_size = 12, nrow = 3,
-                                             rel_heights = c(0.31, 0.49, 0.33), align = "v")
-multipanel_with_overview_bars
-test <- plot_grid(ov, ovL, nrow = 2)
-# saved as : "EFturnover_WEIGHTED_mean_across_tresholds_multipanel_barplot_intecol_presentation_22-08-25.pdf"
-# saved as : "EFnestedness_WEIGHTED_mean_across_tresholds_multipanel_barplot_PES_presentation_23-04-26.pdf"
-# saved as : "EFnestedness_WEIGHTED_mean_across_tresholds_multipanel_barplot_PES_presentation_23-04-26_overviewbars.pdf"
-```
 
 # Create synthesis plot
 
@@ -1252,60 +1034,3 @@ p
 # #
 ```
 
-
-
-
-
-
-
-# DEPRECIATED Calculate unweighted average models
-newer code
-
-```{r}
-# select relevant columns from isplines all models
-names <- model_names[model_class %in% c("multifun") & lui == "LUI", modelname]
-names <- sort(names[grep("distance", names, invert = T)]) # exclude EFdist from the selection
-names <- c("predictor", "Xpredictor", names)
-isplines_all_models[, ..names]
-
-# # #
-# Calculate average over all tresholds EFturnover
-# the resulting column has the identical number of rows than isplines_all_models
-turnover_columns <- grep("turnover", names, value = T)
-turnover_mean <- rowMeans(isplines_all_models[, ..turnover_columns])
-isplines_all_models[, turnover_mean := turnover_mean]
-rm(turnover_mean, turnover_columns)
-#
-# # Plot (shitty plot, just to see if values are +- possible)
-# ggplot(isplines_all_models[predictor %in% grep("beta", isplines_all_models$predictor, value = T), ],
-#        aes(x = Xpredictor, y = turnover_mean, col = predictor)) +
-#   geom_line() +
-#   theme(legend.position = "none")
-# 
-# ggplot(isplines_all_models[!predictor %in% grep("beta", isplines_all_models$predictor, value = T), ], aes(x = Xpredictor, y = turnover_mean)) +
-#   geom_line() +
-#   theme(legend.position = "none") +
-#   facet_grid(cols = vars(predictor), scales = "free")
-
-
-# # #
-# Calculate average over all tresholds EFturnover
-#
-nestedness_columns <- grep("nestedness", names, value = T)
-nestedness_mean <- rowMeans(isplines_all_models[, ..nestedness_columns])
-isplines_all_models[, nestedness_mean := nestedness_mean]
-#TODO
-isplines_all_models[, nestedness_sd := lapply(.SD, sd), .SDcols = nestedness_columns]
-
-rm(nestedness_mean, nestedness_columns)
-# # Plot (shitty plot, just to see if values are +- possible)
-# ggplot(isplines_all_models[predictor %in% grep("beta", isplines_all_models$predictor, value = T), ],
-#        aes(x = Xpredictor, y = nestedness_mean, col = predictor)) +
-#   geom_line() +
-#   theme(legend.position = "none")
-# 
-# ggplot(isplines_all_models[!predictor %in% grep("beta", isplines_all_models$predictor, value = T), ], aes(x = Xpredictor, y = nestedness_mean)) +
-#   geom_line() +
-#   theme(legend.position = "none") +
-#   facet_grid(cols = vars(predictor), scales = "free")
-```
