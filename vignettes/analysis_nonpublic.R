@@ -3,6 +3,9 @@
 # Usage : 
 # - in header of each script, the variables needed to be loaded are specified (elements of vector sections_to_be_loaded)
 #    (is done automatically) : source analysis_nonpublic.R with this specified vector in order to load the needed variables
+# - **Important note** about transferring RDS files from linux to windows systems : can not be done using copy-paste.
+#    need to state that it is a binary file. Can be avoided using .csv files. For Rds, no solution was currently found.
+#    https://stackoverflow.com/questions/30892505/trouble-unzipping-file-under-windows
 
 #TODO user : connect to planteco and nsch to get input files
 
