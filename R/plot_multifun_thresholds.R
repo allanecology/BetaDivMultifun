@@ -15,7 +15,7 @@
 #' Can plot a legend if legend is set to T, but the legend is recommended
 #' to be produced by the function `get_nice_legend`.
 #' 
-#' TODO : add vertical grid lines, remove x axis for above plots
+#' TODO : remove x axis for above plots
 #' @param data data.table, produced in `GDM_multifun_thresholds.Rmd`).
 #' @param legend logical T or F, indicating if the plot or the legend should be returned.
 #' @param ymax the maximum y value shown. Defaults to 1.

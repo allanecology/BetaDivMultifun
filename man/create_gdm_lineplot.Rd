@@ -4,11 +4,19 @@
 \alias{create_gdm_lineplot}
 \title{create lineplots}
 \usage{
-create_gdm_lineplot(data, legend = F, ymax = 1)
+create_gdm_lineplot(data, legend = F, ymax = 1, ymin = 0, ribbon = F)
 }
 \arguments{
 \item{data}{data.table, produced by `gdm::isplineExtract` and further
 cleaning (as shown in `plot_gdm.Rmd`).}
+
+\item{legend}{logical T or F, indicating if the plot or the legend should be returned.}
+
+\item{ymax}{the maximum y value shown. Defaults to 1.}
+
+\item{ymin}{the minimum y value shown. Defaults to 0.}
+
+\item{ribbon}{logical. T if error bands should be shown, F otherwise.}
 }
 \value{
 a ggplot2 plot element, with lineplots.
