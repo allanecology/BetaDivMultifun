@@ -388,11 +388,13 @@ ispline_uncertainty_all_thresholds[, se := sd / sqrt(SDn)]
 
 # save output dataset
 # saveRDS(ispline_uncertainty_all_thresholds, file = paste0(pathtoout, "/allmod_LUI_uncertainty_weighted_avg.Rds"))
+# fwrite(ispline_uncertainty_all_thresholds, file = paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg.csv"))
 ```
 
 ## Plotting
 ```{r}
 # ispline_uncertainty_all_thresholds <- readRDS(paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg.Rds"))
+# ispline_uncertainty_all_threshoslds <- fread(paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg.csv"))
 
 # Quality checks
 # with standard deviation
@@ -436,6 +438,7 @@ ggplot(ispline_uncertainty_all_thresholds[predictor == "plot_isolation" & Model_
 ```
 
 Structured plotting
+#### create plot data
 
 Match with plotting table `nicenames`
 ```{r}
@@ -470,7 +473,8 @@ ispline_uncertainty_all_thresholds[, lwd := 1]
 ispline_uncertainty_all_thresholds[grep("weighted_mean", ispline_uncertainty_all_thresholds$model_name), lwd := 2]
 ```
 
-Plot each predictor individually, showing all model lines
+#### lineplot with standard error
+Plot each predictor individually, showing all model lines with uncertainty (standard error)
 ```{r}
 pdf("GDM_weighted_avg_over_thresholds_allmods.pdf", onefile = T, paper = "a4r")
 for(mtype in c("nestedness", "turnover")){
@@ -487,52 +491,95 @@ for(mtype in c("nestedness", "turnover")){
   }
 }
 dev.off()
+
+
+pdf("GDM_weighted_avg_over_thresholds_allmods_printable.pdf", onefile = T, paper = "a4r")
+for(mtype in c("nestedness", "turnover")){
+  for(pred in unique(ispline_uncertainty_all_thresholds$names)){
+    p <- create_gdm_lineplot_predictorwise_thresholds(
+      data = ispline_uncertainty_all_thresholds[Model_type == mtype & names == pred, ],
+      ribbon = T,
+      ribbontype = "se",
+      legend = F,
+      plottitle = paste(pred, mtype),
+      ymax = min(1, max(ispline_uncertainty_all_thresholds[Model_type == mtype & names == pred, value + se], na.rm = T), na.rm = T)
+      )
+    plot(p)
+  }
+}
+
+# add legend
+p <- create_gdm_lineplot_predictorwise_thresholds(
+      data = ispline_uncertainty_all_thresholds[Model_type == mtype & names == pred, ],
+      ribbon = T,
+      ribbontype = "se",
+      legend = T,
+      plottitle = paste(pred, mtype),
+      ymax = min(1, max(ispline_uncertainty_all_thresholds[Model_type == mtype & names == pred, value + se], na.rm = T), na.rm = T)
+      )
+ggdraw(get_legend(p))
+
+dev.off()
 ```
 
+#### line plots
 
-
+Nestedness and Turnover : **manually** edit
 ```{r}
-
 lineplot_data <- ispline_uncertainty_all_thresholds[model_name == "weighted_mean_nestedness"]
 
-p <- create_gdm_lineplot(lineplot_data[ground == "a"], legend = F, ymax = max(lineplot_data$value), 
-                    ymin = min(lineplot_data$value - lineplot_data$se),
-                    ribbon = T)
-q <- create_gdm_lineplot(lineplot_data[ground == "b"], legend = F, ymax = max(lineplot_data$value), 
-                    ymin = min(lineplot_data$value - lineplot_data$se),
-                    ribbon = T)
+p <- create_gdm_lineplot(lineplot_data[ground == "a"], legend = F, ymax = max(lineplot_data$value),
+                    ribbon = F)
+q <- create_gdm_lineplot(lineplot_data[ground == "b"], legend = F, ymax = max(lineplot_data$value),
+                    ribbon = F)
 
-#TODO HERE create abiotic subplots, if wanted with SE
 # abiotic subplots
 # LUI
 luidat <- lineplot_data[names %in% "LUI",]
 deltaluidat <- lineplot_data[names %in% "deltaLUI",]
 l <- create_gdm_lineplot(luidat, legend = F, ymax = max(lineplot_data$value),
-                         ymin = min(lineplot_data$value - lineplot_data$se),
-                         ribbon = T)
+                         ribbon = F)
 dl <- create_gdm_lineplot(deltaluidat, legend = F, ymax = max(lineplot_data$value),
-                         ymin = min(lineplot_data$value - lineplot_data$se),
-                         ribbon = T)
+                         ribbon = F)
 
 lgeo <- create_gdm_lineplot(lineplot_data[names %in% c("Geographic")], legend = F, 
-                            ymax = max(lineplot_data$value),
-                         ymin = min(lineplot_data$value - lineplot_data$se),
-                         ribbon = T)
+                            ymax = max(lineplot_data$value), ribbon = F)
 lsoil <- create_gdm_lineplot(lineplot_data[names %in% c("edis_soil")], legend = F, 
-                             ymax = max(lineplot_data$value),
-                         ymin = min(lineplot_data$value - lineplot_data$se),
-                         ribbon = T)
+                             ymax = max(lineplot_data$value), ribbon = F)
 lisol <- create_gdm_lineplot(lineplot_data[names %in% c("plot_isolation")], legend = F, 
-                             ymax = max(lineplot_data$value),
-                         ymin = min(lineplot_data$value - lineplot_data$se),
-                         ribbon = T)
+                             ymax = max(lineplot_data$value), ribbon = F)
 
+# create legends
+biotic_legend <- get_nice_legend(type = "biotic")
+biotic_legend <- plot_grid(NULL, NULL, NULL, NULL, ggdraw(biotic_legend), NULL, rel_widths = c(0.1, 0.8, 0.1), rel_heights = c(0.01, 0.99))
+abiotic_legend <- get_nice_legend(type = "abiotic")
+abiotic_legend <- plot_grid(NULL, NULL, NULL, NULL, ggdraw(abiotic_legend), NULL, rel_widths = c(0.1, 0.8, 0.1), rel_heights = c(0.01, 0.99))
 
+# combine plots
+# create classic lineplot
+lin <- plot_grid(
+  plot_grid(p, q, l,  labels = c('A', 'B', 'C'), nrow = 3),
+  plot_grid(biotic_legend, abiotic_legend, nrow = 2, rel_heights = c(0.7, 0.3))
+  )
+lin_abiotic <- plot_grid(dl, lgeo, lsoil, lisol,
+                         labels = c("D", "", "", ""),
+                         align = T, nrow = 1)
+
+all_lines <- plot_grid(lin, lin_abiotic, nrow = 2, rel_heights = c(0.8, 0.2))
+
+# save as A4 pdf: 
+#    "GDM_multifun_thresholds_lineplot_allpredictor_nestedness.pdf"
+#    "GDM_multifun_thresholds_lineplot_allpredictor_turnover.pdf"
 ```
 
 
+#### bar plots
 
-
+##### overview bars
+```{r}
+#TODO HERE create barplots, and overviewbars of those models.
+# use old code
+```
 
 
 
