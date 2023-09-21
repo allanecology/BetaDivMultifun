@@ -391,7 +391,7 @@ ispline_uncertainty_all_thresholds[, se := sd / sqrt(SDn)]
 # fwrite(ispline_uncertainty_all_thresholds, file = paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg.csv"))
 ```
 
-## Plotting
+# Plotting
 ```{r}
 # ispline_uncertainty_all_thresholds <- readRDS(paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg.Rds"))
 # ispline_uncertainty_all_thresholds <- fread(paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg.csv"))
@@ -711,100 +711,31 @@ for(i in c("weighted_mean_nestedness", "weighted_mean_turnover")){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# TODO HERE
-revise code below, keep and update important things
-
-
-# thresholds EF heatmap
-
-```{r, eval = F}
-# dataset is stored, next chunk reads it in
-mod_names <- model_results[EF %in% c("distance", "nestedness", "turnover") & luiinput == "lui", name]
-mod_names <- mod_names[-grep("0.75", mod_names)]
-
-i <- mod_names[1]
-a <- paste(pathtodata, "/analysis/output_datasets/", i, "_output.Rds", sep = "")
-gdm_output <- readRDS(a)
-# get maxsplines
-exSplines <- gdm::isplineExtract(gdm_output)
-# take maximum of each variable for barplot
-maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)
-restab <- data.table(model = i, data.frame(as.list(maxsplines)))
-
-for(i in mod_names[-1]){
-  a <- paste(pathtodata, "/analysis/output_datasets/", i, "_output.Rds", sep = "")
-  gdm_output <- readRDS(a)
-  # get maxsplines
-  exSplines <- gdm::isplineExtract(gdm_output)
-  # take maximum of each variable for barplot
-  maxsplines <- apply(exSplines$y, 2, max, na.rm = TRUE)
-  restab_newline <- data.table(model = i, data.frame(as.list(maxsplines)))
-  # append to restab
-  restab <- rbindlist(list(restab, restab_newline), use.names = T)
-  rm(restab_newline); rm(gdm_output)
-}
-rm(i); rm(exSplines); rm(a); rm(maxsplines)
-
-# make restab column names nice
-setnames(restab, old = as.character(nicenames$names),  new = as.character(nicenames$nicenames), skip_absent = T)
-# transpose data.table
-restab <- dcast(melt(restab, id.vars = "model"), variable ~ model)
-setnames(restab, old = "variable", new = "nicenames")
-restab <- merge(nicenames, restab, by = "nicenames")
-
-# save
-saveRDS(restab, file = "vignettes/out/plot_GDM_results_EFthresholds.rds")
-```
+#### Heatmaps
 
 ```{r}
-# Load data :
-restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
-# need to add component column
-restab <- merge(restab, nicenames[, .(names, nicenames, ground, component)], by = c("names", "nicenames", "ground"))
-fwrite(restab, file = paste(pathtoout, "/all_LUI_mods_results_overview.csv", sep = ""), sep = ",") # write for supplementary
+ispline_uncertainty_all_thresholds <- fread(file = paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg_plotdata.csv"))
+
+# reduce to max values
+restab <- ispline_uncertainty_all_thresholds[value_ID == 8350, ]
+restab[, value_ID := NULL]
+restab[, xaxis := NULL]
+
+# reformat table :
+# model results in separate columns
+restab <- data.table::dcast(
+  data = restab,
+  formula = paste(paste(names(nicenames), collapse = " + "),"~ model_name"),
+  value.var = c("value"))
 ```
 
-create heatmap
+##### all models
+
+All models including average
 
 ```{r, eval = F}
-include <- c("nicenames", names(restab)[grep("gdm", names(restab))])
-# pal <- rev(RColorBrewer::brewer.pal(9, "RdYlBu"))
+include <- c("nicenames", names(restab)[grep("turnover|nestedness", names(restab), perl = T)])
 pal <- RColorBrewer::brewer.pal(9, "YlOrRd")
-# pal <- c("white", RColorBrewer::brewer.pal(9, "YlOrRd"))[-2]
-# colgrad <- melt(restab2[, ..include], id.vars = c("nicenames", "n_affected_fun"))
-# colgrad <- colgrad$value
 
 df <- restab[ground == "a", ]
 df <- data.table::melt(df[, ..include], id.vars = c("nicenames"))
@@ -812,7 +743,9 @@ df[value == 0, value := NA] # 0 values are set to NA to make them appear grey in
 
 a <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
   geom_tile() +
-  scale_fill_gradientn(colours = pal, na.value = "grey80") +
+  scale_fill_gradientn(colours = pal, na.value = "grey80", 
+                       limits = c(0, 0.35),
+                       labels = c(0, 0.1, 0.2, 0.3, 0.35)) +
   theme(axis.text.x = element_text(angle = 90, vjust = 1, 
     size = 9, hjust = 1),
     plot.margin = margin(l = 50, r = 20),
@@ -821,8 +754,12 @@ a <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
     axis.ticks.x = element_blank(),
     panel.grid.major.x = element_line(color = "grey"),
     axis.title = element_blank(),
-    legend.position = "top") +
-  scale_x_discrete(position = "top")
+    legend.position = c(-0.11, 1.2)) +
+  scale_x_discrete(position = "top") +
+  labs(fill = "") +
+  guides(fill = guide_colourbar(ticks.colour = "black", frame.colour = "black"))
+# aL <- get_legend(a)
+# a <- a + theme(legend.position = "none")
 
 df <- restab[ground == "b", ]
 df <- data.table::melt(df[, ..include], id.vars = c("nicenames"))
@@ -859,18 +796,15 @@ c <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
 heatmap <- plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, 
                      nrow = 3, rel_heights = c(0.52, 0.39, 0.09), align = "v")
 
-ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap.pdf", sep = ""), plot = heatmap, device=cairo_pdf,
+ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap.pdf", sep = ""), plot = heatmap,
+       device = cairo_pdf,
        width = 11.96, height = 8.27, units = "in", dpi = 900)
 ```
 
-clustered heatmap
 
+clustered heatmap without average models
 ```{r, eval = F}
-restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds.rds", sep = ""))
-
-include <- c("nicenames", names(restab)[grep("gdm", names(restab))])
-include <- include[-which(include %in% c("gdm_EFdistance_LUI", "gdm_EFturnover_median_LUI", "gdm_EFnestedness_median_LUI"))]
-
+include <- include[-which(include %in% c("weighted_mean_nestedness", "weighted_mean_turnover"))]
 restab1 <- restab[, ..include]
 restab1 <- as.matrix(restab1[, -1])
 rownames(restab1) <- restab$nicenames
@@ -878,84 +812,8 @@ colnames(restab1) <- gsub("EFnestedness_", "NES ", gsub("EFturnover_", "TO ",
                                                         gsub("gdm_", "", gsub("_LUI", "", colnames(restab1)))))
 
 heatmap(restab1, hclustfun = hclust)
-# manually saved as "plot_GDM_thresholds_heatmap_cluster.pdf
+# manually saved as "plot_GDM_thresholds_heatmap_cluster.pdf"
 ```
-
-
-## Heatmap
-
-```{r, eval = F}
-restab <- readRDS(paste(pathtodata, "/analysis/output_datasets/plot_GDM_results_EFthresholds_mean_se.rds", sep = ""))
-restab <- merge(nicenames[, .(nicenames, ground)], restab, by = "nicenames")
-# OPTION : select the variables to include in heatmap
-#    OPTION 2 : take out "white" from color pal
-include <- colnames(restab)[-which(colnames(restab) == "ground")]
-# include <- c("nicenames", "EFturnover_mean", "EFturnover_sd", "EFnestedness_mean", "EFnestedness_sd")
-
-# pal <- c("white", RColorBrewer::brewer.pal(9, "YlOrRd"))
-pal <- c(RColorBrewer::brewer.pal(9, "YlOrRd"))
-
-# below : code copied from heatmap above -----------------------------
-df <- restab[ground == "a", ]
-df <- data.table::melt(df[, ..include], id.vars = c("nicenames"))
-df[value == 0, value := NA] # 0 values are set to NA to make them appear grey in the plot
-
-a <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
-  geom_tile() +
-  scale_fill_gradientn(colours = pal, na.value = "grey80") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 1, 
-    size = 9, hjust = 1),
-    plot.margin = margin(l = 50, r = 20),
-    axis.line.x=element_blank(),
-    axis.text.y = element_text(size=9, angle = 0),
-    axis.ticks.x = element_blank(),
-    panel.grid.major.x = element_line(color = "grey"),
-    axis.title = element_blank(),
-    legend.position = "top") +
-  scale_x_discrete(position = "top")
-
-df <- restab[ground == "b", ]
-df <- data.table::melt(df[, ..include], id.vars = c("nicenames"))
-df[value == 0, value := NA]
-b <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
-  geom_tile() +
-  scale_fill_gradientn(colours = pal, na.value = "grey80") +
-  theme(legend.position = "none", 
-        axis.title = element_blank(),
-        axis.text.y = element_text(size=9, angle = 0),
-        plot.margin = margin(l = 50, r = 20),
-        axis.text.x = element_blank(),
-        axis.line.x=element_blank(),
-        axis.ticks.x = element_blank(),
-        panel.grid.major.x = element_line(color = "grey"))
-
-
-df <- restab[ground == "x", ]
-df <- data.table::melt(df[, ..include], id.vars = c("nicenames"))
-df[value == 0, value := NA]
-c <- ggplot(data = df, aes(x = variable, y = nicenames, fill = value)) +
-  geom_tile() +
-  scale_fill_gradientn(colours = pal, na.value = "grey80") +
-  theme(legend.position = "none", 
-        axis.title = element_blank(),
-        axis.text.y = element_text(size=9, angle = 0),
-        plot.margin = margin(l = 50, r = 20),
-        axis.text.x = element_blank(),
-        axis.line.x=element_blank(),
-        axis.ticks.x = element_blank(),
-        panel.grid.major.x = element_line(color = "grey"))
-# above : code copied from heatmap above -----------------------------
-
-heatmap <- plot_grid(a, b, c, labels = c('A', '', 'B'), label_size = 12, 
-                     nrow = 3, rel_heights = c(0.48, 0.42, 0.1), align = "v")
-
-# manually saved small heatmap with only mean and sd (no other thesholds) 
-#    as : GDM_thresholds_heatmap_mean_sd_only
-ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap_mean_se.pdf", sep = ""), plot = heatmap, device=cairo_pdf,
-       width = 11.96, height = 8.27, units = "in", dpi = 900)
-```
-
-
 
 
 
@@ -964,8 +822,90 @@ ggsave(filename = paste(pathtoout, "/plot_GDM_thresholds_heatmap_mean_se.pdf", s
 
 # Create synthesis plot
 
-Create a plot with average effect sizes across the 3 main models :
-EFturnover_WEIGHTED_mean, EFnestedness_WEIGHTED_mean, EFdistance.
+Create a plot with average effect sizes across the 2 main models :
+EFturnover_WEIGHTED_mean, EFnestedness_WEIGHTED_mean.
+
+## Biotic predictors
+
+Average across 2 main models. (remember the 2 main models are weighted averages of all models)
+```{r}
+ispline_uncertainty_all_thresholds <- fread(file = paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg_plotdata.csv"))
+# reduce to max values
+restab <- ispline_uncertainty_all_thresholds[value_ID == 8350, ]
+restab[, value_ID := NULL]
+restab[, xaxis := NULL]
+# keep average models
+restab <- restab[model_name %in% c("weighted_mean_turnover", "weighted_mean_nestedness"), ]
+# 70 rows left, because 35 predictors in 2 models
+
+# filter biotic effects
+# add together turnover and nestedness effects
+# sum turnover and nestedness of each model
+restab <- aggregate(restab[type == "bio", ], value ~ model_name + legendnames, FUN = sum)
+
+# quality check
+plot(as.factor(restab$model_name), restab$value) # are in same range
+
+# average
+restab <- data.table(aggregate(restab, value ~ legendnames, FUN = mean))
+# sort by effect size
+setorder(restab, cols = "value")
+
+# plot
+restab <- merge(restab, unique(nicenames[, .(legendnames, color)]), by = "legendnames", all.x = T)
+restab[, legendnames := factor(legendnames, levels = restab$legendnames)]
+p <- ggplot(data = restab, aes(x = legendnames, y = value, fill = color)) +
+  geom_bar(stat = "identity", color = "black") + 
+  coord_flip() +
+  scale_fill_identity() +
+  ylab("averages across main models") + xlab("")
+p
+# saved as : "GDM_multifun_thresholds_synthesis_biotic_ranks.pdf" A5 landscape
+```
+
+
+Weighted averages of two main models.
+```{r}
+ispline_uncertainty_all_thresholds <- fread(file = paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg_plotdata.csv"))
+# reduce to max values
+restab <- ispline_uncertainty_all_thresholds[value_ID == 8350, ]
+restab[, value_ID := NULL]
+restab[, xaxis := NULL]
+# keep average models
+restab <- restab[model_name %in% c("weighted_mean_turnover", "weighted_mean_nestedness"), ]
+# 70 rows left, because 35 predictors in 2 models
+
+# filter biotic effects
+# add together turnover and nestedness effects
+# sum turnover and nestedness of each model
+restab1 <- aggregate(restab[type == "bio", ], value ~ model_name + legendnames, FUN = sum)
+restab2 <- aggregate(restab[type == "bio", ], sd ~ model_name + legendnames, FUN = function(x) sqrt(sum(x^2)))
+restab <- data.table(merge(restab1, restab2, by = c("model_name", "legendnames")))
+
+# calculate weighted means
+restab[, weighted_means := value * (1 / sd)]
+restab <- data.table(aggregate(restab, weighted_means ~ legendnames, FUN = mean))
+
+# sort by effect size
+setorder(restab, cols = "weighted_means")
+
+# plot
+restab <- merge(restab, unique(nicenames[, .(legendnames, color)]), by = "legendnames", all.x = T)
+restab[, legendnames := factor(legendnames, levels = restab$legendnames)]
+pw <- ggplot(data = restab, aes(x = legendnames, y = weighted_means, fill = color)) +
+  geom_bar(stat = "identity", color = "black") + 
+  coord_flip() +
+  scale_fill_identity() +
+  ylab("averages across main models") + xlab("")
+pw
+
+plot_grid(p, pw)
+#TODO HERE : discuuss: makes a huge difference if weighted by sd or not!
+# Do I even have to weight again? Go through that carefully.
+```
+
+
+## OLD CODE
 
 Only biotic effects, because we add turnover and nestedness together,
 and a comparison with LUI would not be fair (2 effects vs. 1 effect).
