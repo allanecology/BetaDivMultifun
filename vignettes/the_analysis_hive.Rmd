@@ -105,9 +105,15 @@ source("gdm_uncertainty.R")
 
 The output are 18 .Rds files for thresholds 0.1 - 0.9 for turnover and nestedness. E.g. "analysis/output_datasets/uncertainty_calc/gdm_EFnestedness_0.8_LUI_uncertainty.Rds"
 
+```{r}
+ksource("vignettes/GDM_multifun_thresholds.Rmd") # calcluate models and generate plots (line and barplots)
+# could be added : a script plotting barplots with se
+```
 
+
+### Synthesis plots
 
 ```{r}
-#TODO probably add script : GDM_multifun_thresholds.Rmd
+
 ```
 
