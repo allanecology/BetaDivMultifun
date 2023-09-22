@@ -848,17 +848,20 @@ plot(as.factor(restab$model_name), restab$value) # are in same range
 
 # average
 restab <- data.table(aggregate(restab, value ~ legendnames, FUN = mean))
-# sort by effect size
-setorder(restab, cols = "value")
 
-# plot
+# sort and plot
 restab <- merge(restab, unique(nicenames[, .(legendnames, color)]), by = "legendnames", all.x = T)
+restab[legendnames == "secondary consumer arthropodsoillarvae", legendnames := "secondary consumer\narthropodsoillarvae"]
+setorder(restab, cols = "value")
 restab[, legendnames := factor(legendnames, levels = restab$legendnames)]
 p <- ggplot(data = restab, aes(x = legendnames, y = value, fill = color)) +
   geom_bar(stat = "identity", color = "black") + 
   coord_flip() +
   scale_fill_identity() +
-  ylab("averages across main models") + xlab("")
+  ylab("averages across main models") + xlab("") +
+  labs(title = "Average effect size \nacross main models",
+              caption = "Average across 2 main models EFturn and EFnes.\n 
+       Both are weighted averages of effect sizes across the 9 thresholds.")
 p
 # saved as : "GDM_multifun_thresholds_synthesis_biotic_ranks.pdf" A5 landscape
 ```
@@ -881,96 +884,79 @@ restab <- restab[model_name %in% c("weighted_mean_turnover", "weighted_mean_nest
 restab1 <- aggregate(restab[type == "bio", ], value ~ model_name + legendnames, FUN = sum)
 restab2 <- aggregate(restab[type == "bio", ], sd ~ model_name + legendnames, FUN = function(x) sqrt(sum(x^2)))
 restab <- data.table(merge(restab1, restab2, by = c("model_name", "legendnames")))
+rm(restab1, restab2)
 
 # calculate weighted means
 restab[, weighted_means := value * (1 / sd)]
-restab <- data.table(aggregate(restab, weighted_means ~ legendnames, FUN = mean))
+restab[, weight := 1 / sd]
+restab1 <- data.table(aggregate(restab, weighted_means ~ legendnames, FUN = mean))
+restab2 <- data.table(aggregate(restab, weight ~ legendnames, FUN = sum))
+restab1 <- merge(restab1, restab2, by = "legendnames")
+restab1[, avg_across_models := weighted_means / weight] # divide mean of weighted effects by sum of weights
+restab <- restab1[, .(legendnames, avg_across_models)]
+rm(restab1, restab2)
 
-# sort by effect size
-setorder(restab, cols = "weighted_means")
-
-# plot
+# sort and plot
 restab <- merge(restab, unique(nicenames[, .(legendnames, color)]), by = "legendnames", all.x = T)
+restab[legendnames == "secondary consumer arthropodsoillarvae", legendnames := "secondary consumer\narthropodsoillarvae"]
+setorder(restab, cols = "avg_across_models")
 restab[, legendnames := factor(legendnames, levels = restab$legendnames)]
-pw <- ggplot(data = restab, aes(x = legendnames, y = weighted_means, fill = color)) +
+pw <- ggplot(data = restab, aes(x = legendnames, y = avg_across_models, fill = color)) +
   geom_bar(stat = "identity", color = "black") + 
   coord_flip() +
   scale_fill_identity() +
-  ylab("averages across main models") + xlab("")
+  ylab("averages across main models") + xlab("") +
+  labs(title = "Weighted average effect size \nacross main models",
+      caption = "Weighted average across 2 main models EFturn and EFnes.
+      (1) Calculated weighted average effect size across 9 thresholds of 
+          both turnover and nestedness models (including se) 
+      (2) Weighted average of the turnover and nestedness value
+          weighted by sd.")
 pw
+```
 
-plot_grid(p, pw)
+Average ranks
+```{r}
+ispline_uncertainty_all_thresholds <- fread(file = paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg_plotdata.csv"))
+# reduce to max values
+restab <- ispline_uncertainty_all_thresholds[value_ID == 8350, ]
+restab[, value_ID := NULL]
+restab[, xaxis := NULL]
+restab <- restab[!model_name %in% c("weighted_mean_turnover", "weighted_mean_nestedness"), ]# exclude average models
+
+# filter biotic effects
+# add together turnover and nestedness effects
+# sum turnover and nestedness of each model
+restab1 <- aggregate(restab[type == "bio", ], value ~ model_name + legendnames, FUN = sum)
+restab2 <- aggregate(restab[type == "bio", ], sd ~ model_name + legendnames, FUN = function(x) sqrt(sum(x^2)))
+restab <- data.table(merge(restab1, restab2, by = c("model_name", "legendnames")))
+rm(restab1, restab2)
+
+# calculate ranks per model_name. Higher ranks correspond to higher effect sizes
+setDT(restab)[, ranks := rank(value), by = list(model_name)]
+# average ranks across models
+restab <- data.table(aggregate(restab, ranks ~ legendnames, FUN = mean))
+
+# convert to plotting dataset
+restab <- merge(restab, unique(nicenames[, .(legendnames, color)]), by = "legendnames", all.x = T)
+restab[legendnames == "secondary consumer arthropodsoillarvae", legendnames := "secondary consumer\narthropodsoillarvae"]
+setorder(restab, cols = "ranks")
+restab[, legendnames := factor(legendnames, levels = restab$legendnames)]
+pr <- ggplot(data = restab, aes(x = legendnames, y = ranks, fill = color)) +
+  geom_bar(stat = "identity", color = "black") +
+  coord_flip() +
+  scale_fill_identity() +
+  ylab("averages across main models") + xlab("") +
+  labs(title = "Average rank across \nEFturn and EFnes models",
+              caption = "Average ranks across 18 main models EFturn and EFnes.\n
+       not weighted by sd.")
+pr
+```
+
+Compare different synthesis plots
+```{r}
+plot_grid(p, pw, pr, ncol = 3)
 #TODO HERE : discuuss: makes a huge difference if weighted by sd or not!
 # Do I even have to weight again? Go through that carefully.
+#TODO do this later
 ```
-
-
-## OLD CODE
-
-Only biotic effects, because we add turnover and nestedness together,
-and a comparison with LUI would not be fair (2 effects vs. 1 effect).
-
-Average effect size : Depreciated, because it is almost exclusively
-driven by EFdist model, because it is on a different scale. - either
-scale and average (not done) - or take average rank (done)
-
-```{r}
-d1 <- fread(paste(pathtodata, "/analysis/output_datasets/all_LUI_mods_results_overview.csv", sep = ""))
-d2 <- fread(paste(pathtodata, "/analysis/output_datasets/EFnestedness_turnover_WEIGTHED_mean_across_thresholds_maxsplines.csv", sep = ""))
-mainmods <- merge(d1[, .(names, gdm_EFdistance_LUI)], d2, by = "names")
-mainmods <- mainmods[type == "bio"]
-
-###
-# Sum to + nes and THEN rank
-#
-# sum turnover and nestedness of each model
-mainmods <- data.table(stats::aggregate(mainmods[, .(gdm_EFdistance_LUI, EFturnover_WEIGTHED_mean_across_thresholds, EFnestedness_WEIGTHED_mean_across_thresholds)], 
-                 by = list(mainmods$legendnames), 
-                 FUN = sum))
-setnames(mainmods, old = "Group.1", new = "legendnames")
-#
-# # calc average across main mods
-# mainmods[, mean_across_main_mods := rowMeans(.SD), 
-#          .SDcols = c("gdm_EFdistance_LUI", "EFturnover_WEIGTHED_mean_across_thresholds", "EFnestedness_WEIGTHED_mean_across_thresholds")]
-#
-# calc rank average across main mods
-mainmods[, rank_EFdist := rank(gdm_EFdistance_LUI)]
-mainmods[, rank_EFnes := rank(EFnestedness_WEIGTHED_mean_across_thresholds)]
-mainmods[, rank_EFto := rank(EFturnover_WEIGTHED_mean_across_thresholds)]
-mainmods[, rank_avg := rowMeans(.SD), .SDcols = c("rank_EFdist", "rank_EFnes", "rank_EFto")]
-
-
-# Plot
-mainmods <- merge(mainmods, unique(nicenames[, .(lui_ground, ground, color, legendnames, type)]), by = "legendnames", all.x = T)
-# sort by effect size
-mainmods <- mainmods[order(-rank_avg),]
-# order the levels in the desired order
-mainmods[, legendnames := factor(legendnames, levels = rev(mainmods$legendnames))]
-#
-# plot
-p <- ggplot(data = mainmods, aes(x = legendnames, y = rank_avg, fill = color)) +
-  geom_bar(stat = "identity", color = "black") + 
-  coord_flip() + ylim(c(0, 15)) +
-  scale_fill_identity() +
-  ylab("average ranks across main models") + xlab("")
-p
-# saved as : "GDM_multifun_thresholds_synthesis_biotic_ranks.pdf" A5 landscape
-
-
-# ###
-# # rank, average to + nes and then average across models
-# #
-# # calc rank within main mods
-# mainmods[, rank_EFdist := rank(gdm_EFdistance_LUI)]
-# mainmods[, rank_EFnes := rank(EFnestedness_WEIGTHED_mean_across_thresholds)]
-# mainmods[, rank_EFto := rank(EFturnover_WEIGTHED_mean_across_thresholds)]
-# #
-# # average the rank of to and nes
-# mainmods <- data.table(stats::aggregate(mainmods[, .(rank_EFdist, rank_EFnes, rank_EFto)], by = list(mainmods$legendnames), FUN = mean))
-# setnames(mainmods, old = "Group.1", new = "legendnames")
-# #
-# # average the rank across models
-# mainmods[, rank_avg := rowMeans(.SD), .SDcols = c("rank_EFdist", "rank_EFnes", "rank_EFto")]
-# #
-```
-
