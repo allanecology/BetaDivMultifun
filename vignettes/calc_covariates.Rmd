@@ -178,6 +178,15 @@ geodist <- geodist[, c("Longitude_Dec_Plotcenter", "Latitude_Dec_Plotcenter")]
 rm(plot.names)
 ```
 
+# additional
+```{r}
+#TODO HERE
+# see script "include_new_variables.Rmd"
+```
+
+
+
+
 # combine to predictors
 combine covariates to a predictor dataset
 ```{r, eval=F}
