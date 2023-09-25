@@ -136,8 +136,10 @@ nrow(edis_glsoil) == choose(127, 2)
 saveRDS(edis_glsoil, "predictors_soil.rds")
 ```
 
-# Plot isolation
-```{r}
+# Non-soil predictors
+
+## DEPRECATED Plot isolation
+```{r, eval = F}
 plt.sur <- unique(plt.sur) #for some areas each row has two values
 plt.sur <- plt.sur[,c("EP_PLOTID","G500")]
 data.table::setnames(plt.sur, "EP_PLOTID", "Plot")
@@ -146,14 +148,33 @@ plt.sur[, PLAND_G_500 := 100 - (G500 *100)] # change so more isolated plots have
 plt.sur[, G500 := NULL] ; plt.sur[, Plot := NULL] # remove unused columns
 # select plot set
 plt.sur <- plt.sur[Plotn %in% plotNAset,]
-plt.sur <- as.data.frame(plt.sur)# convert to datatable for analysis
+plt.sur <- as.data.frame(plt.sur)# convert to dataframe for analysis
 rownames(plt.sur) <- plt.sur[["Plotn"]]
 plt.sur <- plt.sur["PLAND_G_500"]
 colnames(plt.sur) <- "plot_isolation"
 # in old code, plt.sur is now as column in a variable called "predictors for GDM preparation"
 ```
 
-# geographic distance
+## historic and landscape LUI
+
+- historic LUI : measure of historic land-use in 1 km radius around the plot
+- landscape LUI : % arable land in 1 km radius around the plot. (is more suitable than plot isolation which was used in earlier versions). 
+- landscape diversity : number of differnt types and abundances of land-use types. Decide if landscape diversity is taken for analysis.
+```{r}
+#TODO decide if landscape diversity yes or no
+landscape <- data.table(BEplotZeros(landscape, column = "EP_PlotID", plotnam = "EP"))
+setnames(landscape, old = c("EP_PlotID", "EP"), new = c("oldEP", "Plotn"))
+landscape <- landscape[, .(Plotn, Grassland.perm.1000, Arable.1000, Shannon.1000)]
+landscape <- landscape[Plotn %in% plotNAset, ]
+
+# convert to data.frame
+data.table::setkey(landscape, Plotn)
+landscape <- data.frame(landscape)
+rownames(landscape) <- landscape$Plotn
+landscape <- landscape[, c("Grassland.perm.1000", "Arable.1000", "Shannon.1000")]
+```
+
+## geographic distance
 ```{r}
 plot.names <- names_gl[Landuse == "G", .(EP_PlotID, PlotID)]
 data.table::setnames(plot.names, old = "EP_PlotID", new = "Plot")
@@ -178,22 +199,15 @@ geodist <- geodist[, c("Longitude_Dec_Plotcenter", "Latitude_Dec_Plotcenter")]
 rm(plot.names)
 ```
 
-# additional
-```{r}
-#TODO HERE
-# see script "include_new_variables.Rmd"
-```
 
+## save as predictors
 
-
-
-# combine to predictors
 combine covariates to a predictor dataset
 ```{r, eval=F}
-predictors <- merge(plt.sur, geodist, by = "row.names")
+predictors <- merge(landscape, geodist, by = "row.names")
 colnames(predictors)[1] <- "Plotn"
 
 saveRDS(predictors, file = "predictors.rds")
 
-rm(edis_glsoil); rm(plt.sur); rm(geodist)
+rm(edis_glsoil); rm(landscape); rm(geodist)
 ```

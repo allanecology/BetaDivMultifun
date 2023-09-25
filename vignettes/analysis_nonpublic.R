@@ -72,6 +72,7 @@ if("assemble_covariates" %in% sections_to_be_loaded){
   names_gl <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/20826_plotNames.txt", sep=""))
   plt.sur <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/18148_landscape.txt", sep=""))
   geodist <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/20907.txt", sep=""))
+  landscape <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/31018_5_Dataset/31018_5_data.csv", sep=""))
 }
 
 if("assemble_functions" %in% sections_to_be_loaded){
