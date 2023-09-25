@@ -1,0 +1,234 @@
+---
+title: "Assess landscape variables"
+author: "N. V. Schenk"
+date: "2023-09-22"
+output: html_document
+---
+
+Requirements
+```{r}
+library(corrplot)
+```
+
+
+add to analysis_nonpublic.R
+```{r}
+landscape <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/31018_5_Dataset/31018_5_data.csv", sep=""))
+landscape <- data.table(BEplotZeros(landscape, column = "EP_PlotID", plotnam = "EP"))
+setnames(landscape, old = c("EP_PlotID", "EP"), new = c("oldEP", "Plotn"))
+
+landscape2 <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/LandUse-31319_31369/LandUse/LandscapeMetrics_acrossYears_acrossScales_Long_UpdatedOct22.csv", sep=""))
+landscape2 <- data.table(BEplotZeros(landscape2, column = "plot_id", plotnam = "EP"))
+landscape2[, plot_id := NULL]
+setnames(landscape2, old = c("EP"), new = c("Plotn"))
+landscape2_long <- landscape2
+
+landscape2[, (c("Land.te", "Land.pr")) := lapply(.SD, FUN = as.numeric), .SDcols = c("Land.te", "Land.pr")]
+landscape2 <- melt(landscape2, id.vars = c("Plotn", "Year", "scale"))
+landscape2 <- dcast(landscape2, Plotn ~ variable + Year + scale, value.var = "value", fill = NA)
+```
+
+
+# Include new variables
+
+- Landscape LUI : 
+  - temporal LUI : delta LUI
+  - local LUI : LUI
+  - landscape LUI : to be done
+  - historic LUI : permanency
+
+1 km radius whenever possible. Sensitivity with other radii.
+
+
+# landscape LUI
+
+Various measures possible. Use PCA to determine.
+
+- landscape LUI (2008 measures) : 
+    - variables included in landscape-LUI index from BEF-Up ID 31018 and https://doi.org/10.1038/s41467-021-23931-1
+       - land-cover diversity
+       - forest cover and forest cover diversity (exclucde, as we do not use forest data)
+         maybe still include, because main source of colonisers?
+       - grassland cover
+       - grassland cover diversity
+    - annual crop cover [%]
+- landscape composition (compositional diversity) : shannon diversity "Land.shdi"
+- landscape connectivity : e.g. edge density "Land.te", the mean-euclidian nearest neighbor distance (which might work better than cohesion), or patchiness. --> use edge density because it's a measure for connectivity and includese some configuration aspect.
+
+
+## Years correlate?
+**Question 1 : Do the years correlate? Use Landscape configuration measures if yes.**
+
+If yes : we can use earlier years.
+```{r}
+# landscape2_long[, .(Plotn, Year, scale, Land.shdi, Land.te)]
+ylandscape2 <- landscape2[, .( 
+               Land.shdi_2012_1000, Land.shdi_2015_1000, Land.shdi_2018_1000, 
+               Land.te_2012_1000, Land.te_2015_1000, Land.te_2018_1000)]
+m <- cor(ylandscape2, method = "spearman")
+par(mfrow = c(1, 2))
+corrplot(m, diag = F, order = "hclust", type = "lower")
+corrplot(m, diag = F, order = "hclust", type = "lower", method = "number")
+dev.off()
+
+test <- merge(landscape2[, .(Plotn, Land.shdi_2012_1000)],
+              landscape[, .(Plotn, Shannon.1000)])
+plot(test$Land.shdi_2012_1000, test$Shannon.1000) # correlation of 2008 and 2012 measure
+rm(test)
+```
+Years strongly correlate. Decide for a year. The earlier the better, because some response variables were measured more recently. LUI is included from 2006 - 2016.
+
+Use from 2012.
+
+## Radii correlate?
+```{r}
+ylandscape2 <- landscape2[, .( 
+               Land.shdi_2012_500, Land.shdi_2012_1000, Land.shdi_2012_1500, Land.shdi_2012_2000, 
+               Land.te_2012_500, Land.te_2012_1000, Land.te_2012_1500, Land.te_2018_2000)]
+m <- cor(ylandscape2, method = "spearman")
+par(mfrow = c(1, 2))
+corrplot(m, diag = F, order = "hclust", type = "lower")
+corrplot(m, diag = F, order = "hclust", type = "lower", method = "number")
+dev.off()
+```
+All positively correlate, between 0.45 and 0.95. larger radii cluster. 500m radius clusters rather across measures than across radii. Use 1000m based on ecological thinking rather than based on mathematical necessity. Will run sensitivity analysis.
+
+
+## PCA of landscape measures
+
+Idea : Find 2-3 measures to include, representative of most important axes. Hypothesis : use grassland permanency, as well as a measure of "landscape LUI".
+
+```{r}
+plandscape2 <- landscape2[, .(Plotn, Land.te_2012_1000)]
+plandscape <- landscape[, .(Plotn, Shannon.1000, Arable.1000, Forest.1000, Grassland.perm.1000,
+                            Grassland.1000)]
+plandscape <- merge(plandscape2, plandscape, by = "Plotn")
+rm(plandscape2)
+
+# Plot information is taken as rownames of a data.frame (instead of data.table).
+plandscape_rownames <- plandscape$Plotn
+plandscape <- as.data.frame(plandscape[, !"Plotn", with=FALSE])
+rownames(plandscape) <- plandscape_rownames
+rm(plandscape_rownames)
+
+# run the pca
+pca_landscape <- prcomp(plandscape, scale = T)
+
+plot_grid(plotlist = list(ggplot(data.frame(PCs = paste0("PC", seq(1, 6)), var = (pca_landscape$sdev)^2), 
+       aes(x = PCs, y = var)) + geom_bar(stat = "identity"),
+       autoplot(pca_landscape, x = 1, y = 2, loadings = T, loadings.label = T),
+       autoplot(pca_landscape, x = 2, y = 3, loadings = T, loadings.label = T),
+       autoplot(pca_landscape, x = 3, y = 4, loadings = T, loadings.label = T)
+), nrow = 2)
+# saved as "include_new_variables_landscape_pca_1000m.pdf"
+```
+grassland cover vs. grassland cover diversity
+
+
+### Sensitivity on other radius: 2 km
+
+the choice of measures should not depend (too much) on the chosen radius.
+```{r}
+# # # # #
+# 2 km
+# # # # #
+plandscape2 <- landscape2[, .(Plotn, Land.te_2012_2000)]
+plandscape <- landscape[, .(Plotn, Shannon.2000, Arable.2000, Forest.2000, Grassland.perm.2000,
+                            Grassland.2000)]
+plandscape <- merge(plandscape2, plandscape, by = "Plotn")
+rm(plandscape2)
+
+# Plot information is taken as rownames of a data.frame (instead of data.table).
+plandscape_rownames <- plandscape$Plotn
+plandscape <- as.data.frame(plandscape[, !"Plotn", with=FALSE])
+rownames(plandscape) <- plandscape_rownames
+rm(plandscape_rownames)
+
+# run the pca
+pca_landscape <- prcomp(plandscape, scale = T)
+
+plot_grid(plotlist = list(ggplot(data.frame(PCs = paste0("PC", seq(1, 6)), var = (pca_landscape$sdev)^2), 
+       aes(x = PCs, y = var)) + geom_bar(stat = "identity"),
+       autoplot(pca_landscape, x = 1, y = 2, loadings = T, loadings.label = T),
+       autoplot(pca_landscape, x = 2, y = 3, loadings = T, loadings.label = T),
+       autoplot(pca_landscape, x = 3, y = 4, loadings = T, loadings.label = T)
+), nrow = 2)
+# saved as : include_new_variables_landscape_pca_2000m.pdf
+
+
+# # # # #
+# 500 m
+# # # # #
+plandscape2 <- landscape2[, .(Plotn, Land.te_2012_500)]
+plandscape <- landscape[, .(Plotn, Shannon.500, Arable.500, Forest.500, Grassland.perm.500,
+                            Grassland.500)]
+plandscape <- merge(plandscape2, plandscape, by = "Plotn")
+rm(plandscape2)
+
+# Plot information is taken as rownames of a data.frame (instead of data.table).
+plandscape_rownames <- plandscape$Plotn
+plandscape <- as.data.frame(plandscape[, !"Plotn", with=FALSE])
+rownames(plandscape) <- plandscape_rownames
+rm(plandscape_rownames)
+
+# run the pca
+pca_landscape <- prcomp(plandscape, scale = T)
+
+plot_grid(plotlist = list(ggplot(data.frame(PCs = paste0("PC", seq(1, 6)), var = (pca_landscape$sdev)^2), 
+       aes(x = PCs, y = var)) + geom_bar(stat = "identity"),
+       autoplot(pca_landscape, x = 1, y = 2, loadings = T, loadings.label = T),
+       autoplot(pca_landscape, x = 2, y = 3, loadings = T, loadings.label = T),
+       autoplot(pca_landscape, x = 3, y = 4, loadings = T, loadings.label = T)
+), nrow = 2)
+# saved as : include_new_variables_landscape_pca_500m.pdf
+
+
+# # # # #
+# all radii
+# # # # #
+plandscape2 <- landscape2[, .(Plotn, Land.te_2012_500, Land.te_2012_1000, Land.te_2012_2000)]
+plandscape <- landscape[, .(Plotn, Shannon.500, Shannon.1000, Shannon.2000, Arable.500, Arable.1000,
+                            Arable.2000, Forest.500, Forest.1000, Forest.2000,
+                            Grassland.500, Grassland.1000, Grassland.2000)]
+plandscape <- merge(plandscape2, plandscape, by = "Plotn")
+rm(plandscape2)
+
+# Plot information is taken as rownames of a data.frame (instead of data.table).
+plandscape_rownames <- plandscape$Plotn
+plandscape <- as.data.frame(plandscape[, !"Plotn", with=FALSE])
+rownames(plandscape) <- plandscape_rownames
+rm(plandscape_rownames)
+
+# run the pca
+pca_landscape <- prcomp(plandscape, scale = T)
+
+plot_grid(plotlist = list(
+  ggplot(data.frame(PCs = factor(paste0("PC", seq(1, length((pca_landscape$sdev)))), levels = paste0("PC", seq(1, length((pca_landscape$sdev))))),
+                    var = (pca_landscape$sdev)^2), 
+       aes(x = PCs, y = var)) + geom_bar(stat = "identity"),
+       autoplot(pca_landscape, x = 1, y = 2, loadings = T, loadings.label = T),
+       autoplot(pca_landscape, x = 2, y = 3, loadings = T, loadings.label = T),
+       autoplot(pca_landscape, x = 3, y = 4, loadings = T, loadings.label = T)
+), nrow = 2)
+# saved as : include_new_variables_landscape_pca_500_to_2000m.pdf
+```
+Sensitivity : not perfectly the same, but main directions. Arable vs. Land.te/ Shannon.
+
+
+# Including variables
+
+## Historic LUI: Grassland perm 1000
+
+will be included. PCA corroborated idea that historic land-use explains other dimension than present land-use.
+
+```{r}
+histLUI <- landscape[, .(Plotn, Grassland.perm.1000)]
+```
+
+## Arable or Shannon/Land.te
+
+We know from study https://doi.org/10.1038/s41467-021-23931-1 that % arable land is correlated with landscape LUI.
+
+Diversity of landscape use and total edge are correlated. Makes sense because the more diverse land-uses are present in a landscape, the more edges we can observe. Is not completely the same tough: total edge measures landcape fragmentation, the diversity measures the number and abundance of land-uses at the lanscape scale.
+
+
