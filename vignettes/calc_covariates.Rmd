@@ -78,9 +78,7 @@ plot_grid(plotlist = pcaplots2, nrow = 2)
 # save plots as : "<date>_calc_covariates_soil_pca1.pdf"
 rm(temp); rm(pcaplots); rm(pcaplots2)
 ```
-Take all axis until 90% cumulative variance explained.
-
-We follow the philosophy that a PCaxis is useful, when it explains more variance than original variables. This can be done by picking all PC axes that explain more variance than original functions, i.e. all those axes which explain more than 1/n % `1/11*100` % of variance, in which n is the number of input variables.
+Take all axis until 90% cumulative variance explained : first 7 axes.
 
 ```{r}
 summary(pca_from_glsoil) # take axes 1 - 7
