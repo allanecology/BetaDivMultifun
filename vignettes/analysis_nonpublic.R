@@ -69,10 +69,12 @@ if("assemble_covariates" %in% sections_to_be_loaded){
   # COVARIATES
   small_glsoil <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/BE env covariates.txt", sep=""))
   main_glsoil <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/Grassland EP soil descriptors.txt", sep=""))
+  glsoil <- fread(paste0(pathtodata, "/data_assembly/output_data/intermediate_glsoil.csv"))
   names_gl <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/20826_plotNames.txt", sep=""))
   plt.sur <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/18148_landscape.txt", sep=""))
   geodist <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/20907.txt", sep=""))
   landscape <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/31018_5_Dataset/31018_5_data.csv", sep=""))
+  landscape2 <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/LandUse-31319_31369/LandUse/LandscapeMetrics_acrossYears_acrossScales_Long_UpdatedOct22.csv", sep=""))
 }
 
 if("assemble_functions" %in% sections_to_be_loaded){
