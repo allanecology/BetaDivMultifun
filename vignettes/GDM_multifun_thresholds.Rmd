@@ -827,8 +827,9 @@ EFturnover_WEIGHTED_mean, EFnestedness_WEIGHTED_mean.
 
 ## Biotic predictors
 
+### DEPREC Avg across 2 main
 Average across 2 main models. (remember the 2 main models are weighted averages of all models)
-```{r}
+```{r, eval = F}
 ispline_uncertainty_all_thresholds <- fread(file = paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg_plotdata.csv"))
 # reduce to max values
 restab <- ispline_uncertainty_all_thresholds[value_ID == 8350, ]
@@ -866,9 +867,8 @@ p
 # saved as : "GDM_multifun_thresholds_synthesis_biotic_ranks.pdf" A5 landscape
 ```
 
-
 Weighted averages of two main models.
-```{r}
+```{r, eval = F}
 ispline_uncertainty_all_thresholds <- fread(file = paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg_plotdata.csv"))
 # reduce to max values
 restab <- ispline_uncertainty_all_thresholds[value_ID == 8350, ]
@@ -915,6 +915,7 @@ pw <- ggplot(data = restab, aes(x = legendnames, y = avg_across_models, fill = c
 pw
 ```
 
+### Average ranks
 Average ranks
 ```{r}
 ispline_uncertainty_all_thresholds <- fread(file = paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg_plotdata.csv"))
@@ -956,7 +957,8 @@ pr
 Compare different synthesis plots
 ```{r}
 plot_grid(p, pw, pr, ncol = 3)
-#TODO HERE : discuuss: makes a huge difference if weighted by sd or not!
-# Do I even have to weight again? Go through that carefully.
-#TODO do this later
 ```
+
+### Decision notes
+
+If average, weighted average or average ranks are taken makes a big difference. We go with average ranks, because : average ranks give a similar weight to all effects, while averaging effect size (both weighted and unweighted) give more weight to very large effects. For the synthesis plot, we want to know if some groups continuously have a considerable effect.
