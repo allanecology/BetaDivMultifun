@@ -5,6 +5,8 @@ date: "2023-09-22"
 output: html_document
 ---
 
+Aim : assessing landscape variables and find appropriate variables to be included in analysis.
+
 Requirements
 ```{r}
 library(corrplot)
@@ -214,6 +216,32 @@ plot_grid(plotlist = list(
 ```
 Sensitivity : not perfectly the same, but main directions. Arable vs. Land.te/ Shannon.
 
+## Lanscape covariate
+
+Shannon diversity and edge density. Landscape diversity and landscape configuration. Measures are correlated.
+```{r}
+plandscape2 <- landscape2[, .(Plotn, Land.te_2012_1000)]
+plandscape <- landscape[, .(Plotn, Shannon.1000)]
+plandscape <- merge(plandscape2, plandscape, by = "Plotn")
+rm(plandscape2)
+
+plot(plandscape$Land.te_2012_1000, plandscape$Shannon.1000)
+
+# Plot information is taken as rownames of a data.frame (instead of data.table).
+plandscape_rownames <- plandscape$Plotn
+plandscape <- as.data.frame(plandscape[, !"Plotn", with=FALSE])
+rownames(plandscape) <- plandscape_rownames
+rm(plandscape_rownames)
+
+# run the pca
+pca_landscape <- prcomp(plandscape, scale = T)
+ggplot(data.frame(PCs = paste0("PC", seq(1, 2)), var = (pca_landscape$sdev)^2), 
+       aes(x = PCs, y = var)) + geom_bar(stat = "identity")
+autoplot(pca_landscape, x = 1, y = 2, loadings = T, loadings.label = T)
+```
+
+Higher distance means that the landscape around the plots is very differently structured, in terms of how many different land uses are there, and how large the patches are. E.g. high diversity would indicate many different land uses. High total edges would indicate that there are many small patches (because many small patches have more edges than few large patches).
+
 
 # Including variables
 
@@ -225,10 +253,31 @@ will be included. PCA corroborated idea that historic land-use explains other di
 histLUI <- landscape[, .(Plotn, Grassland.perm.1000)]
 ```
 
-## Arable or Shannon/Land.te
+## Landscape LUI : % Arable around plot
 
-We know from study https://doi.org/10.1038/s41467-021-23931-1 that % arable land is correlated with landscape LUI.
+We know from study https://doi.org/10.1038/s41467-021-23931-1 that % arable land is correlated with landscape LUI. The measure is treated as "lanscape LUI" there.
 
-Diversity of landscape use and total edge are correlated. Makes sense because the more diverse land-uses are present in a landscape, the more edges we can observe. Is not completely the same tough: total edge measures landcape fragmentation, the diversity measures the number and abundance of land-uses at the lanscape scale.
+## Lansdcape covariates
 
+- Shannon diversity
+- total edges
 
+Diversity of landscape use and total edge are correlated. Makes sense because the more diverse land-uses are present in a landscape, the more edges we can observe. Is not completely the same tough: total edge measures landscape fragmentation, the diversity measures the number and abundance of land-uses at the landscape scale.
+
+If we take them separately, we can interpret separately. Higher edges means smaller patches. But actually some of the functions (e.g. Groundwater recharge) need more space --> better if fragementation is not too high. And some functions might profit from a diverse surrounding in terms of habitat, or not.
+
+We take as separate covariates, because we don't only want to correct for them, but even might interpret their effects.
+
+## Check local correlations
+
+```{r}
+plandscape2 <- landscape2[, .(Plotn, Land.te_2012_1000)]
+plandscape <- landscape[, .(Plotn, Grassland.perm.1000, Arable.1000, Shannon.1000)]
+plandscape <- merge(plandscape2, plandscape, by = "Plotn")
+rm(plandscape2)
+
+m <- cor(plandscape[, -1], method = "spearman")
+corrplot(m, diag = F, order = "hclust", type = "lower")
+corrplot(m, diag = F, order = "hclust", type = "lower", method = "number")
+```
+OK to include them in a model together (from a local perspective). Will be checked again at distance level.
