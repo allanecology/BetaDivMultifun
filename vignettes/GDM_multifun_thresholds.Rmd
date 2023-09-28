@@ -391,6 +391,13 @@ ispline_uncertainty_all_thresholds[, se := sd / sqrt(SDn)]
 # fwrite(ispline_uncertainty_all_thresholds, file = paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg.csv"))
 ```
 
+Smoothing
+```{r}
+#TODO smooth lines along line plot. Some have "ecken". Do same for sd!
+```
+
+
+
 # Plotting
 ```{r}
 # ispline_uncertainty_all_thresholds <- readRDS(paste0(pathtodata, "/analysis/output_datasets/uncertainty_calc/allmod_LUI_uncertainty_weighted_avg.Rds"))
