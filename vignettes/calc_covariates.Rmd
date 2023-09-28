@@ -10,6 +10,7 @@ output: html_document
 
 Depends on `clean_and_load_soil_covariates.Rmd` and `analysis_nonpublic.R`.
 ```{r}
+# run clean_and_load_soil_covariates.Rmd
 sections_to_be_loaded <- c("assemble_covariates")
 source("vignettes/analysis_nonpublic.R")
 ```
@@ -23,6 +24,7 @@ soilcov <- data.table::copy(glsoil)
 
 
 ## Normalisation
+
 scale the columns which are neither binary nor factors. Scaled by centering around 0 (substracting the mean) and dividing by standard deviation.
 ```{r}
 # take out soil type as this is converted to dummy variables
@@ -30,10 +32,8 @@ soilcov[, Soil.type := NULL]
 # create scaling vector T/F of which columns to scale in pcr
 scalecols <- c("Clay", "Fine.Silt", "Medium.Silt", "Coarse.Silt", "Fine.Sand", "Medium.Sand", "Coarse.Sand", "pH", "Soil.depth", "TWI")
 soilcov[, (scalecols) := lapply(.SD, function(x) scale(x, center = T)), .SDcols = scalecols]
-```
+# note : Could be done within PCA computation with parameter `scale = TRUE`.
 
-Could be done within PCA computation with parameter `scale = TRUE`.
-```{r}
 mysubset <- names(soilcov)[!names(soilcov) %in% c("Plotn", "Soil.type")]
 ```
 *note* : The binary categoric columns are not affected by this.
@@ -51,6 +51,8 @@ points(soilcov$Fahlerde)
 
 
 ## soil PCA
+
+From 11 variables, 1 of those (soil type) is split into 9 variables --> 19 columns.
 ```{r}
 # Plot information is taken as rownames of a data.frame (instead of data.table).
 pc_glsoil <- as.data.frame(soilcov[, !"Plotn", with=FALSE])
@@ -76,12 +78,12 @@ plot_grid(plotlist = pcaplots2, nrow = 2)
 # save plots as : "<date>_calc_covariates_soil_pca1.pdf"
 rm(temp); rm(pcaplots); rm(pcaplots2)
 ```
-The first 4 axis would make sense if the dimensionality would need to be reduced a lot. 
+Take all axis until 90% cumulative variance explained.
 
-However, here it is not that much about reducing dimensionality, but taking out unnecessary variables. Therefore, Taking PC1 to 14 is suitable, as PC 15 to 19 do not add any more information.
+We follow the philosophy that a PCaxis is useful, when it explains more variance than original variables. This can be done by picking all PC axes that explain more variance than original functions, i.e. all those axes which explain more than 1/n % `1/11*100` % of variance, in which n is the number of input variables.
+
 ```{r}
-# first 4 axis would make sense
-summary(pca_from_glsoil)
+summary(pca_from_glsoil) # take axes 1 - 7
 ```
 
 ### PCA insights
@@ -89,19 +91,15 @@ summary(pca_from_glsoil)
 # color by soil type
 ggplot2::autoplot(pca_from_glsoil, data = pc_glsoil, colour = 'TWI')
 ggplot2::autoplot(pca_from_glsoil, data = pc_glsoil, colour = 'Soil.depth')
-
 ggplot2::autoplot(pca_from_glsoil, data = pc_glsoil, loadings = TRUE, loadings.colour = 'darkgray', loadings.label = TRUE, loadings.label.size = 2)
-```
-
-```{r, eval=F}
 ggplot2::autoplot(pca_from_glsoil, x=3, y=4, data=pc_glsoil, colour="TWI")
 ggplot2::autoplot(pca_from_glsoil, x=3, y=4, data=pc_glsoil, colour="pH")
 ```
 
 ### Component selection
-Components 1 to 14 (as argued above).
+Components 1 to 7 (as argued above).
 ```{r}
-pca_from_glsoil <- pca_from_glsoil$x[, 1:14]
+pca_from_glsoil <- pca_from_glsoil$x[, 1:7]
 ```
 
 ## Computation of Dissimilarity Matrices
@@ -155,24 +153,35 @@ colnames(plt.sur) <- "plot_isolation"
 # in old code, plt.sur is now as column in a variable called "predictors for GDM preparation"
 ```
 
-## historic and landscape LUI
+## historic/ landscape LUI and landscape covariates
 
-- historic LUI : measure of historic land-use in 1 km radius around the plot
-- landscape LUI : % arable land in 1 km radius around the plot. (is more suitable than plot isolation which was used in earlier versions). 
-- landscape diversity : number of differnt types and abundances of land-use types. Decide if landscape diversity is taken for analysis.
+- historic LUI : Grassland permanency. Measure of historic land-use in 1 km radius around the plot. Is the ratio of the mean grassland cover from 1820/50 to 2008 to the standard deviation over that period. $\frac{\text{mean grl cover y}_i}{\text{stdev grl cover y}_i} $ High permanency : high grassland cover over time which did not fluctuate. Means that the plot has been used since a long time. (Maybe extinction debt already paid)
+- landscape LUI : % arable land in 1 km radius around the plot. (is more suitable than plot isolation which was used in earlier versions). High values indicate more of the surrounding area is arable land --> hypothetically less suitable habitat around.
+- landscape diversity : number of different types and abundances of land-use types. High values indicate a lot of different land-uses around the plots.
+- Landscape fragmentation : total edges. High values indicate high fragmentation.
+
 ```{r}
-#TODO decide if landscape diversity yes or no
 landscape <- data.table(BEplotZeros(landscape, column = "EP_PlotID", plotnam = "EP"))
 setnames(landscape, old = c("EP_PlotID", "EP"), new = c("oldEP", "Plotn"))
 landscape <- landscape[, .(Plotn, Grassland.perm.1000, Arable.1000, Shannon.1000)]
 landscape <- landscape[Plotn %in% plotNAset, ]
 
+landscape2 <- data.table(BEplotZeros(landscape2, column = "plot_id", plotnam = "EP"))
+landscape2[, plot_id := NULL]
+setnames(landscape2, old = c("EP"), new = c("Plotn"))
+landscape2 <- landscape2[Year == 2012 & scale == 1000, .(Plotn, Land.te)]
+setnames(landscape2, old = "Land.te", new = "Land.te.1000")
+
+landscape <- merge(landscape, landscape2, by = "Plotn")
+rm(landscape2)
+
 # convert to data.frame
 data.table::setkey(landscape, Plotn)
 landscape <- data.frame(landscape)
 rownames(landscape) <- landscape$Plotn
-landscape <- landscape[, c("Grassland.perm.1000", "Arable.1000", "Shannon.1000")]
+landscape <- landscape[, c("Grassland.perm.1000", "Arable.1000", "Shannon.1000", "Land.te.1000")]
 ```
+
 
 ## geographic distance
 ```{r}
@@ -203,7 +212,7 @@ rm(plot.names)
 ## save as predictors
 
 combine covariates to a predictor dataset
-```{r, eval=F}
+```{r, eval=T}
 predictors <- merge(landscape, geodist, by = "row.names")
 colnames(predictors)[1] <- "Plotn"
 

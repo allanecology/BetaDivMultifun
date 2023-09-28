@@ -7,7 +7,7 @@ output: html_document
 requires `analysis_nonpublic.R` to load soil covariates `small_glsoil`, `main_glsoil`, `names_gl`, `plt.sur`, `geodist`.
 ```{r}
 sections_to_be_loaded <- c("assemble_covariates")
-source("analysis_nonpublic.R")
+source("vignettes/analysis_nonpublic.R")
 ```
 
 
@@ -52,12 +52,8 @@ glsoil <- glsoil[Plotn %in% plotNAset ,]
 ```
 
 ## Create binary data from Soil.type
-Because PCA can not fit categorical data which have > 2 categories. 
 
-This probably adds some overlaping information with the amount of sand, clay etc. But this does not matter, as selecting the PCA components will take this extra information out again.
-
-*This is a "human" classification, not a "pure physical". Based on which informations? Do we add some "false" information with that, which is then left in the data as only the overlapping information is "removed" in the PCA?*
-TODO
+Because PCA can not fit categorical data which have > 2 categories. This probably adds some overlapping information with the amount of sand, clay etc. But this does not matter, as selecting the PCA components will take this extra information out again.
 
 ```{r}
 stype <- glsoil[, .(Plotn, Soil.type)]
@@ -76,3 +72,6 @@ glsoil <- merge(glsoil, stype, by="Plotn", all=T)
 rm(stype)
 ```
 
+```{r}
+fwrite(glsoil, "vignettes/out/intermediate_glsoil.csv") # saved in data_assembly/output_data/
+```
