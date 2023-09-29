@@ -26,6 +26,8 @@ Requires access to the Plant Ecology Group (Fischer) drive "planteco" at the IPS
 
 ## Prepare data
 ```{r}
+ksource("vignettes/clean_and_load_soil_covariates.Rmd")
+ksource("vignettes/calc_covariates.Rmd")
 #TODO add early scripts
 ```
 
@@ -110,10 +112,4 @@ ksource("vignettes/GDM_multifun_thresholds.Rmd") # calcluate models and generate
 # could be added : a script plotting barplots with se
 ```
 
-
-### Synthesis plots
-
-```{r}
-
-```
 
