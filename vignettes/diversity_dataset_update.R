@@ -1,31 +1,17 @@
----
-title: "add_bio_data"
-author: "N. V. Schenk"
-date: "2023-09-27"
-output: html_document
----
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+# Aim : adding temporal arthropods dataset and AMF dataset to the diversity dataset.
+# Goal : clean this, and source script from analysis_nonpublic.R as part of dataset assembly
+# 
+# This script is called from calc_betadiversitites.Rmd.
+# 
+# Data to add arthropod temporal dataset (not in BExis!)
+# 21969_4_data.txt
+# Temporal_arth_trophicGroups_withNAs.csv
+# 26008_2_data.txt
 
-Aim : adding temporal arthropods dataset and AMF dataset to the diversity dataset.
-Goal : clean this, and source script from analysis_nonpublic.R as part of dataset assembly
-
-Data to add arthropod temporal dataset (not in BExis!)
-21969_4_data.txt
-Temporal_arth_trophicGroups_withNAs.csv
-26008_2_data.txt
-
-
-## temporal arthropod data
-
-Script is here: https://github.com/biodiversity-exploratories-synthesis/Synthesis_dataset_diversity_grassland/blob/master/Add_temporal_arthropods_to_Synthesis.R
-
-```{r}
 # # # # # # # # # # # # # # # # # # # # 
 #
-# Add ARTHROPOD TEMPORAL data
+# Add ARTHROPOD TEMPORAL data          ----
 #
 # # # # # # # # # # # # # # # # # # # # 
 
@@ -44,13 +30,14 @@ fg.class <- spinfo
 ## change column name "value" to "Abundance"
 names(allspecies)[names(allspecies)=="value"] <- "Abundance"
 
-## drop Plot_bexis and dataID dataversion columns
-allsp2 <- allspecies[,-c(1,7,8)]
+## edit : drop Plot_bexis column (not DataID and Dataversion)
+allsp2 <- allspecies[,-c(1)]
 
 ## merge the datafiles
 allsp2 <- merge(allsp2, fg.class, by ="Species")
 
-######## add temporal arthropods ##########################################################################
+# # # # # # # # # # # # # # # # # # # # 
+# add temporal arthropods 
 arthro$Species <- gsub(" ","_",arthro$Species)
 ##trophic group information has NAs if not at species level, unless no other species of the genus are there (those have NA in fun_group_fine)
 arth_tr <- arth_tr[!is.na(Trophic_level)]
@@ -101,10 +88,9 @@ arthro3 <- data.table(BEplotZeros(arthro3, "PlotID", plotnam = "Plot"))
 arthro3$PlotID <- NULL
 arthro3$Suborder <- NULL
 setnames(arthro3, c("Order", "value", "CollectionYear"), c("Group_broad", "Abundance", "Year"))
-# add dataset and version info
+# edit : add dataset and version info
 arthro3[, DataID := 21969]
 arthro3[, Dataversion := 4]
-#TODO HERE do I need DAtaID and version? Noelle added it.
 
 #homogenise trophic group names
 sort(unique(allsp2$Trophic_level))
@@ -125,35 +111,29 @@ rm(arthro, arthro2, arthro3, arth_tr, arth_remove)
 # allsp2 is a dataset containing all previous data, as well as the arthropod data. Column names
 #    do not correspond to spdiv.
 # add data ID information
-#####################################################################################################
-```
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 
 
 
-Data to add AMF dataset is in folder AMF2023
-Script here: https://github.com/biodiversity-exploratories-synthesis/Synthesis_dataset_diversity_grassland/blob/master/Next_Update.R
-```{r}
 # # # # # # # # # # # # # # # # # # # # 
 #
-# Add AMF data
+# Add AMF data                        ----
 #
 # # # # # # # # # # # # # # # # # # # # 
-
 
 # This script collects all things to do during the next update of the dataset
 # Script by: Caterina Penone
 # minor edits by Noëlle Schenk
+# Data to add AMF dataset is in folder AMF2023
+#    script analysis_nonpublic.R reads the datasets
+# Script here: https://github.com/biodiversity-exploratories-synthesis/Synthesis_dataset_diversity_grassland/blob/master/Next_Update.R
 
 setnames(allsp2, old = "Abundance", new = "value")
 
 
 #############Replace symbionts with proper AMF datasets ##########################
-#adapt code from here (this is from BE.RE.analysis.Rproj):
-lt <- fread("N:/Exploratories/Data/GRASSLANDS/AMF2023/27686_3_data.txt") #lookout table
-a11 <- fread("N:/Exploratories/Data/GRASSLANDS/AMF2023/27687_3_data.txt") #2011
-a14 <- fread("N:/Exploratories/Data/GRASSLANDS/AMF2023/27689_3_data.txt") #2014
-a17 <- fread("N:/Exploratories/Data/GRASSLANDS/AMF2023/27691_3_data.txt") #2017
+# note : datasets are read in analysis_nonpublic.R
 
 #stack all years
 a11$Year <- 2011
@@ -182,13 +162,11 @@ amf$Fun_group_fine <- "AMF"
 
 sort(names(allsp2))
 sort(names(amf))
-amf[, c("DataID", "Dataversion", "Plot_bexis") := NULL]
+amf[, c("Plot_bexis") := NULL] # edit : keep DataID and Dataversion
 
 #remove amf measured in soils from synthesis dataset and add speciic AMF
 unique(allsp2[Trophic_level=="symbiont.soilfungi", .(Group_broad, Group_fine, Fun_group_broad, Fun_group_fine)]) #check
 allsp2 <- allsp2[!Fun_group_fine=="AMF"]
-#TODO HERE all ready but the rbindlist not yet done because of dataset ID and version info, see above.
-grl2 <- rbindlist(list(grl2, amf), use.names = T)
-
-```
-
+# combine with all species data
+spdiv <- rbindlist(list(allsp2, amf), use.names = T)
+rm(allsp2, fg.class, lt, amf, allspecies)
