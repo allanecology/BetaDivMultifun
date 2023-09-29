@@ -123,8 +123,23 @@ if("prepared_covariates" %in% sections_to_be_loaded){
 
 if("raw_diversity" %in% sections_to_be_loaded){
   # DIVERSITY
-  spdiv <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/201124_EP_species_diversity_GRL.txt", sep=""))
-  spinfo <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/210112_EP_species_info_GRL.txt", sep=""))
+  #Note 28.9.23 : used updated diversity dataset. (errors were corrected.) Will delete the outdated diversity dataset
+  #TODO delete 2 rows below, AND delete old dataset in rawdata
+  # spdiv <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/201124_EP_species_diversity_GRL.txt", sep=""))
+  # spinfo <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/210112_EP_species_info_GRL.txt", sep=""))
+  spdiv <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/221102_EP_species_diversity_GRL_Patch22.txt", sep=""))
+  spinfo <- data.table::fread(paste(pathtodata, "/data_assembly/raw_data/221102_EP_species_info_GRL_patch22.txt", sep=""))
+  # new arthropod data
+  arthro <- fread(paste0(pathtodata, "/data_assembly/raw_data/21969_4_data.txt")) # temporal arthropod dataset
+  arth_tr <- fread(paste0(pathtodata, "/data_assembly/raw_data/Temporal_arth_trophicGroups_withNAs.csv"))
+  arth_remove <- fread(paste0(pathtodata, "/data_assembly/raw_data/26008_2_data.txt"))
+  # new fungal symbionts data
+  lt <- fread(paste0(pathtodata, "/data_assembly/raw_data/AMF2023/27686_3_data.txt")) #lookout table
+  a11 <- fread(paste0(pathtodata, "/data_assembly/raw_data/AMF2023/27687_3_data.txt")) #2011
+  a14 <- fread(paste0(pathtodata, "/data_assembly/raw_data/AMF2023/27689_3_data.txt")) #2014
+  a17 <- fread(paste0(pathtodata, "/data_assembly/raw_data/AMF2023/27691_3_data.txt")) #2017
+  # run script to add arthropod and AMF data to synthesis dataset
+  source("vignettes/diversity_dataset_update.R")
   names_trlevel <- data.table::fread(paste(pathtodata, "/data_assembly/helper_data/trophic_level_renaming.csv", sep = ""))
 }
 
