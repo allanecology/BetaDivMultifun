@@ -1,20 +1,21 @@
+# # # # # # # # # # # # # # # # # # # # 
+#
+# Add ARTHROPOD TEMPORAL data          ----
+#
+# # # # # # # # # # # # # # # # # # # # 
+# created by Caterina Penone
 
 # Aim : adding temporal arthropods dataset and AMF dataset to the diversity dataset.
-# Goal : clean this, and source script from analysis_nonpublic.R as part of dataset assembly
 # 
-# This script is called from calc_betadiversitites.Rmd.
+# This script is called from calc_betadiversitites.Rmd. It adds the arthropod and fungal
+# data to the current diversity dataset.
 # 
 # Data to add arthropod temporal dataset (not in BExis!)
 # 21969_4_data.txt
 # Temporal_arth_trophicGroups_withNAs.csv
 # 26008_2_data.txt
 
-# # # # # # # # # # # # # # # # # # # # 
-#
-# Add ARTHROPOD TEMPORAL data          ----
-#
-# # # # # # # # # # # # # # # # # # # # 
-
+# original description :
 ## Add temporal arthropods to synthesis dataset
 #This script can be used to add the arthropod temporal dataset to the synthesis dataset
 #Script by Caterina Penone
