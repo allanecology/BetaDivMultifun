@@ -141,6 +141,7 @@ if("raw_diversity" %in% sections_to_be_loaded){
   # run script to add arthropod and AMF data to synthesis dataset
   source("vignettes/diversity_dataset_update.R")
   names_trlevel <- data.table::fread(paste(pathtodata, "/data_assembly/helper_data/trophic_level_renaming.csv", sep = ""))
+  #TODO names_trlevel is currently not used any more --> probably delete
 }
 
 if("betadiversity" %in% sections_to_be_loaded){
