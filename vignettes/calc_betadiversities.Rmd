@@ -62,7 +62,7 @@ exclude <- c("unknown.protist", "unknown.soilfungi", "unknown.acari", "herbivore
 #      have similar role than bacterivores.
 # decomposer.collembola : data from 2019, newer than the newest function (from 2017)
 
-# take out trophic leels which are not used in analsis
+# take out trophic leels which are not used in analysis
 # but are looked at in this script (can be outcommented to reproduce reason of exclusion)
 #TODO potentially uncomment below (Oct 2023)
 exclude <- c(exclude, "omnivore.snail", "omnivore.ant", "omnivore.arthropod", "decomposer.arthropod", "decomposer.acari", "decomposer.myriapod", "carnivore.acari", "protist.bacterivore")
@@ -1339,7 +1339,7 @@ rm(temp_1, temp_2)
 - Keep an eye on Lepidoptera: if the number of plots gets reduced a lot, take out.
 
 use year 2008
-```{r}
+```{r, eval = F}
 pollinator <- pollinator[!Group_broad %in% c("Diptera")]
 pollinator <- pollinator[Year %in% c(2008)]
 
@@ -1350,7 +1350,7 @@ exclude <- test[value == 0, Species]
 pollinator <- pollinator[!Species %in% exclude]
 ```
 
-```{r, eval = T}
+```{r, eval = F}
 testplotpresence_poll <- data.table::dcast(unique(pollinator[, .(Plot, Year, Group_broad)]), Plot ~ Year + Group_broad, value.var = "Plot")
 
 visdat::vis_miss(testplotpresence_poll)
@@ -1359,7 +1359,10 @@ rm(testplotpresence_orthoptera)
 ```
 
 assess number of plots
-```{r}
+```{r, eval = F}
+# Created two datasets, one with lepidoptera and one without, in order to test how many plots we could include.
+# Decided to exclude lepidoptera (see below)
+
 # 134 plots
 lepi_plots <- unique(intersect(intersect(
   unique(pollinator[Group_broad %in% "Coleoptera", Plot]),
@@ -1373,9 +1376,6 @@ nolepi_plots <- unique(intersect(
 
 # 150 plots if we would only use coleoptera
 
-#TODO
-# I make one with lepidoptera and one without --> need to clean later.
-
 pollinator.withlepi <- pollinator[Plot %in% lepi_plots, ]
 pollinator.withoutlepi <- pollinator[Plot %in% nolepi_plots &
                                        Group_broad %in% c("Coleoptera", "Hymenoptera")]
@@ -1384,40 +1384,7 @@ pollinator.withoutlepi <- pollinator[Plot %in% nolepi_plots &
 trlevels <- c(grep("pollinator", trlevels, value = T, invert = T), "pollinator.withlepi", "pollinator.withoutlepi")
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-TODO most probably remove below code, if pollinator data is changed.
-```{r, eval = F}
-bp_overv <- aggregate(value ~ Plot, pollinator, sum)
-barplot(height = bp_overv$value, ylab = "number of pollinator species per plot")
-abline(h = mean(bp_overv$value), col = "red")
-abline(h = median(bp_overv$value), col = "green")
-```
-```{r, eval = F}
-pollinator <- pollinator[!Plot %in% bp_overv$Plot[which(bp_overv$value == 0)]]
-# fill in missing combinations
-pollinator <- data.table::setDT(pollinator)[data.table::CJ(Species=Species,Plot=Plot,unique=T), on=.(Species, Plot)]
-pollinator[is.na(value), value := 0 ]
-length(unique(pollinator$Species))
-nrow(pollinator) == 707 * 144
-# cleaning
-rm(bp_overv)
-```
-144 Plots with 707 species.
-```{r, eval = F}
-spdiv <- spdiv[!Trophic_level == "pollinator.arthropod"]
-```
-
-
+We decide to exclude pollinators. We do not have pollination as ecosystem function, and no hypothesis on how pollinator would affect other functions. There is some evidence that pollinators could affect biomass (at least of seeds and fruits), but this effect is via plants, which we included in the study. (Sources : https://www.sciencedirect.com/science/article/pii/S2468265922000166, https://www.international-climate-initiative.com/legacy/Dokumente/2020/205018_Publication_pollinators_protection.pdf)
 
 
 ## acari REMOVED
