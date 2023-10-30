@@ -33,6 +33,7 @@ From cleaning, getting numbers :
 spdiv <- spdiv[!is.na(value)]
 
 # Set to presence-absence
+spdiv_abund <- spdiv # keep abundance data for later (rarefaction)
 spdiv[value != 0, value := 1] # convert to presence-absence
 ```
 
@@ -65,9 +66,7 @@ exclude <- c("unknown.protist", "unknown.soilfungi", "unknown.acari", "herbivore
 # take out trophic leels which are not used in analysis
 # but are looked at in this script (can be outcommented to reproduce reason of exclusion)
 #TODO potentially uncomment below (Oct 2023)
-exclude <- c(exclude, "omnivore.snail", "omnivore.ant", "omnivore.arthropod", "decomposer.arthropod", "decomposer.acari", "decomposer.myriapod", "carnivore.acari", "protist.bacterivore")
-# keep for moment (Oct 2023)
-c("herbivore.snail", "pollinator.arthropod")
+exclude <- c(exclude, "omnivore.snail", "omnivore.ant", "omnivore.arthropod", "decomposer.acari", "carnivore.acari", "protist.bacterivore", "herbivore.snail", "pollinator.arthropod")
 # pollinator.arthropod : see reason below
 # omnivores : represent interactions between secondary.consumers and herbivores
 # carnivore.acari : only 1 species
@@ -256,7 +255,7 @@ nrow(autotroph) == 150 * 365 + 150 * 119 # TRUE : there are 119 lichen and 365 p
 Dataset IDs : 5522 27386  4140 (all 3 datasets are version 2)
 Years : "2009" "2010" "2011" "2015" "2016" "2017"
 Plots : 150
-```{r}
+```{r, eval = T}
 hist(autotroph$value)
 hist(lichens$value)
 hist(plants$value)
@@ -273,12 +272,13 @@ spdiv <- spdiv[!Trophic_level == "autotroph"]
 
 
 ## herbivore
+
 candidates to include : herbivore.arthropod and herbivore.snail
 *note*: code with `eval=F` is describing the reasons why a specific group of species is excluded or included.
 ```{r}
 herbivore <- spdiv[Trophic_level %in% c("herbivore.arthropod")]
 # note that currently, herbivore.snail is excluded (in head part of script)
-herbivore.snail <- spdiv[Trophic_level %in% c("herbivore.snail")]
+# herbivore.snail <- spdiv[Trophic_level %in% c("herbivore.snail")]
 ```
 first check plot set for arthropods, then check which plots are covered by snail data as well.
 
@@ -335,11 +335,13 @@ rm(temp_1, temp_2)
 |Orthoptera  |2017 |      21|  148|
 
 - exclude years 2014 and 2016 due to missing plots. Arthropod diversity has not been measured the same amount of times if a plot has not been visited.
+- Hymenoptera was only assessed in 1 year, plus many missing plots --> exclude
 - If a species has been present in one of the years, it has been present and potentially contributed to a function. We therefore take is as present.
 - We assess the same years as for plants : "2009", "2008", "2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018"
     - difference to plants : we don't only work with complete years, because there are no complete years. But the missing plots are not the same across years --> we therefore include many years with different missing plots.
 
 ```{r}
+herbivore <- herbivore[!Group_broad %in% "Hymenoptera", ]
 herbivore <- herbivore[!Year %in% c("2014", "2016"), ]
 herbivore <- herbivore[Year %in% c("2009", "2008", "2010", "2011", "2012", "2013", "2015", "2017"), ]
 # find the species in herbivore arthropod which are never present in any of the years
@@ -353,11 +355,10 @@ herbivore <- herbivore[!Species %in% exclude]
 testplotpresence_orthoptera <- data.table::dcast(unique(herbivore[Group_broad == "Orthoptera", .(Plot, Year)]), Plot ~ Year, value.var = "Plot")
 testplotpresence_coleoptera <- data.table::dcast(unique(herbivore[Group_broad == "Coleoptera", .(Plot, Year)]), Plot ~ Year, value.var = "Plot")
 testplotpresence_hemiptera <- data.table::dcast(unique(herbivore[Group_broad == "Hemiptera", .(Plot, Year)]), Plot ~ Year, value.var = "Plot")
-testplotpresence_hymenoptera <- data.table::dcast(unique(herbivore[Group_broad == "Hymenoptera", .(Plot, Year)]), Plot ~ Year, value.var = "Plot")
 
 plot_grid(visdat::vis_miss(testplotpresence_orthoptera), visdat::vis_miss(testplotpresence_coleoptera),
-          visdat::vis_miss(testplotpresence_hemiptera), visdat::vis_miss(testplotpresence_hymenoptera))
-rm(testplotpresence_orthoptera, testplotpresence_coleoptera, testplotpresence_hemiptera, testplotpresence_hymenoptera)
+          visdat::vis_miss(testplotpresence_hemiptera))
+rm(testplotpresence_orthoptera, testplotpresence_coleoptera, testplotpresence_hemiptera)
 ```
 
 ```{r}
@@ -377,7 +378,7 @@ length(unique(herbivore$Plot)) # 150 plots
 herbivore[, Trophic_level := "herbivore.arthropod"]
 ```
 
-### herbivore.snail REMOVED REASSESSED
+### herbivore.snail REMOVED
 
 ```{r, eval=F}
 testplotpresence <- unique(rbindlist(list(herbivore[, .(Trophic_level, Plot)], herbivore.snail[, .(Trophic_level, Plot)])))
@@ -400,19 +401,18 @@ length(unique(herbivore.snail[, Species])) # 39
 length(intersect(herbivore[, Plot], herbivore.snail[Trophic_level == "herbivore.snail", Plot])) # 134
 ```
 We have arthropod data on all plots.
-Snails are only from 1 year, and 16 plots are missing, all in one of the exploratories.
-Would including snails affect the number of plots we can use in the end?
+Snails are only from 1 year, and 16 plots are missing, all in one of the exploratories. We can not include them.
 
-TODO HERE Oct 2023 decide if snails are kept. 
 
 ### herbivore
 
 Too many missing plots in snails, and too few species. Take arthropod dataset only.
 ```{r}
 herbivore.arthropod <- data.table::copy(herbivore)
-spdiv <- spdiv[!Trophic_level %in% c("herbivore.arthropod", "herbivore.snail")]
+herbivore.arthropod <- herbivore.arthropod[, .(Species, Plot, value)]
+spdiv <- spdiv[!Trophic_level %in% c("herbivore.arthropod")]
 # summary : 651 species in 150 plots
-rm(herbivore, temp)
+rm(herbivore)
 ```
 
 
@@ -629,7 +629,7 @@ decomposer <- decomposer[!Species %in% exclude]
 ```
 
 Check pattern of missing plots
-```{r, eval = F}
+```{r, eval = T}
 testplotpresence_myriapod <- data.table::dcast(unique(decomposer[Trophic_level == "decomposer.myriapod", .(Plot, Year)]), Plot ~ Year, value.var = "Plot")
 testplotpresence_arthropod <- data.table::dcast(unique(decomposer[Trophic_level  == "decomposer.arthropod", .(Plot, Year)]), Plot ~ Year, value.var = "Plot")
 
@@ -1131,6 +1131,7 @@ corrplot::corrplot(as.matrix(beta.belowground.predator$beta.sne),type="lower", m
 # cleaning
 rm(beta.belowground.predator)
 ```
+
 ```{r}
 nrow(belowground.predator) == 150 * 17 # expected number of rows present
 secondary.consumer.arthropodsoillarvae <- data.table::copy(belowground.predator[, .(Species, Plot, value)])
@@ -1420,18 +1421,18 @@ names_trlevel <- names_trlevel[-which(names_trlevel == "")]
 Select the plots without missing information and store. This chunk of code generates `plotNAset.rds`, the selected set of plots.
 ```{r, eval=F}
 plots <- list()
-for(t in grep("snail|pollin", trlevels, value = T, invert = T)){
+for(t in trlevels){
   tr <- get(t)
   plots[[t]] <- unique(tr$Plot)
 }
-common.plots <- Reduce(intersect,plots) # 116 plots
+common.plots <- Reduce(intersect,plots) # 147 plots
 # take out HEG31 because this is taken out in functions
-common.plots <- common.plots[-which(common.plots == "HEG31")]
-# saveRDS(common.plots, file = "plotNAset.rds")
-#TODO uncomment above when plotnaset is saved (oct 2023)
+# common.plots <- common.plots[-which(common.plots == "HEG31")]
+#TODO HERE remove later!! first do imputation and check if still needed!! (Oct 23)
+saveRDS(common.plots, file = "plotNAset.rds")
 
 redplotset <- c()
-for(t in grep("snail|withlepi", trlevels, value = T, invert = T)){
+for(t in trlevels){
   redplotset[t] <- length(Reduce(intersect, plots[-which(names(plots) == t)]))
 }
 
@@ -1441,15 +1442,15 @@ names(testplotpresence) <- names(plots)
 visdat::vis_miss(testplotpresence)
 
 par(mar = c(10, 4.1, 4.1, 2.1))
-barplot(redplotset, ylim = c(0, 140), las = 3, cex.names = 0.8, main = "Does removal of given trophic level increase number of plots?")
+barplot(redplotset, ylim = c(0, 150), las = 3, cex.names = 0.8, main = "Does removal of given trophic level increase number of plots?")
 # abline(h = 114, col = "darkgreen")
-abline(h = 136, col = "red")
+abline(h = 147, col = "red")
 
-length(grep("AEG", common.plots))
-length(grep("HEG", common.plots))
-length(grep("SEG", common.plots))
+length(grep("AEG", common.plots)) # 48
+length(grep("HEG", common.plots)) # 50
+length(grep("SEG", common.plots)) # 49
 
-#TODO : assign plotNAset newly! for the moment : assign by hand : 
+#TODO : assign plotNAset newly! for the moment : assign by hand : (October 23)
 plotNAset <- common.plots
 ```
 Inspect common plot set
@@ -1458,11 +1459,10 @@ paste("AEG :", length(grep("A", common.plots)), "   HEG :", length(grep("H", com
 ```
 | region    | no. plots |
 | --------- | --------- |
-| all       |    135    |
-| AEG       |    42     |
-| HEG       |    46     |
-| SEG       |    47     |
-
+| all       |    147    |
+| AEG       |    48     |
+| HEG       |    50     |
+| SEG       |    49     |
 
 
 # Select Plots from diversity datasets
@@ -1476,6 +1476,7 @@ for(t in trlevels){
 }
 # take out HEG31, is automatic as soon as the gapfilling is run. 
 # that means that this betadiversity script needs to be run twice, once before and once after the gapfilling
+#TODO Oct 23 : update this text
 ```
 
 # overvievs
@@ -1497,7 +1498,7 @@ unique(gb)
 length(unique(gb))
 rm(tr); rm(t)
 ```
-[1] "autotroph :  461 species."
+[1] "autotroph :  484 species."
 [1] "    Number of group broad :  3  groups :  Lichen, Plant, Moss"
 [1] "bacteria.RNA :  140510 species."
 [1] "    Number of group broad :  1  groups :  bacteria.RNA"
@@ -1507,8 +1508,8 @@ rm(tr); rm(t)
 [1] "    Number of group broad :  1  groups :  soilfungi"
 [1] "eukaryvore.protist :  217 species."
 [1] "    Number of group broad :  1  groups :  Protists"
-[1] "herbivore.arthropod :  399 species."
-[1] "    Number of group broad :  4  groups :  Hemiptera, Coleoptera, Hymenoptera, Orthoptera"
+[1] "herbivore.arthropod :  651 species."
+[1] "    Number of group broad :  5  groups :  NA, Hemiptera, Coleoptera, Hymenoptera, Orthoptera"
 [1] "herbivore.arthropodsoillarvae :  11 species."
 [1] "    Number of group broad :  1  groups :  Insect.larvae"
 [1] "omnivore.protist :  444 species."
@@ -1519,16 +1520,18 @@ rm(tr); rm(t)
 [1] "    Number of group broad :  1  groups :  Protists"
 [1] "plantpathogen.fungi :  84 species."
 [1] "    Number of group broad :  1  groups :  Plant.pathogen"
-[1] "symbiont.soilfungi :  385 species."
-[1] "    Number of group broad :  1  groups :  soilfungi"
-[1] "tertiary.consumer :  67 species."
-[1] "    Number of group broad :  1  groups :  Birds"
-[1] "secondary.consumer :  174 species."
-[1] "    Number of group broad :  6  groups :  Coleoptera, Araneae, Hemiptera, Neuroptera, Orthoptera, Myriapoda"
 [1] "secondary.consumer.arthropodsoillarvae :  17 species."
 [1] "    Number of group broad :  1  groups :  Insect.larvae"
+[1] "symbiont.soilfungi :  328 species."
+[1] "    Number of group broad :  2  groups :  NA, soilfungi"
+[1] "tertiary.consumer :  67 species."
+[1] "    Number of group broad :  1  groups :  Birds"
+[1] "secondary.consumer :  343 species."
+[1] "    Number of group broad :  6  groups :  NA, Coleoptera, Araneae, Hemiptera, Orthoptera, Myriapoda"
+[1] "decomposer :  130 species."
+[1] "    Number of group broad :  3  groups :  NA, Coleoptera, Myriapoda"
 
-Total : 146'368 species in the  dataset (5'858 species without bacteria) belonging to 16 broad taxonomic groups
+Total : 146'885 species in the  dataset (6'375 species without bacteria) belonging to 16 broad taxonomic groups
 
 
 # Calculate betadiversities
@@ -1590,10 +1593,59 @@ saveRDS(masterbeta, "master_beta.rds")
 ```
 
 # Calculate alpha diversities
+
+Rarefaction of bacteria and soilfungi datasets TODO 
+need to do??
+```{r, eval = F}
+#TODO HERE Oct 2023 : rarefy those two datasets
+# Note : this rarefaction code is not helping : 
+# The data is rarefied to a constant number of species (OTUs per plot). 
+# this means alphadiversity is the same in all plots.
+#
+#TODO need to rarefy on abundance data.
+# I do not have abuncance data on bacteria or fungi..
+
+# dependencies 
+if(!requireNamespace("BiocManager")){
+  install.packages("BiocManager")
+}
+BiocManager::install("phyloseq")
+library(phyloseq)
+
+# is done on abundance data, not on presence-absence data!
+
+dat <- bacteria.RNA
+dat <- symbiont.soilfungi
+dat <- pathotroph.soilfungi
+
+# convert to matrix for phyloseq
+dat <- data.table::dcast(dat, Species ~ Plot, value.var = "value")
+spnames <- dat$Species
+dat <- as.matrix(dat[, -1])
+rownames(dat) <- spnames
+
+# Code from https://github.com/biodiversity-exploratories-synthesis/Synthesis_dataset_manual/blob/main/Synthesis%20datasets%20%20How%20to%20use.md
+# adapted from example code to rarefy a microbial dataset (thanks to Kezia Goldmann and Johannes Sikorski for guidance on this topic)
+
+dat <- otu_table(dat, taxa_are_rows = TRUE) # get a phyloseq object step1
+pylodat <- phyloseq(dat) # get a phyloseq object step2
+
+rarefied.dat <- rarefy_even_depth(pylodat, rngseed = 1) 
+# sample size should be the smallest number of sequences per sample (default)
+# rngseed sets a seed to get reproducible results
+
+# reformat to previous state
+rarefied.dat <- data.frame(rarefied.dat)
+rarefied.dat$Species <- rownames(rarefied.dat)
+rarefied.dat <- data.table::melt(data.table(rarefied.dat), id.vars = c("Species"))
+names(rarefied.dat) <- c("Species", "Plot", "value")
+
+rarefied_alpha <- stats::aggregate(x = rarefied.dat, by = value ~ Plot, FUN = "sum")
+unrarefied_alpha <- stats::aggregate(x = bacteria.RNA, by = value ~ Plot, FUN = "sum")
+```
+
+
 ```{r}
-#TODO rarefaction for bacteria and soilfungi 
-#TODO : loop below deletes the dataset (e.g. autotroph.alpha is there, autotroph not any more)
-#TODO 150 rows now, did I not select the plot set? not yet.
 for(t in trlevels){
   tr <- get(t)
   alpha <- aggregate(value ~ Plot, tr, function(x) sum(x))
@@ -1655,7 +1707,7 @@ rm(t); rm(tr)
 
 # save gammadiversity
 saveRDS(mastergamma, "master_gamma.rds")
- add to masterdiversity
+# add to masterdiversity
 masterdiversity <- merge(masterdiversity, mastergamma, by = c("Var1", "Var2"), all.x = T)
 saveRDS(masterdiversity, "master_diversity_alpha_beta_gamma.rds")
 
@@ -1666,10 +1718,11 @@ mastergamma <- mastergamma[, .(Var1, Var2, autotroph.gamma)]
 
 
 
-# Calculate abundance-based betadiversity
+# Calculate abundance-based betadiversity ABANDONED
 ```{r, eval = F}
-#TODO only change above in script change to presence-absence!
-# Don't run beta- and alpha diverstiy calculation above
+# If this piece should be run : 
+# (1) uncomment the line above that converts dataset to presence-absence
+# (2) do not run beta- and alphadiversity calculations (set by hand eval = F)
 
 for(t in trlevels){
   tr <- get(t)
@@ -1720,8 +1773,8 @@ saveRDS(masterbeta, "master_beta_abundance.rds")
 
 # Cleaning
 ```{r}
-rm(spdiv); rm(test); rm(tr); rm(t); rm(redplotset); rm(plots)
-rm(alphaname); rm(sum); rm(exclude); rm(bh_overv); rm(bp_overv)
+rm(spdiv); rm(test); rm(redplotset); rm(plots)
+rm(alphaname); rm(sum); rm(exclude); rm(bh_overv)
 rm(masteralpha); rm(masterdiversity)
 rm(list = trlevels)
 rm(list = trlevels_components)
