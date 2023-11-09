@@ -79,10 +79,10 @@ if("assemble_covariates" %in% sections_to_be_loaded){
 
 if("assemble_functions" %in% sections_to_be_loaded){
   # FUNCTIONS
-  # store raw grassland functions for gapfilling
-  raw_grlfuns <- data.table::fread(paste(pathtoexplosynthesis, "/Grassland_functions/27087_grassland_functions_bexis/27087_25_Dataset/bexis_to_wide_format_output.csv", sep = ""), header=T)
-  #TODO : in first functions script : run new reformatting script
-  #TODO : run bexis_to_wide_format.R here already!
+  # prerequisite : store raw grassland functions for gapfilling
+  # download dataset 27087 version 24 and run bexis_to_wide_format.R
+  #  create output .csv and use as input for here.
+  raw_grlfuns <- data.table::fread(paste(pathtoexplosynthesis, "/Grassland_functions/27087_grassland_functions_bexis/27087_24_Dataset/bexis_to_wide_format_output.csv", sep = ""), header=T)
   # selection of required functions for gapfilling
   selection <- info_data[`used for Gapfilling` == "yes", ColumnName]
   raw_grlfuns <- raw_grlfuns[, ..selection]
