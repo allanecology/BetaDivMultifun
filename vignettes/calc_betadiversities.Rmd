@@ -1408,14 +1408,11 @@ rm(bp_overv)
 Find subset of plots without missing diversity data and store.
 
 ```{r}
-#TODO HERE Oct 2023 : find plot selection, and see if we can include more plots now!!
-#   keep eye on herbivore.snails, maybe keep or remove, depending on the amount of lost plots.
 rm(spdiv); gc()
-#TODO below : not done yet --> find out if complete or not
+
 #check names of trlevels
-names_trlevel <- names_trlevel$final_name
-all(names_trlevel[-which(names_trlevel == "")] %in% trlevels) & all(trlevels %in% names_trlevel[-which(names_trlevel == "")]) # same set of names in trlevels
-names_trlevel <- names_trlevel[-which(names_trlevel == "")]
+names_trlevel <- names_trlevel[grep("ok", names_trlevel$inclusion), final_name]
+all(names_trlevel %in% trlevels) & all(trlevels %in% names_trlevel) # same set of names in trlevels
 ```
 
 Select the plots without missing information and store. This chunk of code generates `plotNAset.rds`, the selected set of plots.
@@ -1442,17 +1439,16 @@ names(testplotpresence) <- names(plots)
 visdat::vis_miss(testplotpresence)
 
 par(mar = c(10, 4.1, 4.1, 2.1))
-barplot(redplotset, ylim = c(0, 150), las = 3, cex.names = 0.8, main = "Does removal of given trophic level increase number of plots?")
+barplot(redplotset, ylim = c(0, 150), las = 3, cex.names = 0.8, main = "Does removal of \ngiven trophic level \nincrease number of plots?")
 # abline(h = 114, col = "darkgreen")
 abline(h = 147, col = "red")
 
 length(grep("AEG", common.plots)) # 48
-length(grep("HEG", common.plots)) # 50
+length(grep("HEG", common.plots)) # 50 --> will reduce to 49 without HEG31
 length(grep("SEG", common.plots)) # 49
-
-#TODO : assign plotNAset newly! for the moment : assign by hand : (October 23)
-plotNAset <- common.plots
 ```
+Based on above graph : keep 147 plots, do not remove bacteria because we want them.
+
 Inspect common plot set
 ```{r, eval=F}
 paste("AEG :", length(grep("A", common.plots)), "   HEG :", length(grep("H", common.plots)), "    SEG :", length(grep("S", common.plots)), sep = "")
@@ -1474,9 +1470,9 @@ for(t in trlevels){
   tr <- tr[Plot %in% plotNAset, ]
   assign(t, tr)
 }
-# take out HEG31, is automatic as soon as the gapfilling is run. 
+# take out HEG31, is automatic as soon as the gapfilling is run and thus plotNAset is updated.. 
 # that means that this betadiversity script needs to be run twice, once before and once after the gapfilling
-#TODO Oct 23 : update this text
+#TODO HERE Nov 23 : still need to run
 ```
 
 # overvievs
@@ -1508,8 +1504,8 @@ rm(tr); rm(t)
 [1] "    Number of group broad :  1  groups :  soilfungi"
 [1] "eukaryvore.protist :  217 species."
 [1] "    Number of group broad :  1  groups :  Protists"
-[1] "herbivore.arthropod :  651 species."
-[1] "    Number of group broad :  5  groups :  NA, Hemiptera, Coleoptera, Hymenoptera, Orthoptera"
+[1] "herbivore.arthropod :  647 species."
+[1] "    Number of group broad :  4  groups :  NA, Hemiptera, Coleoptera, Orthoptera"
 [1] "herbivore.arthropodsoillarvae :  11 species."
 [1] "    Number of group broad :  1  groups :  Insect.larvae"
 [1] "omnivore.protist :  444 species."
@@ -1531,7 +1527,7 @@ rm(tr); rm(t)
 [1] "decomposer :  130 species."
 [1] "    Number of group broad :  3  groups :  NA, Coleoptera, Myriapoda"
 
-Total : 146'885 species in the  dataset (6'375 species without bacteria) belonging to 16 broad taxonomic groups
+Total : 146'881 species in the  dataset (6'375 species without bacteria) belonging to 16 broad taxonomic groups
 
 
 # Calculate betadiversities
@@ -1710,10 +1706,6 @@ saveRDS(mastergamma, "master_gamma.rds")
 # add to masterdiversity
 masterdiversity <- merge(masterdiversity, mastergamma, by = c("Var1", "Var2"), all.x = T)
 saveRDS(masterdiversity, "master_diversity_alpha_beta_gamma.rds")
-
-# quick and dirty, just for autotrophs
-setnames(mastergamma, old = "autotroph.beta.sim", new = "autotroph.gamma")
-mastergamma <- mastergamma[, .(Var1, Var2, autotroph.gamma)]
 ```
 
 
@@ -1773,7 +1765,7 @@ saveRDS(masterbeta, "master_beta_abundance.rds")
 
 # Cleaning
 ```{r}
-rm(spdiv); rm(test); rm(redplotset); rm(plots)
+rm(redplotset); rm(plots)
 rm(alphaname); rm(sum); rm(exclude); rm(bh_overv)
 rm(masteralpha); rm(masterdiversity)
 rm(list = trlevels)
