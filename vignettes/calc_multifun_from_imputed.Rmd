@@ -18,7 +18,7 @@ Requirements :
 - usedforBetadivMultifun, info_data
 ```{r}
 sections_to_be_loaded <- c("imputed_functions")
-# source("analysis_nonpublic.R")
+source("vignettes/analysis_nonpublic.R")
 ```
 
 
@@ -81,8 +81,6 @@ selecting the functions which are used in analysis.
 # select variables which are included in betadiv multifun analysis
 usedforBetadivMultifun <- usedforBetadivMultifun[!usedforBetadivMultifun == "Plot"]
 imputed_grlfuns <- imputed_grlfuns[, ..usedforBetadivMultifun]
-# saveRDS(imputed_grlfuns, "imputed_and_compound_grlfuns.rds")
-#TODO is that used somewhere? if not, delete
 ```
 
 # Check Correlations
@@ -116,6 +114,11 @@ corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F,
 rm(M)
 ```
 
+```{r}
+nimputed_grlfuns <- data.table::copy(imputed_grlfuns) # save an unscaled version for EFturnover / nestedness
+```
+
+
 # Dissimilarity of single functions
 This part of the script prepares the *single* function dissimilarities for the GDM models. Each function is fitted individually.
 
@@ -139,9 +142,7 @@ for(f in usedforBetadivMultifun[!usedforBetadivMultifun == "Plotn"]){
   diffsmall <- reshape2::melt(diffsmall, value.name = "X")
   diffsmall <- diffsmall[!is.na(diffsmall[, 3]),]
   diffsmall <- data.table::data.table(diffsmall)
-  diffsmall[, eval(f) := scale(X, center = T, scale = T)] # scale and center
-  #TODO remove scaling here, below normalisation is done
-  diffsmall[, X := NULL]
+  setnames(diffsmall, old = "X", new = f)
   # assign(diffname, diffsmall)
   singleEFdist <- merge(singleEFdist, diffsmall, by = c("Var1", "Var2"), all.y = T)
   # saveRDS(diffsmall, file = paste(diffname, ".rds", sep = "")) # note : is not saved, only produce on demand
@@ -162,7 +163,7 @@ saveRDS(singleEFdist, "singleEFdist.rds")
     - weighting of the PCA axis: Weighting by var explained gives the correlated functions too much weight. Equal weighting is chosen. (soil axis should not get too much weight)
 
 
-## EFdistance calculation
+## EFdistance calculation DEPRECATED
 
 From PCA of all functions, take most important axes and calculate euclidean distance of them (using equal weights).
 
@@ -173,7 +174,7 @@ Selection of relevant PC axes :
     - 9 correlations > 0.5 (see corrplots above)
 - (number of selected axes) = (number of PCA) - (number of correlated functions)
 - check if this number corresponds to around 90% variance explained.
-```{r}
+```{r, eval = F}
 # STANDARDISATION
 nimputed_grlfuns <- data.table::copy(imputed_grlfuns) # save an unscaled version for EFturnover / nestedness
 include <- names(imputed_grlfuns)[!names(imputed_grlfuns) %in% "Plotn"]
@@ -185,7 +186,8 @@ pc_grlfuns <- as.data.frame(pc_grlfuns)
 rownames(pc_grlfuns) <- imputed_grlfuns$Plotn
 
 pca_grlfuns <- stats::prcomp(pc_grlfuns, scale=F) 
-summary(pca_grlfuns)
+summ <- summary(pca_grlfuns)
+summ$importance[3, ] <= 0.9 # take axes 1 - 11
 capture.output(summary(pca_grlfuns), file = "calc_multifun_from_imputed_pca_summary.txt")
 
 par(mfrow = c(2, 2))
@@ -232,7 +234,7 @@ p4 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, co
                loadings.label.colour = "black", loadings.label.repel = T, loadings.label.size = labelsize,
                x = 4, y = 5)
 cowplot::plot_grid(plotlist = list(p1, p2, p3, p4), labels = c("A", "B", "C", "D"), align = T)
-cowplot::plot_grid(plotlist = list(p1, p2), labels = c("A", "B"), align = T)
+# cowplot::plot_grid(plotlist = list(p1, p2), labels = c("A", "B"), align = T)
 # saved as : "calc_multifun_from_imputed_pca_axes_1_to_5.pdf"
 
 p5 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, colour = "gray", loadings.colour = "black", 
@@ -248,20 +250,15 @@ p8 <- ggplot2::autoplot(pca_grlfuns, loadingsloadings = T, loadings.label= T, co
                loadings.label.colour = "black", loadings.label.repel = T,
                x = 8, y = 9)
 cowplot::plot_grid(plotlist = list(p5, p6, p7, p8), labels = c("E", "F", "G", "H"), align = T)
-# saved as : "calc_multifun_from_imputed_pca_axes_5_to_9.pdf"
+# saved as : "23-11-09_calc_multifun_from_imputed_pca_axes_5_to_9.pdf"
 ```
 ```{r, eval = F}
 rm(p); rm(p1); rm(p2); rm(p3); rm(p4); rm(p5)
 ```
 **axis selection** : 
-- 9 correlations > 0.5
-    - 6 clusters of inter-correlated functions
-- 17 PC axes (17 functions)
-- 17-6 = 11 axes
-- 11 axes explain 0.91620 % var
-- take first 11 axes
+Use axes until 90% variance explained : take axes 1 - 11
 
-```{r}
+```{r, eval = F}
 pca_grlfuns <- pca_grlfuns$x[, 1:11]
 
 # euclidean distance
@@ -353,7 +350,12 @@ t <- as.matrix(EFbeta)
 t[!lower.tri(t)] <- NA
 t <- reshape2::melt(t, value.name = paste("EFbeta", threshold, sep = "_"))
 EFbeta <- t[!is.na(t[, 3]), ]
-EFmaster <- merge(EFmaster, EFbeta, by = c("Var1", "Var2"), all = T)
+
+if(!exists("EFmaster")){ # if EFmaster does not exist yet, create
+  EFmaster <- EFbeta
+} else {
+  EFmaster <- merge(EFmaster, EFbeta, by = c("Var1", "Var2"), all = T)
+}
 
 EFturnover <- pa_grlfuns$beta.sim
 t <- as.matrix(EFturnover)
@@ -373,7 +375,7 @@ standardise and save
 ```{r}
 # saveRDS(EFturnover, "EFturnover.rds")
 # saveRDS(EFnestedness, "EFnestedness.rds")
-# saveRDS(EFmaster, "EFmaster_all_thresholds.rds") # if all threshods were calculated and added to EFmaster
+saveRDS(EFmaster, "EFmaster_all_thresholds.rds") # if all threshods were calculated and added to EFmaster
 saveRDS(EFmaster, "EFmaster.rds")
 ```
 
@@ -382,10 +384,10 @@ Plot components of EFbeta
 ```{r, eval = F}
 # # check EFmaster
 # EFcheck <- data.table::copy(data.table::data.table(EFmaster))
-# EFcheck[, "check" := EFturnover + EFnestedness - EFbeta]
+# EFcheck[, check := EFturnover + EFnestedness - EFbeta]
 # plot(EFcheck$check, ylim = c(-1, 1))
 # rm(EFcheck)
-# TRUE : EFturnover + EFnestedness - EFbeta is always 0 (or very near 0)
+# # TRUE : EFturnover + EFnestedness - EFbeta is always 0 (or very near 0)
 
 plotEFbeta <- reshape2::melt(EFmaster[, c("Var1", "Var2", "EFbeta_0.5", "EFturnover_0.5", "EFnestedness_0.5")], id = c("Var1", "Var2"))
 p <- ggplot2::ggplot(data = plotEFbeta, aes(x = variable, y = value)) +
@@ -408,7 +410,7 @@ p1 <- ggplot2::ggplot(data = plotEFbeta[variable %in% unique(plotEFbeta$variable
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank()) +
   # scale_fill_brewer(palette="Dark2")
-  scale_fill_manual(values = c("#1B9E77", "#D95F02", "#7570B3", "#E7298A"))
+  scale_fill_manual(values = c("#D95F02", "#1B9E77", "#7570B3"))
 p2 <- ggplot2::ggplot(data = plotEFbeta[variable %in% unique(plotEFbeta$variable)[14:28]], 
                       aes(x = variable, y = value, fill = type)) +
       geom_violin() +
@@ -418,16 +420,17 @@ p2 <- ggplot2::ggplot(data = plotEFbeta[variable %in% unique(plotEFbeta$variable
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank()) +
   # scale_fill_brewer(palette="Dark2")
-  scale_fill_manual(values = c("#1B9E77", "#7570B3", "#E7298A"))
+  scale_fill_manual(values = c("#D95F02", "#1B9E77", "#7570B3"))
 plot_grid(p1, p2, nrow = 2)
 # save as : 21-10-04_calc_multifun_from_imputed_all_EFdistances_violinplot
 ```
 Plot various thresholds
 ```{r, eval = F}
 # only run if EFmaster contains various thresholds
-temp <- c("EFdistance", grep("turnover|nestedness", names(EFmaster), value = T))
+temp <- c(grep("turnover|nestedness", names(EFmaster), value = T))
 # temp <- grep("turnover", names(EFmaster), value = T)
 # pairs(EFmaster[, ..temp], upper.panel = NULL )
+EFmaster <- data.table(EFmaster)
 
 m <- cor(EFmaster[, ..temp], method = "spearman")
 pdf("calc_multifun_from_imputed_all_EFdistances_corrplot.pdf", paper = "a4r")
@@ -441,7 +444,7 @@ plot(EFmaster$EFbeta_0.5, EFmaster$EFturnover_0.5 + EFmaster$EFnestedness_0.5)
 
 
 
-With quantile method
+With quantile method DEPRECATED
 ```{r, eval=F}
 threshold <- 0.5
 include <- names(nimputed_grlfuns)[!names(imputed_grlfuns) %in% "Plotn"]
@@ -480,9 +483,9 @@ EFmaster <- merge(EFmaster, t, by = c("Var1", "Var2"))
 saveRDS(EFmaster, "EFquantile_median.rds")
 ```
 
-# abundance betadiversity
+# abundance betadiversity DEPRECATED
 Abundance betadiversity of z-scores of functions.
-```{r}
+```{r, eval = F}
 abund_grlfuns <- data.table::copy(nimputed_grlfuns) # dataset for quantile functions
 # CALC BETADIVERSITY
 abund_grlfuns <- data.frame(abund_grlfuns[, !"Plotn", with = F], row.names = abund_grlfuns$Plotn)
