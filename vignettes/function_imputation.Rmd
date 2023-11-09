@@ -183,22 +183,16 @@ write.table(OOB_NRMSE, file = "function_imputation_parameter_tuning_mtry.csv", s
 OOB_NRMSE <- read.table(file = paste(pathtodata, "/data_assembly/output_data/function_imputation_parameter_tuning_mtry.csv", sep = ""), sep = ";")
 OOB_NRMSE <- OOB_NRMSE$x
 
-plot(seq(2, 50), OOB_NRMSE, type = "l", ylab = "OOB",
-     xlab = "mtry")
-abline(h = 0.2, lty = "dashed", col = "gray")
-
-
 pdf(file = "function_imputation_parameter_tuning_mtry.pdf", paper = "a4r")
 plot(seq(2, maxiteration), OOB_NRMSE, type = "l", ylab = "OOB",
      xlab = "mtry")
 abline(v = which(OOB_NRMSE == min(OOB_NRMSE)) + 1, lty = "dashed", col = "orange")
+abline(v = which(OOB_NRMSE[1:30] == min(OOB_NRMSE[1:30])) + 1, lty = "dashed", col = "red")
 dev.off()
 
 which(OOB_NRMSE == min(OOB_NRMSE)) + 1 # optimal mtry for explanatory is 28
 ```
-Explanatory : use mtry = 22
-
-Response : use mtry = 3
+Absolute minimum would be to use 45, but higher mtry means more computational resources. Find the local minimum around 20, not too high compared to abs minimu. thus use **mtry = 21**.
 
 
 ## Tuning ntree paramteter (additional)
@@ -206,13 +200,12 @@ Response : use mtry = 3
 default is 100, increasing ntree can decrease the imputation error.
 source script : https://github.com/eric-allan/BE.RE.analysis/blob/master/EF_select_suitable_functions.R by Caterina Penone
 ```{r, eval = F}
-mtry_val <- NA
-#TODO fix the mtry from above
+mtry_val <- 22
 
 OOB_NRMSE <- c()
 i <- 1
-for (ntree in c(100, 110, 120, 130, 180, 200)) {
-   imp.matX <- missForest(dataset_raw, mtry = mtry_val, ntree = ntree)
+for(ntree in c(100, 110, 120, 130, 180, 200)) {
+   imp.matX <- missForest::missForest(dataset, mtry = mtry_val, ntree = ntree)
    OOB_NRMSE[i] <- imp.matX$OOBerror[1]
    i <- i + 1
    print(i)
@@ -225,25 +218,19 @@ rm(i); rm(ntree)
 ```
 Visualise
 ```{r}
-read.table(OOB_NRMSE, file = "function_imputation_parameter_tuning_ntree.csv", sep = ";")
-OOB_NRMSE <- OOB_NRMSE$x
+OOB_NRMSE <- read.table(file = paste(pathtodata, "/data_assembly/output_data/function_imputation_parameter_tuning_ntree.csv", sep = ""), sep = ";")
+OOB_NRMSE <- data.table(OOB_NRMSE)
 
-OOB_NRMSE[which(OOB_NRMSE$OOB == min(OOB_NRMSE$OOB)), ntree] # 120 for explanatory
-
+OOB_NRMSE[which(OOB_NRMSE$OOB == min(OOB_NRMSE$OOB)), ntree] # 130
 
 pdf("function_imputation_parameter_tuning_ntree.pdf")
 plot(OOB_NRMSE$ntree, OOB_NRMSE$OOB, type = "l", ylab = "OOB",
      xlab = "ntree")
 abline(v = OOB_NRMSE[which(OOB_NRMSE$OOB == min(OOB_NRMSE$OOB)), ntree], lty = "dashed", col = "orange")
-abline(v = 100, lty = "dashed", col = "darkgreen")
 dev.off()
 ```
 
-
-Explanatory variables : stay with ntree = 100 (120 is not really better)
-Response variables: I guess the same: stay with ntree = 100
-
-
+ntree = 130 (not so much better, but still)
 
 
 # Imputation
@@ -264,8 +251,9 @@ dataset <- befun[, !colnames(befun) %in% c("Plotn", "Plot"), with=F]
 ```{r imputation, results="hide", eval=F}
 for(i in 1:50){
   print(i)
-  current <- missForest::missForest(dataset, variablewise = T)
-  imperr[[i]] <- data.table::data.table("columns" = colnames(dataset), "errors" =current$OOBerror)
+  current <- missForest::missForest(dataset, variablewise = T, mtry = 21, ntree = 130)
+  imperr[[i]] <- data.table::data.table("columns" = colnames(dataset), 
+                                        "errors" = current$OOBerror)
   current <- data.table::as.data.table(current$ximp)
   # re-transform the numeric variables
   current[, (numcols) := lapply(.SD, function(x) (exp(x)-1)), .SDcols = numcols]
@@ -294,8 +282,8 @@ Check imputation error
 ```{r}
 imperr <- do.call(rbind, imperr)
 mimperr <- data.table::as.data.table(aggregate(errors ~ columns, imperr, mean))
-mean(mimperr[,errors]) # 0.071
-mean(imperr[errors != 0, errors]) # 0.1352324 mean of only the imputed values
+mean(mimperr[,errors]) # 0.06827009
+mean(imperr[errors != 0, errors]) # 0.1289546 mean of only the imputed values
 
 # barplot(height=mimperr[,errors], names.arg = mimperr[, columns])
 library(cowplot)
@@ -307,16 +295,17 @@ p <- ggplot2::ggplot(data=mimperr, ggplot2::aes(x=columns, y=errors)) +
 p
 ```
 The two variables Total pollinators and Parasitoid traps are removed, because the imputation error is too high and because they rely on diversity data (which is hard / not possible to impute).
-The other variables with imputation errors over 25% are left, because only 1-2 values are missing in those datasets.
+The other variables with imputation errors over 25% are left, because only 1-2 values are missing in those datasets. Also, the variablewise imputation error depends on the variable scale.
 ```{r}
 dataset[, c("Total.pollinators", "Parasitoid.traps") := NULL]
 numcols <- numcols[-which(numcols %in% c("Total.pollinators", "Parasitoid.traps"))]
 ```
 
 ```{r, eval=F}
-pdf("imputation_errors.pdf", paper = "a4")
+pdf("imputation_errors.pdf", paper = "a4r")
 cowplot::plot_grid(naniar::vis_miss(dataset, sort_miss = T), p, nrow = 2)
 dev.off()
+#TODO might do nicer plot : not all labels are readable
 ```
 
 
@@ -387,6 +376,7 @@ summary(M_compare$correlation_before - M_compare$correlation)
 Store imputed grassland function dataset.
 ```{r}
 saveRDS(Y, file="imputed_function_values.rds")
+fwrite(Y, file="imputed_function_values.csv", sep = ";")
 # clean a bit
 imputed_grlfuns <- data.table::copy(Y)
 rm(befun); rm(befunbackup); rm(corrbefun); rm(dataset); rm(imperr); rm(impvals)
