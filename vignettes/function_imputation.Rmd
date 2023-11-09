@@ -6,7 +6,7 @@ output:
 ---
 # Updates 09.02.23
 ```{r}
-#TODO : tune the mty parameter (probably around 20 would be good)
+#TODO : tune the mtry parameter (probably around 20 would be good)
 #TODO : calculate the assembled functions AFTER imputation
 #TODO : recheck negative values
 #TODO : note that the variable-wise error depends on the scale --> keep in mind
@@ -35,7 +35,7 @@ The dataset used for gap-filling is larger than the dataset used for the analysi
 * *Note* that this script removes an additional plot from the plot set. However, this does not matter for the performance of this imputation script.
 
 
-## Data preparation
+# Data preparation
 
 ```{r}
 befun <- data.table::copy(raw_grlfuns)
@@ -67,6 +67,7 @@ If the missing plot from 16S, amoA_AOA.2016 & Co is taken out, 3 more functions 
 # befun[is.na(`16S_NB`), Plotn]
 # befun[is.na(amoA_AOA.2016), Plotn]
 # befun[is.na(amoA_AOB.2016), Plotn]
+# visdat::vis_miss(befun[, .(`16S_NB`, amoA_AOA.2016, amoA_AOB.2016, amoA_AOA.2011)], sort_miss = T)
 # The missing plot is "HEG31"
 befun <- befun[Plotn != "HEG31"]
 ```
@@ -96,7 +97,7 @@ M[which(M < tres & M > -tres)] <- 0
 corrplot::corrplot(M, type = "upper", tl.col="black", tl.srt=40, diag = F, tl.cex = 0.3)
 ```
 Network
-```{r}
+```{r, eval = F}
 # show network - is there a variable "alone"? bzw. isolated?
 network <- igraph::graph_from_adjacency_matrix(M, weighted=T, mode="undirected", diag=F)
 plot(network)
@@ -108,6 +109,7 @@ rm(M); rm(network)
 
 
 ## Log transformation
+
 before changing values, store the original dataset
 ```{r}
 befunbackup <- data.table::copy(befun)
@@ -145,7 +147,106 @@ befun[, (numcols) := lapply(.SD, function(x) log(x+1)), .SDcols = numcols]
 naloc <- is.na(befun)
 ```
 
-## Imputation
+# Tuning imputation parameters
+
+```{r}
+# recoding Explo as factor for imputation
+befun[, Explo := as.factor(Explo)]
+dataset <- befun[, !colnames(befun) %in% c("Plotn", "Plot"), with=F]
+```
+
+## Tuning mtry paramteter (additional)
+
+By default square root of p = number of columns. Try values between 2 and 50 to tune the OOB error. Find the minimum of error and use the according mtry parameter value. Around 20 worked well in previous projects.
+
+source script : https://github.com/eric-allan/BE.RE.analysis/blob/master/EF_select_suitable_functions.R by Caterina Penone
+```{r, eval = F}
+# note : only run once, then work with the output dataset.
+maxiteration <- 50
+sqrt(ncol(befun))
+OOB_NRMSE <- c()
+i <- 1
+for (mtry in 2:maxiteration) {
+   imp.matX <- missForest::missForest(dataset, mtry = mtry)
+   OOB_NRMSE[i] <- imp.matX$OOBerror[1]
+   i <- i + 1
+   print(i)
+}
+rm(i)
+
+write.table(OOB_NRMSE, file = "function_imputation_parameter_tuning_mtry.csv", sep = ";")
+```
+
+
+### visualise mtry optimisation
+```{r}
+OOB_NRMSE <- read.table(file = paste(pathtodata, "/data_assembly/output_data/function_imputation_parameter_tuning_mtry.csv", sep = ""), sep = ";")
+OOB_NRMSE <- OOB_NRMSE$x
+
+plot(seq(2, 50), OOB_NRMSE, type = "l", ylab = "OOB",
+     xlab = "mtry")
+abline(h = 0.2, lty = "dashed", col = "gray")
+
+
+pdf(file = "function_imputation_parameter_tuning_mtry.pdf", paper = "a4r")
+plot(seq(2, maxiteration), OOB_NRMSE, type = "l", ylab = "OOB",
+     xlab = "mtry")
+abline(v = which(OOB_NRMSE == min(OOB_NRMSE)) + 1, lty = "dashed", col = "orange")
+dev.off()
+
+which(OOB_NRMSE == min(OOB_NRMSE)) + 1 # optimal mtry for explanatory is 28
+```
+Explanatory : use mtry = 22
+
+Response : use mtry = 3
+
+
+## Tuning ntree paramteter (additional)
+
+default is 100, increasing ntree can decrease the imputation error.
+source script : https://github.com/eric-allan/BE.RE.analysis/blob/master/EF_select_suitable_functions.R by Caterina Penone
+```{r, eval = F}
+mtry_val <- NA
+#TODO fix the mtry from above
+
+OOB_NRMSE <- c()
+i <- 1
+for (ntree in c(100, 110, 120, 130, 180, 200)) {
+   imp.matX <- missForest(dataset_raw, mtry = mtry_val, ntree = ntree)
+   OOB_NRMSE[i] <- imp.matX$OOBerror[1]
+   i <- i + 1
+   print(i)
+}
+OOB_NRMSE <- data.table(ntree = c(100, 110, 120, 130, 180, 200), OOB = OOB_NRMSE)
+
+write.table(OOB_NRMSE, file = "function_imputation_parameter_tuning_ntree.csv", sep = ";")
+
+rm(i); rm(ntree)
+```
+Visualise
+```{r}
+read.table(OOB_NRMSE, file = "function_imputation_parameter_tuning_ntree.csv", sep = ";")
+OOB_NRMSE <- OOB_NRMSE$x
+
+OOB_NRMSE[which(OOB_NRMSE$OOB == min(OOB_NRMSE$OOB)), ntree] # 120 for explanatory
+
+
+pdf("function_imputation_parameter_tuning_ntree.pdf")
+plot(OOB_NRMSE$ntree, OOB_NRMSE$OOB, type = "l", ylab = "OOB",
+     xlab = "ntree")
+abline(v = OOB_NRMSE[which(OOB_NRMSE$OOB == min(OOB_NRMSE$OOB)), ntree], lty = "dashed", col = "orange")
+abline(v = 100, lty = "dashed", col = "darkgreen")
+dev.off()
+```
+
+
+Explanatory variables : stay with ntree = 100 (120 is not really better)
+Response variables: I guess the same: stay with ntree = 100
+
+
+
+
+# Imputation
 
 The imputation is repeated 50 times, and the mean of the imputed values is taken. 
 
