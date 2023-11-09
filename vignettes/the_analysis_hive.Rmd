@@ -28,8 +28,17 @@ Requires access to the Plant Ecology Group (Fischer) drive "planteco" at the IPS
 ```{r}
 ksource("vignettes/clean_and_load_soil_covariates.Rmd")
 ksource("vignettes/calc_covariates.Rmd")
+ksouce("vignettes/calc_betadiversities.Rmd")
+ksource("vignettes/function_imputation.Rmd")
+# Note : plotNAset is created here.
+# potentially need to re-run calc_betadiversities.Rmd
+#    again with the correct number of plots!!
+# ksouce("vignettes/calc_betadiversities.Rmd")
+
 #TODO add early scripts
 ```
+
+
 
 
 ## Fit models
